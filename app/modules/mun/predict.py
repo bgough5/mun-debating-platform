@@ -134,6 +134,11 @@ def build_inputs(conn, target: dict, params: ModelParams, extra_sources: dict | 
             return 1.0 if e["topic_id"] == topic_id else 0.0
         return 0.0
 
+    hist: dict = {}
+    if one(conn, "SELECT 1 FROM sqlite_master WHERE name = 'un_resolution'"):
+        from app.modules.intelligence.service import history_sources
+        hist = history_sources(conn, topic_id, target["tags"], isos, params)
+
     inputs: list[CountryInput] = []
     detail: dict[str, dict] = {}
     for m in members:
@@ -173,8 +178,10 @@ def build_inputs(conn, target: dict, params: ModelParams, extra_sources: dict | 
             pos = -e["position"] if target["negate"] else e["position"]
             srcs.append(Source(float(pos), w, e["source_type"], label, f"evidence:{e['id']}", stale,
                                e["summary"] or e["condition_text"]))
-        for s in (extra_sources or {}).get(iso, []):
-            srcs.append(s)
+        for h in hist.get(iso, []):    # 3. voting history on similar resolutions (Phase 4)
+            srcs.append(Source(-h.position if target["negate"] else h.position, h.weight, h.kind, h.label, h.ref, h.stale, h.note))
+        for x in (extra_sources or {}).get(iso, []):
+            srcs.append(x)
         best = sorted(my_blocs.values(), key=lambda b: (-b["cohesion"], b["code"]))
         group, rho = (best[0]["code"], float(best[0]["cohesion"])) if best else ("", 0.0)
         ci = CountryInput(iso, m["name"], tuple(srcs), group, rho)

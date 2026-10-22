@@ -117,6 +117,22 @@ REFERENCE = [
         C("name", "Name", required=True), C("body", "Body", "textarea",
                                             hint="Placeholders in {{ double braces }}; loops with {% for %}. Safe: templates run in a sandbox.")),
         natural_key=("code",), order_by="kind, name"),
+    Table("house", "Houses", (C("code", "Code", required=True), C("name", "Name", required=True),
+                              C("colour", "Colour (for display)", hint="e.g. #2E7D32")), natural_key=("code",), order_by="name",
+          group="Debating"),
+    Table("debate_format", "Debate formats", (
+        C("code", "Code", required=True), C("name", "Name", required=True), C("speakers_per_team", "Speakers per team (1-4)", "int"),
+        C("reply", "Reply speeches", "bool"), C("speech_seconds", "Speech length (seconds)", "int"),
+        C("reply_seconds", "Reply length (seconds)", "int"), C("prep_minutes", "Preparation (minutes)", "int"),
+        C("notes", "Notes", "textarea")), natural_key=("code",), order_by="id", group="Debating"),
+    Table("motion_bank", "Motion bank", (C("motion", "Motion", required=True), C("topic", "Topic"),
+                                         C("level", "Level", "choice", choices=("junior", "middle", "senior")), C("source", "Source")),
+          order_by="level, id", group="Debating"),
+    Table("house_points_rule", "House points rules", (
+        C("code", "Code", required=True), C("label", "Label", required=True),
+        C("kind", "Kind", "choice", choices=("win", "participation", "team_place", "speaker_place")),
+        C("place", "Place (for placings)", "int"), C("points", "Points", "real")), natural_key=("code",), order_by="kind, place",
+          group="Debating", note="Assumed defaults. Set them to the school's own house points rules."),
     Table("pathway_milestone", "Pathway milestones", (
         C("code", "Code", required=True), C("name", "Name", required=True),
         C("track", "Track", "choice", choices=("mun", "debating", "speaking", "both")), C("position", "Order", "int"),
@@ -128,6 +144,9 @@ EXPORT_ONLY = [
     "class", "student", "staff_class", "conference", "committee", "delegation", "delegation_member", "resolution",
     "paragraph", "paragraph_version", "amendment", "amendment_support", "evidence", "prediction", "prediction_country",
     "actual_vote", "task", "student_milestone", "model_version", "event_log",
+    "live_session", "speakers_list_entry", "motion", "division", "division_vote", "minutes",
+    "debate_event", "team", "team_member", "adjudicator", "room", "debate_round", "pairing", "pairing_adjudicator",
+    "ballot", "ballot_score", "house_points_entry", "event_document", "practice_speech",
 ]
 # Columns never exported or shown.
 SECRET_COLUMNS = {"pass_hash", "token_hash", "csrf"}

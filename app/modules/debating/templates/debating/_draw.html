@@ -1,0 +1,12 @@
+<div class="table-wrap"><table>
+<caption>{{ draw|length }} debate(s){% if r.motion and (manage or r.motion_released) %} · Motion: {{ r.motion }}{% endif %}</caption>
+<thead><tr><th scope="col">#</th><th scope="col">Room</th><th scope="col">Affirmative</th><th scope="col">Negative</th><th scope="col">Adjudicators</th>{% if manage %}<th scope="col">Result</th>{% endif %}</tr></thead>
+<tbody>{% for p in draw %}
+<tr><td class="num">{{ p.position }}</td><td>{{ p.room or '—' }}</td>
+<td>{{ p.aff }}{% if p.aff_house %} <span class="small muted">({{ p.aff_house }})</span>{% endif %}</td>
+<td>{% if p.neg %}{{ p.neg }}{% if p.neg_house %} <span class="small muted">({{ p.neg_house }})</span>{% endif %}{% else %}<em>Bye</em>{% endif %}</td>
+<td>{% for a in p.adjudicators %}{{ a.name }}{% if a.role != 'chair' %} <span class="small muted">({{ a.role }})</span>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+{% if manage %}<td>{% if p.neg %}{% if p.result %}{{ p.aff if p.result.winner == p.aff_team_id else p.neg }} won ({{ p.result.split }}){% else %}<span class="muted">no ballot</span>{% endif %}
+  · <a href="/debating/pairings/{{ p.id }}/ballot">{{ 'Edit' if p.ballots else 'Enter' }} ballot<span class="visually-hidden"> for debate {{ p.position }}</span></a>{% endif %}
+  {% if p.note %}<br><span class="small lockline">{{ p.note }}</span>{% endif %}</td>{% endif %}</tr>
+{% else %}<tr><td colspan="6">No draw yet.</td></tr>{% endfor %}</tbody></table></div>

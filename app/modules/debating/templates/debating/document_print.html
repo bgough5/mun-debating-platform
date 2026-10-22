@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="no-print"><a href="/debating/events/{{ e.id }}/documents/{{ kind }}">Back</a> · Print with Ctrl+P and choose “Save as PDF”.</p>
+<pre style="white-space:pre-wrap;font-family:inherit;font-size:1.05rem">{{ body }}</pre>
+{% endblock %}

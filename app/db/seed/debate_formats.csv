@@ -1,0 +1,5 @@
+code,name,speakers_per_team,reply,speech_seconds,reply_seconds,prep_minutes,roles,notes
+schools_3v3,Schools 3 v 3 (junior),3,0,240,0,30,,"Assumed common Victorian schools format: three speakers, no reply, short preparation. Check against the competition's rules."
+senior_3v3,Schools 3 v 3 (senior),3,0,360,0,60,,Longer speeches and preparation for senior students.
+small_2v2,Small group 2 v 2,2,0,240,0,20,,For small groups: the 2nd speaker also does the 3rd speaker's job (rebuttal and summary).
+duo_1v1,One on one,1,1,300,120,15,,"For two or three students: one speaker a side, each with a reply; a third student adjudicates."

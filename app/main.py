@@ -110,13 +110,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     if settings.module_on("mun"):
         from app.modules.mun.routes import router as mun_router
         app.include_router(mun_router)
-    for name in ("chair", "debating", "intelligence"):
-        if settings.module_on(name):
-            try:
-                mod = __import__(f"app.modules.{name}.routes", fromlist=["router"])
-            except ModuleNotFoundError as e:
-                if e.name != f"app.modules.{name}.routes" and not str(e.name).startswith(f"app.modules.{name}"):
-                    raise
-                continue
-            app.include_router(mod.router)
+    if settings.module_on("chair"):
+        from app.modules.chair.routes import router as chair_router
+        app.include_router(chair_router)
+    if settings.module_on("debating"):
+        from app.modules.debating.routes import router as debating_router
+        app.include_router(debating_router)
+    if settings.module_on("intelligence"):
+        try:
+            from app.modules.intelligence.routes import router as intel_router
+        except ModuleNotFoundError as e:       # module not built yet in this checkout
+            if not str(e.name).startswith("app.modules.intelligence"):
+                raise
+        else:
+            app.include_router(intel_router)
     return app

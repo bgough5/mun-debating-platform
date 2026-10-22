@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Debating", "/debating"), (e.name, "/debating/events/" ~ e.id), ("Round " ~ r.number, None)]) }}
+<h1>Round {{ r.number }} <span class="small muted">({{ 'random draw' if r.kind == 'random' else 'power-paired' }}, {{ r.status }})</span></h1>
+<form method="post" action="/debating/rounds/{{ r.id }}" class="stack no-print" style="max-width:none">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="motion_text">
+  <div class="field"><label for="mt">Motion</label><input id="mt" type="text" name="motion" value="{{ r.motion }}"></div>
+  <div class="field"><label for="mi">Information</label><textarea id="mi" name="info" rows="2">{{ r.info }}</textarea></div>
+  <button type="submit" class="secondary">Save motion</button></form>
+<div class="row no-print" style="margin:.75rem 0">
+  {% if r.status == 'draft' %}
+  <form method="post" action="/debating/rounds/{{ r.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="redraw"><button type="submit" class="secondary">Redraw</button></form>
+  <form method="post" action="/debating/rounds/{{ r.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="release"><button type="submit">Release the draw</button></form>
+  <form method="post" action="/debating/rounds/{{ r.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="release"><input type="hidden" name="with_motion" value="1"><button type="submit" class="secondary">Release draw and motion</button></form>
+  {% else %}
+  {% if not r.motion_released %}<form method="post" action="/debating/rounds/{{ r.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="motion"><button type="submit">Release the motion</button></form>{% endif %}
+  <form method="post" action="/debating/rounds/{{ r.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="house_points"><button type="submit" class="secondary">Award house points for this round</button></form>
+  {% if r.status == 'released' %}<form method="post" action="/debating/rounds/{{ r.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="close"><button type="submit" class="secondary">Close round</button></form>{% endif %}
+  <form method="post" action="/debating/rounds/{{ r.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="unrelease"><button type="submit" class="secondary">Back to draft</button></form>
+  {% endif %}
+  <a class="button secondary" href="/debating/projector/{{ e.projector_token }}" target="_blank" rel="noopener">Projector</a>
+</div>
+<p id="live-status" class="small muted"></p>
+<div id="draw" data-live-channel="debate:{{ e.id }}" hx-get="/debating/rounds/{{ r.id }}/f" hx-trigger="live-update" hx-swap="innerHTML">
+{% set manage = true %}{% include "debating/_draw.html" %}
+</div>
+{% if r.status == 'draft' and draw %}
+<details class="no-print"><summary>Swap two teams</summary>
+<form method="post" action="/debating/rounds/{{ r.id }}" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="swap">
+  {% for side in ['a','b'] %}<div class="row">
+    <div class="field"><label for="p{{ side }}">Debate</label><select id="p{{ side }}" name="pairing_{{ side }}">{% for p in draw %}<option value="{{ p.id }}">{{ p.position }}: {{ p.aff }} v {{ p.neg or 'bye' }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="t{{ side }}">Team</label><select id="t{{ side }}" name="team_{{ side }}">{% for t in teams %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}</select></div></div>{% endfor %}
+  <button type="submit" class="secondary">Swap</button></form></details>
+{% endif %}
+{% if roles %}<h2>Speaker roles in this format</h2><ol>{% for ro in roles %}<li>{{ ro }}</li>{% endfor %}</ol>{% endif %}
+{% endblock %}

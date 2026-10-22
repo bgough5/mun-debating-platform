@@ -61,13 +61,17 @@ def last_backup_age_s(settings, dataset: str) -> float | None:
 
 
 async def nightly_loop(app, check_every_s: int = 3600):
-    """Every hour, make a backup if the newest one is more than a day old."""
+    """Every hour, make a backup if the newest one is more than a day old, then run the retention purge."""
     while True:
         try:
             s = app.state.settings
             age = last_backup_age_s(s, s.dataset)
             if age is None or age > DAY_S:
                 await asyncio.to_thread(nightly_backup, s)
+                from app.retention import purge
+                report = await asyncio.to_thread(purge, app.state.db)
+                if report["purged"] or report["event_log_deleted"] or report["kept_referenced"]:
+                    log.info("Retention purge: %s", report)
         except Exception:      # never let a backup failure stop the app
             log.exception("Nightly backup failed")
         await asyncio.sleep(check_every_s)

@@ -31,6 +31,14 @@
   <div class="field"><label for="edate">Date of the statement</label><input id="edate" type="date" name="stated_on"></div>
   <div class="field"><label for="esum">What it says (your own words)</label><textarea id="esum" name="summary" rows="2"></textarea></div>
   <button type="submit">Record evidence</button></form></section>
+{% if modules.intelligence and access == 'manage' %}
+<section class="card no-print" aria-labelledby="h-ai"><h2 id="h-ai">Ask for an AI estimate <span class="label-ai">AI</span></h2>
+<p class="small">Stored as “AI estimate — verify” with its sources, at low weight. With no source it is stored as unknown and doesn't change any prediction.</p>
+<form method="post" action="/intel/ai/estimate" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="committee_id" value="{{ com.id }}">
+  <div class="field"><label for="aiiso">Country</label><select id="aiiso" name="iso3">{% for d in dels %}<option value="{{ d.iso3 }}" {% if d.iso3 == iso3 %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="aipar">Paragraph</label><select id="aipar" name="paragraph_id">{% for p in paras %}<option value="{{ p.id }}">{{ p.position }}. {{ p.text[:50] }}…</option>{% endfor %}</select></div>
+  <button type="submit" class="secondary">Ask</button></form></section>
+{% endif %}
 <h2>Recorded evidence{% if iso3 %} for {{ iso3 }} <a class="small" href="/mun/committees/{{ com.id }}/evidence">(show all)</a>{% endif %}</h2>
 <div class="table-wrap"><table>
 <thead><tr><th scope="col">About</th><th scope="col">On</th><th scope="col">Position</th><th scope="col">Shown as</th><th scope="col">Source</th><th scope="col">Recorded</th><th scope="col"><span class="visually-hidden">Remove</span></th></tr></thead>

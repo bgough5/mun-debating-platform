@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Debating", "/debating"), (e.name, "/debating/events/" ~ e.id), (label, None)]) }}
+<h1>{{ label }}</h1>
+<p class="lede">Filled in from the event and the template (Admin → Templates). Edit, then save: every version is kept.</p>
+<div class="row no-print">
+  <form method="post" action="/debating/events/{{ e.id }}/documents/{{ kind }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="generate"><button type="submit" class="secondary">Regenerate from the template</button></form>
+  <a class="button secondary" href="/debating/events/{{ e.id }}/documents/{{ kind }}/export.docx" hx-boost="false">Export to Word</a>
+  <a class="button secondary" href="/debating/events/{{ e.id }}/documents/{{ kind }}/print">Print / PDF</a>
+</div>
+<form method="post" action="/debating/events/{{ e.id }}/documents/{{ kind }}" class="stack" style="max-width:none">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="db">{{ label }}</label><textarea id="db" name="body" rows="24" style="font-family:var(--mono)">{{ draft }}</textarea></div>
+  <button type="submit">Save as a new version</button></form>
+{% if versions %}<h2>Versions</h2><ul class="small">{% for v in versions %}<li>Version {{ v.version }} · {{ 'generated' if v.generated else 'edited by ' ~ v.author }} · {{ v.created_at|when }}</li>{% endfor %}</ul>{% endif %}
+{% endblock %}

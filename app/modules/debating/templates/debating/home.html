@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<h1>Debating</h1>
+<div class="row no-print"><a class="button" href="/debating/practice">Practice debates for a class</a>
+  {% if actor.is_coordinator %}<a class="button secondary" href="/admin/t/motion_bank">Motion bank</a> <a class="button secondary" href="/admin/t/house">Houses</a>{% endif %}</div>
+<div class="table-wrap"><table>
+<caption>Events</caption>
+<thead><tr><th scope="col">Event</th><th scope="col">Type</th><th scope="col">Format</th><th scope="col" class="num">Teams</th><th scope="col">Status</th></tr></thead>
+<tbody>{% for e in events %}<tr><td><a href="/debating/events/{{ e.id }}">{{ e.name }}</a>{% if e.class_name %} <span class="small muted">({{ e.class_name }})</span>{% endif %}</td>
+<td>{{ e.kind }}</td><td>{{ e.format_name }}</td><td class="num">{{ e.teams }}</td><td>{{ e.status }}</td></tr>
+{% else %}<tr><td colspan="5">No events yet.</td></tr>{% endfor %}</tbody></table></div>
+<div class="grid" style="margin-top:1rem">
+<section class="card" aria-labelledby="h-new"><h2 id="h-new">New event</h2>
+<form method="post" action="/debating/events" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="en">Name</label><input id="en" type="text" name="name" required></div>
+  <div class="field"><label for="ek">Type</label><select id="ek" name="kind"><option value="carnival">House carnival</option><option value="competition">Competition or interschool</option><option value="class">Class debates</option></select></div>
+  <div class="field"><label for="ef">Format</label><select id="ef" name="format_id">{% for f in formats %}<option value="{{ f.id }}">{{ f.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="er">Rubric</label><select id="er" name="rubric_id">{% for r in rubrics %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="ec">Class <span class="hint">Leave empty for a school-wide event</span></label><select id="ec" name="class_id"><option value="">— school-wide —</option>{% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div>
+  <div class="row"><div class="field"><label for="ed">Date</label><input id="ed" type="date" name="starts_on"></div>
+  <div class="field"><label for="et">Start time</label><input id="et" type="text" name="start_time" value="09:00" size="6"></div></div>
+  <button type="submit">Create event</button></form></section>
+{% if demo and actor.is_coordinator %}
+<section class="card" aria-labelledby="h-demo"><h2 id="h-demo">Try a whole carnival (demo only)</h2>
+<p>Generates fake students in four houses, teams, rooms, adjudicators and four rounds with fake ballots, so you can explore draws, ladders, house points, the run sheet and the MC script.</p>
+<form method="post" action="/debating/demo-carnival" class="inline">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="dn">Students</label><input id="dn" type="number" name="students" value="325" min="8" max="400" style="width:6rem"></div>
+  <div class="field"><label for="dr">Rounds</label><input id="dr" type="number" name="rounds" value="4" min="1" max="8" style="width:5rem"></div>
+  <button type="submit" class="secondary">Generate</button></form></section>
+{% endif %}
+<section class="card" aria-labelledby="h-hp"><h2 id="h-hp">House points (all events)</h2>
+{% if totals %}<ol>{% for h in totals %}<li><strong>{{ h.name }}</strong>: {{ h.points|num(0) }}</li>{% endfor %}</ol>{% else %}<p>No houses yet.{% if actor.is_coordinator %} <a href="/admin/t/house">Add houses</a>.{% endif %}</p>{% endif %}
+</section>
+</div>
+{% endblock %}

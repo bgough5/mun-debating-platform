@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<h1>Practise with an AI delegation</h1>
+<div class="notice"><p><span class="label-ai">AI</span> The other delegation is played by {{ prov.name if prov else 'an AI' }}. Its positions are <strong>estimates, not facts</strong>, and it will never write your speech or clauses: it only answers as the country might.</p></div>
+{% if prov %}
+<form method="post" action="/me/ai-practice" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="apc">Negotiate with</label><select id="apc" name="iso3">{% for c in countries %}<option value="{{ c.iso3 }}">{{ c.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="app">About which paragraph (optional)</label><select id="app" name="paragraph_id"><option value="">General</option>{% for p in paras %}<option value="{{ p.id }}">{{ p.committee }}: paragraph {{ p.position }}</option>{% endfor %}</select></div>
+  <button type="submit">Start</button></form>
+{% else %}<p>AI practice is switched off.</p>{% endif %}
+{% if past %}<h2>Earlier practice</h2><ul>{% for p in past %}<li><a href="/me/ai-practice/{{ p.id }}">{{ p.country }} · {{ p.created_at|when }}</a></li>{% endfor %}</ul>{% endif %}
+{% endblock %}

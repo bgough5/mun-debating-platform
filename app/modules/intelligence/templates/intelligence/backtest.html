@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/intel">Back to Intelligence</a></p>
+<h1>Backtest: {{ r.source }}</h1>
+{% if r.synthetic %}<div class="notice"><p><strong>Synthetic data.</strong> These votes were generated from a known model, so this shows the method works end to end. It says nothing about accuracy on real UN votes.</p></div>{% endif %}
+<p class="lede">Trained on the earliest {{ r.train_resolutions }} resolutions; each country's vote on the next {{ r.test_resolutions }} was predicted from its voting history alone (on resolutions sharing a tag, or all of them if none did). Real-UN backtests are reported separately from conference calibration (D-013).</p>
+{% for w_ in r.warnings %}<div class="notice">{{ w_ }}</div>{% endfor %}
+<div class="grid">
+  <section class="card"><h2>Sample</h2><p class="bigstat">{{ r.n }}</p><p>country-votes</p></section>
+  <section class="card"><h2>Brier</h2><p class="bigstat">{{ r.brier|num(3) }}</p><p>90% interval {{ r.brier_ci[0]|num(3) }}–{{ r.brier_ci[1]|num(3) }}</p></section>
+  <section class="card"><h2>Log loss</h2><p class="bigstat">{{ r.log_loss|num(3) }}</p><p>90% interval {{ r.log_loss_ci[0]|num(3) }}–{{ r.log_loss_ci[1]|num(3) }}</p></section>
+  <section class="card"><h2>Calibration</h2><p class="bigstat" style="font-size:1.3rem">{{ r.verdict }}</p><p>ECE {{ r.ece|num(3) }}</p></section>
+</div>
+<h2>Against baselines</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Baseline</th><th scope="col" class="num">Brier</th><th scope="col" class="num">Model minus baseline (90% interval)</th><th scope="col">Result</th></tr></thead>
+<tbody>{% for b in r.baselines %}<tr><td>{{ b.name }}</td><td class="num">{{ b.brier|num(3) }}</td><td class="num">{{ '%+.3f'|format(b.diff) }} ({{ '%+.3f'|format(b.diff_lo) }} to {{ '%+.3f'|format(b.diff_hi) }})</td>
+<td>{% if b.beats %}Model is better{% elif b.loses %}<strong>Model is worse</strong>{% else %}No clear difference{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+<h2>Reliability</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col">Band</th><th scope="col" class="num">n</th><th scope="col" class="num">Predicted</th><th scope="col" class="num">Happened</th><th scope="col">Flag</th></tr></thead>
+<tbody>{% for b in r.reliability %}<tr><td>{{ (b.lo*100)|int }}–{{ (b.hi*100)|int }}%</td><td class="num">{{ b.n }}</td><td class="num">{{ b.mean_predicted|pct }}</td><td class="num">{{ b.observed|pct }}</td><td>{{ 'Outside' if b.flagged else 'ok' }}</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

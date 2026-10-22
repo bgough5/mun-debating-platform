@@ -100,6 +100,43 @@ def seed_reference(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+def _table_exists(conn, name: str) -> bool:
+    return bool(conn.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (name,)).fetchone())
+
+
+def _empty(conn, table: str) -> bool:
+    return _table_exists(conn, table) and not conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+
+
+def seed_later_phases(conn: sqlite3.Connection) -> None:
+    """Seeds for tables added by later migrations; runs on every start and fills only empty tables,
+    so an existing database (e.g. the laptop's real data) gets them when it is upgraded."""
+    if _empty(conn, "debate_format"):
+        for r in _csv("debate_formats.csv"):
+            conn.execute("INSERT INTO debate_format (code, name, speakers_per_team, reply, speech_seconds, reply_seconds, prep_minutes, "
+                         "roles, notes) VALUES (?,?,?,?,?,?,?,?,?)", (r["code"], r["name"], int(r["speakers_per_team"]), int(r["reply"]),
+                                                                       int(r["speech_seconds"]), int(r["reply_seconds"]),
+                                                                       int(r["prep_minutes"]), r["roles"], r["notes"]))
+    if _empty(conn, "house_points_rule"):
+        for r in _csv("house_points_rules.csv"):
+            conn.execute("INSERT INTO house_points_rule (code, label, kind, place, points) VALUES (?,?,?,?,?)",
+                         (r["code"], r["label"], r["kind"], int(r["place"]) if r["place"] else None, float(r["points"])))
+    if _empty(conn, "motion_bank"):
+        for r in _csv("motion_bank.csv"):
+            conn.execute("INSERT INTO motion_bank (motion, topic, level, source) VALUES (?,?,?,?)",
+                         (r["motion"], r["topic"], r["level"], "Generic schools motion, written for the platform"))
+    if _empty(conn, "data_source"):
+        for r in _csv("data_sources.csv"):
+            conn.execute("INSERT INTO data_source (code, name, url, licence_found, synthetic, attribution, notes) VALUES (?,?,?,?,?,?,?)",
+                         (r["code"], r["name"], r["url"], r["licence_found"], int(r["synthetic"]), r["attribution"], r["notes"]))
+    if _empty(conn, "history_tag_rule"):
+        for r in _csv("history_tag_rules.csv"):
+            tid = _id(conn, "topic", r["topic_code"])
+            if tid:
+                conn.execute("INSERT INTO history_tag_rule (topic_id, tag_code, keyword) VALUES (?,?,?)", (tid, r["tag_code"], r["keyword"]))
+    conn.commit()
+
+
 def _seed_pack(conn, pack):
     cur = conn.execute("INSERT INTO topic (code, name, notes) VALUES (?,?,?)",
                        (PACK_TOPIC, pack["meta"]["title"],

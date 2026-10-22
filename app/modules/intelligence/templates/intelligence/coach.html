@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/me/practice">Back to practice</a></p>
+<h1>Coaching: {{ ps.topic or 'your speech' }}</h1>
+<p class="small">From {{ prov.name }}. It points you to the rubric and asks questions; it doesn't rewrite your speech.</p>
+{% for n in notes %}<section class="card"><h2 class="small">{{ n.criterion }}</h2><p>{{ n.text }}</p></section>{% endfor %}
+{% endblock %}

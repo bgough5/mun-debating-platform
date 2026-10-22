@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block bodyclass %}projector{% endblock %}
+{% block bodyattrs %}data-projector-token="{{ token }}"{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div id="projector-main" data-live-channel="debate:{{ e.id }}" hx-get="/debating/projector/{{ token }}/f" hx-trigger="live-update" hx-swap="innerHTML">
+{% include "debating/_projector_main.html" %}
+</div>
+<p id="live-status" class="small"></p>
+{% endblock %}

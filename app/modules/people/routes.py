@@ -150,6 +150,14 @@ def student_edit(request: Request, student_id: int, s=Depends(require_staff), fo
             w.soft_delete("student", student_id, ch)
             revoke_devices(w.conn, "student_id = ?", (student_id,))
             msg = "Student deleted (restorable for 30 days)."
+        elif action == "erase":
+            if not request.state.actor.is_coordinator:
+                raise UserError("Only the coordinator can erase a student's records.", 403)
+            if form.get("confirm") != "yes":
+                raise UserError("Tick the confirmation box to erase.")
+            from app.retention import erase_student
+            erase_student(w, student_id)
+            msg = "Student erased: their name, own writing and devices are gone; their scores stay as \"Erased\"."
         elif action == "release":
             n = revoke_devices(w.conn, "student_id = ?", (student_id,))
             w.log("student", student_id, "release_name", None, {"devices_signed_out": n}, ch)

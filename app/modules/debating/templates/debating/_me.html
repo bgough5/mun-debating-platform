@@ -1,0 +1,9 @@
+{% set d = debating %}
+<section class="card" aria-labelledby="h-deb"><h2 id="h-deb">Debating{% if d.house %} · {{ d.house }}{% endif %}</h2>
+  {% if d.debates %}<h3>My debates</h3><ul>{% for x in d.debates %}<li>{{ x.event }}, round {{ x.number }}: {{ x.team }} ({{ x.side }}) v {{ x.opponent or 'bye' }}{% if x.room %} in {{ x.room }}{% endif %}
+    {% if x.motion_released and x.motion %}<br><span class="small">Motion: {{ x.motion }}</span>{% endif %}</li>{% endfor %}</ul>{% endif %}
+  {% if d.adjudicating %}<h3>I'm adjudicating</h3><ul>{% for x in d.adjudicating %}<li>{{ x.event }}, round {{ x.number }}{% if x.room %} in {{ x.room }}{% endif %} — <a href="/debating/pairings/{{ x.pairing_id }}/ballot">enter my ballot</a></li>{% endfor %}</ul>{% endif %}
+  {% if d.scores %}<h3>My scores against the rubric</h3><ul>{% for s_ in d.scores %}<li>{{ s_.name }}: average {{ s_.avg|num(1) }} out of {{ s_.max_score|int }} ({{ s_.debates }} debate{{ 's' if s_.debates != 1 }})</li>{% endfor %}</ul>{% endif %}
+  {% if d.feedback %}<h3>Feedback from adjudicators</h3><ul class="small">{% for f in d.feedback %}<li>{{ f.event }}, round {{ f.number }}: {{ f.comment }}</li>{% endfor %}</ul>{% endif %}
+  <p><a href="/me/practice">Practise a speech</a> ({{ d.practice }} so far)</p>
+</section>

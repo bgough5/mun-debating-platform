@@ -1,0 +1,11 @@
+<h1>{{ e.name }}</h1>
+{% if r %}
+<h2>Round {{ r.number }}</h2>
+{% if r.motion_released and r.motion %}<p class="bigstat" style="font-size:2.4rem">{{ r.motion }}</p>{% else %}<p style="font-size:1.6rem">The motion will be announced shortly.</p>{% endif %}
+{% set manage = false %}{% include "debating/_draw.html" %}
+{% else %}
+<div class="grid">
+  <div class="card"><h2>House points</h2><ol style="font-size:1.8rem">{% for h in totals %}<li>{{ h.name }} — {{ h.points|num(0) }}</li>{% endfor %}</ol></div>
+  {% if ladder %}<div class="card"><h2>Leading teams</h2><ol style="font-size:1.4rem">{% for t in ladder %}<li>{{ t.team }} ({{ t.wins|num(0) }} wins)</li>{% endfor %}</ol></div>{% endif %}
+</div>
+{% endif %}

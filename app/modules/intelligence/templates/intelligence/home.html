@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<h1>Intelligence</h1>
+<p class="lede">Voting-history priors from real UN votes, backtests against baselines, and AI features. Everything here is labelled as an estimate, and nothing is used until its licence or approval is recorded.</p>
+<h2>Voting data sources</h2>
+{% for s in sources %}
+<section class="card" aria-labelledby="src{{ s.id }}">
+  <h3 id="src{{ s.id }}">{{ s.name }}{% if s.synthetic %} <span class="label-computed">synthetic</span>{% endif %}</h3>
+  {% if s.url %}<p class="small"><a href="{{ s.url }}" rel="noopener" target="_blank">{{ s.url }}</a></p>{% endif %}
+  <p><strong>Licence:</strong> {% if s.licence_confirmed %}confirmed by {{ s.confirmed_by }} on {{ s.confirmed_on }}: “{{ s.licence_found }}”{% else %}<span class="lockline">not confirmed</span> — {{ s.licence_found }}{% endif %}</p>
+  <p class="small">{{ s.notes }}</p>
+  <p>{{ s.resolutions }} resolutions, {{ s.votes }} votes imported. {{ s.why }}</p>
+  {% if actor.is_coordinator %}
+    {% if not s.synthetic and not s.licence_confirmed %}
+    <details><summary>Record that the licence has been checked</summary>
+    <form method="post" action="/intel/sources/{{ s.id }}/confirm" class="stack">{{ hidden_csrf(csrf) }}
+      <div class="field"><label for="lt{{ s.id }}">Licence or terms of use, exactly as the dataset's page states them</label><textarea id="lt{{ s.id }}" name="licence_text" rows="3" required></textarea></div>
+      <div class="field"><label for="ln{{ s.id }}">Note (e.g. school approval, attribution we will show)</label><input id="ln{{ s.id }}" type="text" name="note"></div>
+      <label class="checks"><input type="checkbox" name="confirm" value="yes" required> I have read the licence on the dataset's own page and it allows this school's use</label>
+      <button type="submit">Record licence</button></form></details>
+    {% endif %}
+    {% if s.can_import %}
+      {% if s.synthetic %}{% if demo %}<form method="post" action="/intel/sources/{{ s.id }}/load-synthetic" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Load the synthetic test data (demo only)</button></form>{% endif %}
+      {% else %}
+      <form method="post" action="/intel/sources/{{ s.id }}/import" enctype="multipart/form-data" class="stack" hx-boost="false">{{ hidden_csrf(csrf) }}
+        <div class="field"><label for="f{{ s.id }}">CSV file</label><input id="f{{ s.id }}" type="file" name="file" accept=".csv" required></div>
+        <div class="field"><label for="pr{{ s.id }}">Columns</label><select id="pr{{ s.id }}" name="preset"><option value="undl">UN Digital Library voting CSV</option><option value="generic">Platform format (resolution_id, date, title, subjects, iso3, vote)</option></select></div>
+        <div class="field"><label for="tp{{ s.id }}">Topic (for tagging resolutions)</label><select id="tp{{ s.id }}" name="topic_id"><option value="">—</option>{% for t in topics %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}</select></div>
+        <button type="submit">Import</button></form>
+      {% endif %}
+      {% if s.resolutions >= 10 %}<form method="post" action="/intel/backtest/{{ s.id }}" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Run a backtest</button></form>{% endif %}
+    {% endif %}
+  {% endif %}
+</section>
+{% endfor %}
+{% if backtests %}<h2>Backtests</h2><ul>{% for b in backtests %}<li><a href="/intel/backtests/{{ b.id }}">{{ b.name }} · {{ b.created_at|when }}</a>{% if b.synthetic %} <span class="label-computed">synthetic data</span>{% endif %}</li>{% endfor %}</ul>{% endif %}
+<h2>AI</h2>
+<section class="card" aria-labelledby="h-ai"><h3 id="h-ai">Status</h3>
+  <p>Provider in use: <strong>{{ prov_name }}</strong>. {% if off_device %}<span class="lockline">Sends data to an outside service (school-approved).</span>{% else %}Nothing leaves this laptop.{% endif %}</p>
+  <p class="small">AI positions are stored as “AI estimate — verify” with their sources, or as unknown when there is no source. AI never writes students' speeches, clauses or amendments.</p>
+  {% if actor.is_coordinator %}
+  <form method="post" action="/intel/ai" class="stack">{{ hidden_csrf(csrf) }}
+    <div class="field"><label for="aip">Provider</label><select id="aip" name="provider">
+      <option value="fake" {% if ai.provider == 'fake' %}selected{% endif %}>Offline practice provider (no AI service)</option>
+      <option value="anthropic" {% if ai.provider == 'anthropic' %}selected{% endif %}>Anthropic Claude (needs school approval)</option>
+      <option value="off" {% if ai.provider == 'off' %}selected{% endif %}>Off</option></select></div>
+    <label class="checks"><input type="checkbox" name="school_approved" value="1" {% if ai.school_approved %}checked{% endif %}> The school has approved using this AI service with student data</label>
+    <div class="field"><label for="aref">Approval reference (who, when)</label><input id="aref" type="text" name="approval_ref" value="{{ ai.approval_ref or '' }}"></div>
+    <div class="field"><label for="akey">Name of the environment variable holding the API key</label><input id="akey" type="text" name="api_key_env" value="{{ ai.api_key_env or 'ANTHROPIC_API_KEY' }}"></div>
+    <button type="submit" class="secondary">Save AI settings</button></form>
+  {% endif %}
+</section>
+{% if calls %}<h3>Recent AI use</h3><div class="table-wrap"><table><thead><tr><th scope="col">When</th><th scope="col">Provider</th><th scope="col">Purpose</th><th scope="col">By</th><th scope="col">Stored as</th></tr></thead>
+<tbody>{% for c in calls %}<tr><td>{{ c.created_at|when }}</td><td>{{ c.provider }}</td><td>{{ c.purpose }}</td><td>{{ c.actor_kind }}</td><td>{{ c.stored_as }}{% if c.sources %} ({{ c.sources }} source{{ 's' if c.sources > 1 }}){% endif %}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+{% endblock %}

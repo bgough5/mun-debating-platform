@@ -33,6 +33,7 @@
       {% elif actor and actor.kind == 'student' %}
         <li><a href="/me" {% if req_path == '/me' %}aria-current="page"{% endif %}>My page</a></li>
         {% if modules.debating %}<li><a href="/me/practice" {% if req_path.startswith('/me/practice') %}aria-current="page"{% endif %}>Practise</a></li>{% endif %}
+        {% if modules.intelligence %}<li><a href="/me/ai-practice" {% if req_path.startswith('/me/ai-practice') %}aria-current="page"{% endif %}>AI delegation</a></li>{% endif %}
         <li><a href="/practice-game">Practice game</a></li>
       {% endif %}
       </ul>

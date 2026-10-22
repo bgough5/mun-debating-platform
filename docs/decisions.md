@@ -153,3 +153,48 @@ Server-side sessions: the browser holds a random token, the database holds only 
 
 ### D-038 Full names are cut to a first name and initial — Decided (build)
 If staff type "Sam Lee" into the roster, it is stored as "Sam L." (spec §8.1: first names only). The last initial is kept only if needed; the class page warns when two students share a first name with no initial.
+
+### D-039 Live updates re-fetch server-rendered fragments — Decided (build)
+The server sends only "channel X changed (event n)" over one WebSocket; each page re-fetches the HTML fragments that show channel X through htmx. All rendering and every access check stay on the server, and the client script is small (`app/static/js/live.js`). A client that reconnects sends the last event number it saw and is sent every change it missed from the event log, so no change is lost. Re-fetches are throttled (at once, then at most every 250 ms, never dropping the last) so a burst of 25 votes doesn't cause 25 × 30 page loads. A region holding unsaved typing, or an open paragraph editor, isn't refreshed until the typing is saved or abandoned.
+
+### D-040 Procedural votes in small groups — Decided (build)
+Delegations with no student don't vote on motions (the engine has nothing to say about procedure); only delegations with students vote. An absolute minimum in the rule (the Security Council's 9) is scaled to the share of members voting, rounded up (3 students of 15 → 2 yes needed). The chair can also pass a motion "with no objection", as real chairs do. Tested with 1, 2 and 3 students.
+
+### D-041 Computed delegations vote the engine's most likely vote, and never calibrate the engine — Decided (build)
+When a substantive vote opens, a prediction is stored and each delegation without a student is given its most likely vote (ties go to abstain), labelled "computed". When voting closes, only the human votes are recorded as conference outcomes next to that stored prediction, so live classes feed the calibration report automatically while the engine is never graded on its own guesses.
+
+### D-042 Performance architecture — Decided (build), measured
+Measured with `tools/loadtest.py` (30 clients). First runs had a p95 update latency of 10.6 s because synchronous SQLite work ran on the event loop and every client's re-fetch repeated ~21 queries. Changes, each measured: request handlers run their database work in the thread pool (forms are read by an async dependency); read connections are pooled per thread; the shared part of a live session's view is computed once per change and reused by all 30 clients; a browser's session lookup is cached for 5 s and cleared whenever a device is signed out; the thread pool is 8 workers instead of 40 (the work is Python, so more threads only fought over the GIL and starved the writer). Throughput of the student live fragment went from 57 to 267 requests/s; the 2-minute test went to p95 0.60 s with 0 lost events. Full 45-minute numbers: `docs/phase-reports.md`.
+
+### D-043 The 25-student cap counts students seen in the last 2 minutes — Decided (build)
+A live session admits a 26th student only when fewer than 25 have been active (page or WebSocket heartbeat) in the last 2 minutes. A student who already holds a place can always come back. Joining the class itself is not capped: the cap is on live joins per session (D-022).
+
+### D-044 Paragraph locks lapse after 60 s without a heartbeat — Decided (build)
+An open editor sends a heartbeat every 20 s. A closed laptop releases its paragraph within a minute; staff can always take over a lapsed lock. Saving checks the lock, so two people can't overwrite each other even without JavaScript.
+
+### D-045 Debating draw rules — Decided (build), tested
+Round 1 is a seeded random draw; later rounds are power-paired by wins, then points, then margin, then id. Pairing walks down the ranking and takes the nearest valid opponent, giving up rules only when it must, least important first: side balance, then same-house (carnivals), then repeat pairings. A swap pass then repairs any remaining clash. Every relaxed rule is shown on the draw. Measured over 100 simulated events (16 teams, 4 rounds): no repeat pairings, 97.5% of teams within one of an even side split, none worse than two; 108 teams over 4 rounds: 99.98% exactly 2 aff / 2 neg. Byes go to the lowest-ranked team that hasn't had one. Rooms go to the top of the draw first (accessible rooms to teams that need them); adjudicators are allocated by rating to the strongest brackets, never from either team's house where avoidable.
+
+### D-046 Ballots — Decided (build)
+The winner must be the team with the higher total; level totals are allowed only with an explicit winner (schools debates can't be drawn). A panel decides by majority; an even split goes to the chair's ballot. Ladders and speaker tabs are always recomputed from ballots, so a corrected ballot fixes everything at once. Students see only their own scores and feedback.
+
+### D-047 House points are entries, reversed by counter-entries — Decided (build)
+Every point is an entry with a reason and who made it. Reversing adds a cancelling entry; nothing is deleted (spec §8.4). Awarding is idempotent per debate or placing. The seeded rules (win 3, participation 1, places 10/6/3, best speakers 3/2/1) are placeholders for the school's real rules.
+
+### D-048 Debating formats and scale are assumptions — Assumption
+Formats seeded: schools 3 v 3 (junior, 4 min; senior, 6 min), small-group 2 v 2, and 1 v 1. Speaker scores use matter 40, manner 40, method 20. These were not checked against the DAV or any competition rulebook; edit them under Admin.
+
+### D-049 Practice for any number of students — Decided (build), beyond spec
+Staff tick who is present and the platform fits the format: 1 student → solo speech practice (timer that never cuts them off, rubric self-review, reflection, teacher comments); 2 → one-on-one with replies; 3 → one-on-one with a student adjudicator; larger groups → as many 3 v 3 rooms as fit, then smaller rooms, with leftovers as student adjudicators, so no one sits out (tested for every size from 1 to 25). Student adjudication and solo practice feed the pathway suggestions (D-030).
+
+### D-050 School-wide events are run by all staff — Decided (build)
+Staff run debating events for their classes and every event with no class (carnivals, competitions), because carnivals need many adults. Students can open only events they are in.
+
+### D-051 UN voting data: licences not confirmed; import locked — Done (build), Ben to decide
+I could not read either dataset's licence page: both hosts were unreachable from the build environment. A web search quotes the UN Digital Library record (https://digitallibrary.un.org/record/4060887) as "Copyright, United Nations; Non commercial use, with attribution"; I found no statement of terms for the Voeten Harvard Dataverse dataset. Per D-014, nothing real was imported. The importer, history priors and backtest are built and tested against a synthetic fixture (`tools/make_synthetic_votes.py`), which can be loaded only into the demo dataset. Import of a real source stays locked until the coordinator records, in the app, the licence text read on the source's own page. The UN Digital Library column names in the importer's "undl" format are from memory and must be checked against a downloaded file.
+
+### D-052 Voting-history prior — Decided (build)
+For a paragraph with tags T, each country's past votes on resolutions sharing a tag in T give a position: 2 × (yes − no) / votes cast (abstentions pull toward 0), weighted 0.25 per vote up to 4 (as strong as an official statement). Resolutions are tagged by keyword rules (Admin-editable) from their UN subjects and titles. This gives resolution-level priors only (spec §5.7) and inherits the recorded-vote bias toward contested issues.
+
+### D-053 AI behind a provider interface; offline by default — Decided (build)
+The offline provider calls nothing: its "position suggestions" only restate evidence already recorded with a real source (never unsourced notes), its practice delegation uses the archetype lines, and its coach points to the next rubric level and asks questions. An Anthropic (Claude) adapter exists but is used only when the coordinator records the school's approval and reference, the `anthropic` package is installed, and an API key is in an environment variable on the laptop. It has been tested only with a mock client, never against the live API. Any AI position without a source is stored as unknown and doesn't change predictions; with sources it is stored as "AI estimate — verify" at low weight. Requests for positions carry country and resolution text only. AI never writes a student's speech, clause or amendment.

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<h1>Practise a speech</h1>
+<p class="lede">On your own: pick a topic, prepare, speak to the timer, then score yourself honestly against the rubric. Your teacher can add comments.</p>
+<form method="post" action="/me/practice" class="stack" style="max-width:none" id="practice-form">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="tp">Topic</label><input id="tp" type="text" name="topic" value="{{ topic }}" list="tmotions"><datalist id="tmotions">{% for m in motions %}<option value="{{ m.motion }}">{% endfor %}</datalist></div>
+  <div class="field"><label for="tg">Target length</label><select id="tg" name="target_seconds"><option value="60">1 minute</option><option value="120">2 minutes</option><option value="180" selected>3 minutes</option><option value="240">4 minutes</option><option value="300">5 minutes</option></select></div>
+  <div class="card" aria-labelledby="h-timer"><h2 id="h-timer">Timer</h2>
+    <p class="timer" role="timer" aria-live="off" id="pt-display">0:00</p>
+    <div class="row"><button type="button" id="pt-start">Start</button><button type="button" id="pt-stop" class="secondary">Stop</button><button type="button" id="pt-reset" class="secondary">Reset</button></div>
+    <input type="hidden" name="actual_seconds" id="pt-seconds">
+    <p class="small muted">The timer counts up and tells you (for screen readers too) when you reach the target. It never stops you: take the time you need.</p>
+    <p id="pt-announce" class="visually-hidden" role="status" aria-live="polite"></p></div>
+  {% if rub %}<fieldset><legend>Score yourself ({{ rub.name }})</legend>
+  {% for c in crit %}<div class="field"><label for="c{{ c.id }}">{{ c.name }} <span class="hint">{{ c.hint }}</span></label>
+    <select id="c{{ c.id }}" name="c_{{ c.id }}"><option value="">—</option>{% for d in descriptors.get(c.id, []) %}<option value="{{ d.level }}">{{ d.level }}: {{ d.descriptor }}</option>{% endfor %}</select></div>{% endfor %}
+  </fieldset>{% endif %}
+  <div class="field"><label for="rf">What will you do differently next time?</label><textarea id="rf" name="reflection" rows="3"></textarea></div>
+  <button type="submit">Save this practice</button>
+</form>
+<script>
+(function(){
+  var t0=null, acc=0, iv=null, d=document.getElementById('pt-display'), out=document.getElementById('pt-seconds'), ann=document.getElementById('pt-announce');
+  var target=function(){return parseInt(document.getElementById('tg').value,10);}, said=false;
+  function show(){var s=Math.floor(acc+(t0?(Date.now()-t0)/1000:0)); d.textContent=Math.floor(s/60)+':'+('0'+s%60).slice(-2); out.value=s;
+    if(!said && s>=target()){said=true; ann.textContent='Target time reached';}}
+  document.getElementById('pt-start').onclick=function(){if(!t0){t0=Date.now(); iv=setInterval(show,250);}};
+  document.getElementById('pt-stop').onclick=function(){if(t0){acc+=(Date.now()-t0)/1000;t0=null;clearInterval(iv);show();}};
+  document.getElementById('pt-reset').onclick=function(){t0=null;acc=0;said=false;clearInterval(iv);show();};
+})();
+</script>
+<h2>Your practice so far ({{ past|length }})</h2>
+{% for p in past %}<section class="card"><p><strong>{{ p.topic or 'Free topic' }}</strong> · {{ p.created_at|when }} · {{ p.actual_seconds|mmss if p.actual_seconds else '—' }}</p>
+  {% if p.reflection %}<p class="small"><em>{{ p.reflection }}</em></p>{% endif %}
+  {% if p.staff_comment %}<p class="small">Teacher: {{ p.staff_comment }}</p>{% endif %}
+  {% if modules.intelligence %}<p class="small"><a href="/me/practice/{{ p.id }}/coach">Get coaching on this</a></p>{% endif %}</section>
+{% else %}<p>None yet. Your first one counts toward the “First speech” milestone.</p>{% endfor %}
+{% endblock %}

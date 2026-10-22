@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from app.config import Settings
 from app.db import Database, connect, migrate, scalar
-from app.db.seed import seed_reference
+from app.db.seed import seed_later_phases, seed_reference
 
 DATASETS = ("real", "demo")
 
@@ -18,6 +18,7 @@ def prepare(path, dataset: str) -> None:
     try:
         migrate(conn)
         seed_reference(conn)
+        seed_later_phases(conn)
         if dataset == "demo" and not scalar(conn, "SELECT COUNT(*) FROM class"):
             from app.fakedata import populate_demo
             populate_demo(conn)
