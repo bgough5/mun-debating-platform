@@ -160,6 +160,9 @@ dialog .dialog-body { padding: 1rem; }
 .st-no { color: var(--maroon); background: var(--no-bg); border-color: var(--maroon); }
 .st-abs { color: var(--ink); background: var(--abs-bg); border-color: var(--control); }
 .st-unk { color: var(--muted); background: var(--unk-bg); border-color: var(--control); border-style: dashed; }
+.q-sourced { color: var(--green-dk); background: var(--yes-bg); border-color: var(--green); }
+.q-estimate { color: var(--ink); background: var(--warn-bg); border-color: var(--gold); }
+.q-unknown { color: var(--muted); background: var(--unk-bg); border-color: var(--control); border-style: dashed; }
 .tag { display: inline-block; font-size: .8rem; background: var(--info-bg); border-radius: 4px; padding: 0 .4rem; margin: 0 .2rem .2rem 0; }
 .label-computed { font-size: .8rem; font-weight: 700; color: var(--muted); border: 1px dashed var(--control); border-radius: 4px; padding: 0 .35rem; }
 .label-ai { font-size: .8rem; font-weight: 700; color: var(--gold-text); border: 1px solid var(--gold); background: var(--warn-bg); border-radius: 4px; padding: 0 .35rem; }

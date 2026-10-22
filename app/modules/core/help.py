@@ -47,6 +47,7 @@ CONTEXT = [
         "Conference → committee → delegations and resolutions. Allocate students to countries on the committee page.",
         "Evidence: record what a country has said, with its source. Predictions use it; a country with no evidence is shown as unknown.",
         "Prediction: the chance a paragraph passes, the countries most likely to swing it, and lobbying tasks for students.",
+        "Each country is marked Sourced, Estimate only or Unknown. \"Estimate only\" means the prediction rests on the model's archetype guess or an unsourced note: treat it as a starting point, not evidence. The prediction page shows how much of the outcome rests on such estimates.",
         "Workspace: one editor per paragraph; everyone else proposes amendments. History restores any version.",
     ]),
     ("/debating", "Debating", [
@@ -83,6 +84,7 @@ GLOSSARY = [
     ("Delegation", "The student or students representing one country in a committee."),
     ("Division", "A formal vote. The platform applies the committee's voting rule, including the Security Council veto."),
     ("Draft resolution", "The text the committee debates: preambular paragraphs (why) and operative paragraphs (what to do)."),
+    ("Estimate only", "A country whose prediction rests only on estimates (the archetype model, an unsourced note, an invented demo position or an AI estimate), with no sourced evidence. Shown with its own label so a guess is never mistaken for evidence."),
     ("Evidence", "What a country has said or done on an issue, with a source. The prediction engine weights it by how reliable the source is."),
     ("House points", "Points for school houses from debates and carnivals. Every entry says who added it and why; mistakes are reversed, never deleted."),
     ("Ladder", "The ranking of teams: wins, then total points, then margin."),

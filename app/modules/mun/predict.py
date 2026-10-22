@@ -5,7 +5,8 @@ import json
 from dataclasses import asdict
 
 from app.db import one, rows
-from app.engine.model import CountryDist, CountryInput, ModelParams, Source, distribution, source_weight, unknown_share
+from app.engine.model import (CountryDist, CountryInput, ModelParams, Source, distribution, evidence_quality, quality_shares,
+                              source_weight, unknown_share)
 from app.engine.priors.archetype import raw_score
 from app.engine.rules import VotingRule
 from app.engine.simulate import exact_p_pass, inputs_hash, simulate
@@ -215,10 +216,12 @@ def run_prediction(conn, target_kind: str, target_id: int, runs: int = DEFAULT_R
     seed = seed if seed is not None else int(h[:8], 16)
     res = simulate(dists, rule, params, runs=runs, seed=seed, members=ctx["members"], blocs=ctx["blocs"],
                    with_swing=with_swing)
+    quality = {ci.iso3: evidence_quality(ci) for ci in inputs}
     return {
         "target": target, "committee": committee, "rule": rule, "model_version_id": mv_id, "params": params,
         "dists": dists, "result": res, "inputs_hash": h, "seed": seed, "payload": payload,
-        "unknown_share": unknown_share(dists), "detail": ctx["detail"], "blocs": ctx["blocs"],
+        "unknown_share": unknown_share(dists), "quality": quality, "quality_shares": quality_shares(dists, quality),
+        "estimate_isos": [k for k, v in quality.items() if v == "estimate"], "detail": ctx["detail"], "blocs": ctx["blocs"],
         "exact_independent": exact_p_pass(dists, rule, ctx["members"]) if len(dists) <= 60 else None,
     }
 

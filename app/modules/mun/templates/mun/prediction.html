@@ -15,12 +15,14 @@
     {% if pred.target.negate %}<p class="notice">This is a deletion: the prediction is for the vote to delete, so supporting the paragraph counts against it.</p>{% endif %}
   </section>
   <section class="card" aria-labelledby="h-unk">
-    <h2 id="h-unk">How much is unknown</h2>
+    <h2 id="h-unk">How much rests on evidence</h2>
     {% set unknowns = pred.dists|selectattr('unknown')|list %}
-    <p class="bigstat">{{ pred.unknown_share|pct }}</p>
-    <p>of the uncertainty in the outcome comes from {{ unknowns|length }} countr{{ 'y' if unknowns|length == 1 else 'ies' }} with no evidence at all{% if unknowns %}:
-      {{ unknowns|map(attribute='name')|join(', ') }}{% endif %}.</p>
-    {% if unknowns %}<p class="small">These are shown as <span class="badge st-unk"><span aria-hidden="true">?</span> Unknown</span>, never as a confident number. Recording evidence for them is the quickest way to sharpen the prediction.</p>{% endif %}
+    {% set estimates = pred.dists|selectattr('iso3', 'in', pred.estimate_isos)|list %}
+    <p class="bigstat">{{ pred.quality_shares.estimate|pct }}</p>
+    <p>of the uncertainty in the outcome rests <strong>only on unsourced estimates</strong> (the archetype model, unsourced notes or invented demo positions) for {{ estimates|length }} countr{{ 'y' if estimates|length == 1 else 'ies' }} with no sourced evidence.</p>
+    <p><strong>{{ pred.unknown_share|pct }}</strong> comes from {{ unknowns|length }} countr{{ 'y' if unknowns|length == 1 else 'ies' }} with no evidence at all{% if unknowns %}: {{ unknowns|map(attribute='name')|join(', ') }}{% endif %}.
+       Only <strong>{{ pred.quality_shares.sourced|pct }}</strong> rests on sourced evidence.</p>
+    <p class="small">Each country is marked {{ 'sourced'|quality }}, {{ 'estimate'|quality }} or {{ 'unknown'|quality }}. Recording a sourced statement for an "estimate only" country is the quickest way to make this prediction trustworthy.</p>
   </section>
   <section class="card no-print" aria-labelledby="h-act">
     <h2 id="h-act">Act on it</h2>
@@ -43,7 +45,7 @@
 <tbody>{% for s_ in swing %}
 {% set det = pred.detail.get(s_.key) %}
 <tr><td class="num">{{ loop.index }}</td>
-<td>{% if s_.kind == 'bloc' %}<strong>{{ s_.name }}</strong> <span class="small muted">(bloc: {{ s_.members|join(', ') }})</span>{% else %}{{ flag(flags.get(s_.key), s_.name) }} {{ s_.name }} <span class="iso">{{ s_.key }}</span>{% endif %}</td>
+<td>{% if s_.kind == 'bloc' %}<strong>{{ s_.name }}</strong> <span class="small muted">(bloc: {{ s_.members|join(', ') }})</span>{% else %}{{ flag(flags.get(s_.key), s_.name) }} {{ s_.name }} <span class="iso">{{ s_.key }}</span> {{ pred.quality.get(s_.key)|quality }}{% endif %}</td>
 <td class="num">{{ '%+.1f'|format(s_.delta_p*100) }} pts</td><td class="num">{{ s_.movability|pct }}</td>
 <td class="small">{% if det %}{% set evs = det.sources|rejectattr('kind','equalto','model_estimate')|list %}
   {{ evs|length }} item(s){% if evs|selectattr('stale')|list %}, {{ evs|selectattr('stale')|list|length }} stale{% endif %}{% if not evs %} — only the model estimate{% endif %}
@@ -59,7 +61,7 @@
 <thead><tr><th scope="col">Country</th><th scope="col">Most likely</th><th scope="col">Yes / abstain / no</th><th scope="col" class="num">Position</th><th scope="col" class="num">Spread</th><th scope="col">Sources</th></tr></thead>
 <tbody>{% for d in pred.dists|sort(attribute='name') %}
 {% set det = pred.detail[d.iso3] %}
-<tr><td>{{ flag(flags.get(d.iso3), d.name) }} {{ d.name }} {% if d.iso3 in computed %}<span class="label-computed">computed</span>{% endif %}</td>
+<tr><td>{{ flag(flags.get(d.iso3), d.name) }} {{ d.name }} {{ pred.quality.get(d.iso3)|quality }} {% if d.iso3 in computed %}<span class="label-computed">computed</span>{% endif %}</td>
 <td>{% if d.unknown %}{{ 'unknown'|stance }}{% else %}{{ d.modal_vote|stance }}{% endif %}</td>
 <td style="min-width:9rem">{{ meter(d.p_yes, d.p_abstain, d.p_no) }}<span class="small">{{ d.p_yes|pct }} / {{ d.p_abstain|pct }} / {{ d.p_no|pct }}</span></td>
 <td class="num">{{ '%+.2f'|format(d.mu) }}</td><td class="num">{{ d.sigma|num }}</td>

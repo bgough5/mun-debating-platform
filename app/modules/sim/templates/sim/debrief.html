@@ -15,7 +15,7 @@
 <section class="card" aria-labelledby="h-piv">
   <h2 id="h-piv">{{ icon("whip") }} Which votes decided it</h2>
   {% if d.pivotal %}<p>One changed vote from any of these would have {{ "sunk" if dv.passed else "carried" }} it:</p>
-  <ul>{% for p in d.pivotal %}<li><strong>{{ p.country }}</strong> voted {{ p.vote }}; a {{ p.flip_to|join(" or ") }} vote would have flipped the result.</li>{% endfor %}</ul>
+  <ul>{% for p in d.pivotal %}<li><strong>{{ p.country }}</strong> {{ p.quality|quality }} voted {{ p.vote }}; a {{ p.flip_to|join(" or ") }} vote would have flipped the result.</li>{% endfor %}</ul>
   {% else %}<p>No single delegation could have changed the result: the margin was wider than one vote.</p>{% endif %}
 </section>
 </div>
@@ -54,6 +54,7 @@
   {% for p in d.profiles %}
   <div class="card">
     <h3>{{ p.country }}{% if p.students %} ({{ p.students|join(", ") }}){% endif %}: {{ p.profile.name }}</h3>
+    <p class="small">Evidence about {{ p.country }} when the vote opened: {{ p.quality|quality }}{% if p.quality == 'estimate' %} — the mandate judgement below rests on the model's estimate, not on sourced evidence{% endif %}.</p>
     <p>{{ p.profile.line }}</p>
     <p class="small">Voted {{ p.vote|stance }} · Mandate: <strong>{{ {'consistent':'consistent','inconsistent':'against the evidence','borderline':'borderline','unjudged':'not judged'}[p.fidelity] }}</strong> ({{ p.why }}) · Coalition: <strong>{{ {'won':'on the winning side','lost':'on the losing side','abstained':'abstained'}[p.coalition] }}</strong></p>
     {% if staff %}<details><summary>Judge the mandate yourself<span class="visually-hidden"> for {{ p.country }}</span></summary>

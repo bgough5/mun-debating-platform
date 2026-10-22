@@ -279,6 +279,21 @@ def pivotal(rule: VotingRule, votes: dict[str, str], members: int) -> list[dict]
     return out
 
 
+def stored_quality(conn, prediction_id: int | None) -> dict[str, str]:
+    """Evidence quality per country from the inputs stored with a prediction (D-065)."""
+    from app.engine.model import CountryInput, Source, evidence_quality
+    if not prediction_id:
+        return {}
+    raw = scalar(conn, "SELECT inputs_json FROM prediction WHERE id = ?", (prediction_id,))
+    if not raw:
+        return {}
+    out = {}
+    for c in json.loads(raw).get("countries", []):
+        srcs = tuple(Source(s[0], s[1], s[2], s[2], s[3]) for s in c["sources"])
+        out[c["iso3"]] = evidence_quality(CountryInput(c["iso3"], c["iso3"], srcs, c.get("group", ""), c.get("rho", 0.0)))
+    return out
+
+
 def debrief(conn, division_id: int) -> dict:
     dv = one(conn, "SELECT dv.*, ls.committee_id FROM division dv JOIN live_session ls ON ls.id = dv.session_id WHERE dv.id = ?",
              (division_id,))
@@ -293,8 +308,10 @@ def debrief(conn, division_id: int) -> dict:
     vmap = {v["iso3"]: v["vote"] for v in votes}
     piv = pivotal(rule, vmap, members) if not dv["procedural"] else []
     names = {v["iso3"]: v["country"] for v in votes}
+    quality = stored_quality(conn, dv["prediction_id"])
     for p in piv:
         p["country"] = names.get(p["iso3"], p["iso3"])
+        p["quality"] = quality.get(p["iso3"], "unknown")
     # Engine calibration on this vote: the prediction stored when voting opened, against human votes only.
     engine = None
     if dv["prediction_id"]:
@@ -339,7 +356,7 @@ def debrief(conn, division_id: int) -> dict:
         profiles.append({"iso3": v["iso3"], "country": v["country"], "delegation_id": v["del_id"], "vote": v["vote"],
                          "students": [display_name(s["first_name"], s["last_initial"]) for s in students],
                          "fidelity": fid, "why": why, "coalition": coalition, "override": o,
-                         "profile": delegate_profile(fid, coalition)})
+                         "profile": delegate_profile(fid, coalition), "quality": quality.get(v["iso3"], "unknown")})
     wr = one(conn, "SELECT id FROM whip_round WHERE division_id = ?", (division_id,))
     return {"division": dv, "votes": votes, "pivotal": piv, "engine": engine, "profiles": profiles,
             "whip": whip_scores(conn, wr["id"]) if wr else None, "rule": rule}

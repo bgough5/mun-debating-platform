@@ -125,6 +125,31 @@ def vote_variance(d: CountryDist) -> float:
     return d.p_yes + d.p_no - mean * mean
 
 
+# Sources that are estimates, not evidence: the archetype prior, unsourced notes, invented demo positions and AI
+# estimates (an AI is not a source even when it cites one). D-065.
+ESTIMATE_KINDS = frozenset({"model_estimate", "unsourced_note", "demo_unverified", "ai_estimate"})
+QUALITY_LABEL = {"sourced": "Sourced", "estimate": "Estimate only", "unknown": "Unknown"}
+
+
+def evidence_quality(ci: CountryInput) -> str:
+    """'sourced' if any counted source is real evidence; 'estimate' if all are estimates; 'unknown' if none."""
+    kinds = [s.kind for s in ci.sources if s.weight > 0]
+    if not kinds:
+        return "unknown"
+    return "sourced" if any(k not in ESTIMATE_KINDS for k in kinds) else "estimate"
+
+
+def quality_shares(dists: list[CountryDist], quality: dict[str, str]) -> dict[str, float]:
+    """Share of the total vote variance from countries of each evidence quality (sums to 1)."""
+    total = sum(vote_variance(d) for d in dists)
+    out = {"sourced": 0.0, "estimate": 0.0, "unknown": 0.0}
+    if total <= 0:
+        return out
+    for d in dists:
+        out[quality.get(d.iso3, "unknown")] += vote_variance(d) / total
+    return out
+
+
 def unknown_share(dists: list[CountryDist]) -> float:
     """Share of the total vote variance that comes from countries with no evidence."""
     total = sum(vote_variance(d) for d in dists)

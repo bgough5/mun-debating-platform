@@ -28,6 +28,16 @@ STANCE = {
 POSITION = {2: "Strongly support", 1: "Support", 0: "Neutral / abstain", -1: "Oppose", -2: "Strongly oppose"}
 
 
+QUALITY = {"sourced": ("Sourced", "evidence", "q-sourced"), "estimate": ("Estimate only", "warning", "q-estimate"),
+           "unknown": ("Unknown", "unknown", "q-unknown")}
+
+
+def quality_badge(q: str) -> Markup:
+    """Evidence quality of a country's prediction (D-065): text and icon, never colour alone."""
+    label, icon_name, cls = QUALITY.get(q or "unknown", QUALITY["unknown"])
+    return Markup(f'<span class="badge {cls}">{icon(icon_name)} {escape(label)}</span>')
+
+
 def stance_badge(vote: str) -> Markup:
     label, icon_name, cls = STANCE.get(vote, STANCE["unknown"])
     return Markup(f'<span class="badge {cls}">{icon(icon_name)} {escape(label)}</span>')
@@ -69,7 +79,7 @@ def mmss(seconds) -> str:
 
 
 env.globals.update(icon=icon)
-env.filters.update(stance=stance_badge, position=position_label, pct=pct, num=num, when=short_time, mmss=mmss)
+env.filters.update(quality=quality_badge, stance=stance_badge, position=position_label, pct=pct, num=num, when=short_time, mmss=mmss)
 
 
 def today_long() -> str:
