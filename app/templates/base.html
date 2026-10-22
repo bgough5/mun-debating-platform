@@ -14,12 +14,13 @@
 </head>
 <body hx-boost="true" hx-headers='{"X-CSRF-Token": "{{ csrf }}"}' class="{% block bodyclass %}{% endblock %}" {% block bodyattrs %}{% endblock %}>
 <div id="live-announcer" class="visually-hidden" role="status" aria-live="polite"></div>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 <a class="skip" href="#main">Skip to main content</a>
 {% if demo %}<div class="demo-banner" role="status">DEMO — fake data only. Nothing here is a real student.</div>{% endif %}
 {% block header %}
 <header class="site">
   <div class="bar">
-    <a class="brand" href="/"><img src="/static/soc_logo.png" alt="" width="36" height="36"><span>SOC Debating &amp; MUN</span></a>
+    <a class="brand" href="/"><img src="/static/soc_logo.png" alt="" width="46" height="46"><span><span class="school">South Oakleigh College</span><span class="product">Debating &amp; Model UN</span></span></a>
     <nav class="main" aria-label="Main">
       <ul>
       {% if actor and actor.is_staff %}
@@ -50,6 +51,7 @@
 </header>
 {% endblock %}
 <main id="main" tabindex="-1">
+<div class="letterhead" aria-hidden="true"><img src="/static/soc_logo.png" alt=""><div><div class="school">South Oakleigh College</div><div class="sub">Public Speaking, Debating &amp; Model United Nations</div></div><div class="when">{{ title|default("") }}<br>Printed {{ printed_on }}</div></div>
 {% if flash %}<div class="flash" role="status">{{ flash }}</div>{% endif %}
 {% block content %}{% endblock %}
 </main>

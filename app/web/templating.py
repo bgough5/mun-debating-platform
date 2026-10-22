@@ -69,6 +69,13 @@ def mmss(seconds) -> str:
 env.filters.update(stance=stance_badge, position=position_label, pct=pct, num=num, when=short_time, mmss=mmss)
 
 
+def today_long() -> str:
+    from datetime import datetime, timezone
+    from app.util import now
+    d = datetime.fromtimestamp(now(), timezone.utc)
+    return f"{d.day} {d:%B %Y}"
+
+
 def render(request: Request, template: str, ctx: dict | None = None, status: int = 200,
            headers: dict | None = None) -> HTMLResponse:
     st = request.app.state
@@ -83,6 +90,7 @@ def render(request: Request, template: str, ctx: dict | None = None, status: int
         "modules": {m: st.settings.module_on(m) for m in ("mun", "chair", "debating", "people", "intelligence")},
         "flash": getattr(request.state, "flash", None),
         "req_path": request.url.path,
+        "printed_on": today_long(),
     }
     base.update(ctx or {})
     html = env.get_template(template).render(**base)

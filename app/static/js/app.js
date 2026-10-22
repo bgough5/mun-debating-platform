@@ -32,6 +32,54 @@
     if (btn) btn.setAttribute("aria-pressed", on ? "true" : "false");
   }
 
+  // Toasts: short confirmations in a polite live region. They stay until dismissed or 8 s pass,
+  // and never carry the only copy of something important (that goes in the page).
+  window.socToast = function (message) {
+    var box = document.getElementById("toasts");
+    if (!box) return;
+    var t = document.createElement("div");
+    t.className = "toast";
+    var text = document.createElement("span");
+    text.textContent = message;
+    var close = document.createElement("button");
+    close.type = "button";
+    close.textContent = "Dismiss";
+    close.addEventListener("click", function () { t.remove(); });
+    t.appendChild(text);
+    t.appendChild(close);
+    box.appendChild(t);
+    setTimeout(function () { t.remove(); }, 8000);
+  };
+  document.body && document.body.addEventListener("htmx:afterRequest", function (e) {
+    var msg = e.detail && e.detail.xhr && e.detail.xhr.getResponseHeader("X-Toast");
+    if (msg) window.socToast(msg);
+  });
+
+  // Dialogs: native <dialog>. Escape closes; focus goes back to the button that opened it.
+  var opener = null;
+  document.addEventListener("click", function (e) {
+    var open = e.target.closest && e.target.closest("[data-dialog-open]");
+    if (open) {
+      var dlg = document.getElementById(open.getAttribute("data-dialog-open"));
+      if (dlg && dlg.showModal) {
+        e.preventDefault();
+        opener = open;
+        dlg.showModal();
+      }
+    }
+    var shut = e.target.closest && e.target.closest("[data-dialog-close]");
+    if (shut) {
+      var d = shut.closest("dialog");
+      if (d) d.close();
+    }
+  });
+  document.addEventListener("close", function (e) {
+    if (e.target.tagName === "DIALOG" && opener) {
+      opener.focus();
+      opener = null;
+    }
+  }, true);
+
   document.addEventListener("click", function (e) {
     var t = e.target;
     if (t && t.id === "easy-read-toggle") {

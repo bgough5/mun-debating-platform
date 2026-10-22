@@ -6,8 +6,13 @@ from __future__ import annotations
 import csv
 import io
 
+from pathlib import Path
+
 from docx import Document
-from docx.shared import Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Pt, RGBColor
+
+from app.web.design import TOKENS
 
 from app.modules.admin.tables import SECRET_COLUMNS
 
@@ -30,13 +35,42 @@ def read_csv(data: bytes) -> list[dict]:
     return list(csv.DictReader(io.StringIO(text)))
 
 
+LOGO = Path(__file__).resolve().parent / "static" / "soc_logo.png"
+
+
+def _rgb(token: str) -> RGBColor:
+    return RGBColor.from_string(TOKENS[token].lstrip("#"))
+
+
+def _letterhead(doc: Document) -> None:
+    """South Oakleigh letterhead in the page header of every exported document (D-058)."""
+    header = doc.sections[0].header
+    p = header.paragraphs[0]
+    if LOGO.exists():
+        p.add_run().add_picture(str(LOGO), width=Pt(34))
+    run = p.add_run("  South Oakleigh College")
+    run.bold = True
+    run.font.name = "Cambria"
+    run.font.size = Pt(13)
+    run.font.color.rgb = _rgb("maroon-dk")
+    sub = header.add_paragraph("Public Speaking, Debating & Model United Nations")
+    sub.runs[0].font.size = Pt(9)
+    sub.runs[0].font.color.rgb = _rgb("muted")
+    sub.alignment = WD_ALIGN_PARAGRAPH.LEFT
+
+
 def _doc(title: str, subtitle: str = "") -> Document:
     doc = Document()
     style = doc.styles["Normal"]
     style.font.name = "Calibri"
     style.font.size = Pt(11)
+    for name in ("Title", "Heading 1", "Heading 2", "Heading 3"):
+        h = doc.styles[name]
+        h.font.name = "Cambria"
+        h.font.color.rgb = _rgb("maroon-dk")
     doc.core_properties.title = title
     doc.core_properties.author = "South Oakleigh College"
+    _letterhead(doc)
     doc.add_heading(title, level=0)
     if subtitle:
         doc.add_paragraph(subtitle)

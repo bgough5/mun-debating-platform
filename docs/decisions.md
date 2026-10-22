@@ -210,3 +210,14 @@ Spec §8.6 says pathway records are deleted on request or at exit, but a soft de
 
 ### D-057 Restore checks the file first and signs everyone out — Decided (build), tested
 A backup is validated (zip, manifest, SQLite integrity) before the open database is touched; previously a damaged file could leave the app refusing requests until restarted. After a restore every device signed in at the time of the backup is signed out, so old sign-ins don't come back to life; the coordinator who restored stays signed in.
+
+### D-058 South Oakleigh design system — Decided (Ben, Phase 6 work package); supersedes HANDOVER §11b's navy/UN-blue identity
+The platform now uses South Oakleigh's own identity: maroon `#8C332A` (primary), dark maroon `#2A1512` (header, navigation, projector), green `#0A6B39`/`#0A4527` (success, "for"), gold `#B8960C`/`#D4B441` (accent), cream `#F4F0E6` page, `#FBFAF6` cards, ink `#2A2320`; Cambria/Georgia headings and Calibri body (Carlito, Segoe UI and system fallbacks); the SOC diamond logo with the school name in the header. Tokens live in `app/web/design.py` and the `:root` of `app/static/css/app.css`; `tests/test_design_contrast.py` checks they match, checks all 37 text/background and interface pairs against WCAG 2.2 AA, and fails if a colour is written anywhere in the stylesheet outside the tokens.
+
+Measured and adjusted, never silently swapped:
+- **Gold fails as text on every light surface** (2.5:1 on cream, 2.7:1 on cards). Gold stays decorative on light surfaces (rules, borders) and is text only on dark maroon (6.1:1; light gold 8.6:1). Added `gold-text` `#7A6206` (5.2:1 on cream) for gold-coloured text on light backgrounds.
+- **A gold focus ring fails the 3:1 non-text minimum on cream** (2.5:1). Focus is a dark-maroon outline (15.2:1) with a light-gold halo, and a light-gold outline on the dark header and projector (8.6:1).
+- Added `muted` `#655C55` for secondary text (5.7:1 on cream) and `control` `#8A7F76` for input borders (3.4:1).
+- Maroon, dark maroon, green, cream, card and ink pass as specified: white on maroon 8.0:1, ink on cream 13.6:1, green on cream 5.8:1.
+
+Components: primary (maroon), secondary (outline), danger (dark maroon), success (green) and link buttons; forms; tables; cards; badges; tabs as links (work without JavaScript); toasts in a polite live region; native `<dialog>` with focus returned to the opener; empty states that name the next action; htmx loading indicators. Stances and votes always carry a word and a symbol as well as colour. Print: every printed page carries a South Oakleigh letterhead, and every Word export has the logo and school name in its page header. Projector: dark maroon background, cream text, light-gold headings and timer (9rem), larger list type. Easy-read, reduced motion, 200% zoom and 320 px reflow are kept and re-tested.
