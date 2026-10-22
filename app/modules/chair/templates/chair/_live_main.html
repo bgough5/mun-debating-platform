@@ -1,6 +1,28 @@
 {% from "_macros.html" import hidden_csrf %}
 {% from "chair/_timer.html" import timer %}
+{% from "sim/_stages.html" import tracker %}
 {% if s.state != 'open' %}<div class="notice" role="status">The session is {{ s.state }}.</div>{% endif %}
+{{ tracker(sim) }}
+<section class="card accent" aria-labelledby="h-now-do" data-announce="{{ 'Stage: ' ~ sim.stage.name }}" data-announce-key="stage">
+  <p class="eyebrow">Now: {{ sim.stage.name }}{% if s.agenda %} · Agenda: {{ s.agenda }}{% endif %}</p>
+  <h2 id="h-now-do">{{ icon("info") }} What you can do now</h2>
+  <p>{{ sim.student_prompt }}</p>
+  {% if mine and sim.stage.code == 'roll_call' and s.state == 'open' %}
+    {% if my_roll and my_roll.status %}<p>{{ icon("ok") }} You answered: <strong>{{ {'present':'Present','present_and_voting':'Present and voting','absent':'Absent'}[my_roll.status] }}</strong>.</p>{% endif %}
+    <form method="post" action="/live/{{ s.id }}/roll" class="row">{{ hidden_csrf(csrf) }}
+      <button type="submit" name="status" value="present" class="big">{{ icon("check") }} Present</button>
+      <button type="submit" name="status" value="present_and_voting" class="big secondary">{{ icon("vote") }} Present and voting</button></form>
+  {% endif %}
+  {% if my_whip %}
+    <h3>{{ icon("whip") }} Whip count: {{ whip_round.title }}</h3>
+    <p class="small">Predict how each delegation will vote. You're scored against the votes they actually cast. You can change a prediction until voting opens.</p>
+    <div class="table-wrap"><table><caption class="visually-hidden">Your predictions</caption><thead><tr><th scope="col">Delegation</th><th scope="col">Your prediction</th><th scope="col">Predict</th></tr></thead><tbody>
+    {% for w_ in my_whip %}<tr><td>{{ w_.name }}</td><td>{% if w_.vote %}{{ w_.vote|stance }}{% else %}<span class="muted">not yet</span>{% endif %}</td>
+      <td>{% for opt in ['yes','abstain','no'] %}<form method="post" action="/live/{{ s.id }}/whip/{{ whip_round.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="delegation_id" value="{{ w_.delegation_id }}"><input type="hidden" name="vote" value="{{ opt }}"><button type="submit" class="secondary">{{ icon(opt) }} {{ opt|capitalize }}<span class="visually-hidden"> for {{ w_.name }}</span></button></form>{% endfor %}</td></tr>{% endfor %}
+    </tbody></table></div>
+  {% endif %}
+  {% if mine and sim.stage.code == 'debrief' and last_vote %}<p><a class="button" href="/live/{{ s.id }}/debrief/{{ last_vote.id }}">{{ icon("calibration") }} See your debrief: {{ last_vote.title }}</a></p>{% endif %}
+</section>
 {% if not mine %}<div class="notice">You aren't in a delegation in this committee yet. Ask your teacher.</div>{% else %}
 <p>You are <strong>{{ mine.iso3 }}</strong>{% if mine.role == 'head' %} (head of delegation){% endif %}.</p>{% endif %}
 <div class="grid">

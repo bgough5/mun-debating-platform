@@ -134,6 +134,13 @@ def seed_later_phases(conn: sqlite3.Connection) -> None:
             tid = _id(conn, "topic", r["topic_code"])
             if tid:
                 conn.execute("INSERT INTO history_tag_rule (topic_id, tag_code, keyword) VALUES (?,?,?)", (tid, r["tag_code"], r["keyword"]))
+    if _empty(conn, "procedure_stage"):
+        for r in _csv("procedure_stages.csv"):
+            rs = _id(conn, "procedure_rule_set", r["rule_set"])
+            if rs:
+                conn.execute("INSERT INTO procedure_stage (rule_set_id, code, position, name, chair_script, chair_next, student_prompt) "
+                             "VALUES (?,?,?,?,?,?,?)", (rs, r["code"], int(r["position"]), r["name"], r["chair_script"],
+                                                         r["chair_next"], r["student_prompt"]))
     conn.commit()
 
 

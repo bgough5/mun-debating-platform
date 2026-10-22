@@ -25,10 +25,10 @@ student may open a resolution only in their own class's committee, and a ballot 
 |---|---|
 | Public | 21 |
 | Signed in (any role, checked per item) | 26 |
-| Students only | 15 |
-| Staff and coordinator | 68 |
+| Students only | 22 |
+| Staff and coordinator | 76 |
 | Coordinator only | 34 |
-| **Total** | **164** |
+| **Total** | **179** |
 
 ## Coordinator only
 
@@ -78,11 +78,15 @@ student may open a resolution only in their own class's committee, and a ballot 
 | POST | `/chair/committee/{committee_id}/open` |
 | GET | `/chair/{sid}` |
 | POST | `/chair/{sid}/adjust` |
+| POST | `/chair/{sid}/agenda` |
+| GET | `/chair/{sid}/debrief/{did}` |
+| POST | `/chair/{sid}/debrief/{did}/fidelity` |
 | POST | `/chair/{sid}/divisions` |
 | POST | `/chair/{sid}/divisions/{did}` |
 | POST | `/chair/{sid}/end-caucus` |
 | POST | `/chair/{sid}/entries/{eid}` |
 | GET | `/chair/{sid}/f/{part}` |
+| GET | `/chair/{sid}/guide` |
 | GET | `/chair/{sid}/minutes` |
 | POST | `/chair/{sid}/minutes` |
 | GET | `/chair/{sid}/minutes.docx` |
@@ -90,11 +94,15 @@ student may open a resolution only in their own class's committee, and a ballot 
 | POST | `/chair/{sid}/motions` |
 | POST | `/chair/{sid}/motions/{mid}` |
 | POST | `/chair/{sid}/next` |
+| POST | `/chair/{sid}/roll` |
 | POST | `/chair/{sid}/speakers` |
 | POST | `/chair/{sid}/speaking-time` |
+| POST | `/chair/{sid}/stage` |
 | POST | `/chair/{sid}/state` |
 | POST | `/chair/{sid}/timer` |
 | POST | `/chair/{sid}/timers/{tid}` |
+| POST | `/chair/{sid}/whip` |
+| POST | `/chair/{sid}/whip/{rid}` |
 | POST | `/chair/{sid}/yield` |
 | GET | `/debating` |
 | POST | `/debating/demo-carnival` |
@@ -147,11 +155,14 @@ student may open a resolution only in their own class's committee, and a ballot 
 | Method | Path |
 |---|---|
 | GET | `/live/{sid}` |
+| GET | `/live/{sid}/debrief/{did}` |
 | GET | `/live/{sid}/f` |
 | POST | `/live/{sid}/motion` |
+| POST | `/live/{sid}/roll` |
 | POST | `/live/{sid}/second/{mid}` |
 | POST | `/live/{sid}/speak` |
 | POST | `/live/{sid}/vote` |
+| POST | `/live/{sid}/whip/{rid}` |
 | POST | `/live/{sid}/withdraw` |
 | GET | `/me` |
 | GET | `/me/ai-practice` |
@@ -161,6 +172,10 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/me/practice` |
 | POST | `/me/practice` |
 | GET | `/me/practice/{ps_id}/coach` |
+| GET | `/me/sim` |
+| POST | `/me/sim` |
+| GET | `/me/sim/{pid}` |
+| POST | `/me/sim/{pid}` |
 
 ## Signed in (any role, checked per item)
 

@@ -191,12 +191,16 @@ def build_inputs(conn, target: dict, params: ModelParams, extra_sources: dict | 
 
 
 def run_prediction(conn, target_kind: str, target_id: int, runs: int = DEFAULT_RUNS, with_swing: bool = True,
-                   seed: int | None = None) -> dict:
-    """Compute (not store) a prediction. Returns a dict for display and storage."""
+                   seed: int | None = None, tags_override: list[str] | None = None, extra_sources: dict | None = None) -> dict:
+    """Compute (not store) a prediction. Returns a dict for display and storage.
+    `tags_override` and `extra_sources` are for practice runs (D-060): a hypothetical amendment and practice-only
+    lobbying readings, which never touch the class's own evidence."""
     target = describe_target(conn, target_kind, target_id)
+    if tags_override is not None:
+        target = {**target, "tags": list(tags_override), "label": target["label"] + " (practice amendment)"}
     committee, rule = committee_rule(conn, target["committee_id"])
     mv_id, params = active_model(conn)
-    inputs, ctx = build_inputs(conn, target, params)
+    inputs, ctx = build_inputs(conn, target, params, extra_sources)
     if not inputs:
         raise UserError("This committee has no delegations yet. Add delegations before predicting.")
     dists = [distribution(ci, params) for ci in inputs]

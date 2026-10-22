@@ -38,7 +38,11 @@ OVERFLOWING = """() => { const W = document.documentElement.clientWidth, out = [
 
 
 def _pattern(path: str) -> str:
-    return re.sub(r"/[A-Za-z0-9_-]{12,}(?=/|$)", "/{token}", re.sub(r"\d+", "{n}", path.split("?")[0]))
+    # Random tokens (projector links) are long and contain a capital or a digit; table names like
+    # "procedure_stage" are lowercase words and must each count as their own page.
+    path = path.split("?")[0]
+    path = re.sub(r"/(?=[A-Za-z0-9_-]{12,}(?:/|$))(?=[^/]*[A-Z0-9])[A-Za-z0-9_-]+", "/{token}", path)
+    return re.sub(r"\d+", "{n}", path)
 
 
 def _check_page(page, name: str) -> list:
@@ -151,7 +155,7 @@ def test_a11y_every_student_page(page, live, session_id):
         failures["/join/{code}"] = probs
     page.locator(f"form[action='/join/{st['code']}/{st['id']}'] button").click()
     page.wait_for_load_state("networkidle")
-    more, visited = _crawl(page, live, "student", ["/me", f"/live/{session_id}", "/me/practice", "/me/ai-practice"])
+    more, visited = _crawl(page, live, "student", ["/me", f"/live/{session_id}", "/me/practice", "/me/ai-practice", "/me/sim"])
     failures.update(more)
     _record("student", ["/join", "/join/{code}"] + visited, failures)
     assert failures == {}

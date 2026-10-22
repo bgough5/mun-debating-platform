@@ -1,7 +1,11 @@
 {% extends "base.html" %}
 {% from "_macros.html" import hidden_csrf %}
 {% block content %}
-<h1>Chair: {{ s.committee }}</h1>
+<h1>{{ icon("chair") }} Chair: {{ s.committee }}</h1>
+<section class="card accent" aria-labelledby="h-guide"><h2 id="h-guide">{{ icon("stage") }} Guide: what happens next</h2>
+<div id="guide" data-live-channel="session:{{ s.id }}" hx-get="/chair/{{ s.id }}/guide" hx-trigger="live-update" hx-swap="innerHTML">
+{% include "sim/_chair_guide.html" %}
+</div></section>
 <div id="status" data-live-channel="session:{{ s.id }}" hx-get="/chair/{{ s.id }}/f/status" hx-trigger="live-update" hx-swap="innerHTML">
 {% include "chair/_chair_status.html" %}
 </div>

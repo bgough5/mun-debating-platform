@@ -10,6 +10,7 @@ from app.db import one, rows, scalar
 from app.errors import UserError
 from app.exports import text_docx
 from app.modules.chair import service as C
+from app.modules.sim import service as SIM
 from app.web.auth import committee_access, require_any, require_staff, require_student, staff_class_ids
 from app.web.http import form_float, form_int, redirect, form_data
 from app.util import now
@@ -69,6 +70,17 @@ def _shared_view(conn, sid: int) -> dict:
                                  "AND a.deleted_at IS NULL ORDER BY a.id", (s["committee_id"],)),
         "cap": 25,
     }
+    # Guided simulation (D-060): stage, roll call, whip count, the last result to debrief.
+    data["sim"] = SIM.stage_view(conn, s)
+    data["roll"] = SIM.roll_state(conn, s)
+    data["present"] = sum(1 for r in data["roll"] if r["status"] in ("present", "present_and_voting"))
+    wr = SIM.open_round(conn, sid)
+    if wr:
+        wr = {**wr, "made": scalar(conn, "SELECT COUNT(*) FROM whip_prediction WHERE round_id = ? AND vote IS NOT NULL", (wr["id"],)),
+              "asked": scalar(conn, "SELECT COUNT(*) FROM whip_prediction WHERE round_id = ?", (wr["id"],))}
+    data["whip_round"] = wr
+    data["last_vote"] = one(conn, "SELECT * FROM division WHERE session_id = ? AND status = 'closed' AND procedural = 0 "
+                                  "ORDER BY id DESC LIMIT 1", (sid,))
     with _VIEW_LOCK:
         if len(_VIEW_CACHE) > 64:
             _VIEW_CACHE.clear()
@@ -89,7 +101,10 @@ def session_view(conn, sid: int, actor=None) -> dict:
     my_vote = None
     if view["division"] and mine:
         my_vote = next((v for v in view["division"]["voters"] if v["id"] == mine["id"]), None)
-    view.update(mine=mine, my_place=my_place, my_vote=my_vote)
+    my_roll = next((r for r in view["roll"] if mine and r["id"] == mine["id"]), None)
+    my_whip = SIM.my_whip(conn, view["whip_round"]["id"], actor.id) if (view["whip_round"] and actor is not None
+                                                                        and actor.kind == "student") else []
+    view.update(mine=mine, my_place=my_place, my_vote=my_vote, my_roll=my_roll, my_whip=my_whip)
     return view
 
 

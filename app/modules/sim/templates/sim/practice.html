@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb, meter %}
+{% block content %}
+{{ breadcrumb([("Practice committee", "/me/sim"), ("Paragraph " ~ para.position, None)]) }}
+<h1>{{ icon("practice") }} Practice: paragraph {{ para.position }}</h1>
+<p class="lede">You are <strong>{{ me_m.country }}</strong>. {% if members|length > 1 %}With {% for m in members if m.student_id != me_m.student_id %}{{ names[m.student_id] }} ({{ m.country }}){% if not loop.last %}, {% endif %}{% endfor %}.{% endif %} Every other delegation is computed.</p>
+<div class="info-box"><p>{{ icon("info") }} <strong>How it works.</strong> Each computed delegation has a hidden position drawn from the engine's estimate for it, so it behaves like a real delegation with a mandate. Talk to up to {{ limit }} of them, write down what you think they'll do, amend the paragraph if that would win votes, then call the vote. The conversations are simulated: the words come from each country's diplomatic style, not from real statements.</p></div>
+
+<section class="card" aria-labelledby="h-text"><h2 id="h-text">{{ icon("resolution") }} The paragraph</h2>
+<p>{{ para.text }}</p>
+<p class="small">It commits countries to: {% for t in tags if t.code in current_tags %}<span class="tag">{{ t.label }}</span>{% endfor %}</p></section>
+
+{% if p.stage == 'lobbying' %}
+<div class="cols-2"><div>
+<section class="card" aria-labelledby="h-lobby"><h2 id="h-lobby">{{ icon("motion") }} Lobby a delegation ({{ used }} of {{ limit }} conversations used)</h2>
+{% if used < limit %}
+<form method="post" action="/me/sim/{{ p.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="lobby">
+  <div class="field"><label for="lc">Talk to</label><select id="lc" name="iso3">{% for c in countries if c.iso3 not in played %}<option value="{{ c.iso3 }}">{{ c.name }}</option>{% endfor %}</select></div>
+  <button type="submit">{{ icon("motion") }} Ask for their position</button></form>
+{% else %}<p>You've used all your conversations. Record your readings and call the vote.</p>{% endif %}
+{% for l in lobbies %}
+<div class="card">
+  <h3>{{ l.country }}</h3>
+  <blockquote class="script">“{{ l.heard }}”</blockquote>
+  <form method="post" action="/me/sim/{{ p.id }}" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="read"><input type="hidden" name="lobby_id" value="{{ l.id }}">
+    <div class="field"><label for="lp{{ l.id }}">What do you think {{ l.country }} will do?</label><select id="lp{{ l.id }}" name="position">
+      {% for v, txt in [(2,'Strongly support'),(1,'Support'),(0,'Abstain / undecided'),(-1,'Oppose'),(-2,'Strongly oppose')] %}<option value="{{ v }}" {% if l.position == v %}selected{% endif %}>{{ txt }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="ln{{ l.id }}">Why (optional)</label><input id="ln{{ l.id }}" type="text" name="note" value="{{ l.note }}" maxlength="300"></div>
+    <button type="submit" class="secondary">{% if l.position is none %}Record my reading{% else %}Update my reading{% endif %}</button></form>
+</div>{% endfor %}
+</section>
+</div><div>
+<section class="card" aria-labelledby="h-pred"><h2 id="h-pred">{{ icon("prediction") }} Your whip count</h2>
+<p class="bigstat">{{ (pred.result.p_pass * 100)|round|int }}% chance it passes</p>
+<p class="small">The engine's estimate with your readings added (labelled "practice lobbying"). Countries you haven't read are estimated from your class's evidence. Expected yes votes {{ pred.result.yes_mean|num(1) }} ({{ pred.result.yes_lo }}–{{ pred.result.yes_hi }}).</p>
+{% if pred.result.swing %}<h3>Who to talk to next</h3><ul>{% for s_ in pred.result.swing[:5] %}<li>{{ s_.name }} <span class="small muted">(moving them one step towards yes adds {{ (s_.delta_p * 100)|round|int }} points)</span></li>{% endfor %}</ul>{% endif %}
+</section>
+<section class="card" aria-labelledby="h-amend"><h2 id="h-amend">{{ icon("amendment") }} Amend the paragraph (practice only)</h2>
+<form method="post" action="/me/sim/{{ p.id }}" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="amend">
+  <fieldset><legend>What should the paragraph commit countries to?</legend><div class="checks">
+  {% for t in tags %}<label><input type="checkbox" name="tags" value="{{ t.code }}" {% if t.code in current_tags %}checked{% endif %}> {{ t.label }}</label>{% endfor %}</div></fieldset>
+  <button type="submit" class="secondary">{{ icon("amendment") }} Apply the amendment</button></form></section>
+<section class="card" aria-labelledby="h-vote"><h2 id="h-vote">{{ icon("vote") }} The vote</h2>
+<form method="post" action="/me/sim/{{ p.id }}" class="row">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="my_vote">
+  <span>{{ me_m.country }} votes:</span>{% for v in ['yes','abstain','no'] %}<button type="submit" name="vote" value="{{ v }}" class="{{ '' if me_m.vote == v else 'secondary' }}">{{ icon(v) }} {{ v|capitalize }}{% if me_m.vote == v %}<span class="visually-hidden"> (chosen)</span>{% endif %}</button>{% endfor %}</form>
+<form method="post" action="/me/sim/{{ p.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="vote"><button type="submit" class="big">{{ icon("vote") }} Call the vote</button></form>
+</section>
+{% if members|length < 3 and classmates %}<details><summary>Practise with a classmate (up to 3 of you)</summary>
+<form method="post" action="/me/sim/{{ p.id }}" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="add_member">
+  <div class="field"><label for="am">Classmate</label><select id="am" name="student_id">{% for c in classmates %}<option value="{{ c.id }}">{{ c.first_name }}{% if c.last_initial %} {{ c.last_initial }}.{% endif %}</option>{% endfor %}</select></div>
+  <div class="field"><label for="ac">Their delegation</label><select id="ac" name="iso3">{% for c in countries if c.iso3 not in played %}<option value="{{ c.iso3 }}">{{ c.name }}</option>{% endfor %}</select></div>
+  <button type="submit" class="secondary">Add</button></form></details>{% endif %}
+</div></div>
+
+{% else %}
+{% set r = result %}
+<section class="card accent" aria-labelledby="h-out"><h2 id="h-out">{{ icon("ok" if r.passed else "error") }} {{ "Passed" if r.passed else "Failed" }}: {{ r.summary }}</h2>
+<p>Your whip count said <strong>{{ (r.p_pass_before * 100)|round|int }}%</strong> before the vote.{% if r.vetoed_by %} Vetoed by {{ r.vetoed_by|join(", ") }}.{% endif %} Rule: {{ r.rule }}.</p></section>
+<div class="grid">
+<section class="card" aria-labelledby="h-read"><h2 id="h-read">{{ icon("whip") }} How well you read the room</h2>
+{% set mine_r = r.readings | selectattr("student_id", "equalto", me_m.student_id) | list %}
+{% if mine_r %}<p>{{ mine_r | selectattr("correct") | list | length }} of {{ mine_r | rejectattr("correct", "none") | list | length }} readings matched how the delegation actually voted.</p>
+<ul>{% for x in mine_r %}<li><strong>{{ x.country }}</strong>: you read {{ x.read_vote or "nothing recorded" }}; at that point they would have voted {{ x.then_vote }}. {% if x.correct is none %}{% elif x.correct %}{{ icon("ok") }} Right{% else %}{{ icon("error") }} Missed{% endif %}{% if x.moved_after %} Your amendment then moved them to {{ x.actual_vote }}.{% endif %}</li>{% endfor %}</ul>
+{% else %}<p class="muted">You didn't lobby anyone this time.</p>{% endif %}</section>
+<section class="card" aria-labelledby="h-piv"><h2 id="h-piv">{{ icon("whip") }} Which votes decided it</h2>
+{% if r.pivotal %}<ul>{% for x in r.pivotal %}<li>{{ x.country }} ({{ x.vote }}; {{ x.flip_to|join(" or ") }} would have flipped it)</li>{% endfor %}</ul>{% else %}<p>No single vote would have changed the result.</p>{% endif %}</section>
+<section class="card" aria-labelledby="h-mov"><h2 id="h-mov">{{ icon("amendment") }} What your amendment changed</h2>
+{% if r.tags != r.original_tags %}{% if r.moved %}<ul>{% for x in r.moved %}<li>{{ x.country }}: {{ x.before }} → {{ x.after }}</li>{% endfor %}</ul>{% else %}<p>Your amendment didn't change any computed delegation's vote.</p>{% endif %}
+{% else %}<p>You voted on the paragraph as written.</p>{% endif %}</section>
+</div>
+<p><a class="button" href="/me/sim">{{ icon("practice") }} Practise again</a></p>
+{% endif %}
+{% endblock %}

@@ -71,6 +71,17 @@ REFERENCE = [
         C("voting_rule_id", "Voting rule", "ref", ref="voting_rule:id:name"), C("needs_second", "Needs a second", "bool"),
         C("has_duration", "Has a duration", "bool"), C("has_speaking_time", "Has a speaking time", "bool"),
         C("description", "Description", "textarea")), natural_key=("rule_set_id", "code"), order_by="rule_set_id, precedence DESC"),
+    Table("procedure_stage", "Procedure stages (chair script)", (
+        C("rule_set_id", "Rule set", "ref", ref="procedure_rule_set:id:name", required=True),
+        C("code", "Stage", "choice", choices=("roll_call", "agenda", "opening_speeches", "caucus", "draft_resolution", "amendments",
+                                               "voting_procedure", "division", "debrief"), required=True),
+        C("position", "Order", "int"), C("name", "Name", required=True),
+        C("chair_script", "What the chair says", "textarea",
+          hint="Placeholders: {committee}, {agenda}, {present}, {majority}, {speaking_time}, {target}, {yes}, {no}, {abstain}, {result}"),
+        C("chair_next", "What happens next (for the chair)", "textarea"),
+        C("student_prompt", "What students can do now", "textarea")),
+        natural_key=("rule_set_id", "code"), order_by="rule_set_id, position",
+        note="The guided committee session (D-060) shows these to the chair and students at each stage."),
     Table("committee_type", "Committee types", (
         C("code", "Code", required=True), C("name", "Name", required=True),
         C("default_rule_id", "Default voting rule", "ref", ref="voting_rule:id:name"),
@@ -145,6 +156,7 @@ EXPORT_ONLY = [
     "paragraph", "paragraph_version", "amendment", "amendment_support", "evidence", "prediction", "prediction_country",
     "actual_vote", "task", "student_milestone", "model_version", "event_log",
     "live_session", "speakers_list_entry", "motion", "division", "division_vote", "minutes",
+    "roll_call", "whip_round", "whip_prediction", "fidelity_override", "sim_practice", "sim_practice_member", "sim_practice_lobby",
     "debate_event", "team", "team_member", "adjudicator", "room", "debate_round", "pairing", "pairing_adjudicator",
     "ballot", "ballot_score", "house_points_entry", "event_document", "practice_speech",
 ]
