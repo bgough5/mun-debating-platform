@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Engine unit tests</title></head>
+<body>
+<pre id="out">running…</pre>
+<script src="../src/pack_climate2026.js"></script>
+<script src="../shared/engine.js"></script>
+<script>
+(function () {
+  const results = [];
+  let pass = 0, fail = 0;
+
+  function assertEqual(actual, expected, label) {
+    const ok = JSON.stringify(actual) === JSON.stringify(expected);
+    if (ok) pass++; else fail++;
+    results.push(`${ok ? "PASS" : "FAIL"} — ${label}` + (ok ? "" : `\n    expected: ${JSON.stringify(expected)}\n    actual:   ${JSON.stringify(actual)}`));
+  }
+  function assertTrue(cond, label) {
+    if (cond) pass++; else fail++;
+    results.push(`${cond ? "PASS" : "FAIL"} — ${label}`);
+  }
+
+  const byName = n => PACK.countries.find(c => c.n === n);
+
+  // ---- stanceOf ----
+  assertEqual(Engine.stanceOf(byName("Australia"), [], "2.1", PACK), { s: 0, line: null }, "stanceOf: empty tags -> abstain, no line");
+
+  const us21 = Engine.stanceOf(byName("United States of America"), PACK.clauses.find(c=>c.id==="2.1").tags, "2.1", PACK);
+  assertTrue(us21.forced === true, "stanceOf: US|2.1 override is forced");
+  assertEqual(us21.s, -2, "stanceOf: US|2.1 override forces strongly-oppose");
+  assertEqual(us21.line, "The United States has withdrawn from the Paris Agreement and cannot be bound by its deadlines.", "stanceOf: US|2.1 override supplies its own line");
+
+  const tuvalu23 = Engine.stanceOf(byName("Tuvalu"), PACK.clauses.find(c=>c.id==="2.3").tags, "2.3", PACK);
+  assertEqual(tuvalu23.s, 1, "stanceOf: Tuvalu|2.3 computed from archetype blend (no override) -> support (+1)");
+  assertTrue(!tuvalu23.forced, "stanceOf: Tuvalu|2.3 is not forced (no override for this clause)");
+
+  // Overrides only apply to the UNAMENDED clause — clauseId=null must bypass them.
+  const clause26tags = PACK.clauses.find(c=>c.id==="2.6").tags;
+  const usAmended = Engine.stanceOf(byName("United States of America"), [...clause26tags, "binding"], null, PACK);
+  assertTrue(!usAmended.forced, "stanceOf: override suppressed once clauseId is null (amended text)");
+
+  // ---- lineFor ----
+  assertEqual(Engine.lineFor(byName("United States of America"), us21, null, PACK), us21.line, "lineFor: returns the override line untouched when stance.line is set");
+  assertEqual(Engine.lineFor(byName("Tuvalu"), tuvalu23, null, PACK), PACK.lines.FRONTLINE["1"], "lineFor: falls back to top-archetype generic line (Tuvalu is 90% FRONTLINE)");
+
+  // ---- archNames ----
+  assertEqual(Engine.archNames(byName("Australia"), PACK),
+    ["Industrialised Donor 45%", "Extractive Incumbent 40%", "Regional Broker 15%"],
+    "archNames: sorted by descending weight");
+
+  // ---- applyAmendment ----
+  const c21tags = PACK.clauses.find(c=>c.id==="2.1").tags; // ["binding","curb_fossil"]
+  const soften = PACK.amendments.find(a=>a.id==="soften");
+  assertEqual(Engine.applyAmendment(c21tags, soften), ["curb_fossil"], "applyAmendment: soften removes 'binding'");
+
+  const finance = PACK.amendments.find(a=>a.id==="finance");
+  const c26tags = PACK.clauses.find(c=>c.id==="2.6").tags; // ["cost_wealthy","adapt_finance"]
+  assertEqual(Engine.applyAmendment(c26tags, finance), ["cost_wealthy", "adapt_finance"], "applyAmendment: finance adds tags already present -> no duplicates");
+
+  const untouched = Engine.applyAmendment(c21tags, null);
+  assertEqual(untouched, c21tags, "applyAmendment: null amendment returns an equal copy");
+  assertTrue(untouched !== c21tags, "applyAmendment: null amendment does not return the same array reference");
+  untouched.push("mutated");
+  assertEqual(c21tags, ["binding", "curb_fossil"], "applyAmendment: mutating the result does not mutate the original clause tags");
+
+  // ---- applyAmendmentText ----
+  const clause21 = PACK.clauses.find(c=>c.id==="2.1"); // verb "Urges"
+  const strengthen = PACK.amendments.find(a=>a.id==="strengthen");
+  assertEqual(Engine.applyAmendmentText(clause21.text, clause21.verb, strengthen).startsWith("Demands "), true,
+    "applyAmendmentText: replaceVerb swaps the clause's own leading verb");
+  assertTrue(!Engine.applyAmendmentText(clause21.text, clause21.verb, strengthen).startsWith("Urges"),
+    "applyAmendmentText: replaceVerb removes the original verb, doesn't just prepend");
+  assertEqual(Engine.applyAmendmentText(clause21.text, clause21.verb, soften).startsWith("Invites States to consider "), true,
+    "applyAmendmentText: soften replaces the verb with its own phrase");
+
+  const clause26 = PACK.clauses.find(c=>c.id==="2.6");
+  const financeAmendment = PACK.amendments.find(a=>a.id==="finance");
+  const financedText = Engine.applyAmendmentText(clause26.text, clause26.verb, financeAmendment);
+  assertTrue(financedText.startsWith(clause26.text), "applyAmendmentText: append keeps the original text intact, unlike replaceVerb");
+  assertTrue(financedText.length > clause26.text.length, "applyAmendmentText: append actually adds new text, not a no-op");
+
+  assertEqual(Engine.applyAmendmentText(clause21.text, clause21.verb, null), clause21.text,
+    "applyAmendmentText: no amendment -> text unchanged");
+  const noOpAmendment = { id: "x", label: "x", detail: "x", add: [], remove: [] }; // no textOp field at all
+  assertEqual(Engine.applyAmendmentText(clause21.text, clause21.verb, noOpAmendment), clause21.text,
+    "applyAmendmentText: amendment with no textOp -> text unchanged (doesn't throw)");
+
+  // ---- computeDivision ----
+  const chamber = PACK.countries.filter(c => c.n !== "Vanuatu");
+  const div21 = Engine.computeDivision(chamber, c21tags, "2.1", PACK);
+  assertEqual(div21.yes + div21.abstain + div21.no, chamber.length, "computeDivision: yes+abstain+no covers every country");
+  const usVote = div21.votes.find(v => v.country.n === "United States of America");
+  assertEqual(usVote.s, -2, "computeDivision: US|2.1 override reflected in the full division");
+  const tuvaluGone = !div21.votes.some(v => v.country.n === "Vanuatu");
+  assertTrue(tuvaluGone, "computeDivision: excluded country does not appear in the division");
+
+  // ---- tallyVotes ----
+  const castVotes = [{s:2},{s:1},{s:0},{s:-1},{s:-2},{s:1}];
+  const tallied = Engine.tallyVotes(castVotes);
+  assertEqual({yes: tallied.yes, abstain: tallied.abstain, no: tallied.no, passed: tallied.passed},
+    {yes: 3, abstain: 1, no: 2, passed: true}, "tallyVotes: tallies arbitrary cast votes (e.g. real player votes, not just AI-computed ones)");
+
+  // ---- shuffle ----
+  const seq = [0.9, 0.1, 0.5, 0.0]; let i = 0;
+  const rng = () => seq[i++ % seq.length];
+  const original = [1,2,3,4,5];
+  const shuffled = Engine.shuffle(original, rng);
+  assertEqual([...shuffled].sort(), [...original].sort(), "shuffle: result is a permutation of the input");
+  assertEqual(original, [1,2,3,4,5], "shuffle: does not mutate the input array");
+
+  // ---- resolveAmendment ----
+  const amendments = PACK.amendments; // strengthen, soften, finance, exempt, rights, review
+  const ev = (seq, playerId, kind, payload) => ({ seq, playerId, kind, payload });
+
+  assertEqual(Engine.resolveAmendment([], amendments), null, "resolveAmendment: no events -> no amendment (vote unamended)");
+
+  assertEqual(Engine.resolveAmendment([
+    ev(1, "p1", "amendment_sponsor", { amendmentId: "strengthen" }),
+  ], amendments).id, "strengthen", "resolveAmendment: a single sponsor with no seconds still wins (only amendment on the floor)");
+
+  assertEqual(Engine.resolveAmendment([
+    ev(1, "p1", "amendment_sponsor", { amendmentId: "strengthen" }),
+    ev(2, "p2", "amendment_sponsor", { amendmentId: "soften" }),
+    ev(3, "p3", "amendment_second", { amendmentId: "soften", seconded: true }),
+  ], amendments).id, "soften", "resolveAmendment: more seconds wins over fewer");
+
+  assertEqual(Engine.resolveAmendment([
+    ev(1, "p1", "amendment_sponsor", { amendmentId: "strengthen" }),
+    ev(2, "p2", "amendment_sponsor", { amendmentId: "soften" }),
+  ], amendments).id, "strengthen", "resolveAmendment: tied seconds (zero each) -> earliest sponsorship wins");
+
+  assertEqual(Engine.resolveAmendment([
+    ev(1, "p1", "amendment_sponsor", { amendmentId: "strengthen" }),
+    ev(2, "p2", "amendment_second", { amendmentId: "strengthen", seconded: true }),
+    ev(3, "p2", "amendment_second", { amendmentId: "strengthen", seconded: false }),
+  ], amendments).id, "strengthen", "resolveAmendment: a single sponsor with a withdrawn second still wins (only amendment on the floor)");
+
+  assertEqual(Engine.resolveAmendment([
+    ev(1, "p1", "amendment_sponsor", { amendmentId: "strengthen" }),
+    ev(2, "p1", "amendment_second", { amendmentId: "strengthen", seconded: true }),
+  ], amendments).id, "strengthen", "resolveAmendment: sponsor's own support does not double as a second (still resolves fine as the only amendment)");
+
+  assertEqual(Engine.resolveAmendment([
+    ev(1, "p1", "amendment_sponsor", { amendmentId: "strengthen" }),
+    ev(2, "p2", "amendment_sponsor", { amendmentId: "soften" }),
+    ev(3, "p3", "amendment_second", { amendmentId: "soften", seconded: true }),
+    ev(4, "p1", "amendment_second", { amendmentId: "soften", seconded: true }),
+  ], amendments).id, "soften", "resolveAmendment: original sponsor of a losing amendment can second a different one");
+
+  assertEqual(Engine.resolveAmendment([
+    ev(1, "p1", "amendment_sponsor", { amendmentId: "strengthen" }),
+    ev(2, "p1", "amendment_sponsor", { amendmentId: "soften" }),
+  ], amendments).id, "soften", "resolveAmendment: a player's later sponsorship replaces their earlier one");
+
+  assertEqual(Engine.resolveAmendment([
+    ev(1, "p1", "amendment_sponsor", { amendmentId: "strengthen" }),
+    ev(2, "p1", "amendment_sponsor", { amendmentId: null }),
+  ], amendments), null, "resolveAmendment: withdrawing the only sponsorship leaves nothing on the floor");
+
+  // ---- resolveClausePitch (same generic sponsor/second mechanic, applied to clauses) ----
+  const clauses = PACK.clauses;
+  assertEqual(Engine.resolveClausePitch([], clauses), null, "resolveClausePitch: no events -> no clause chosen");
+
+  assertEqual(Engine.resolveClausePitch([
+    ev(1, "p1", "clause_sponsor", { clauseId: "2.1" }),
+  ], clauses).id, "2.1", "resolveClausePitch: a single sponsor with no seconds still wins");
+
+  assertEqual(Engine.resolveClausePitch([
+    ev(1, "p1", "clause_sponsor", { clauseId: "2.1" }),
+    ev(2, "p2", "clause_sponsor", { clauseId: "2.6" }),
+    ev(3, "p3", "clause_second", { clauseId: "2.6", seconded: true }),
+  ], clauses).id, "2.6", "resolveClausePitch: more seconds wins over fewer, exactly like amendments");
+
+  assertEqual(Engine.resolveClausePitch([
+    ev(1, "p1", "clause_sponsor", { clauseId: "2.1" }),
+    ev(2, "p2", "clause_sponsor", { clauseId: "2.6" }),
+  ], clauses).id, "2.1", "resolveClausePitch: tied seconds (zero each) -> earliest sponsorship wins");
+
+  // Sanity check: the two mechanics don't cross-contaminate each other's
+  // events, since they're distinguished purely by event kind string.
+  assertEqual(Engine.resolveAmendment([
+    ev(1, "p1", "clause_sponsor", { clauseId: "2.1" }),
+    ev(2, "p1", "amendment_sponsor", { amendmentId: "strengthen" }),
+  ], amendments).id, "strengthen", "resolveAmendment: ignores clause_sponsor events entirely (different kind)");
+
+  results.push("", `${pass} passed, ${fail} failed`);
+  const text = results.join("\n");
+  document.getElementById("out").textContent = text;
+  console.log(text);
+  window.__testSummary = { pass, fail };
+})();
+</script>
+</body>
+</html>

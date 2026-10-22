@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Whip Count — Model UN Caucus Simulator</title>
+<style>
+  :root{
+    --maroon:#8C332A; --maroon-dk:#2A1512; --maroon-deep:#3D1712;
+    --green:#0A6B39; --green-dk:#0A4527;
+    --gold:#B8960C; --gold-lt:#D4B441;
+    --cream:#F4F0E6; --card:#FBFAF6; --ink:#2A2320; --grey:#6B6560; --line:#E4DFD3;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:Calibri,Candara,Segoe UI,system-ui,sans-serif;
+    background:var(--maroon-dk); color:var(--ink);
+    min-height:100vh; display:flex; justify-content:center; padding:20px 14px 60px;
+  }
+  .shell{width:100%;max-width:1080px}
+  h1,h2,h3,.serif{font-family:Cambria,Georgia,"Times New Roman",serif}
+
+  /* header */
+  .topbar{display:flex;align-items:center;gap:14px;padding:6px 2px 18px}
+  .topbar img{width:42px;height:40px;flex:none}
+  .brandname{color:var(--cream);font-size:15px;font-weight:bold;letter-spacing:1.6px}
+  .brandsub{color:var(--gold-lt);font-size:11px;letter-spacing:2.4px;margin-top:2px}
+  .spacer{flex:1}
+  .scorepill{background:var(--maroon-deep);border:1px solid #5A2A22;color:var(--cream);
+    padding:8px 16px;border-radius:22px;font-size:13px;letter-spacing:.6px}
+  .scorepill b{color:var(--gold-lt);font-size:16px}
+
+  .panel{background:var(--card);border-radius:12px;padding:30px 32px;box-shadow:0 8px 30px rgba(0,0,0,.32)}
+  .kicker{color:var(--gold);font-size:11.5px;font-weight:bold;letter-spacing:2.4px;text-transform:uppercase}
+  h1{font-size:33px;color:var(--maroon);margin:8px 0 6px;line-height:1.16}
+  h2{font-size:24px;color:var(--maroon);margin:0 0 6px}
+  .lede{color:var(--grey);font-size:15px;line-height:1.6;max-width:76ch}
+  .hr{height:1px;background:var(--line);margin:22px 0}
+
+  label.fld{display:block;font-size:11.5px;font-weight:bold;letter-spacing:1.6px;
+    text-transform:uppercase;color:var(--maroon);margin-bottom:7px}
+  select{width:100%;padding:11px 12px;font-size:15px;font-family:inherit;color:var(--ink);
+    border:1px solid #CFC8B8;border-radius:7px;background:#fff}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+
+  button{font-family:inherit;cursor:pointer;border:none;border-radius:7px;transition:.13s}
+  .btn{background:var(--maroon);color:#fff;padding:14px 30px;font-size:15.5px;font-weight:bold;letter-spacing:.4px}
+  .btn:hover{background:#6E2820}
+  .btn:disabled{background:#B9AEA5;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--maroon);border:1.5px solid var(--maroon)}
+  .btn.ghost:hover{background:#F3E9E7}
+  .btn.green{background:var(--green-dk)} .btn.green:hover{background:#073419}
+  .actions{display:flex;gap:12px;align-items:center;margin-top:26px;flex-wrap:wrap}
+
+  /* brief card */
+  .brief{background:var(--maroon-dk);color:var(--cream);border-radius:10px;padding:20px 22px;margin-bottom:20px}
+  .brief .cn{font-family:Cambria,Georgia,serif;font-size:22px;font-weight:bold;color:#fff}
+  .brief .arch{margin:12px 0 10px;display:flex;flex-wrap:wrap;gap:7px}
+  .tagchip{background:var(--maroon-deep);border:1px solid #62312A;color:var(--gold-lt);
+    font-size:11.5px;padding:4px 11px;border-radius:20px;letter-spacing:.4px}
+  .brief .fact{font-size:13.2px;color:#CFC6BC;line-height:1.55;font-style:italic}
+
+  .clausebox{background:var(--cream);border-radius:9px;padding:19px 22px;margin-bottom:22px}
+  .clausebox .cid{font-family:Cambria,Georgia,serif;font-weight:bold;color:var(--maroon);font-size:17px}
+  .clausebox .ctext{font-size:14.6px;line-height:1.62;margin-top:7px;color:var(--ink)}
+  .amended{border-left:4px solid var(--gold);}
+  .amendnote{margin-top:11px;font-size:12.8px;color:var(--green-dk);font-weight:bold}
+
+  /* voting rows */
+  .vrow{display:flex;align-items:center;gap:14px;padding:12px 4px;border-bottom:1px solid var(--line)}
+  .vrow:last-child{border-bottom:none}
+  .vname{flex:1;min-width:150px}
+  .vname .nm{font-family:Cambria,Georgia,serif;font-size:16.5px;font-weight:bold}
+  .vname .rg{font-size:11.5px;color:var(--grey);letter-spacing:.8px;text-transform:uppercase;margin-top:2px}
+  .vbtns{display:flex;gap:6px;flex:none}
+  .vb{width:46px;height:38px;border-radius:6px;background:#EFEAE0;color:var(--grey);
+    font-size:16px;font-weight:bold;border:1.5px solid transparent}
+  .vb:hover{background:#E3DCCD}
+  .vb.sel{color:#fff}
+  .vb.sel[data-v="2"],.vb.sel[data-v="1"]{background:var(--green-dk)}
+  .vb.sel[data-v="0"]{background:#8A8078}
+  .vb.sel[data-v="-1"],.vb.sel[data-v="-2"]{background:var(--maroon)}
+  .legend{display:flex;gap:16px;font-size:11.5px;color:var(--grey);margin:4px 0 14px;flex-wrap:wrap}
+
+  /* reveal */
+  .rev{padding:14px 4px;border-bottom:1px solid var(--line)}
+  .revhead{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+  .mark{width:24px;height:24px;border-radius:50%;color:#fff;font-size:14px;font-weight:bold;
+    display:flex;align-items:center;justify-content:center;flex:none}
+  .mark.ok{background:var(--green-dk)} .mark.no{background:var(--maroon)}
+  .stancetag{font-size:11px;font-weight:bold;letter-spacing:1.1px;text-transform:uppercase;
+    padding:3px 10px;border-radius:14px;color:#fff}
+  .revline{font-family:Cambria,Georgia,serif;font-style:italic;color:var(--ink);
+    font-size:14.2px;line-height:1.55;margin:8px 0 0 35px;padding-left:12px;border-left:2px solid var(--line)}
+  .revwhy{font-size:12.2px;color:var(--grey);margin:6px 0 0 47px}
+
+  /* amendments */
+  .amcard{background:var(--cream);border-radius:9px;padding:15px 17px;cursor:pointer;
+    border:2px solid transparent;text-align:left;width:100%;font-family:inherit}
+  .amcard:hover{background:#EDE7D9}
+  .amcard.sel{border-color:var(--green-dk);background:#EAF0EA}
+  .amcard .al{font-family:Cambria,Georgia,serif;font-weight:bold;font-size:15.5px;color:var(--maroon)}
+  .amcard.sel .al{color:var(--green-dk)}
+  .amcard .ad{font-size:12.8px;color:var(--grey);line-height:1.5;margin-top:5px}
+
+  /* tally */
+  .tally{display:flex;gap:3px;margin:16px 0 10px;height:34px;border-radius:6px;overflow:hidden}
+  .tally div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:bold}
+  .verdict{font-family:Cambria,Georgia,serif;font-size:21px;font-weight:bold;margin:6px 0 4px}
+  .pass{color:var(--green-dk)} .fail{color:var(--maroon)}
+
+  .statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0}
+  .stat{background:var(--cream);border-radius:9px;padding:17px}
+  .stat .v{font-family:Cambria,Georgia,serif;font-size:31px;font-weight:bold;color:var(--maroon)}
+  .stat .l{font-size:11.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--grey);margin-top:3px}
+  .warn{background:#FBF0EE;border-radius:9px;padding:15px 18px;font-size:13.6px;line-height:1.55;color:var(--maroon);margin-top:14px}
+  .good{background:#EAF0EA;border-radius:9px;padding:15px 18px;font-size:13.6px;line-height:1.55;color:var(--green-dk);margin-top:14px}
+
+  .timer{font-family:Cambria,Georgia,serif;font-size:19px;font-weight:bold;color:var(--maroon)}
+  .timer.low{color:#C0392B}
+  .hidden{display:none}
+  .foot{text-align:center;color:#7C7168;font-size:11px;letter-spacing:1.6px;margin-top:22px}
+  @media(max-width:720px){
+    .grid2,.grid3,.statgrid{grid-template-columns:1fr}
+    .panel{padding:22px 18px}
+    h1{font-size:26px}
+    .vrow{flex-wrap:wrap}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="topbar">
+    <img id="logo" alt="">
+    <div>
+      <div class="brandname">WHIP COUNT</div>
+      <div class="brandsub">SOUTH OAKLEIGH COLLEGE MUN</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="scorepill">ROUND SCORE <b id="scoreOut">0</b></div>
+  </div>
+
+  <!-- ============ SETUP ============ -->
+  <div class="panel" id="scSetup">
+    <div class="kicker">Caucus Simulator</div>
+    <h1>Can you read the room?</h1>
+    <p class="lede">Real delegates don't memorise positions — they reason from a country's interests to its vote. You'll be handed a delegation and a clause, then asked to predict how the room falls before you try to amend your way to a majority. Guess wrong and you'll see exactly why.</p>
+    <div class="hr"></div>
+    <div class="grid2">
+      <div>
+        <label class="fld" for="selCountry">Your delegation</label>
+        <select id="selCountry"></select>
+      </div>
+      <div>
+        <label class="fld" for="selClause">Clause under debate</label>
+        <select id="selClause"></select>
+      </div>
+    </div>
+    <div style="margin-top:20px" class="grid2">
+      <div>
+        <label class="fld" for="selDiff">Difficulty</label>
+        <select id="selDiff">
+          <option value="easy">Attaché — 5 delegations, archetypes shown, no timer</option>
+          <option value="normal" selected>Delegate — 7 delegations, archetypes shown, 3 min</option>
+          <option value="hard">Ambassador — 9 delegations, archetypes hidden, 2 min</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:flex-end">
+        <button class="btn" style="width:100%" onclick="startRound()">Enter the chamber</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ WHIP COUNT ============ -->
+  <div class="panel hidden" id="scWhip">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div><div class="kicker">Step 1 of 3 — The Whip Count</div><h2>How will the room vote?</h2></div>
+      <div class="timer" id="timer"></div>
+    </div>
+    <p class="lede" style="margin-bottom:18px">Predict each delegation's stance on the clause as drafted. You are not guessing — reason from what each state needs.</p>
+    <div class="brief" id="briefBox"></div>
+    <div class="clausebox" id="clauseBox"></div>
+    <div class="legend">
+      <span><b>++</b> Strongly support</span><span><b>+</b> Support</span>
+      <span><b>~</b> Abstain</span><span><b>−</b> Oppose</span><span><b>−−</b> Strongly oppose</span>
+    </div>
+    <div id="voteRows"></div>
+    <div class="actions">
+      <button class="btn" id="btnLock" onclick="lockWhip()" disabled>Lock in my count</button>
+      <span style="font-size:13px;color:var(--grey)" id="progressNote"></span>
+    </div>
+  </div>
+
+  <!-- ============ REVEAL ============ -->
+  <div class="panel hidden" id="scReveal">
+    <div class="kicker">Step 2 of 3 — The Reveal</div>
+    <h2 id="revealTitle"></h2>
+    <p class="lede" style="margin-bottom:6px" id="revealSub"></p>
+    <div class="hr"></div>
+    <div id="revealRows"></div>
+    <div class="actions"><button class="btn green" onclick="goAmend()">Now amend the clause</button></div>
+  </div>
+
+  <!-- ============ AMEND ============ -->
+  <div class="panel hidden" id="scAmend">
+    <div class="kicker">Step 3 of 3 — The Amendment</div>
+    <h2>Build your majority.</h2>
+    <p class="lede" style="margin-bottom:18px">Choose one amendment. It must win a simple majority of the room <em>and</em> keep your own delegation able to vote for it — a delegate who wins the room by abandoning their national interest has failed.</p>
+    <div class="clausebox" id="clauseBox2"></div>
+    <div class="grid3" id="amendGrid"></div>
+    <div class="actions">
+      <button class="btn" id="btnAmend" onclick="applyAmend()" disabled>Put it to the vote</button>
+      <button class="btn ghost" onclick="applyAmend(true)">Vote on the clause unamended</button>
+    </div>
+  </div>
+
+  <!-- ============ RESULT ============ -->
+  <div class="panel hidden" id="scResult">
+    <div class="kicker">Division of the Assembly</div>
+    <h2 id="resTitle"></h2>
+    <div class="clausebox amended" id="clauseBox3"></div>
+    <div class="tally" id="tally"></div>
+    <div style="font-size:12.5px;color:var(--grey);margin-bottom:16px" id="tallyNote"></div>
+    <div class="verdict" id="verdict"></div>
+    <div id="mandateBox"></div>
+    <div class="statgrid" id="statGrid"></div>
+    <div class="actions">
+      <button class="btn" onclick="location.reload()">Play another round</button>
+      <button class="btn ghost" onclick="sameCountryNewClause()">Same country, new clause</button>
+    </div>
+  </div>
+
+  <div class="foot">PREP TOOL — BUILD YOUR OWN ARGUMENTS. NOT FOR USE DURING THE ASSEMBLY.</div>
+</div>
+
+<script>
+// ============================================================
+// WHIP COUNT — TOPIC PACK
+// Schema v1. Any pack matching this shape runs in the engine.
+// ============================================================
+const PACK = {
+  meta: {
+    title: "Combating Climate Change: Committing to Global Action",
+    committee: "United Nations General Assembly",
+    conference: "UNAA Victoria Model UN 2026",
+    year: 2026,
+  },
+
+  // ---- Closed vocabulary of clause attributes. Generalises past climate. ----
+  tags: {
+    cost_wealthy:   "Imposes cost on wealthy states",
+    curb_fossil:    "Constrains fossil fuel production",
+    binding:        "Creates binding obligation",
+    human_right:    "Asserts a human right",
+    agriculture:    "Targets the agriculture sector",
+    adapt_finance:  "Provides adaptation / resilience finance",
+    indigenous:     "Concerns Indigenous rights",
+    lifestyle:      "Requires behavioural or lifestyle change",
+    ecosystems:     "Protects ecosystems",
+    tech_transfer:  "Demands technology transfer",
+  },
+
+  // ---- Diplomatic archetypes. The engine reasons over THESE, not countries. ----
+  archetypes: {
+    FRONTLINE: {
+      name: "Existential Frontline State",
+      blurb: "Bears severe harm, contributed almost nothing to the cause. Argues from survival and, increasingly, from law.",
+      affinity: { cost_wealthy: 2, curb_fossil: 2, binding: 2, human_right: 2, agriculture: 0, adapt_finance: 2, indigenous: 1, lifestyle: 0, ecosystems: 1, tech_transfer: 2 },
+    },
+    EXTRACTIVE: {
+      name: "Extractive Incumbent",
+      blurb: "National economy tied to the activity being regulated. Wants soft verbs, long timelines, 'transition' not 'phase-out'.",
+      affinity: { cost_wealthy: -1, curb_fossil: -2, binding: -2, human_right: -1, agriculture: 0, adapt_finance: -1, indigenous: 0, lifestyle: -1, ecosystems: 0, tech_transfer: -1 },
+    },
+    DONOR: {
+      name: "Industrialised Donor",
+      blurb: "Wealthy and expected to pay. Backs ambition in principle, resists open-ended financial obligation.",
+      affinity: { cost_wealthy: -1, curb_fossil: 1, binding: 0, human_right: 2, agriculture: 1, adapt_finance: 1, indigenous: 1, lifestyle: 1, ecosystems: 2, tech_transfer: 0 },
+    },
+    EMERGING: {
+      name: "Emerging Industrialiser",
+      blurb: "Large and growing. High total output, low per-capita. Invokes differentiated responsibility and the right to develop.",
+      affinity: { cost_wealthy: 2, curb_fossil: -1, binding: -1, human_right: 0, agriculture: -1, adapt_finance: 2, indigenous: 0, lifestyle: -1, ecosystems: 0, tech_transfer: 2 },
+    },
+    REFORMER: {
+      name: "Credible Reformer",
+      blurb: "Mid-sized, punches above its weight through demonstrated results. Bridge-builder who offers its own model as a template.",
+      affinity: { cost_wealthy: 1, curb_fossil: 2, binding: 1, human_right: 2, agriculture: 0, adapt_finance: 1, indigenous: 1, lifestyle: 1, ecosystems: 2, tech_transfer: 1 },
+    },
+    DEVPRIORITY: {
+      name: "Development-Priority State",
+      blurb: "Capacity-constrained. Will back ambition only where it is financed. Sensitive about external accountability.",
+      affinity: { cost_wealthy: 2, curb_fossil: 0, binding: -1, human_right: 1, agriculture: -1, adapt_finance: 2, indigenous: 0, lifestyle: -1, ecosystems: 1, tech_transfer: 2 },
+    },
+    SOVEREIGNTY: {
+      name: "Sovereignty Guardian",
+      blurb: "Resists binding international obligation on principle, largely regardless of topic. Suspicious of rights framings and outside review.",
+      affinity: { cost_wealthy: -2, curb_fossil: -1, binding: -2, human_right: -2, agriculture: -1, adapt_finance: -2, indigenous: -1, lifestyle: -1, ecosystems: -1, tech_transfer: -1 },
+    },
+    BROKER: {
+      name: "Regional Broker",
+      blurb: "Has hosting or convening ambitions and needs the deal to land. Will trade substance for consensus.",
+      affinity: { cost_wealthy: 0, curb_fossil: 0, binding: 0, human_right: 1, agriculture: 0, adapt_finance: 1, indigenous: 0, lifestyle: 0, ecosystems: 1, tech_transfer: 1 },
+    },
+  },
+
+  clauses: [
+    { id: "2.1", verb: "Urges", text: "Urges all nations to commit to the goals and deadlines set by the Paris Climate Agreement and increase emission reduction targets to limit the rise in global temperatures to well below two degrees above pre-industrial levels.", tags: ["binding", "curb_fossil"] },
+    { id: "2.2", verb: "Requests", text: "Requests that all wealthy industrialised nations invest heavily in research and technologies, including transfer of these technologies to developing countries, that boost renewable energy sources, and phase out their reliance on non-renewable energy sources.", tags: ["cost_wealthy", "curb_fossil", "tech_transfer"] },
+    { id: "2.3", verb: "Calls upon", text: "Calls upon all nations to protect their existing forest and invest heavily in reforestation, to improve the state of the world's forests and help absorb harmful carbon dioxide levels.", tags: ["ecosystems"] },
+    { id: "2.4", verb: "Invites", text: "Invites States to consider implementing sustainable agricultural practices, mitigating the agriculture sector's negative impact on biodiversity, water resources and climate, and holding the sector accountable.", tags: ["agriculture", "ecosystems"] },
+    { id: "2.5", verb: "Encourages", text: "Encourages all States, together with civil society and the private sector, to commit to gradually moving towards a greater reliance on plant-based diets for their citizens.", tags: ["lifestyle", "agriculture"] },
+    { id: "2.6", verb: "Suggests", text: "Suggests all wealthy developed States tackle the causes of climate change and increase their financial support to the Green Climate Fund to promote adaptation, resilience and carbon-neutral development in developing countries.", tags: ["cost_wealthy", "adapt_finance"] },
+    { id: "2.7", verb: "Further reminds", text: "Further reminds States to provide decent employment and green jobs when transitioning away from fossil fuel economies, including eliminating inefficient fossil fuel subsidies.", tags: ["curb_fossil", "cost_wealthy"] },
+    { id: "2.8", verb: "Appeals to", text: "Appeals to all States to consider ways of increasing the representation of Indigenous peoples when negotiating and implementing climate action agreements.", tags: ["indigenous"] },
+    { id: "2.9", verb: "Recommends", text: "Recommends Member States recognise the right to a clean, healthy and sustainable environment as a human right under the principles of international law.", tags: ["human_right", "binding"] },
+  ],
+
+  // ---- Amendments available to the player. Each mutates the clause's tag set. ----
+  amendments: [
+    { id: "strengthen", label: "Strengthen the verb", detail: "Replace the soft verb with “Demands”, creating a clear obligation.", add: ["binding"], remove: [] },
+    { id: "soften", label: "Soften the verb", detail: "Downgrade to “Invites States to consider”, removing any sense of obligation.", add: [], remove: ["binding"] },
+    { id: "finance", label: "Attach finance to it", detail: "Require wealthy States to fund implementation in developing countries.", add: ["adapt_finance", "cost_wealthy"], remove: [] },
+    { id: "exempt", label: "Exempt developing States", detail: "Limit the obligation to developed States only.", add: [], remove: ["cost_wealthy"] },
+    { id: "rights", label: "Add a rights framing", detail: "Ground the clause in the right to a clean, healthy and sustainable environment.", add: ["human_right"], remove: [] },
+    { id: "review", label: "Add a review mechanism", detail: "Require States to report progress for international scrutiny every two years.", add: ["binding"], remove: [] },
+  ],
+
+  // ---- Countries as WEIGHTED BLENDS of archetypes. This is what makes it generalise. ----
+  countries: [
+    { n: "Australia",                 g: "Asia-Pacific", w: { DONOR: 45, EXTRACTIVE: 40, BROKER: 15 }, fact: "Holds the COP31 presidency of negotiations in 2026, while remaining one of the world's largest coal and gas exporters." },
+    { n: "Barbados",                  g: "Americas",     w: { FRONTLINE: 70, DEVPRIORITY: 30 }, fact: "Author of the Bridgetown Initiative on reforming climate finance." },
+    { n: "Brazil",                    g: "Americas",     w: { EMERGING: 60, EXTRACTIVE: 20, BROKER: 20 }, fact: "Hosted COP30 in Belém in 2025; holds most of the Amazon basin." },
+    { n: "Canada",                    g: "Americas",     w: { DONOR: 55, EXTRACTIVE: 45 }, fact: "Combines strong climate rhetoric with major oil sands production." },
+    { n: "Central African Republic",  g: "Africa",       w: { DEVPRIORITY: 100 }, fact: "Among the lowest emitters on earth, with minimal capacity to adapt." },
+    { n: "Chile",                     g: "Americas",     w: { REFORMER: 60, EMERGING: 25, DEVPRIORITY: 15 }, fact: "Rapid solar build-out in the Atacama; a major supplier of transition minerals." },
+    { n: "China",                     g: "Asia-Pacific", w: { EMERGING: 55, SOVEREIGNTY: 30, EXTRACTIVE: 15 }, fact: "The largest total emitter and simultaneously the largest installer of renewable capacity." },
+    { n: "Costa Rica",                g: "Americas",     w: { REFORMER: 75, DEVPRIORITY: 25 }, fact: "Co-authored the 2022 UNGA resolution recognising the right to a healthy environment; ~99% renewable electricity." },
+    { n: "Denmark",                   g: "Europe",       w: { DONOR: 55, REFORMER: 45 }, fact: "Co-founded the Beyond Oil and Gas Alliance while phasing out North Sea extraction." },
+    { n: "Egypt",                     g: "Africa",       w: { BROKER: 40, DEVPRIORITY: 35, EXTRACTIVE: 25 }, fact: "Hosted COP27, where the Loss and Damage Fund was agreed." },
+    { n: "Fiji",                      g: "Asia-Pacific", w: { FRONTLINE: 75, DEVPRIORITY: 25 }, fact: "First Pacific state to preside over a COP; already relocating coastal villages." },
+    { n: "France",                    g: "Europe",       w: { DONOR: 75, REFORMER: 15, SOVEREIGNTY: 10 }, fact: "Draws roughly 70% of its electricity from nuclear power — which clause 2.2 would phase out." },
+    { n: "Gambia",                    g: "Africa",       w: { DEVPRIORITY: 85, FRONTLINE: 15 }, fact: "One of very few states whose climate plan has been rated Paris-compatible." },
+    { n: "Germany",                   g: "Europe",       w: { DONOR: 70, REFORMER: 30 }, fact: "A leading contributor to the Green Climate Fund; exited coal power on an accelerated timetable." },
+    { n: "Greece",                    g: "Europe",       w: { DONOR: 70, BROKER: 30 }, fact: "Devastated by the 2023 wildfires; now a Mediterranean climate-adaptation advocate." },
+    { n: "India",                     g: "Asia-Pacific", w: { EMERGING: 65, DEVPRIORITY: 20, SOVEREIGNTY: 15 }, fact: "Secured the change from 'phase out' to 'phase down' coal at COP26." },
+    { n: "Japan",                     g: "Asia-Pacific", w: { DONOR: 75, EXTRACTIVE: 25 }, fact: "Heavily import-dependent for energy; a major financier of overseas gas projects." },
+    { n: "Kenya",                     g: "Africa",       w: { DEVPRIORITY: 65, REFORMER: 35 }, fact: "Over 80% renewable electricity, largely geothermal; hosted the Africa Climate Summit." },
+    { n: "Madagascar",                g: "Africa",       w: { DEVPRIORITY: 80, FRONTLINE: 20 }, fact: "Suffered what was described as the world's first climate-driven famine conditions in the south." },
+    { n: "Mexico",                    g: "Americas",     w: { EMERGING: 50, DONOR: 25, BROKER: 25 }, fact: "A major oil producer that has expanded state refining capacity." },
+    { n: "Mongolia",                  g: "Asia-Pacific", w: { DEVPRIORITY: 55, EXTRACTIVE: 45 }, fact: "Coal-dependent economy; severe dzud winters are destroying herding livelihoods." },
+    { n: "Morocco",                   g: "Africa",       w: { REFORMER: 45, DEVPRIORITY: 30, BROKER: 25 }, fact: "Home to the Noor Ouarzazate complex, among the largest concentrated solar plants in the world." },
+    { n: "Philippines",               g: "Asia-Pacific", w: { FRONTLINE: 50, DEVPRIORITY: 30, EMERGING: 20 }, fact: "Struck by some of the most intense typhoons ever recorded; chaired the Climate Vulnerable Forum." },
+    { n: "Saudi Arabia",              g: "Africa/M.East",w: { EXTRACTIVE: 70, SOVEREIGNTY: 30 }, fact: "Has consistently resisted explicit fossil fuel phase-out language in COP texts." },
+    { n: "South Africa",              g: "Africa",       w: { EMERGING: 55, EXTRACTIVE: 25, DEVPRIORITY: 20 }, fact: "Around 80% coal-powered; pilot recipient of a Just Energy Transition Partnership." },
+    { n: "Spain",                     g: "Europe",       w: { DONOR: 70, REFORMER: 30 }, fact: "Facing severe drought and desertification across its southern regions." },
+    { n: "Türkiye",              g: "Europe",       w: { BROKER: 50, EMERGING: 30, SOVEREIGNTY: 20 }, fact: "Hosts COP31 in November 2026 — and needs the conference to be seen to succeed." },
+    { n: "Tuvalu",                    g: "Asia-Pacific", w: { FRONTLINE: 90, DEVPRIORITY: 10 }, fact: "Building a digital replica of itself to preserve statehood if the territory becomes uninhabitable." },
+    { n: "United Kingdom",            g: "Europe",       w: { DONOR: 75, REFORMER: 25 }, fact: "Closed its last coal-fired power station in 2024." },
+    { n: "United States of America",  g: "Americas",     w: { SOVEREIGNTY: 65, EXTRACTIVE: 25, DONOR: 10 }, fact: "Withdrew from the Paris Agreement for a second time in January 2026, and from the UNFCCC in February 2026." },
+    { n: "Vanuatu",                   g: "Asia-Pacific", w: { FRONTLINE: 85, DEVPRIORITY: 15 }, fact: "Led the campaign that produced the ICJ's July 2025 advisory opinion on states' climate obligations." },
+  ],
+
+  // ---- Overrides: where real diplomacy departs from archetype maths. ----
+  // Keyed "Country|clause". Forces a stance and supplies a bespoke line.
+  overrides: {
+    "United States of America|2.1": { s: -2, line: "The United States has withdrawn from the Paris Agreement and cannot be bound by its deadlines." },
+    "United States of America|2.9": { s: -2, line: "The United States does not accept the creation of new human rights through General Assembly resolutions." },
+    "United States of America|2.6": { s: -2, line: "The United States will not accept open-ended financial obligations to the Green Climate Fund." },
+    "Costa Rica|2.9":  { s: 2,  line: "Costa Rica co-authored this very language in 2022. We do not merely support this clause — we wrote it." },
+    "Costa Rica|2.3":  { s: 2,  line: "Our Payments for Environmental Services scheme took forest cover from a quarter of our territory to over half. This works." },
+    "Costa Rica|2.4":  { s: 0,  line: "Costa Rica supports accountability, but our pineapple and banana growers require transition finance, not blunt condemnation." },
+    "Vanuatu|2.6":     { s: 1,  line: "Adaptation finance is welcome, but it is not compensation. Where is loss and damage in this clause?" },
+    "Vanuatu|2.1":     { s: 1,  line: "‘Well below two degrees’ is a retreat. The International Court of Justice has confirmed our obligations run further than this." },
+    "France|2.2":      { s: -1, line: "France cannot accept nuclear energy being grouped with coal and oil. Nuclear power emits no greenhouse gases." },
+    "Saudi Arabia|2.2":{ s: -2, line: "The Kingdom rejects any text singling out particular energy sources for elimination." },
+    "Australia|2.2":   { s: -1, line: "Australia supports the transition, but as COP31 president we must bring resource economies with us, not corner them." },
+    "Türkiye|2.1": { s: 1, line: "As host of COP31, Türkiye needs this Assembly to arrive in November with momentum, not division." },
+    "India|2.2":       { s: 1,  line: "India welcomes technology transfer — but developed nations must fund it, not merely request it of themselves." },
+    "Tuvalu|2.1":      { s: 2,  line: "Two degrees is not a target for Tuvalu. It is a description of our disappearance." },
+    "Brazil|2.3":      { s: 2,  line: "Brazil accepts this responsibility, and expects the world to pay for the forest it asks us to keep standing." },
+    "China|2.2":       { s: 0,  line: "China notes that it manufactures the very technologies this clause asks to be transferred." },
+  },
+
+  // ---- Layered reaction lines: archetype-generic, used when no override exists. ----
+  lines: {
+    FRONTLINE:   { 2: "This is the minimum our survival requires.", 1: "We support this, though it asks too little too slowly.", 0: "We cannot celebrate a clause this weak.", "-1": "This language fails the states already losing territory.", "-2": "We reject text that treats our disappearance as negotiable." },
+    EXTRACTIVE:  { 2: "We can accept this, as it imposes no obligation on production.", 1: "We will not oppose language framed as transition rather than prohibition.", 0: "We reserve our position pending clarification.", "-1": "This clause threatens the livelihoods of our energy sector.", "-2": "This is an attack on our economy and we will oppose it outright." },
+    DONOR:       { 2: "This reflects the ambition we have long advocated.", 1: "We support this, consistent with our existing commitments.", 0: "We support the intent but question the mechanism.", "-1": "We cannot accept an open-ended call on our treasury.", "-2": "This asks our taxpayers to underwrite obligations without limit." },
+    EMERGING:    { 2: "This properly reflects common but differentiated responsibility.", 1: "We support this, provided developed nations move first.", 0: "Our position depends entirely on who is being asked to pay.", "-1": "This constrains our development without financing our alternative.", "-2": "We will not accept a ceiling on growth the industrialised world never faced." },
+    REFORMER:    { 2: "We have done this at home and we commend it to the Assembly.", 1: "We support this and can offer our own experience as a model.", 0: "We would prefer implementation detail before committing.", "-1": "We support the goal but this drafting will not achieve it.", "-2": "We cannot support text this poorly constructed." },
+    DEVPRIORITY: { 2: "With finance attached, we support this wholeheartedly.", 1: "We support this if the means of implementation follow.", 0: "We cannot commit to what we cannot afford.", "-1": "This asks of us what wealthier states will not do themselves.", "-2": "We reject obligations imposed without the capacity to meet them." },
+    SOVEREIGNTY: { 2: "We accept this only because it binds no one.", 1: "We can live with language this permissive.", 0: "We note this clause without endorsing it.", "-1": "This encroaches on matters properly decided nationally.", "-2": "We reject this as an infringement of national sovereignty." },
+    BROKER:      { 2: "This is text the whole Assembly can rally behind.", 1: "We support this as a basis for consensus.", 0: "We would counsel compromise before this divides the room.", "-1": "This will cost us votes we cannot afford to lose.", "-2": "Pressing this will fracture the Assembly." },
+  },
+};
+
+</script>
+<script>
+/* ============ ENGINE ============ */
+const S = {stanceName:{2:"Strongly support",1:"Support",0:"Abstain","-1":"Oppose","-2":"Strongly oppose"},
+           stanceCol:{2:"#0A4527",1:"#0A6B39",0:"#8A8078","-1":"#8C332A","-2":"#5E1F18"}};
+let G = {};
+
+/* Compute a country's stance on a tag-set from its archetype blend. */
+function stanceOf(country, tags, clauseId){
+  if(clauseId){
+    const o = PACK.overrides[country.n+"|"+clauseId];
+    if(o) return {s:o.s, line:o.line, forced:true};
+  }
+  if(!tags.length) return {s:0, line:null};
+  let total=0, wsum=0;
+  for(const [arch,wt] of Object.entries(country.w)){
+    const aff = PACK.archetypes[arch].affinity;
+    let sub=0; tags.forEach(t=> sub += (aff[t]||0));
+    total += (sub/tags.length)*wt; wsum += wt;
+  }
+  const raw = total/wsum;
+  let s = raw>=1.15?2 : raw>=0.4?1 : raw>-0.4?0 : raw>-1.15?-1 : -2;
+  return {s, line:null, raw};
+}
+function lineFor(country, st, tags){
+  if(st.line) return st.line;
+  let top=null,best=-1;
+  for(const [a,w] of Object.entries(country.w)) if(w>best){best=w;top=a;}
+  return PACK.lines[top][String(st.s)];
+}
+function archNames(c){
+  return Object.entries(c.w).sort((a,b)=>b[1]-a[1])
+    .map(([a,w])=>PACK.archetypes[a].name+" "+w+"%");
+}
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function el(id){return document.getElementById(id);}
+function show(id){["scSetup","scWhip","scReveal","scAmend","scResult"].forEach(x=>el(x).classList.add("hidden"));el(id).classList.remove("hidden");window.scrollTo(0,0);}
+
+/* ---- setup ---- */
+function initSetup(){
+  const sc=el("selCountry"); sc.innerHTML='<option value="-1">— Deal me a random delegation —</option>';
+  PACK.countries.forEach((c,i)=>sc.innerHTML+=`<option value="${i}">${c.n}</option>`);
+  const cl=el("selClause"); cl.innerHTML='<option value="-1">— Deal me a random clause —</option>';
+  PACK.clauses.forEach((c,i)=>cl.innerHTML+=`<option value="${i}">${c.id} — ${c.text.slice(0,64)}…</option>`);
+}
+function startRound(keep){
+  const ci = keep!==undefined ? keep : (+el("selCountry").value>=0 ? +el("selCountry").value : Math.floor(Math.random()*PACK.countries.length));
+  let li = +el("selClause").value>=0 ? +el("selClause").value : Math.floor(Math.random()*PACK.clauses.length);
+  if(keep!==undefined && G.clauseIdx!==undefined){ do{ li=Math.floor(Math.random()*PACK.clauses.length);}while(li===G.clauseIdx && PACK.clauses.length>1); }
+  const diff = el("selDiff").value;
+  const n = diff==="easy"?5:diff==="normal"?7:9;
+  G = {me:PACK.countries[ci], meIdx:ci, clause:PACK.clauses[li], clauseIdx:li, diff, showArch:diff!=="hard",
+       tags:[...PACK.clauses[li].tags], guesses:{}, score:G.score||0};
+  G.room = shuffle(PACK.countries.filter(c=>c.n!==G.me.n)).slice(0,n);
+  renderWhip();
+  show("scWhip");
+  if(diff!=="easy") startTimer(diff==="normal"?180:120);
+  else el("timer").textContent="";
+}
+function sameCountryNewClause(){ startRound(G.meIdx); }
+
+let tHandle=null;
+function startTimer(sec){
+  clearInterval(tHandle);
+  const t=el("timer"); let left=sec;
+  const tick=()=>{ const m=Math.floor(left/60), s=String(left%60).padStart(2,"0");
+    t.textContent=`⏱ ${m}:${s}`; t.className="timer"+(left<=30?" low":"");
+    if(left<=0){clearInterval(tHandle); lockWhip(true);} left--; };
+  tick(); tHandle=setInterval(tick,1000);
+}
+
+/* ---- whip count ---- */
+function renderWhip(){
+  const m=G.me;
+  el("briefBox").innerHTML=
+    `<div style="font-size:11px;letter-spacing:2px;color:#B9AFA4">YOUR DELEGATION</div>
+     <div class="cn">${m.n}</div>
+     <div class="arch">${archNames(m).map(a=>`<span class="tagchip">${a}</span>`).join("")}</div>
+     <div class="fact">${m.fact}</div>`;
+  const c=G.clause;
+  el("clauseBox").innerHTML=`<div class="cid">Operative Clause ${c.id}</div><div class="ctext">${c.text}</div>`;
+  el("voteRows").innerHTML = G.room.map((c2,i)=>
+    `<div class="vrow">
+       <div class="vname"><div class="nm">${c2.n}</div>
+         <div class="rg">${G.showArch?archNames(c2)[0]:c2.g}</div></div>
+       <div class="vbtns">${[2,1,0,-1,-2].map(v=>
+         `<button class="vb" data-v="${v}" onclick="guess(${i},${v},this)">${{2:"++",1:"+",0:"~","-1":"−","-2":"−−"}[v]}</button>`).join("")}</div>
+     </div>`).join("");
+  updProgress();
+}
+function guess(i,v,btn){
+  G.guesses[i]=v;
+  btn.parentNode.querySelectorAll(".vb").forEach(b=>b.classList.remove("sel"));
+  btn.classList.add("sel");
+  updProgress();
+}
+function updProgress(){
+  const done=Object.keys(G.guesses).length, tot=G.room.length;
+  el("progressNote").textContent=`${done} of ${tot} delegations counted`;
+  el("btnLock").disabled = done<tot;
+}
+
+/* ---- reveal ---- */
+function lockWhip(timeUp){
+  clearInterval(tHandle);
+  let right=0;
+  const rows = G.room.map((c,i)=>{
+    const st=stanceOf(c,G.tags,G.clause.id);
+    const g = G.guesses[i];
+    const exact = g===st.s;
+    const close = g!==undefined && Math.abs(g-st.s)===1;
+    if(exact) right++;
+    const pts = exact?10:close?4:0;
+    G.score += pts;
+    return `<div class="rev">
+      <div class="revhead">
+        <div class="mark ${exact?"ok":"no"}">${exact?"✓":"✕"}</div>
+        <div style="font-family:Cambria,Georgia,serif;font-size:16.5px;font-weight:bold;flex:1;min-width:130px">${c.n}</div>
+        <span class="stancetag" style="background:${S.stanceCol[st.s]}">${S.stanceName[st.s]}</span>
+        <span style="font-size:12px;color:var(--grey)">${g===undefined?"not counted":"you said "+S.stanceName[g].toLowerCase()} · +${pts}</span>
+      </div>
+      <div class="revline">“${lineFor(c,st,G.tags)}”</div>
+      <div class="revwhy">Reads this clause as: ${archNames(c).slice(0,2).join(" · ")}</div>
+    </div>`;
+  }).join("");
+  const pct=Math.round(right/G.room.length*100);
+  el("revealTitle").textContent = timeUp ? `Time. You called ${right} of ${G.room.length} correctly.`
+    : `You called ${right} of ${G.room.length} correctly — ${pct}%.`;
+  el("revealSub").textContent = pct>=70 ? "Strong reading of the room. You're reasoning from interests, not memory."
+    : pct>=40 ? "A workable count, but some delegations surprised you. Read their reasoning below."
+    : "The room is not behaving how you expected. The lines below tell you why — this is the useful part.";
+  el("revealRows").innerHTML=rows;
+  el("scoreOut").textContent=G.score;
+  show("scReveal");
+}
+
+/* ---- amend ---- */
+function goAmend(){
+  const c=G.clause;
+  el("clauseBox2").innerHTML=`<div class="cid">Operative Clause ${c.id}</div><div class="ctext">${c.text}</div>`;
+  el("amendGrid").innerHTML=PACK.amendments.map((a,i)=>
+    `<button class="amcard" data-i="${i}" onclick="pickAmend(${i},this)">
+       <div class="al">${a.label}</div><div class="ad">${a.detail}</div></button>`).join("");
+  G.amend=null; el("btnAmend").disabled=true;
+  show("scAmend");
+}
+function pickAmend(i,node){
+  G.amend=i;
+  document.querySelectorAll(".amcard").forEach(x=>x.classList.remove("sel"));
+  node.classList.add("sel");
+  el("btnAmend").disabled=false;
+}
+function applyAmend(none){
+  let tags=[...G.clause.tags], am=null;
+  if(!none && G.amend!==null){
+    am=PACK.amendments[G.amend];
+    am.remove.forEach(t=>{tags=tags.filter(x=>x!==t);});
+    am.add.forEach(t=>{if(!tags.includes(t))tags.push(t);});
+  }
+  // Whole chamber votes. Amended text loses clause-specific overrides.
+  const full = PACK.countries.filter(c=>c.n!==G.me.n);
+  const cid = am?null:G.clause.id;
+  const votes = full.map(c=>({c, s:stanceOf(c,tags,cid).s}));
+  const yes=votes.filter(v=>v.s>0).length, abs=votes.filter(v=>v.s===0).length, no=votes.filter(v=>v.s<0).length;
+  const mine = stanceOf(G.me, tags, cid);
+  const myYes = mine.s>0;
+  const passed = yes > no;
+
+  el("resTitle").textContent = am ? `Amendment: ${am.label}` : "The clause, put unamended";
+  el("clauseBox3").innerHTML=`<div class="cid">Operative Clause ${G.clause.id}</div>
+    <div class="ctext">${G.clause.text}</div>
+    ${am?`<div class="amendnote">Amended — ${am.detail}</div>`:""}`;
+
+  const tot=votes.length;
+  el("tally").innerHTML=
+    `<div style="flex:${yes||0.001};background:var(--green-dk)">${yes?yes+" FOR":""}</div>
+     <div style="flex:${abs||0.001};background:#8A8078">${abs?abs+" ABS":""}</div>
+     <div style="flex:${no||0.001};background:var(--maroon)">${no?no+" AGAINST":""}</div>`;
+  el("tallyNote").textContent=`${tot} delegations voting, excluding your own. Simple majority of those voting for or against carries the amendment.`;
+  el("verdict").innerHTML = passed
+    ? `<span class="pass">Carried — ${yes} for, ${no} against.</span>`
+    : `<span class="fail">Failed — ${yes} for, ${no} against.</span>`;
+
+  let bonus=0;
+  if(passed&&myYes) bonus=30; else if(passed&&!myYes) bonus=5; else if(!passed&&myYes) bonus=10;
+  G.score+=bonus;
+
+  el("mandateBox").innerHTML = myYes
+    ? `<div class="good"><b>Mandate intact.</b> ${G.me.n} can vote for this text. ${passed?"You built a majority without abandoning your national interest — this is what a strong delegate does.":"The room wasn't there yet, but your position held."}</div>`
+    : `<div class="warn"><b>Mandate breached.</b> ${G.me.n} would now vote <em>${S.stanceName[mine.s].toLowerCase()}</em> on this text. ${passed?"You won the room by conceding your own country's interest — in a real caucus your delegation would be instructed to withdraw it.":"You lost the room and your own position with it."}</div>`;
+
+  el("statGrid").innerHTML=
+    `<div class="stat"><div class="v">${yes}</div><div class="l">Delegations for</div></div>
+     <div class="stat"><div class="v">${no}</div><div class="l">Delegations against</div></div>
+     <div class="stat"><div class="v">+${bonus}</div><div class="l">Amendment points</div></div>`;
+  el("scoreOut").textContent=G.score;
+  show("scResult");
+}
+
+document.getElementById("logo").src="data:image/png;base64,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";
+initSetup();
+</script>
+</body>
+</html>

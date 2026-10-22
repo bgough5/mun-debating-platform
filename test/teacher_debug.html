@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Whip Count — Teacher Debug Panel (NOT the real dashboard — see HANDOVER.md step 5)</title>
+<style>
+  body{font-family:system-ui,sans-serif;background:#222;color:#eee;padding:20px;max-width:900px;margin:0 auto}
+  h1{font-size:18px;color:#D4B441}
+  fieldset{border:1px solid #555;border-radius:6px;margin-bottom:14px;padding:12px}
+  legend{color:#D4B441;font-size:12px;letter-spacing:1px;text-transform:uppercase}
+  label{display:block;font-size:12px;margin:8px 0 3px;color:#aaa}
+  select,input{width:100%;padding:6px;font-size:14px}
+  button{margin:4px 6px 4px 0;padding:8px 14px;cursor:pointer}
+  #code{font-size:28px;letter-spacing:4px;color:#D4B441;text-align:center;margin:10px 0}
+  #roster{width:100%;border-collapse:collapse;font-size:13px}
+  #roster td,#roster th{border:1px solid #444;padding:5px 8px;text-align:left}
+  #log{background:#111;color:#8f8;font-size:11px;height:200px;overflow:auto;padding:8px;white-space:pre-wrap}
+  .warn{color:#e88;font-size:12px}
+</style>
+</head>
+<body>
+<h1>WHIP COUNT — TEACHER DEBUG PANEL</h1>
+<p class="warn">This is a test harness for driving the server, not the real projector-facing teacher dashboard (HANDOVER.md build step 5). No branding, no polish.</p>
+
+<fieldset>
+  <legend>Create room</legend>
+  <label>Player count</label>
+  <select id="playerCount"><option>3</option><option selected>5</option><option>7</option><option>9</option></select>
+  <label>Pack id</label>
+  <input id="packId" value="climate2026">
+  <label>Tone mode</label>
+  <select id="toneMode"><option value="standard" selected>standard</option><option value="junior">junior</option></select>
+  <label><input type="checkbox" id="whipCountEnabled" checked style="width:auto"> Whip count enabled</label>
+  <label><input type="checkbox" id="fullAssembly" style="width:auto"> Full assembly</label>
+  <button onclick="createRoom()">Create room</button>
+</fieldset>
+
+<div id="code"></div>
+
+<fieldset>
+  <legend>Round control</legend>
+  <label>Clause</label>
+  <select id="clauseSelect"><option value="">— random —</option></select>
+  <button onclick="setClause()">Set clause</button>
+  <button onclick="assignRandom()">Assign countries (random)</button>
+  <button onclick="advance()">Advance phase →</button>
+  <button onclick="newRound()">New round</button>
+  <div id="phaseNow" style="margin-top:8px;color:#8cf"></div>
+</fieldset>
+
+<fieldset>
+  <legend>Roster</legend>
+  <table id="roster"><thead><tr><th>Name</th><th>Country</th><th>Connected</th></tr></thead><tbody></tbody></table>
+</fieldset>
+
+<fieldset>
+  <legend>Raw message log</legend>
+  <div id="log"></div>
+</fieldset>
+
+<script src="../shared/engine.js"></script>
+<script>
+// pack_*.js declares its own top-level `const PACK`, shared script-scope
+// across classic <script> tags — do not also declare PACK here (see
+// client/player.html for the full explanation of why that breaks).
+let ws, room;
+
+function log(dir, obj){
+  const d = document.getElementById("log");
+  d.textContent += `${dir} ${JSON.stringify(obj)}\n`;
+  d.scrollTop = d.scrollHeight;
+}
+
+function loadPack(packId){
+  return new Promise((resolve)=>{
+    const s = document.createElement("script");
+    s.src = `../src/pack_${packId}.js`;
+    s.onload = ()=>resolve();
+    document.head.appendChild(s);
+  });
+}
+
+function connect(){
+  return new Promise((resolve)=>{
+    ws = new WebSocket(`ws://${location.hostname}:8765`);
+    ws.onopen = resolve;
+    ws.onmessage = (ev)=>{ const msg = JSON.parse(ev.data); log("<-", msg); handle(msg); };
+  });
+}
+function send(payload){ log("->", payload); ws.send(JSON.stringify(payload)); }
+
+function handle(msg){
+  if(msg.type === "room_created" || msg.type === "state"){
+    room = msg.state;
+    render();
+  }
+}
+
+function render(){
+  document.getElementById("code").textContent = room.code;
+  document.getElementById("phaseNow").textContent = `phase: ${room.phase} · round ${room.roundNumber}`;
+  const tbody = document.querySelector("#roster tbody");
+  tbody.innerHTML = room.players.map(p=>`<tr><td>${p.name}</td><td>${p.country||""}</td><td>${p.connected?"yes":"no"}</td></tr>`).join("");
+}
+
+async function createRoom(){
+  const packId = document.getElementById("packId").value;
+  await loadPack(packId);
+  const sel = document.getElementById("clauseSelect");
+  sel.innerHTML = '<option value="">— random —</option>' + PACK.clauses.map(c=>`<option value="${c.id}">${c.id} — ${c.text.slice(0,50)}…</option>`).join("");
+  await connect();
+  send({type:"create_room", settings:{
+    playerCount: +document.getElementById("playerCount").value,
+    packId,
+    toneMode: document.getElementById("toneMode").value,
+    whipCountEnabled: document.getElementById("whipCountEnabled").checked,
+    fullAssembly: document.getElementById("fullAssembly").checked,
+  }});
+}
+
+function setClause(){
+  const v = document.getElementById("clauseSelect").value;
+  const clauseId = v || PACK.clauses[Math.floor(Math.random()*PACK.clauses.length)].id;
+  send({type:"update_settings", settings:{clauseId}});
+}
+
+function assignRandom(){
+  send({type:"assign_countries", availableCountries: PACK.countries.map(c=>c.n)});
+}
+function advance(){ send({type:"advance_phase"}); }
+function newRound(){ send({type:"new_round"}); }
+</script>
+</body>
+</html>

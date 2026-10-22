@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Rubric unit tests</title></head>
+<body>
+<pre id="out">running…</pre>
+<script src="../src/pack_climate2026.js"></script>
+<script src="../shared/engine.js"></script>
+<script src="../shared/rubric.js"></script>
+<script>
+(function () {
+  const results = [];
+  let pass = 0, fail = 0;
+
+  function assertEqual(actual, expected, label) {
+    const ok = JSON.stringify(actual) === JSON.stringify(expected);
+    if (ok) pass++; else fail++;
+    results.push(`${ok ? "PASS" : "FAIL"} — ${label}` + (ok ? "" : `\n    expected: ${JSON.stringify(expected)}\n    actual:   ${JSON.stringify(actual)}`));
+  }
+
+  const costaRica = PACK.countries.find(c => c.n === "Costa Rica");
+  const clause26 = PACK.clauses.find(c => c.id === "2.6");
+  const baseCtx = { country: costaRica, clause: clause26, pack: PACK, wordLimitMin: 60, wordLimitMax: 150 };
+
+  // ---- fixture: a genuinely good statement — should max every criterion ----
+  // Private channel with Vanuatu; Vanuatu's prior message is what this
+  // statement is actually responding to (shares "adaptation"/"finance").
+  const VANUATU_PRIOR = "Vanuatu remains concerned that adaptation finance is not reaching frontline states quickly enough.";
+  const GOOD_TEXT = "The delegation of Costa Rica rises to address operative clause 2.6, in this channel with Vanuatu. " +
+    "Fellow delegates, Costa Rica has already demonstrated that climate finance works at home, " +
+    "with renewable electricity above 99% of supply and a functioning Green Climate Fund partnership " +
+    "supporting adaptation projects across the region. Costa Rica shares Vanuatu's concern about the pace " +
+    "of adaptation finance reaching those who need it most. Costa Rica could support strengthening clause " +
+    "2.6's finance language, provided that contributions to the Green Climate Fund are made binding rather " +
+    "than voluntary, and would welcome further discussion with Vanuatu on the precise wording.";
+  const goodWc = Rubric.wordCount(GOOD_TEXT);
+  assertEqual(goodWc >= 60 && goodWc <= 150, true, `GOOD_TEXT fixture is within the 60-150 word range (actual: ${goodWc})`);
+
+  const goodMark = Rubric.markStatement(GOOD_TEXT, { ...baseCtx, counterpartCountry: "Vanuatu", priorCounterpartMessage: VANUATU_PRIOR });
+  assertEqual(goodMark.criteria.protocolRegister.score, 5, "good statement: protocol register maxed (third person + formal address)");
+  assertEqual(goodMark.criteria.nationalInterest.score, 5, "good statement: national interest maxed (clause subject + own circumstances)");
+  assertEqual(goodMark.criteria.specificity.score, 5, "good statement: specificity maxed (clause id + figure + named mechanism)");
+  assertEqual(goodMark.criteria.engagement.score, 5, "good statement: engagement maxed (directly responds to what Vanuatu raised)");
+  assertEqual(goodMark.criteria.trade.score, 5, "good statement: trade maxed ('provided that')");
+  assertEqual(goodMark.criteria.concision.score, 5, "good statement: concision maxed (within word range)");
+  assertEqual(goodMark.total, 30, "good statement: perfect total score of 30");
+  assertEqual(Rubric.isLobbySuccess(goodMark), true, "good statement: qualifies as a successful lobby (engagement & trade both >=4)");
+
+  // ---- fixture: a genuinely bad statement — should floor every criterion it can ----
+  // Engagement's floor in a private channel is 3, not 1: the channel itself
+  // proves you're addressing the right delegation, even on an opening message
+  // that doesn't yet respond to anything (priorCounterpartMessage is null).
+  const BAD_TEXT = "I think this clause is fine and we should just vote yes.";
+  const badMark = Rubric.markStatement(BAD_TEXT, { ...baseCtx, counterpartCountry: "Vanuatu", priorCounterpartMessage: null });
+  assertEqual(badMark.criteria.protocolRegister.score, 1, "bad statement: protocol register floored (uses 'I')");
+  assertEqual(badMark.criteria.nationalInterest.score, 1, "bad statement: national interest floored (no engagement with clause or country)");
+  assertEqual(badMark.criteria.specificity.score, 1, "bad statement: specificity floored (no clause id, figure, or mechanism)");
+  assertEqual(badMark.criteria.engagement.score, 3, "bad statement: engagement at its channel floor (opens the channel, but replies to nothing)");
+  assertEqual(badMark.criteria.trade.score, 1, "bad statement: trade floored (no conditional/exchange language)");
+  assertEqual(badMark.criteria.concision.score, 1, "bad statement: concision floored (far too short)");
+  assertEqual(badMark.total, 8, "bad statement: minimum achievable total given the channel-opening floor on engagement");
+  assertEqual(Rubric.isLobbySuccess(badMark), false, "bad statement: does not qualify as a successful lobby");
+
+  // ---- individual criteria: partial-credit tiers ----
+  assertEqual(Rubric.markProtocolRegister("Costa Rica supports this clause and looks forward to discussion.").score, 4,
+    "protocol register: no first person, no formal address -> mid tier (4)");
+
+  assertEqual(Rubric.markEngagement("We have read your message and will consider it.", "Vanuatu", VANUATU_PRIOR).score, 3,
+    "engagement: replying in an existing channel but without addressing their actual point -> mid tier (3)");
+  assertEqual(Rubric.markEngagement("Costa Rica shares Vanuatu's concern about adaptation finance reaching those in need.", "Vanuatu", VANUATU_PRIOR).score, 5,
+    "engagement: replying and clearly addressing what they raised -> top tier (5)");
+  assertEqual(Rubric.markEngagement("Costa Rica welcomes this opportunity to speak with Vanuatu directly.", "Vanuatu", null).score, 3,
+    "engagement: opening a fresh channel (no prior message yet) -> floor tier (3), not 1");
+
+  assertEqual(Rubric.markSpecificity("This references clause 2.6 directly.", "2.6").score, 3,
+    "specificity: exactly one concrete reference -> mid tier (3)");
+
+  assertEqual(Rubric.markNationalInterest("This touches on climate finance broadly.", costaRica, clause26.tags, PACK).score, 3,
+    "national interest: engages clause subject only, not own circumstances -> mid tier (3)");
+
+  const midLength = Array(45).fill("delegate").join(" ");
+  assertEqual(Rubric.markConcision(midLength, 60, 150).score, 3, "concision: under the minimum but not a bare non-answer -> mid tier (3)");
+  const overLength = Array(170).fill("delegate").join(" ");
+  assertEqual(Rubric.markConcision(overLength, 60, 150).score, 3, "concision: over the maximum but not wildly padded -> mid tier (3)");
+  const wayOverLength = Array(400).fill("delegate").join(" ");
+  assertEqual(Rubric.markConcision(wayOverLength, 60, 150).score, 1, "concision: wildly over length -> floored (1)");
+
+  // ---- lobbying mechanic ----
+  assertEqual(Rubric.applyLobbyShift({ s: 0, forced: false }, 1), 1, "lobby shift: abstaining, unforced -> nudged toward positive direction");
+  assertEqual(Rubric.applyLobbyShift({ s: 0, forced: false }, -1), -1, "lobby shift: abstaining, unforced -> nudged toward negative direction");
+  assertEqual(Rubric.applyLobbyShift({ s: 0, forced: true }, 1), 0, "lobby shift: never moves a forced (hard mandate) stance");
+  assertEqual(Rubric.applyLobbyShift({ s: 2, forced: false }, 1), 2, "lobby shift: never moves a delegation that already has a decided (non-abstaining) stance");
+  assertEqual(Rubric.applyLobbyShift({ s: 0, forced: false }, 0), 0, "lobby shift: no direction (no successful lobby) -> unchanged");
+
+  results.push("", `${pass} passed, ${fail} failed`);
+  const text = results.join("\n");
+  document.getElementById("out").textContent = text;
+  console.log(text);
+  window.__testSummary = { pass, fail };
+})();
+</script>
+</body>
+</html>

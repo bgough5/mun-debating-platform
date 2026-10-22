@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Whip Count — Model UN Caucus Simulator</title>
+<style>
+  :root{
+    --maroon:#8C332A; --maroon-dk:#2A1512; --maroon-deep:#3D1712;
+    --green:#0A6B39; --green-dk:#0A4527;
+    --gold:#B8960C; --gold-lt:#D4B441;
+    --cream:#F4F0E6; --card:#FBFAF6; --ink:#2A2320; --grey:#6B6560; --line:#E4DFD3;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:Calibri,Candara,Segoe UI,system-ui,sans-serif;
+    background:var(--maroon-dk); color:var(--ink);
+    min-height:100vh; display:flex; justify-content:center; padding:20px 14px 60px;
+  }
+  .shell{width:100%;max-width:1080px}
+  h1,h2,h3,.serif{font-family:Cambria,Georgia,"Times New Roman",serif}
+
+  /* header */
+  .topbar{display:flex;align-items:center;gap:14px;padding:6px 2px 18px}
+  .topbar img{width:42px;height:40px;flex:none}
+  .brandname{color:var(--cream);font-size:15px;font-weight:bold;letter-spacing:1.6px}
+  .brandsub{color:var(--gold-lt);font-size:11px;letter-spacing:2.4px;margin-top:2px}
+  .spacer{flex:1}
+  .scorepill{background:var(--maroon-deep);border:1px solid #5A2A22;color:var(--cream);
+    padding:8px 16px;border-radius:22px;font-size:13px;letter-spacing:.6px}
+  .scorepill b{color:var(--gold-lt);font-size:16px}
+
+  .panel{background:var(--card);border-radius:12px;padding:30px 32px;box-shadow:0 8px 30px rgba(0,0,0,.32)}
+  .kicker{color:var(--gold);font-size:11.5px;font-weight:bold;letter-spacing:2.4px;text-transform:uppercase}
+  h1{font-size:33px;color:var(--maroon);margin:8px 0 6px;line-height:1.16}
+  h2{font-size:24px;color:var(--maroon);margin:0 0 6px}
+  .lede{color:var(--grey);font-size:15px;line-height:1.6;max-width:76ch}
+  .hr{height:1px;background:var(--line);margin:22px 0}
+
+  label.fld{display:block;font-size:11.5px;font-weight:bold;letter-spacing:1.6px;
+    text-transform:uppercase;color:var(--maroon);margin-bottom:7px}
+  select{width:100%;padding:11px 12px;font-size:15px;font-family:inherit;color:var(--ink);
+    border:1px solid #CFC8B8;border-radius:7px;background:#fff}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+
+  button{font-family:inherit;cursor:pointer;border:none;border-radius:7px;transition:.13s}
+  .btn{background:var(--maroon);color:#fff;padding:14px 30px;font-size:15.5px;font-weight:bold;letter-spacing:.4px}
+  .btn:hover{background:#6E2820}
+  .btn:disabled{background:#B9AEA5;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--maroon);border:1.5px solid var(--maroon)}
+  .btn.ghost:hover{background:#F3E9E7}
+  .btn.green{background:var(--green-dk)} .btn.green:hover{background:#073419}
+  .actions{display:flex;gap:12px;align-items:center;margin-top:26px;flex-wrap:wrap}
+
+  /* brief card */
+  .brief{background:var(--maroon-dk);color:var(--cream);border-radius:10px;padding:20px 22px;margin-bottom:20px}
+  .brief .cn{font-family:Cambria,Georgia,serif;font-size:22px;font-weight:bold;color:#fff}
+  .brief .arch{margin:12px 0 10px;display:flex;flex-wrap:wrap;gap:7px}
+  .tagchip{background:var(--maroon-deep);border:1px solid #62312A;color:var(--gold-lt);
+    font-size:11.5px;padding:4px 11px;border-radius:20px;letter-spacing:.4px}
+  .brief .fact{font-size:13.2px;color:#CFC6BC;line-height:1.55;font-style:italic}
+
+  .clausebox{background:var(--cream);border-radius:9px;padding:19px 22px;margin-bottom:22px}
+  .clausebox .cid{font-family:Cambria,Georgia,serif;font-weight:bold;color:var(--maroon);font-size:17px}
+  .clausebox .ctext{font-size:14.6px;line-height:1.62;margin-top:7px;color:var(--ink)}
+  .amended{border-left:4px solid var(--gold);}
+  .amendnote{margin-top:11px;font-size:12.8px;color:var(--green-dk);font-weight:bold}
+
+  /* voting rows */
+  .vrow{display:flex;align-items:center;gap:14px;padding:12px 4px;border-bottom:1px solid var(--line)}
+  .vrow:last-child{border-bottom:none}
+  .vname{flex:1;min-width:150px}
+  .vname .nm{font-family:Cambria,Georgia,serif;font-size:16.5px;font-weight:bold}
+  .vname .rg{font-size:11.5px;color:var(--grey);letter-spacing:.8px;text-transform:uppercase;margin-top:2px}
+  .vbtns{display:flex;gap:6px;flex:none}
+  .vb{width:46px;height:38px;border-radius:6px;background:#EFEAE0;color:var(--grey);
+    font-size:16px;font-weight:bold;border:1.5px solid transparent}
+  .vb:hover{background:#E3DCCD}
+  .vb.sel{color:#fff}
+  .vb.sel[data-v="2"],.vb.sel[data-v="1"]{background:var(--green-dk)}
+  .vb.sel[data-v="0"]{background:#8A8078}
+  .vb.sel[data-v="-1"],.vb.sel[data-v="-2"]{background:var(--maroon)}
+  .legend{display:flex;gap:16px;font-size:11.5px;color:var(--grey);margin:4px 0 14px;flex-wrap:wrap}
+
+  /* reveal */
+  .rev{padding:14px 4px;border-bottom:1px solid var(--line)}
+  .revhead{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+  .mark{width:24px;height:24px;border-radius:50%;color:#fff;font-size:14px;font-weight:bold;
+    display:flex;align-items:center;justify-content:center;flex:none}
+  .mark.ok{background:var(--green-dk)} .mark.no{background:var(--maroon)}
+  .stancetag{font-size:11px;font-weight:bold;letter-spacing:1.1px;text-transform:uppercase;
+    padding:3px 10px;border-radius:14px;color:#fff}
+  .revline{font-family:Cambria,Georgia,serif;font-style:italic;color:var(--ink);
+    font-size:14.2px;line-height:1.55;margin:8px 0 0 35px;padding-left:12px;border-left:2px solid var(--line)}
+  .revwhy{font-size:12.2px;color:var(--grey);margin:6px 0 0 47px}
+
+  /* amendments */
+  .amcard{background:var(--cream);border-radius:9px;padding:15px 17px;cursor:pointer;
+    border:2px solid transparent;text-align:left;width:100%;font-family:inherit}
+  .amcard:hover{background:#EDE7D9}
+  .amcard.sel{border-color:var(--green-dk);background:#EAF0EA}
+  .amcard .al{font-family:Cambria,Georgia,serif;font-weight:bold;font-size:15.5px;color:var(--maroon)}
+  .amcard.sel .al{color:var(--green-dk)}
+  .amcard .ad{font-size:12.8px;color:var(--grey);line-height:1.5;margin-top:5px}
+
+  /* tally */
+  .tally{display:flex;gap:3px;margin:16px 0 10px;height:34px;border-radius:6px;overflow:hidden}
+  .tally div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:bold}
+  .verdict{font-family:Cambria,Georgia,serif;font-size:21px;font-weight:bold;margin:6px 0 4px}
+  .pass{color:var(--green-dk)} .fail{color:var(--maroon)}
+
+  .statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0}
+  .stat{background:var(--cream);border-radius:9px;padding:17px}
+  .stat .v{font-family:Cambria,Georgia,serif;font-size:31px;font-weight:bold;color:var(--maroon)}
+  .stat .l{font-size:11.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--grey);margin-top:3px}
+  .warn{background:#FBF0EE;border-radius:9px;padding:15px 18px;font-size:13.6px;line-height:1.55;color:var(--maroon);margin-top:14px}
+  .good{background:#EAF0EA;border-radius:9px;padding:15px 18px;font-size:13.6px;line-height:1.55;color:var(--green-dk);margin-top:14px}
+
+  .timer{font-family:Cambria,Georgia,serif;font-size:19px;font-weight:bold;color:var(--maroon)}
+  .timer.low{color:#C0392B}
+  .hidden{display:none}
+  .foot{text-align:center;color:#7C7168;font-size:11px;letter-spacing:1.6px;margin-top:22px}
+  @media(max-width:720px){
+    .grid2,.grid3,.statgrid{grid-template-columns:1fr}
+    .panel{padding:22px 18px}
+    h1{font-size:26px}
+    .vrow{flex-wrap:wrap}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="topbar">
+    <img id="logo" alt="">
+    <div>
+      <div class="brandname">WHIP COUNT</div>
+      <div class="brandsub">SOUTH OAKLEIGH COLLEGE MUN</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="scorepill">ROUND SCORE <b id="scoreOut">0</b></div>
+  </div>
+
+  <!-- ============ SETUP ============ -->
+  <div class="panel" id="scSetup">
+    <div class="kicker">Caucus Simulator</div>
+    <h1>Can you read the room?</h1>
+    <p class="lede">Real delegates don't memorise positions — they reason from a country's interests to its vote. You'll be handed a delegation and a clause, then asked to predict how the room falls before you try to amend your way to a majority. Guess wrong and you'll see exactly why.</p>
+    <div class="hr"></div>
+    <div class="grid2">
+      <div>
+        <label class="fld" for="selCountry">Your delegation</label>
+        <select id="selCountry"></select>
+      </div>
+      <div>
+        <label class="fld" for="selClause">Clause under debate</label>
+        <select id="selClause"></select>
+      </div>
+    </div>
+    <div style="margin-top:20px" class="grid2">
+      <div>
+        <label class="fld" for="selDiff">Difficulty</label>
+        <select id="selDiff">
+          <option value="easy">Attaché — 5 delegations, archetypes shown, no timer</option>
+          <option value="normal" selected>Delegate — 7 delegations, archetypes shown, 3 min</option>
+          <option value="hard">Ambassador — 9 delegations, archetypes hidden, 2 min</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:flex-end">
+        <button class="btn" style="width:100%" onclick="startRound()">Enter the chamber</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ WHIP COUNT ============ -->
+  <div class="panel hidden" id="scWhip">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div><div class="kicker">Step 1 of 3 — The Whip Count</div><h2>How will the room vote?</h2></div>
+      <div class="timer" id="timer"></div>
+    </div>
+    <p class="lede" style="margin-bottom:18px">Predict each delegation's stance on the clause as drafted. You are not guessing — reason from what each state needs.</p>
+    <div class="brief" id="briefBox"></div>
+    <div class="clausebox" id="clauseBox"></div>
+    <div class="legend">
+      <span><b>++</b> Strongly support</span><span><b>+</b> Support</span>
+      <span><b>~</b> Abstain</span><span><b>−</b> Oppose</span><span><b>−−</b> Strongly oppose</span>
+    </div>
+    <div id="voteRows"></div>
+    <div class="actions">
+      <button class="btn" id="btnLock" onclick="lockWhip()" disabled>Lock in my count</button>
+      <span style="font-size:13px;color:var(--grey)" id="progressNote"></span>
+    </div>
+  </div>
+
+  <!-- ============ REVEAL ============ -->
+  <div class="panel hidden" id="scReveal">
+    <div class="kicker">Step 2 of 3 — The Reveal</div>
+    <h2 id="revealTitle"></h2>
+    <p class="lede" style="margin-bottom:6px" id="revealSub"></p>
+    <div class="hr"></div>
+    <div id="revealRows"></div>
+    <div class="actions"><button class="btn green" onclick="goAmend()">Now amend the clause</button></div>
+  </div>
+
+  <!-- ============ AMEND ============ -->
+  <div class="panel hidden" id="scAmend">
+    <div class="kicker">Step 3 of 3 — The Amendment</div>
+    <h2>Build your majority.</h2>
+    <p class="lede" style="margin-bottom:18px">Choose one amendment. It must win a simple majority of the room <em>and</em> keep your own delegation able to vote for it — a delegate who wins the room by abandoning their national interest has failed.</p>
+    <div class="clausebox" id="clauseBox2"></div>
+    <div class="grid3" id="amendGrid"></div>
+    <div class="actions">
+      <button class="btn" id="btnAmend" onclick="applyAmend()" disabled>Put it to the vote</button>
+      <button class="btn ghost" onclick="applyAmend(true)">Vote on the clause unamended</button>
+    </div>
+  </div>
+
+  <!-- ============ RESULT ============ -->
+  <div class="panel hidden" id="scResult">
+    <div class="kicker">Division of the Assembly</div>
+    <h2 id="resTitle"></h2>
+    <div class="clausebox amended" id="clauseBox3"></div>
+    <div class="tally" id="tally"></div>
+    <div style="font-size:12.5px;color:var(--grey);margin-bottom:16px" id="tallyNote"></div>
+    <div class="verdict" id="verdict"></div>
+    <div id="mandateBox"></div>
+    <div class="statgrid" id="statGrid"></div>
+    <div class="actions">
+      <button class="btn" onclick="location.reload()">Play another round</button>
+      <button class="btn ghost" onclick="sameCountryNewClause()">Same country, new clause</button>
+    </div>
+  </div>
+
+  <div class="foot">PREP TOOL — BUILD YOUR OWN ARGUMENTS. NOT FOR USE DURING THE ASSEMBLY.</div>
+</div>
+
+<script src="PACK_PLACEHOLDER"></script>
+<script>
+/* ============ ENGINE ============ */
+const S = {stanceName:{2:"Strongly support",1:"Support",0:"Abstain","-1":"Oppose","-2":"Strongly oppose"},
+           stanceCol:{2:"#0A4527",1:"#0A6B39",0:"#8A8078","-1":"#8C332A","-2":"#5E1F18"}};
+let G = {};
+
+/* Compute a country's stance on a tag-set from its archetype blend. */
+function stanceOf(country, tags, clauseId){
+  if(clauseId){
+    const o = PACK.overrides[country.n+"|"+clauseId];
+    if(o) return {s:o.s, line:o.line, forced:true};
+  }
+  if(!tags.length) return {s:0, line:null};
+  let total=0, wsum=0;
+  for(const [arch,wt] of Object.entries(country.w)){
+    const aff = PACK.archetypes[arch].affinity;
+    let sub=0; tags.forEach(t=> sub += (aff[t]||0));
+    total += (sub/tags.length)*wt; wsum += wt;
+  }
+  const raw = total/wsum;
+  let s = raw>=1.15?2 : raw>=0.4?1 : raw>-0.4?0 : raw>-1.15?-1 : -2;
+  return {s, line:null, raw};
+}
+function lineFor(country, st, tags){
+  if(st.line) return st.line;
+  let top=null,best=-1;
+  for(const [a,w] of Object.entries(country.w)) if(w>best){best=w;top=a;}
+  return PACK.lines[top][String(st.s)];
+}
+function archNames(c){
+  return Object.entries(c.w).sort((a,b)=>b[1]-a[1])
+    .map(([a,w])=>PACK.archetypes[a].name+" "+w+"%");
+}
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function el(id){return document.getElementById(id);}
+function show(id){["scSetup","scWhip","scReveal","scAmend","scResult"].forEach(x=>el(x).classList.add("hidden"));el(id).classList.remove("hidden");window.scrollTo(0,0);}
+
+/* ---- setup ---- */
+function initSetup(){
+  const sc=el("selCountry"); sc.innerHTML='<option value="-1">— Deal me a random delegation —</option>';
+  PACK.countries.forEach((c,i)=>sc.innerHTML+=`<option value="${i}">${c.n}</option>`);
+  const cl=el("selClause"); cl.innerHTML='<option value="-1">— Deal me a random clause —</option>';
+  PACK.clauses.forEach((c,i)=>cl.innerHTML+=`<option value="${i}">${c.id} — ${c.text.slice(0,64)}…</option>`);
+}
+function startRound(keep){
+  const ci = keep!==undefined ? keep : (+el("selCountry").value>=0 ? +el("selCountry").value : Math.floor(Math.random()*PACK.countries.length));
+  let li = +el("selClause").value>=0 ? +el("selClause").value : Math.floor(Math.random()*PACK.clauses.length);
+  if(keep!==undefined && G.clauseIdx!==undefined){ do{ li=Math.floor(Math.random()*PACK.clauses.length);}while(li===G.clauseIdx && PACK.clauses.length>1); }
+  const diff = el("selDiff").value;
+  const n = diff==="easy"?5:diff==="normal"?7:9;
+  G = {me:PACK.countries[ci], meIdx:ci, clause:PACK.clauses[li], clauseIdx:li, diff, showArch:diff!=="hard",
+       tags:[...PACK.clauses[li].tags], guesses:{}, score:G.score||0};
+  G.room = shuffle(PACK.countries.filter(c=>c.n!==G.me.n)).slice(0,n);
+  renderWhip();
+  show("scWhip");
+  if(diff!=="easy") startTimer(diff==="normal"?180:120);
+  else el("timer").textContent="";
+}
+function sameCountryNewClause(){ startRound(G.meIdx); }
+
+let tHandle=null;
+function startTimer(sec){
+  clearInterval(tHandle);
+  const t=el("timer"); let left=sec;
+  const tick=()=>{ const m=Math.floor(left/60), s=String(left%60).padStart(2,"0");
+    t.textContent=`⏱ ${m}:${s}`; t.className="timer"+(left<=30?" low":"");
+    if(left<=0){clearInterval(tHandle); lockWhip(true);} left--; };
+  tick(); tHandle=setInterval(tick,1000);
+}
+
+/* ---- whip count ---- */
+function renderWhip(){
+  const m=G.me;
+  el("briefBox").innerHTML=
+    `<div style="font-size:11px;letter-spacing:2px;color:#B9AFA4">YOUR DELEGATION</div>
+     <div class="cn">${m.n}</div>
+     <div class="arch">${archNames(m).map(a=>`<span class="tagchip">${a}</span>`).join("")}</div>
+     <div class="fact">${m.fact}</div>`;
+  const c=G.clause;
+  el("clauseBox").innerHTML=`<div class="cid">Operative Clause ${c.id}</div><div class="ctext">${c.text}</div>`;
+  el("voteRows").innerHTML = G.room.map((c2,i)=>
+    `<div class="vrow">
+       <div class="vname"><div class="nm">${c2.n}</div>
+         <div class="rg">${G.showArch?archNames(c2)[0]:c2.g}</div></div>
+       <div class="vbtns">${[2,1,0,-1,-2].map(v=>
+         `<button class="vb" data-v="${v}" onclick="guess(${i},${v},this)">${{2:"++",1:"+",0:"~","-1":"−","-2":"−−"}[v]}</button>`).join("")}</div>
+     </div>`).join("");
+  updProgress();
+}
+function guess(i,v,btn){
+  G.guesses[i]=v;
+  btn.parentNode.querySelectorAll(".vb").forEach(b=>b.classList.remove("sel"));
+  btn.classList.add("sel");
+  updProgress();
+}
+function updProgress(){
+  const done=Object.keys(G.guesses).length, tot=G.room.length;
+  el("progressNote").textContent=`${done} of ${tot} delegations counted`;
+  el("btnLock").disabled = done<tot;
+}
+
+/* ---- reveal ---- */
+function lockWhip(timeUp){
+  clearInterval(tHandle);
+  let right=0;
+  const rows = G.room.map((c,i)=>{
+    const st=stanceOf(c,G.tags,G.clause.id);
+    const g = G.guesses[i];
+    const exact = g===st.s;
+    const close = g!==undefined && Math.abs(g-st.s)===1;
+    if(exact) right++;
+    const pts = exact?10:close?4:0;
+    G.score += pts;
+    return `<div class="rev">
+      <div class="revhead">
+        <div class="mark ${exact?"ok":"no"}">${exact?"✓":"✕"}</div>
+        <div style="font-family:Cambria,Georgia,serif;font-size:16.5px;font-weight:bold;flex:1;min-width:130px">${c.n}</div>
+        <span class="stancetag" style="background:${S.stanceCol[st.s]}">${S.stanceName[st.s]}</span>
+        <span style="font-size:12px;color:var(--grey)">${g===undefined?"not counted":"you said "+S.stanceName[g].toLowerCase()} · +${pts}</span>
+      </div>
+      <div class="revline">“${lineFor(c,st,G.tags)}”</div>
+      <div class="revwhy">Reads this clause as: ${archNames(c).slice(0,2).join(" · ")}</div>
+    </div>`;
+  }).join("");
+  const pct=Math.round(right/G.room.length*100);
+  el("revealTitle").textContent = timeUp ? `Time. You called ${right} of ${G.room.length} correctly.`
+    : `You called ${right} of ${G.room.length} correctly — ${pct}%.`;
+  el("revealSub").textContent = pct>=70 ? "Strong reading of the room. You're reasoning from interests, not memory."
+    : pct>=40 ? "A workable count, but some delegations surprised you. Read their reasoning below."
+    : "The room is not behaving how you expected. The lines below tell you why — this is the useful part.";
+  el("revealRows").innerHTML=rows;
+  el("scoreOut").textContent=G.score;
+  show("scReveal");
+}
+
+/* ---- amend ---- */
+function goAmend(){
+  const c=G.clause;
+  el("clauseBox2").innerHTML=`<div class="cid">Operative Clause ${c.id}</div><div class="ctext">${c.text}</div>`;
+  el("amendGrid").innerHTML=PACK.amendments.map((a,i)=>
+    `<button class="amcard" data-i="${i}" onclick="pickAmend(${i},this)">
+       <div class="al">${a.label}</div><div class="ad">${a.detail}</div></button>`).join("");
+  G.amend=null; el("btnAmend").disabled=true;
+  show("scAmend");
+}
+function pickAmend(i,node){
+  G.amend=i;
+  document.querySelectorAll(".amcard").forEach(x=>x.classList.remove("sel"));
+  node.classList.add("sel");
+  el("btnAmend").disabled=false;
+}
+function applyAmend(none){
+  let tags=[...G.clause.tags], am=null;
+  if(!none && G.amend!==null){
+    am=PACK.amendments[G.amend];
+    am.remove.forEach(t=>{tags=tags.filter(x=>x!==t);});
+    am.add.forEach(t=>{if(!tags.includes(t))tags.push(t);});
+  }
+  // Whole chamber votes. Amended text loses clause-specific overrides.
+  const full = PACK.countries.filter(c=>c.n!==G.me.n);
+  const cid = am?null:G.clause.id;
+  const votes = full.map(c=>({c, s:stanceOf(c,tags,cid).s}));
+  const yes=votes.filter(v=>v.s>0).length, abs=votes.filter(v=>v.s===0).length, no=votes.filter(v=>v.s<0).length;
+  const mine = stanceOf(G.me, tags, cid);
+  const myYes = mine.s>0;
+  const passed = yes > no;
+
+  el("resTitle").textContent = am ? `Amendment: ${am.label}` : "The clause, put unamended";
+  el("clauseBox3").innerHTML=`<div class="cid">Operative Clause ${G.clause.id}</div>
+    <div class="ctext">${G.clause.text}</div>
+    ${am?`<div class="amendnote">Amended — ${am.detail}</div>`:""}`;
+
+  const tot=votes.length;
+  el("tally").innerHTML=
+    `<div style="flex:${yes||0.001};background:var(--green-dk)">${yes?yes+" FOR":""}</div>
+     <div style="flex:${abs||0.001};background:#8A8078">${abs?abs+" ABS":""}</div>
+     <div style="flex:${no||0.001};background:var(--maroon)">${no?no+" AGAINST":""}</div>`;
+  el("tallyNote").textContent=`${tot} delegations voting, excluding your own. Simple majority of those voting for or against carries the amendment.`;
+  el("verdict").innerHTML = passed
+    ? `<span class="pass">Carried — ${yes} for, ${no} against.</span>`
+    : `<span class="fail">Failed — ${yes} for, ${no} against.</span>`;
+
+  let bonus=0;
+  if(passed&&myYes) bonus=30; else if(passed&&!myYes) bonus=5; else if(!passed&&myYes) bonus=10;
+  G.score+=bonus;
+
+  el("mandateBox").innerHTML = myYes
+    ? `<div class="good"><b>Mandate intact.</b> ${G.me.n} can vote for this text. ${passed?"You built a majority without abandoning your national interest — this is what a strong delegate does.":"The room wasn't there yet, but your position held."}</div>`
+    : `<div class="warn"><b>Mandate breached.</b> ${G.me.n} would now vote <em>${S.stanceName[mine.s].toLowerCase()}</em> on this text. ${passed?"You won the room by conceding your own country's interest — in a real caucus your delegation would be instructed to withdraw it.":"You lost the room and your own position with it."}</div>`;
+
+  el("statGrid").innerHTML=
+    `<div class="stat"><div class="v">${yes}</div><div class="l">Delegations for</div></div>
+     <div class="stat"><div class="v">${no}</div><div class="l">Delegations against</div></div>
+     <div class="stat"><div class="v">+${bonus}</div><div class="l">Amendment points</div></div>`;
+  el("scoreOut").textContent=G.score;
+  show("scResult");
+}
+
+initSetup();
+</script>
+</body>
+</html>

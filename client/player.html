@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Whip Count — Delegate</title>
+<style>
+  /* ============ Whip Count visual identity v2 ============
+     Formal-UN-blue x modern-conference-tech, its own standalone
+     identity rather than a reskinned school page. South Oakleigh
+     College's actual colours are kept as the semantic FOR/AGAINST
+     accent pair (a deliberate, quiet nod) rather than the dominant
+     palette; the SOC diamond becomes a small corner badge. Class
+     names are unchanged from v1 throughout — only the tokens and a
+     handful of rules that were decoratively (not semantically) using
+     the school maroon have moved to --blue. Footer notice text and
+     structure are untouched per HANDOVER.md section 10. */
+  :root{
+    --bg:#0A1F33; --bg-alt:#0F2E4C; --navy-chip:#1B4A73;
+    --blue:#1C4E8C; --blue-dk:#123A6B; --blue-lt:#2E7BD6;
+    --maroon:#8C332A; --maroon-dk:#5E1F18;
+    --green:#0A6B39; --green-dk:#0A4527;
+    --gold:#B8960C; --gold-lt:#D4B441;
+    --cream:#EDF1F6; --card:#FFFFFF; --ink:#16202B; --grey:#5C6B7A; --line:#E1E7EE;
+    --font-head:"Segoe UI","Segoe UI Semibold",system-ui,sans-serif;
+    --font-body:"Segoe UI",system-ui,-apple-system,sans-serif;
+    --font-mono:Consolas,"Cascadia Mono","Courier New",monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:var(--font-body);
+    background:var(--bg); background-image:radial-gradient(ellipse at top, var(--bg-alt), var(--bg) 65%);
+    background-attachment:fixed;
+    color:var(--ink);
+    min-height:100vh; display:flex; justify-content:center; padding:20px 14px 60px;
+  }
+  .shell{width:100%;max-width:1080px}
+  h1,h2,h3,.serif{font-family:var(--font-head);font-weight:800;letter-spacing:-.2px}
+
+  .topbar{display:flex;align-items:center;gap:12px;padding:6px 2px 20px;flex-wrap:wrap;row-gap:10px}
+  .appmark{flex:none;display:block}
+  .unemblem{flex:none;display:block}
+  .scorecard-wrap{position:relative}
+  .scorecard-watermark{position:absolute;top:-14px;right:-10px;opacity:.07;pointer-events:none}
+  .brandname{color:#fff;font-size:16px;font-weight:800;letter-spacing:2px;font-family:var(--font-head)}
+  .brandsub{color:var(--gold-lt);font-size:10.5px;letter-spacing:2.6px;margin-top:2px;text-transform:uppercase;white-space:nowrap}
+  .spacer{flex:1}
+  .socbadge{flex:none;display:flex;align-items:center;gap:7px;opacity:.62;transition:opacity .15s}
+  .socbadge:hover{opacity:1}
+  .socbadge img{height:22px;width:auto;display:block}
+  .socbadge span{color:var(--gold-lt);font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;max-width:70px;line-height:1.3}
+  .scorepill{background:var(--navy-chip);border:1px solid #26618F;color:#EAF1F9;white-space:nowrap;
+    padding:7px 15px;border-radius:8px;font-size:12.5px;letter-spacing:.6px;font-family:var(--font-mono)}
+  .scorepill b{color:var(--gold-lt);font-size:15px}
+
+  .panel{background:var(--card);border-radius:10px;padding:30px 32px;box-shadow:0 12px 34px rgba(6,18,32,.38)}
+  .kicker{color:var(--blue);font-size:11px;font-weight:700;letter-spacing:2.6px;text-transform:uppercase}
+  h1{font-size:32px;color:var(--ink);margin:9px 0 6px;line-height:1.15}
+  h2{font-size:22px;color:var(--ink);margin:0 0 6px;font-weight:700}
+  .lede{color:var(--grey);font-size:15px;line-height:1.6;max-width:76ch}
+  .hr{height:1px;background:var(--line);margin:22px 0}
+
+  label.fld{display:block;font-size:11px;font-weight:700;letter-spacing:1.4px;
+    text-transform:uppercase;color:var(--blue);margin-bottom:7px}
+  select,input[type=text]{width:100%;padding:11px 12px;font-size:15px;font-family:inherit;color:var(--ink);
+    border:1px solid #D2D9E2;border-radius:7px;background:#fff}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+
+  button{font-family:inherit;cursor:pointer;border:none;border-radius:7px;transition:.13s}
+  .btn{background:var(--blue);color:#fff;padding:13px 28px;font-size:15px;font-weight:700;letter-spacing:.3px}
+  .btn:hover{background:var(--blue-dk)}
+  .btn:disabled{background:#B7C1CC;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--blue);border:1.5px solid var(--blue)}
+  .btn.ghost:hover{background:#EAF1FA}
+  .btn.green{background:var(--green-dk)} .btn.green:hover{background:#073419}
+  .actions{display:flex;gap:12px;align-items:center;margin-top:26px;flex-wrap:wrap}
+
+  .brief{background:var(--bg-alt);color:#EAF1F9;border-radius:9px;padding:20px 22px;margin-bottom:20px;border:1px solid #1D4468}
+  .brief .cn{font-family:var(--font-head);font-weight:800;font-size:21px;color:#fff}
+  .brief .arch{margin:12px 0 10px;display:flex;flex-wrap:wrap;gap:7px}
+  .tagchip{background:var(--navy-chip);border:1px solid #2A628E;color:var(--gold-lt);
+    font-size:11.5px;padding:4px 11px;border-radius:20px;letter-spacing:.4px}
+  .brief .fact{font-size:13.2px;color:#C4D3E2;line-height:1.55;font-style:italic}
+
+  .clausebox{background:var(--cream);border-radius:8px;padding:19px 22px;margin-bottom:22px;border:1px solid var(--line)}
+  .clausebox .cid{font-family:var(--font-head);font-weight:700;color:var(--blue);font-size:16px;letter-spacing:.2px}
+  .clausebox .ctext{font-size:14.6px;line-height:1.62;margin-top:7px;color:var(--ink)}
+
+  .vrow{display:flex;align-items:center;gap:14px;padding:12px 4px;border-bottom:1px solid var(--line)}
+  .vrow:last-child{border-bottom:none}
+  .vname{flex:1;min-width:150px;display:flex;align-items:center;gap:9px}
+  .vname .nm{font-family:var(--font-head);font-size:16px;font-weight:700}
+  .vname .rg{font-size:11.5px;color:var(--grey);letter-spacing:.8px;text-transform:uppercase;margin-top:2px}
+  .flag{display:inline-block;flex:none;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.12);margin-right:7px;vertical-align:middle}
+  .vbtns{display:flex;gap:6px;flex:none}
+  .vb{width:46px;height:38px;border-radius:6px;background:#EDF1F6;color:var(--grey);
+    font-size:15px;font-weight:700;border:1.5px solid transparent}
+  .vb:hover{background:#DFE7F0}
+  .vb.sel{color:#fff}
+  .vb.sel[data-v="2"],.vb.sel[data-v="1"]{background:var(--green-dk)}
+  .vb.sel[data-v="0"]{background:#6B7A88}
+  .vb.sel[data-v="-1"],.vb.sel[data-v="-2"]{background:var(--maroon)}
+  .legend{display:flex;gap:16px;font-size:11.5px;color:var(--grey);margin:4px 0 14px;flex-wrap:wrap}
+
+  .rev{padding:14px 4px;border-bottom:1px solid var(--line)}
+  .revhead{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+  .mark{width:24px;height:24px;border-radius:50%;color:#fff;font-size:13px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;flex:none}
+  .mark.ok{background:var(--green-dk)} .mark.no{background:var(--maroon)}
+  .stancetag{font-size:10.5px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;
+    padding:3px 10px;border-radius:5px;color:#fff}
+  .revline{font-family:var(--font-head);font-style:italic;font-weight:400;color:var(--ink);
+    font-size:14.2px;line-height:1.55;margin:8px 0 0 35px;padding-left:12px;border-left:2px solid var(--line)}
+  .revwhy{font-size:12.2px;color:var(--grey);margin:6px 0 0 47px}
+
+  .amcard{background:var(--cream);border-radius:8px;padding:15px 17px;border:2px solid transparent}
+  .amcard.sel{border-color:var(--green-dk);background:#E9F2EC}
+  .amcard .al{font-family:var(--font-head);font-weight:700;font-size:15px;color:var(--blue)}
+  .amcard.sel .al{color:var(--green-dk)}
+  .amcard .ad{font-size:12.8px;color:var(--grey);line-height:1.5;margin-top:5px}
+
+  .tally{display:flex;gap:3px;margin:16px 0 10px;height:32px;border-radius:5px;overflow:hidden}
+  .tally div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12.5px;font-weight:700}
+  .verdict{font-family:var(--font-head);font-size:20px;font-weight:800;margin:6px 0 4px}
+  .pass{color:var(--green-dk)} .fail{color:var(--maroon)}
+
+  .statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0}
+  .stat{background:var(--cream);border-radius:8px;padding:17px;border:1px solid var(--line)}
+  .stat .v{font-family:var(--font-mono);font-size:29px;font-weight:700;color:var(--blue)}
+  .stat .l{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--grey);margin-top:3px}
+  .warn{background:#FBEEEC;border-radius:8px;padding:15px 18px;font-size:13.6px;line-height:1.55;color:var(--maroon-dk);margin-top:14px;border:1px solid #F0D6D1}
+  .good{background:#E9F2EC;border-radius:8px;padding:15px 18px;font-size:13.6px;line-height:1.55;color:var(--green-dk);margin-top:14px;border:1px solid #CFE6D8}
+
+  .hidden{display:none}
+  .foot{text-align:center;color:#7C8AA0;font-size:10.5px;letter-spacing:1.6px;margin-top:22px}
+  @media(max-width:720px){
+    .grid2,.grid3,.statgrid{grid-template-columns:1fr}
+    .panel{padding:22px 18px}
+    h1{font-size:26px}
+    .vrow{flex-wrap:wrap}
+  }
+
+  /* ---- roster / connection banner ---- */
+  .roster{list-style:none;margin:14px 0}
+  .roster li{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line);font-size:14.5px}
+  .roster li:last-child{border-bottom:none}
+  .dot{width:9px;height:9px;border-radius:50%;background:#B7C1CC;flex:none}
+  .dot.on{background:var(--green-dk)}
+  .unread-badge{margin-left:auto;background:var(--maroon);color:#fff;font-size:11px;font-weight:700;
+    border-radius:999px;padding:1px 7px;line-height:1.5;flex:none}
+  .codebox{font-family:var(--font-mono);font-size:28px;letter-spacing:7px;color:var(--blue);text-align:center;
+    background:var(--cream);border-radius:8px;padding:16px;margin:14px 0;border:1px solid var(--line)}
+  .banner{position:fixed;top:0;left:0;right:0;background:var(--maroon);color:#fff;text-align:center;
+    padding:9px;font-size:13px;letter-spacing:.4px;z-index:10}
+  .timer{font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--blue)}
+  .timer.low{color:var(--maroon)}
+</style>
+</head>
+<body>
+<div id="banner" class="banner hidden"></div>
+<div class="shell">
+
+  <div class="topbar">
+    <svg class="appmark" width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <rect x="5" y="5" width="22" height="22" rx="5" fill="var(--blue)" transform="rotate(45 16 16)"/>
+      <path d="M10 16.2l4.2 4.2 8-8.6" stroke="var(--gold-lt)" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <div class="brandname">WHIP COUNT</div>
+      <div class="brandsub">Model UN Caucus Simulator</div>
+    </div>
+    <svg class="unemblem" width="26" height="26" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" title="Model United Nations (stylised, not the official UN emblem)">
+      <circle cx="32" cy="27" r="14" fill="none" stroke="var(--blue)" stroke-width="1.6"/>
+      <ellipse cx="32" cy="27" rx="14" ry="5.5" fill="none" stroke="var(--blue)" stroke-width="1"/>
+      <ellipse cx="32" cy="27" rx="14" ry="10" fill="none" stroke="var(--blue)" stroke-width="1"/>
+      <line x1="32" y1="13" x2="32" y2="41" stroke="var(--blue)" stroke-width="1.2"/>
+      <line x1="18" y1="27" x2="46" y2="27" stroke="var(--blue)" stroke-width="1"/>
+      <g fill="var(--gold)">
+        <path d="M13 33 Q7 43 11 51 Q15 58 24 61" fill="none" stroke="var(--gold)" stroke-width="2"/>
+        <ellipse cx="11" cy="38" rx="3.4" ry="1.6" transform="rotate(-40 11 38)"/>
+        <ellipse cx="9.5" cy="45" rx="3.6" ry="1.7" transform="rotate(-15 9.5 45)"/>
+        <ellipse cx="11.5" cy="52" rx="3.6" ry="1.7" transform="rotate(20 11.5 52)"/>
+        <ellipse cx="16" cy="57" rx="3.6" ry="1.7" transform="rotate(50 16 57)"/>
+        <ellipse cx="21" cy="60" rx="3.4" ry="1.6" transform="rotate(75 21 60)"/>
+      </g>
+      <g fill="var(--gold)" transform="translate(64,0) scale(-1,1)">
+        <path d="M13 33 Q7 43 11 51 Q15 58 24 61" fill="none" stroke="var(--gold)" stroke-width="2"/>
+        <ellipse cx="11" cy="38" rx="3.4" ry="1.6" transform="rotate(-40 11 38)"/>
+        <ellipse cx="9.5" cy="45" rx="3.6" ry="1.7" transform="rotate(-15 9.5 45)"/>
+        <ellipse cx="11.5" cy="52" rx="3.6" ry="1.7" transform="rotate(20 11.5 52)"/>
+        <ellipse cx="16" cy="57" rx="3.6" ry="1.7" transform="rotate(50 16 57)"/>
+        <ellipse cx="21" cy="60" rx="3.4" ry="1.6" transform="rotate(75 21 60)"/>
+      </g>
+    </svg>
+    <div class="spacer"></div>
+    <div class="scorepill" id="phasePill">—</div>
+    <div class="socbadge" title="South Oakleigh College Model United Nations">
+      <img src="../assets/soc_logo.png" alt="South Oakleigh College">
+      <span>South Oakleigh College</span>
+    </div>
+  </div>
+
+  <!-- ============ JOIN ============ -->
+  <div class="panel" id="scJoin">
+    <div class="kicker">Multiplayer Caucus</div>
+    <h1>Join the chamber.</h1>
+    <p class="lede">Enter the room code the chair has given you and the name you'll answer to on the floor.</p>
+    <div class="hr"></div>
+    <div class="grid2">
+      <div>
+        <label class="fld" for="inCode">Room code</label>
+        <input type="text" id="inCode" maxlength="4" placeholder="ABCD" style="text-transform:uppercase">
+      </div>
+      <div>
+        <label class="fld" for="inName">Your name</label>
+        <input type="text" id="inName" placeholder="e.g. Alex">
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="joinRoom()">Take your seat</button>
+      <span id="joinError" style="color:var(--maroon);font-size:13px"></span>
+    </div>
+  </div>
+
+  <!-- ============ LOBBY ============ -->
+  <div class="panel hidden" id="scLobby">
+    <div class="kicker">Lobby</div>
+    <h2>Waiting for the chamber to fill.</h2>
+    <p class="lede" id="lobbyLede"></p>
+    <ul class="roster" id="roster"></ul>
+  </div>
+
+  <!-- ============ CLAUSE PITCH ============ -->
+  <div class="panel hidden" id="scClausePitch">
+    <div class="kicker">The Floor Is Open</div>
+    <h2>Which clause should we debate?</h2>
+    <p class="lede" style="margin-bottom:18px" id="pitchLede"></p>
+    <div class="grid2" id="pitchGrid"></div>
+  </div>
+
+  <!-- ============ BRIEF ============ -->
+  <div class="panel hidden" id="scBrief">
+    <div class="kicker">Private Brief</div>
+    <h2>Your delegation.</h2>
+    <p class="lede" style="margin-bottom:18px" id="briefLede"></p>
+    <div class="brief" id="briefBox"></div>
+    <div class="clausebox" id="briefClause"></div>
+    <p class="lede">This brief is yours alone. Other delegates cannot see it — read the room from what they say, not from a shared list.</p>
+  </div>
+
+  <!-- ============ WHIP COUNT ============ -->
+  <div class="panel hidden" id="scWhip">
+    <div class="kicker">The Whip Count</div>
+    <h2 id="whipHead">How will the room vote?</h2>
+    <p class="lede" style="margin-bottom:18px" id="whipLede"></p>
+    <div class="clausebox" id="whipClauseBox"></div>
+    <div id="voteRows"></div>
+    <div class="actions">
+      <button class="btn" id="btnLock" onclick="lockWhip()" disabled>Lock in my count</button>
+      <span style="font-size:13px;color:var(--grey)" id="progressNote"></span>
+    </div>
+    <div id="whipReveal" class="hidden">
+      <div class="hr"></div>
+      <div id="revealRows"></div>
+      <p class="lede" style="margin-top:14px">Waiting for the chair to open negotiations.</p>
+    </div>
+  </div>
+
+  <!-- ============ NEGOTIATION (private channels) ============ -->
+  <div class="panel hidden" id="scNegotiation">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div><div class="kicker">Backroom Negotiation</div><h2>Private channels.</h2></div>
+      <div class="timer" id="negoTimer"></div>
+    </div>
+    <p class="lede" style="margin-bottom:14px" id="negoLede"></p>
+    <div class="clausebox" id="negoClauseBox"></div>
+    <div class="grid2" style="align-items:start">
+      <div>
+        <label class="fld">Channels</label>
+        <ul class="roster" id="channelList" style="cursor:pointer"></ul>
+      </div>
+      <div>
+        <p class="lede" id="threadEmpty">Choose a delegation on the left to open a private channel with them. Nobody else can see this conversation — not even the rest of the room.</p>
+        <div id="threadView" class="hidden">
+          <div style="font-family:var(--font-head);font-weight:700;font-size:17px;color:var(--blue)" id="threadTitle"></div>
+          <div id="threadMessages" style="max-height:260px;overflow-y:auto;margin:10px 0"></div>
+          <textarea id="negoText" rows="4" oninput="updNegoWordCount()"
+            style="width:100%;padding:11px;font-family:inherit;font-size:14.5px;color:var(--ink);border:1px solid #CFC8B8;border-radius:7px"></textarea>
+          <div style="margin-top:6px"><span style="font-size:12px;color:var(--grey)" id="negoWordCount"></span></div>
+          <div class="actions">
+            <button class="btn" id="btnSendNego" onclick="sendChannelMessage()" disabled>Send privately</button>
+          </div>
+          <div id="negoOwnMark"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ AMENDMENT ============ -->
+  <div class="panel hidden" id="scAmendment">
+    <div class="kicker">The Amendment</div>
+    <h2>Build your majority.</h2>
+    <p class="lede" style="margin-bottom:18px" id="amendLede"></p>
+    <div class="clausebox" id="amendClause"></div>
+    <div class="grid3" id="amendGrid"></div>
+  </div>
+
+  <!-- ============ WAITING (generic) ============ -->
+  <div class="panel hidden" id="scWaiting">
+    <div class="kicker" id="waitKicker">In progress</div>
+    <h2 id="waitHead"></h2>
+    <p class="lede" id="waitLede"></p>
+  </div>
+
+  <!-- ============ DIVISION ============ -->
+  <div class="panel hidden" id="scDivision">
+    <div class="kicker">Division of the Assembly</div>
+    <h2>Cast your vote.</h2>
+    <div class="clausebox" id="divClause"></div>
+    <div class="legend">
+      <span><b>++</b> Strongly support</span><span><b>+</b> Support</span>
+      <span><b>~</b> Abstain</span><span><b>−</b> Oppose</span><span><b>−−</b> Strongly oppose</span>
+    </div>
+    <div class="vrow" style="border:none;padding-top:0">
+      <div class="vname"><div class="nm" id="divCountry"></div></div>
+      <div class="vbtns" id="divButtons"></div>
+    </div>
+    <p class="lede" id="divStatus" style="margin-top:16px"></p>
+  </div>
+
+  <!-- ============ RESULTS ============ -->
+  <div class="panel hidden" id="scResults">
+    <div class="kicker">Division Result</div>
+    <h2 id="resTitle"></h2>
+    <div class="clausebox" id="resClause"></div>
+    <div class="tally" id="tally"></div>
+    <div style="font-size:12.5px;color:var(--grey);margin-bottom:16px" id="tallyNote"></div>
+    <div class="verdict" id="verdict"></div>
+    <div id="mandateBox"></div>
+    <div class="hr"></div>
+    <div class="scorecard-wrap">
+      <svg class="scorecard-watermark" width="170" height="170" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="32" cy="27" r="14" fill="none" stroke="var(--blue)" stroke-width="1.6"/>
+        <ellipse cx="32" cy="27" rx="14" ry="5.5" fill="none" stroke="var(--blue)" stroke-width="1"/>
+        <ellipse cx="32" cy="27" rx="14" ry="10" fill="none" stroke="var(--blue)" stroke-width="1"/>
+        <line x1="32" y1="13" x2="32" y2="41" stroke="var(--blue)" stroke-width="1.2"/>
+        <line x1="18" y1="27" x2="46" y2="27" stroke="var(--blue)" stroke-width="1"/>
+        <g fill="var(--gold)">
+          <path d="M13 33 Q7 43 11 51 Q15 58 24 61" fill="none" stroke="var(--gold)" stroke-width="2"/>
+          <ellipse cx="11" cy="38" rx="3.4" ry="1.6" transform="rotate(-40 11 38)"/>
+          <ellipse cx="9.5" cy="45" rx="3.6" ry="1.7" transform="rotate(-15 9.5 45)"/>
+          <ellipse cx="11.5" cy="52" rx="3.6" ry="1.7" transform="rotate(20 11.5 52)"/>
+          <ellipse cx="16" cy="57" rx="3.6" ry="1.7" transform="rotate(50 16 57)"/>
+          <ellipse cx="21" cy="60" rx="3.4" ry="1.6" transform="rotate(75 21 60)"/>
+        </g>
+        <g fill="var(--gold)" transform="translate(64,0) scale(-1,1)">
+          <path d="M13 33 Q7 43 11 51 Q15 58 24 61" fill="none" stroke="var(--gold)" stroke-width="2"/>
+          <ellipse cx="11" cy="38" rx="3.4" ry="1.6" transform="rotate(-40 11 38)"/>
+          <ellipse cx="9.5" cy="45" rx="3.6" ry="1.7" transform="rotate(-15 9.5 45)"/>
+          <ellipse cx="11.5" cy="52" rx="3.6" ry="1.7" transform="rotate(20 11.5 52)"/>
+          <ellipse cx="16" cy="57" rx="3.6" ry="1.7" transform="rotate(50 16 57)"/>
+          <ellipse cx="21" cy="60" rx="3.4" ry="1.6" transform="rotate(75 21 60)"/>
+        </g>
+      </svg>
+      <div class="kicker">Your Scorecard</div>
+      <h2 id="profileTitle" style="margin-top:4px"></h2>
+      <p class="lede" id="profileLine"></p>
+      <div class="statgrid">
+        <div class="stat"><div class="v" id="scoreFidelity"></div><div class="l">Mandate Fidelity</div></div>
+        <div class="stat"><div class="v" id="scoreCoalition"></div><div class="l">Coalition</div></div>
+        <div class="stat"><div class="v" id="scoreDiplomacy"></div><div class="l">Diplomacy</div></div>
+      </div>
+      <p class="lede" id="scoreDetail" style="font-size:13px"></p>
+    </div>
+  </div>
+
+  <div class="foot">PREP TOOL — BUILD YOUR OWN ARGUMENTS. NOT FOR USE DURING THE ASSEMBLY.</div>
+</div>
+
+<script src="../shared/engine.js"></script>
+<script src="../shared/rubric.js"></script>
+<script src="../shared/scoring.js"></script>
+<script src="../shared/flags.js"></script>
+<script>
+/* The pack file declares its own top-level `const PACK`, which — like
+   every classic <script>'s top-level let/const — lands in the shared
+   script scope for this document, so it's readable here as a bare `PACK`
+   identifier once loaded. We must NOT also declare a `PACK` binding
+   ourselves (redeclaring a const throws and silently kills the pack
+   script) — track "which pack is loaded" separately instead. */
+let packLoadedId = null;
+let ws = null;
+let myPlayerId = sessionStorage.getItem("wc_playerId") || null;
+let roomCode = sessionStorage.getItem("wc_roomCode") || null;
+let room = null; // latest room state from server
+let myGuesses = {};    // whip count: otherPlayerId -> guessed stance
+let whipLocked = false;
+let votesSeen = {};    // playerId -> cast vote value (from event broadcasts)
+let channels = {};      // counterpartCountry -> [{fromMe, text, mark, seq, ts}] — private, one thread per delegation
+let activeChannel = null;
+let channelSeen = {};   // counterpartCountry -> highest seq already viewed (for the unread dot)
+let negoDeadline = null, negoTimerHandle = null, negoTimerRound = null;
+let amendmentEvents = [];    // public amendment_sponsor/amendment_second events, replayed to resolve the winner
+let clausePitchEvents = [];  // public clause_sponsor/clause_second events, replayed to resolve which clause is debated
+let fidelityOverride = null; // {points, note} — set only if the chair overrides MY fidelity score
+let lastSentScoreKey = null; // content key, not a one-shot flag — see sendRoundScoreIfChanged()
+let lastSeenRoundNumber = null;
+
+// The 3-axis score is per round (HANDOVER.md section 8), so everything that
+// feeds it — votes, whip guesses, channels, amendment sponsorship, any
+// fidelity override — must not leak from one round into the next. This
+// only fires once, right when a new round's state first arrives.
+function resetPerRoundState(){
+  myGuesses = {}; whipLocked = false;
+  votesSeen = {};
+  channels = {}; activeChannel = null; channelSeen = {};
+  amendmentEvents = [];
+  clausePitchEvents = [];
+  fidelityOverride = null;
+  lastSentScoreKey = null;
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function el(id){ return document.getElementById(id); }
+const SCREENS = ["scJoin","scLobby","scClausePitch","scBrief","scWhip","scNegotiation","scAmendment","scWaiting","scDivision","scResults"];
+function show(id){ SCREENS.forEach(x=>el(x).classList.add("hidden")); el(id).classList.remove("hidden"); window.scrollTo(0,0); }
+
+function banner(msg){
+  const b = el("banner");
+  if(!msg){ b.classList.add("hidden"); return; }
+  b.textContent = msg; b.classList.remove("hidden");
+}
+
+/* ---- tone mode (HANDOVER.md 11a #6: standard dry tone is default, a
+   lighter "junior" tone is an explicit, approved exception for younger
+   cohorts — never the reverse) ---- */
+function T(standard, junior){
+  return (room && room.settings.toneMode === "junior") ? junior : standard;
+}
+
+async function loadPack(packId){
+  if(packLoadedId === packId) return;
+  await new Promise((resolve, reject)=>{
+    const s = document.createElement("script");
+    s.src = `../src/pack_${packId}.js`;
+    s.onload = ()=>{ packLoadedId = packId; resolve(); };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+/* ---- connection ---- */
+function wsUrl(){
+  return `ws://${location.hostname}:8765`;
+}
+
+function connect(onOpen){
+  const badUrlMsg = "Could not connect — open this page using the address the server printed (not by double-clicking the file).";
+  try {
+    ws = new WebSocket(wsUrl());
+  } catch(e){
+    if(el("scJoin") && !el("scJoin").classList.contains("hidden")) el("joinError").textContent = badUrlMsg;
+    else banner(badUrlMsg);
+    return;
+  }
+  ws.onopen = () => onOpen && onOpen();
+  ws.onmessage = (ev) => handleMessage(JSON.parse(ev.data));
+  ws.onclose = () => banner(T("Connection lost. Reload this page to rejoin the chamber.",
+                              "You've been disconnected — reload the page to jump back in."));
+  ws.onerror = () => {};
+}
+
+function send(payload){ ws.send(JSON.stringify(payload)); }
+
+function joinRoom(){
+  const code = el("inCode").value.trim().toUpperCase();
+  const name = el("inName").value.trim();
+  el("joinError").textContent = "";
+  if(code.length !== 4 || !name){ el("joinError").textContent = "Enter a 4-letter room code and your name."; return; }
+  connect(() => send({type:"join_room", code, name}));
+}
+
+function tryRejoin(){
+  connect(() => send({type:"rejoin_room", code: roomCode, playerId: myPlayerId, lastSeq: 0}));
+}
+
+async function handleMessage(msg){
+  if(msg.type === "error"){
+    if(el("scJoin").classList.contains("hidden")) banner(msg.message);
+    else el("joinError").textContent = msg.message;
+    return;
+  }
+  if(msg.type === "joined" || msg.type === "rejoined"){
+    myPlayerId = msg.playerId;
+    room = msg.state;
+    roomCode = room.code;
+    sessionStorage.setItem("wc_playerId", myPlayerId);
+    sessionStorage.setItem("wc_roomCode", roomCode);
+    await loadPack(room.settings.packId);
+    if(msg.type === "rejoined"){
+      // Only replay events from the CURRENT round — the server's log spans
+      // the room's whole lifetime, but per-round state (votes, channels,
+      // amendment sponsorship) must not leak in from an earlier round.
+      (msg.missedEvents||[]).filter(e=>e.roundNumber===room.roundNumber).forEach(applyEvent);
+    }
+    render();
+    return;
+  }
+  if(msg.type === "state"){
+    room = msg.state;
+    await loadPack(room.settings.packId);
+    render();
+    return;
+  }
+  if(msg.type === "event"){
+    applyEvent(msg);
+    render();
+    return;
+  }
+  if(msg.type === "channel_message"){
+    applyChannelMessage(msg);
+    render();
+    return;
+  }
+}
+
+function applyEvent(e){
+  if(e.kind === "vote"){ votesSeen[e.playerId] = e.payload.choice; return; }
+  if(e.kind === "channel_message"){ applyChannelMessage(e); return; }
+  if(e.kind === "amendment_sponsor" || e.kind === "amendment_second"){ amendmentEvents.push(e); return; }
+  if(e.kind === "clause_sponsor" || e.kind === "clause_second"){ clausePitchEvents.push(e); return; }
+  if(e.kind === "fidelity_override" && e.payload.targetPlayerId === myPlayerId){
+    fidelityOverride = { points: e.payload.points, note: e.payload.note };
+    return;
+  }
+}
+
+// Negotiation is a private 1:1 channel per delegation pair (not a shared
+// floor feed) — see PROTOCOL.md. Only the two parties (and the teacher)
+// ever receive a given channel_message at all, so this only ever runs for
+// messages I'm actually a party to.
+function applyChannelMessage(e){
+  const senderPlayer = room.players.find(p=>p.id===e.playerId);
+  if(!senderPlayer || !senderPlayer.country) return;
+  const fromMe = e.playerId === myPlayerId;
+  const counterpartCountry = fromMe ? e.payload.to : senderPlayer.country;
+  if(!counterpartCountry) return;
+
+  const list = channels[counterpartCountry] = channels[counterpartCountry] || [];
+  const priorFromCounterpart = [...list].reverse().find(m => !m.fromMe) || null;
+  const speakerCountry = PACK.countries.find(c => c.n === (fromMe ? me().country : senderPlayer.country));
+  const clause = currentClause();
+
+  const mark = Rubric.markStatement(e.payload.text, {
+    country: speakerCountry, clause, pack: PACK,
+    counterpartCountry,
+    priorCounterpartMessage: priorFromCounterpart ? priorFromCounterpart.text : null,
+    wordLimitMin: room.settings.wordLimitMin, wordLimitMax: room.settings.wordLimitMax,
+  });
+  list.push({ fromMe, text: e.payload.text, mark, seq: e.seq, ts: e.ts });
+
+  if(fromMe){
+    renderOwnMark(mark);
+  } else if(Rubric.isLobbySuccess(mark)){
+    // Purely a social/pedagogical signal — nobody's actual vote is moved by
+    // this. Their vote stays their own choice (HANDOVER.md section 6); the
+    // Full Assembly "nudge an abstaining AI delegation" bonus from the
+    // earlier public-feed design was dropped when negotiation went private,
+    // since it depended on every client seeing every message to stay
+    // consistent, which a private channel deliberately breaks.
+    flashBanner(T(`You have been lobbied by ${senderPlayer.country}.`, `${senderPlayer.country} is trying to win you over!`), 5000);
+  } else if(counterpartCountry !== activeChannel){
+    // The channel-list dot/badge is easy to miss if you're not looking at
+    // the sidebar (e.g. mid-reply in a different channel) — a banner is the
+    // hard-to-miss version of the same "you have an unread message" signal.
+    flashBanner(T(`New private message from ${senderPlayer.country}.`, `${senderPlayer.country} sent you a message!`), 4000);
+  }
+}
+
+let bannerToken = 0;
+function flashBanner(msg, ms){
+  // A token, not a text comparison: two notifications with identical text
+  // (e.g. lobbied twice by the same country) must not let the OLDER one's
+  // timeout clear the NEWER one just because the strings happen to match.
+  const token = ++bannerToken;
+  banner(msg);
+  setTimeout(()=>{ if(bannerToken === token) banner(null); }, ms);
+}
+
+function me(){ return room.players.find(p=>p.id===myPlayerId); }
+function others(){ return room.players.filter(p=>p.id!==myPlayerId); }
+function currentClause(){
+  if(!room.settings.clauseId) return null;
+  return PACK.clauses.find(c=>c.id===room.settings.clauseId) || null;
+}
+// Shared clause reminder box — Brief, Whip, Negotiation and Amendment all
+// show it so the clause under debate never drops out of view mid-round.
+function clauseBoxHtml(clause){
+  return clause ? `<div class="cid">Operative Clause ${clause.id}</div><div class="ctext">${clause.text}</div>` : "";
+}
+function winningAmendment(){
+  return Engine.resolveAmendment(amendmentEvents, PACK.amendments);
+}
+// The tag-set and clauseId actually in force once the Amendment phase has
+// resolved: overrides apply only to the unamended text, so clauseId is
+// nulled out the moment an amendment carries (see Engine.stanceOf).
+function finalTagsAndClause(){
+  const clause = currentClause();
+  if(!clause) return { tags: [], clauseId: null, amendment: null, text: "" };
+  const amendment = winningAmendment();
+  return {
+    tags: Engine.applyAmendment(clause.tags, amendment),
+    clauseId: amendment ? null : clause.id,
+    amendment,
+    text: Engine.applyAmendmentText(clause.text, clause.verb, amendment),
+  };
+}
+
+/* ---- render dispatch ---- */
+function render(){
+  el("phasePill").textContent = `${room.code} · ${room.phase.toUpperCase()}`;
+  if(lastSeenRoundNumber !== null && room.roundNumber !== lastSeenRoundNumber) resetPerRoundState();
+  lastSeenRoundNumber = room.roundNumber;
+  if(room.phase !== "negotiation" && negoTimerHandle){ clearInterval(negoTimerHandle); negoTimerHandle = null; negoTimerRound = null; }
+  if(!me()){ show("scJoin"); return; }
+  switch(room.phase){
+    case "lobby": return renderLobby();
+    case "clause_pitch": return renderClausePitch();
+    case "brief": return renderBrief();
+    case "whip": return renderWhip();
+    case "negotiation": return renderNegotiation();
+    case "amendment": return renderAmendment();
+    case "division": return renderDivision();
+    case "results": return renderResults();
+  }
+}
+
+/* ---- lobby ---- */
+function renderLobby(){
+  const n = room.players.length, target = room.settings.playerCount;
+  el("lobbyLede").textContent = T(
+    `${n} of ${target} delegates present. The chair will assign delegations and open the floor once the chamber is full.`,
+    `${n} of ${target} players here. We'll get going once everyone's in!`);
+  el("roster").innerHTML = room.players.map(p=>
+    `<li><span class="dot ${p.connected?"on":""}"></span>${escapeHtml(p.name)}</li>`).join("");
+  show("scLobby");
+}
+
+/* ---- brief ---- */
+function renderBrief(){
+  const mine = me();
+  if(!mine.country){ renderWaiting("brief", T("Awaiting assignment.","Almost there!"),
+    T("The chair has not yet assigned delegations.", "Your teacher hasn't handed out countries yet.")); return; }
+  const country = PACK.countries.find(c=>c.n===mine.country);
+  const top = Object.entries(country.w).sort((a,b)=>b[1]-a[1])[0][0];
+  el("briefLede").textContent = T(
+    "Read your country's interests before the floor opens. This information is yours alone.",
+    "Here's your country — nobody else can see this bit!");
+  el("briefBox").innerHTML =
+    `<div style="font-size:11px;letter-spacing:2px;color:#B9AFA4">YOUR DELEGATION</div>
+     <div class="cn" style="display:flex;align-items:center;gap:9px">${Flags.svgFor(country.n, 26)}${country.n}</div>
+     <div class="arch">${Engine.archNames(country, PACK).map(a=>`<span class="tagchip">${a}</span>`).join("")}</div>
+     <div class="fact">${country.fact}</div>
+     <div class="fact" style="margin-top:8px;font-style:normal">${PACK.archetypes[top].blurb}</div>`;
+  const clause = currentClause();
+  el("briefClause").innerHTML = clause
+    ? `<div class="cid">Operative Clause ${clause.id}</div><div class="ctext">${clause.text}</div>`
+    : `<div class="ctext">Waiting for the chair to select the clause under debate.</div>`;
+  show("scBrief");
+}
+
+/* ---- whip count ---- */
+function renderWhip(){
+  const clause = currentClause();
+  if(!clause){ renderWaiting("whip", "Waiting.", "The chair has not yet selected a clause."); return; }
+  if(!room.settings.whipCountEnabled){
+    renderWaiting("whip", T("Whip count skipped this round.", "No prediction round today!"),
+      T("The chair has switched off the whip count for this round.", "Your teacher's turned this bit off for today.")); return;
+  }
+  el("whipLede").textContent = T(
+    "Predict each other delegate's stance on the clause as drafted. Reason from national interest, not memory.",
+    "Guess how everyone else will vote — think about what their country actually wants.");
+  el("whipClauseBox").innerHTML = clauseBoxHtml(clause);
+  if(whipLocked){ el("voteRows").innerHTML=""; el("btnLock").parentElement.classList.add("hidden"); }
+  else {
+    el("btnLock").parentElement.classList.remove("hidden");
+    el("voteRows").innerHTML = others().filter(p=>p.country).map(p=>
+      `<div class="vrow">
+         <div class="vname">${Flags.svgFor(p.country, 22)}<div class="nm">${p.country}</div></div>
+         <div class="vbtns">${[2,1,0,-1,-2].map(v=>
+           `<button class="vb ${myGuesses[p.id]===v?'sel':''}" data-v="${v}" onclick="guess('${p.id}',${v},this)">${{2:"++",1:"+",0:"~","-1":"−","-2":"−−"}[v]}</button>`).join("")}</div>
+       </div>`).join("");
+    updProgress();
+  }
+  el("whipReveal").classList.toggle("hidden", !whipLocked);
+  show("scWhip");
+}
+function guess(pid,v,btn){
+  myGuesses[pid]=v;
+  btn.parentNode.querySelectorAll(".vb").forEach(b=>b.classList.remove("sel"));
+  btn.classList.add("sel");
+  updProgress();
+}
+function updProgress(){
+  const target = others().filter(p=>p.country);
+  const done = target.filter(p=>myGuesses[p.id]!==undefined).length;
+  el("progressNote").textContent = `${done} of ${target.length} delegations counted`;
+  el("btnLock").disabled = done < target.length;
+}
+function lockWhip(){
+  whipLocked = true;
+  send({type:"event", kind:"whip_lock", payload:{guesses: myGuesses}});
+  const clause = currentClause();
+  let right = 0;
+  const targets = others().filter(p=>p.country);
+  el("revealRows").innerHTML = targets.map(p=>{
+    const country = PACK.countries.find(c=>c.n===p.country);
+    const st = Engine.stanceOf(country, clause.tags, clause.id, PACK);
+    const g = myGuesses[p.id];
+    const exact = g === st.s;
+    if(exact) right++;
+    return `<div class="rev">
+      <div class="revhead">
+        <div class="mark ${exact?"ok":"no"}">${exact?"✓":"✕"}</div>
+        <div style="font-family:var(--font-head);font-size:16px;font-weight:700;flex:1;min-width:130px;display:flex;align-items:center;gap:8px">${Flags.svgFor(country.n, 20)}${country.n}</div>
+        <span class="stancetag" style="background:${Engine.STANCE_COLOR[st.s]}">${Engine.STANCE_NAME[st.s]}</span>
+        <span style="font-size:12px;color:var(--grey)">you said ${Engine.STANCE_NAME[g].toLowerCase()}</span>
+      </div>
+      <div class="revline">"${Engine.lineFor(country, st, clause.tags, PACK)}"</div>
+    </div>`;
+  }).join("");
+  render();
+}
+
+/* ---- negotiation: private per-delegation channels ---- */
+function renderNegotiation(){
+  el("negoLede").textContent = T(
+    "Open a private channel with another delegation. Nobody else in the room can see it — this is where the real negotiating happens.",
+    "Pick someone to message privately — nobody else can see what you write here!");
+  el("negoClauseBox").innerHTML = clauseBoxHtml(currentClause());
+  startNegoTimerIfNeeded();
+
+  const otherCountries = room.players.filter(p=>p.country && p.id!==myPlayerId).map(p=>p.country);
+  el("channelList").innerHTML = otherCountries.length ? otherCountries.map(country=>{
+    const msgs = channels[country] || [];
+    const unreadCount = msgs.filter(m => !m.fromMe && m.seq > (channelSeen[country] || 0)).length;
+    const unread = unreadCount > 0;
+    const active = country === activeChannel;
+    return `<li onclick="openChannel('${escapeHtml(country)}')" style="${active ? "background:#EAF1FA;border-radius:6px" : ""}">
+              <span class="dot ${unread ? "on" : ""}"></span>${Flags.svgFor(country, 18)}<span style="${unread ? "font-weight:700" : ""}">${escapeHtml(country)}</span>${unread ? `<span class="unread-badge">${unreadCount}</span>` : ""}
+            </li>`;
+  }).join("") : `<li style="color:var(--grey)">${T("No one else is present yet.", "Nobody to talk to yet!")}</li>`;
+
+  if(activeChannel && otherCountries.includes(activeChannel)) renderThread(activeChannel);
+  else { activeChannel = null; el("threadEmpty").classList.remove("hidden"); el("threadView").classList.add("hidden"); }
+
+  show("scNegotiation");
+}
+
+function openChannel(country){
+  activeChannel = country;
+  const msgs = channels[country] || [];
+  if(msgs.length) channelSeen[country] = Math.max(...msgs.map(m=>m.seq));
+  renderNegotiation();
+}
+
+function renderThread(country){
+  el("threadEmpty").classList.add("hidden");
+  el("threadView").classList.remove("hidden");
+  el("threadTitle").innerHTML = `<span style="display:inline-flex;align-items:center;gap:8px">${Flags.svgFor(country, 20)}${escapeHtml(country)}</span>`;
+  const msgs = channels[country] || [];
+  el("threadMessages").innerHTML = msgs.length ? msgs.map(m=>
+    `<div class="rev">
+       <div style="font-size:11px;color:var(--grey);letter-spacing:.8px;text-transform:uppercase">${m.fromMe ? T("You","You") : escapeHtml(country)}</div>
+       <div style="margin-top:3px;font-size:14px;line-height:1.5">${escapeHtml(m.text)}</div>
+     </div>`).join("")
+    : `<p class="lede">${T(`No messages yet with ${country}.`, `Nothing sent to ${country} yet — go ahead!`)}</p>`;
+  updNegoWordCount();
+}
+
+function startNegoTimerIfNeeded(){
+  if(negoTimerRound === room.roundNumber) return;
+  negoTimerRound = room.roundNumber;
+  negoDeadline = Date.now() + room.settings.negotiationSeconds * 1000;
+  clearInterval(negoTimerHandle);
+  const tick = () => {
+    const left = Math.max(0, Math.round((negoDeadline - Date.now()) / 1000));
+    const m = Math.floor(left/60), s = String(left%60).padStart(2,"0");
+    el("negoTimer").textContent = left > 0 ? `⏱ ${m}:${s}` : T("Time's up — awaiting the chair.", "Time's up!");
+    el("negoTimer").className = "timer" + (left <= 30 && left > 0 ? " low" : "");
+  };
+  tick();
+  negoTimerHandle = setInterval(tick, 1000);
+}
+
+function updNegoWordCount(){
+  if(!activeChannel){ return; }
+  const wc = Rubric.wordCount(el("negoText").value);
+  const { wordLimitMin, wordLimitMax } = room.settings;
+  el("negoWordCount").textContent = `${wc} / ${wordLimitMax} words (suggested ${wordLimitMin}-${wordLimitMax})`;
+  el("negoWordCount").style.color = wc > wordLimitMax ? "var(--maroon)" : "var(--grey)";
+  el("btnSendNego").disabled = !activeChannel || wc === 0 || wc > wordLimitMax;
+}
+
+function sendChannelMessage(){
+  if(!activeChannel) return;
+  const text = el("negoText").value.trim();
+  const wc = Rubric.wordCount(text);
+  if(!text || wc > room.settings.wordLimitMax) return;
+  send({type:"channel_message", to: activeChannel, text});
+  el("negoText").value = "";
+  updNegoWordCount();
+}
+
+function renderOwnMark(mark){
+  const rows = Object.entries(mark.criteria).map(([key, c])=>
+    `<div style="display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:12.8px">
+       <span style="color:var(--grey)">${key.replace(/([A-Z])/g," $1").replace(/^./,c=>c.toUpperCase())}</span>
+       <span style="font-weight:bold;color:var(--blue)">${c.score}/5</span>
+     </div>`).join("");
+  el("negoOwnMark").innerHTML =
+    `<div class="hr"></div>
+     <div style="font-size:11.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--grey);margin-bottom:6px">Your statement, marked (${mark.total}/${mark.max})</div>
+     ${rows}`;
+}
+
+/* ---- amendment: sponsor / second ---- */
+/* ---- clause pitch: sponsor / second which clause gets debated ---- */
+function renderClausePitch(){
+  el("pitchLede").textContent = T(
+    "Pitch a clause for the room to debate this round, or second someone else's pick. The most-seconded clause wins; if none is pitched, the chair picks one at random.",
+    "Pick a clause you want to debate, or back someone else's pick!");
+
+  const { sponsorsOf, secondsOf, currentSponsorship } = Engine.tallyClausePitchEvents(clausePitchEvents);
+  const mySponsorship = currentSponsorship[myPlayerId] || null;
+
+  el("pitchGrid").innerHTML = PACK.clauses.map(c=>{
+    const sponsorNames = [...(sponsorsOf[c.id] || [])]
+      .map(pid => room.players.find(p=>p.id===pid))
+      .filter(Boolean).map(p=>p.country || p.name);
+    const seconds = [...(secondsOf[c.id] || [])];
+    const secondCount = seconds.filter(pid => !(sponsorsOf[c.id] && sponsorsOf[c.id].has(pid))).length;
+    const iSponsor = mySponsorship === c.id;
+    const iSecond = seconds.includes(myPlayerId);
+    // Unlike amendment sponsorship (co-sponsorship allowed by design), a
+    // pitched clause takes exactly one sponsor — first to pitch it holds it
+    // until they withdraw; everyone else can only second it.
+    const takenByOther = sponsorNames.length > 0 && !iSponsor;
+    return `<div class="amcard ${iSponsor ? "sel" : ""}">
+        <div class="al">Clause ${c.id}</div>
+        <div class="ad">${c.text}</div>
+        <div class="ad" style="margin-top:8px">
+          ${sponsorNames.length ? T("Pitched by ", "Picked by ") + sponsorNames.map(escapeHtml).join(", ") : T("Not pitched yet.", "Nobody's picked this yet.")}
+          ${secondCount ? ` · ${secondCount} second${secondCount===1?"":"s"}` : ""}
+        </div>
+        <div class="actions" style="margin-top:10px">
+          <button class="btn ${iSponsor ? "" : "ghost"}" style="padding:8px 16px;font-size:13px" ${takenByOther ? "disabled" : ""} onclick="toggleClauseSponsor('${c.id}')">
+            ${iSponsor ? T("Withdraw pitch","Unpick this") : T("Pitch this","Pick this")}
+          </button>
+          ${!iSponsor ? `<button class="btn ghost" style="padding:8px 16px;font-size:13px" onclick="toggleClauseSecond('${c.id}')">
+            ${iSecond ? T("Withdraw second","Unsecond") : T("Second this","Second it")}
+          </button>` : ""}
+        </div>
+      </div>`;
+  }).join("");
+
+  show("scClausePitch");
+}
+
+function toggleClauseSponsor(clauseId){
+  const { sponsorsOf, currentSponsorship } = Engine.tallyClausePitchEvents(clausePitchEvents);
+  const mine = currentSponsorship[myPlayerId] || null;
+  if(mine !== clauseId && sponsorsOf[clauseId] && sponsorsOf[clauseId].size > 0) return;
+  send({type:"event", kind:"clause_sponsor", payload:{clauseId: mine === clauseId ? null : clauseId}});
+}
+
+function toggleClauseSecond(clauseId){
+  const { secondsOf } = Engine.tallyClausePitchEvents(clausePitchEvents);
+  const already = (secondsOf[clauseId] || new Set()).has(myPlayerId);
+  send({type:"event", kind:"clause_second", payload:{clauseId, seconded: !already}});
+}
+
+function renderAmendment(){
+  el("amendLede").textContent = T(
+    "Sponsor an amendment or second someone else's. The most-seconded amendment goes to the floor; if none is sponsored, the clause is voted as drafted.",
+    "Pick an amendment to back, or second someone else's pick!");
+  const clause = currentClause();
+  el("amendClause").innerHTML = clause
+    ? `<div class="cid">Operative Clause ${clause.id}</div><div class="ctext">${clause.text}</div>`
+    : "";
+
+  const { sponsorsOf, secondsOf, currentSponsorship } = Engine.tallyAmendmentEvents(amendmentEvents);
+  const mySponsorship = currentSponsorship[myPlayerId] || null;
+
+  el("amendGrid").innerHTML = PACK.amendments.map(a=>{
+    const sponsorCountries = [...(sponsorsOf[a.id] || [])]
+      .map(pid => room.players.find(p=>p.id===pid))
+      .filter(Boolean).map(p=>p.country || p.name);
+    const seconds = [...(secondsOf[a.id] || [])];
+    const secondCount = seconds.filter(pid => !(sponsorsOf[a.id] && sponsorsOf[a.id].has(pid))).length;
+    const iSponsor = mySponsorship === a.id;
+    const iSecond = seconds.includes(myPlayerId);
+    return `<div class="amcard ${iSponsor ? "sel" : ""}">
+        <div class="al">${escapeHtml(a.label)}</div>
+        <div class="ad">${escapeHtml(a.detail)}</div>
+        <div class="ad" style="margin-top:8px">
+          ${sponsorCountries.length ? T("Sponsored by ", "Backed by ") + sponsorCountries.map(c=>Flags.svgFor(c,16)+escapeHtml(c)).join(", ") : T("No sponsor yet.", "Nobody's picked this yet.")}
+          ${secondCount ? ` · ${secondCount} second${secondCount===1?"":"s"}` : ""}
+        </div>
+        <div class="actions" style="margin-top:10px">
+          <button class="btn ${iSponsor ? "" : "ghost"}" style="padding:8px 16px;font-size:13px" onclick="toggleSponsor('${a.id}')">
+            ${iSponsor ? T("Withdraw sponsorship","Unpick this") : T("Sponsor this","Pick this")}
+          </button>
+          ${!iSponsor ? `<button class="btn ghost" style="padding:8px 16px;font-size:13px" onclick="toggleSecond('${a.id}')">
+            ${iSecond ? T("Withdraw second","Unsecond") : T("Second this","Second it")}
+          </button>` : ""}
+        </div>
+      </div>`;
+  }).join("");
+
+  show("scAmendment");
+}
+
+function toggleSponsor(amendmentId){
+  const { currentSponsorship } = Engine.tallyAmendmentEvents(amendmentEvents);
+  const mine = currentSponsorship[myPlayerId] || null;
+  send({type:"event", kind:"amendment_sponsor", payload:{amendmentId: mine === amendmentId ? null : amendmentId}});
+}
+
+function toggleSecond(amendmentId){
+  const { secondsOf } = Engine.tallyAmendmentEvents(amendmentEvents);
+  const already = (secondsOf[amendmentId] || new Set()).has(myPlayerId);
+  send({type:"event", kind:"amendment_second", payload:{amendmentId, seconded: !already}});
+}
+
+/* ---- waiting (generic) ---- */
+function renderWaiting(kicker, head, lede){
+  el("waitKicker").textContent = kicker;
+  el("waitHead").textContent = head;
+  el("waitLede").textContent = lede;
+  show("scWaiting");
+}
+
+/* ---- division ---- */
+function renderDivision(){
+  const mine = me();
+  const clause = currentClause();
+  const { amendment, text } = finalTagsAndClause();
+  el("divClause").innerHTML = clause
+    ? `<div class="cid">Operative Clause ${clause.id}</div><div class="ctext">${amendment ? text : clause.text}</div>
+       ${amendment
+         ? `<div style="margin-top:11px;font-size:12.8px;color:var(--green-dk);font-weight:bold">${T("Amended","Changed")} — ${escapeHtml(amendment.detail)}</div>`
+         : `<div style="margin-top:11px;font-size:12.8px;color:var(--grey)">${T("Voted as drafted — no amendment carried.","No changes made — voting on the original text.")}</div>`}`
+    : "";
+  el("divCountry").innerHTML = mine.country ? `${Flags.svgFor(mine.country, 20)}${escapeHtml(mine.country)}` : "";
+  const cast = votesSeen[myPlayerId];
+  el("divButtons").innerHTML = [2,1,0,-1,-2].map(v=>
+    `<button class="vb ${cast===v?'sel':''}" data-v="${v}" onclick="castVote(${v})">${{2:"++",1:"+",0:"~","-1":"−","-2":"−−"}[v]}</button>`).join("");
+  const votedCount = room.players.filter(p=>votesSeen[p.id]!==undefined).length;
+  el("divStatus").textContent = cast===undefined
+    ? T("Cast your vote when you're ready.", "Pick your vote whenever you're ready!")
+    : T(`Vote recorded. ${votedCount} of ${room.players.length} delegates have voted. Waiting for the chair.`,
+        `Got it! ${votedCount} of ${room.players.length} have voted so far.`);
+  show("scDivision");
+}
+function castVote(v){
+  votesSeen[myPlayerId] = v;
+  send({type:"event", kind:"vote", payload:{choice:v}});
+  renderDivision();
+}
+
+/* ---- results ---- */
+function renderResults(){
+  const clause = currentClause();
+  const mine = me();
+  const { tags, clauseId, amendment, text } = finalTagsAndClause();
+
+  el("resClause").innerHTML = clause
+    ? `<div class="cid">Operative Clause ${clause.id}</div><div class="ctext">${amendment ? text : clause.text}</div>
+       ${amendment
+         ? `<div style="margin-top:11px;font-size:12.8px;color:var(--green-dk);font-weight:bold">${T("Amended","Changed")} — ${escapeHtml(amendment.detail)}</div>`
+         : `<div style="margin-top:11px;font-size:12.8px;color:var(--grey)">${T("Voted as drafted — no amendment carried.","No changes made — voting on the original text.")}</div>`}`
+    : "";
+
+  const cast = room.players.filter(p=>p.country).map(p=>({
+    label: p.country, s: votesSeen[p.id] !== undefined ? votesSeen[p.id] : 0,
+  }));
+  let all = cast;
+  if(room.settings.fullAssembly && clause){
+    // Plain stanceOf — no lobbying-derived shift here. That bonus mechanic
+    // depended on every client seeing every negotiation message, which a
+    // private channel deliberately prevents; see applyChannelMessage's
+    // comment for why it was dropped rather than left silently inconsistent.
+    const assigned = new Set(room.players.map(p=>p.country));
+    const rest = PACK.countries.filter(c=>!assigned.has(c.n));
+    const aiVotes = rest.map(c=>({label:c.n, s: Engine.stanceOf(c, tags, clauseId, PACK).s}));
+    all = cast.concat(aiVotes);
+  }
+  const tally = Engine.tallyVotes(all.map(v=>({s:v.s})));
+
+  el("resTitle").textContent = amendment
+    ? T("The amended clause is put to the vote.", "Here's how the vote went!")
+    : T("The clause, as drafted, is put to the vote.", "Here's how the vote went!");
+  const tot = all.length;
+  el("tally").innerHTML =
+    `<div style="flex:${tally.yes||0.001};background:var(--green-dk)">${tally.yes?tally.yes+" FOR":""}</div>
+     <div style="flex:${tally.abstain||0.001};background:#8A8078">${tally.abstain?tally.abstain+" ABS":""}</div>
+     <div style="flex:${tally.no||0.001};background:var(--maroon)">${tally.no?tally.no+" AGAINST":""}</div>`;
+  el("tallyNote").textContent = `${tot} delegations voting${room.settings.fullAssembly?" (Full Assembly)":""}.`;
+  el("verdict").innerHTML = tally.passed
+    ? `<span class="pass">Carried — ${tally.yes} for, ${tally.no} against.</span>`
+    : `<span class="fail">Failed — ${tally.yes} for, ${tally.no} against.</span>`;
+
+  const myCast = votesSeen[myPlayerId];
+  let fidelity = { points: 0, distance: null };
+  if(mine.country && myCast !== undefined && clause){
+    const country = PACK.countries.find(c=>c.n===mine.country);
+    const trueStance = Engine.stanceOf(country, tags, clauseId, PACK).s;
+    fidelity = Scoring.mandateFidelityPoints(myCast, trueStance);
+    el("mandateBox").innerHTML = fidelity.distance === 0
+      ? `<div class="good"><b>Mandate intact.</b> ${country.n} voted as its interests required.</div>`
+      : `<div class="warn"><b>Note.</b> ${country.n} would likely have voted <em>${Engine.STANCE_NAME[trueStance]?.toLowerCase()}</em> here.</div>`;
+  } else {
+    el("mandateBox").innerHTML = "";
+  }
+
+  // ---- three-axis scoring (HANDOVER.md section 8) ----
+  const fidelityPoints = fidelityOverride ? fidelityOverride.points : fidelity.points;
+
+  const { currentSponsorship, secondsOf } = Engine.tallyAmendmentEvents(amendmentEvents);
+  const backedWinner = !!(amendment && (
+    currentSponsorship[myPlayerId] === amendment.id ||
+    (secondsOf[amendment.id] && secondsOf[amendment.id].has(myPlayerId))
+  ));
+  const coalition = myCast !== undefined ? Scoring.coalitionPoints(myCast, tally, backedWinner) : { points: 0, base: 0, bonus: 0 };
+
+  const myMessageMarks = Object.values(channels).flatMap(list => list.filter(m=>m.fromMe).map(m=>m.mark));
+  const diplomacy = Scoring.diplomacyPoints(myMessageMarks);
+
+  const profile = Scoring.classifyProfile(fidelityPoints, coalition.base);
+
+  el("scoreFidelity").textContent = fidelityPoints;
+  el("scoreCoalition").textContent = coalition.points;
+  el("scoreDiplomacy").textContent = diplomacy.points;
+  el("profileTitle").textContent = profile.profile;
+  el("profileLine").textContent = profile.line;
+
+  const detailBits = [];
+  if(fidelity.distance !== null && !fidelityOverride) detailBits.push(T(
+    fidelity.distance === 0 ? "Fidelity: exact match." : `Fidelity: ${fidelity.distance} bucket(s) off.`,
+    fidelity.distance === 0 ? "Voted exactly as your country would." : `Off by ${fidelity.distance} step(s) from your country's real position.`));
+  if(fidelityOverride) detailBits.push(`${T("Chair override","Teacher override")}: ${fidelityOverride.points}/40 — "${escapeHtml(fidelityOverride.note)}"`);
+  if(coalition.bonus) detailBits.push(T(`+${coalition.bonus} for sponsoring/seconding the amendment that carried.`, `+${coalition.bonus} bonus for backing the winning amendment!`));
+  if(diplomacy.count < 2) detailBits.push(T("Diplomacy is capped until you've sent at least two statements.", "Send at least two messages to unlock full diplomacy points."));
+  el("scoreDetail").textContent = detailBits.join(" ");
+
+  // Broadcast so the teacher dashboard can build a scoreboard. Keyed on the
+  // actual computed values, not a one-shot flag: this screen re-renders
+  // every time any event arrives while it's showing (including this very
+  // broadcast echoing back), so a plain "have I sent yet" flag would either
+  // spam a resend loop or — if guarded too bluntly — never reflect a
+  // fidelity override the chair applies after the first send. Resending
+  // only when the content actually changed handles both correctly.
+  const scoreKey = `${room.roundNumber}|${fidelityPoints}|${coalition.points}|${diplomacy.points}`;
+  if(lastSentScoreKey !== scoreKey){
+    lastSentScoreKey = scoreKey;
+    send({type:"event", kind:"round_score", payload:{
+      roundNumber: room.roundNumber,
+      country: mine.country,
+      fidelity: fidelityPoints, coalition: coalition.points, diplomacy: diplomacy.points,
+      total: fidelityPoints + coalition.points + diplomacy.points,
+      profile: profile.profile,
+    }});
+  }
+
+  show("scResults");
+}
+
+/* ---- boot ---- */
+if(roomCode && myPlayerId) tryRejoin();
+else show("scJoin");
+</script>
+</body>
+</html>

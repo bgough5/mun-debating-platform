@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Scoring unit tests</title></head>
+<body>
+<pre id="out">running…</pre>
+<script src="../shared/scoring.js"></script>
+<script>
+(function () {
+  const results = [];
+  let pass = 0, fail = 0;
+
+  function assertEqual(actual, expected, label) {
+    const ok = JSON.stringify(actual) === JSON.stringify(expected);
+    if (ok) pass++; else fail++;
+    results.push(`${ok ? "PASS" : "FAIL"} — ${label}` + (ok ? "" : `\n    expected: ${JSON.stringify(expected)}\n    actual:   ${JSON.stringify(actual)}`));
+  }
+
+  // ---- Axis 1: Mandate Fidelity ----
+  assertEqual(Scoring.mandateFidelityPoints(2, 2), { points: 40, distance: 0 }, "fidelity: exact match -> 40");
+  assertEqual(Scoring.mandateFidelityPoints(1, 2), { points: 24, distance: 1 }, "fidelity: 1 bucket off -> 24");
+  assertEqual(Scoring.mandateFidelityPoints(-2, 2), { points: 0, distance: 4 }, "fidelity: 4 buckets off (3+) -> 0");
+  assertEqual(Scoring.mandateFidelityPoints(0, 2), { points: 8, distance: 2 }, "fidelity: 2 buckets off -> 8");
+  assertEqual(Scoring.mandateFidelityPoints(-1, 1), { points: 8, distance: 2 }, "fidelity: 2 buckets off the other direction -> 8 (direction doesn't matter, only distance)");
+
+  // ---- Axis 2: Coalition ----
+  const carried = { yes: 2, abstain: 0, no: 1, passed: true };
+  const failed = { yes: 1, abstain: 0, no: 2, passed: false };
+  assertEqual(Scoring.coalitionPoints(1, carried, false), { points: 30, base: 30, bonus: 0 }, "coalition: voted for, it carried -> winning side (30)");
+  assertEqual(Scoring.coalitionPoints(-1, carried, false), { points: 5, base: 5, bonus: 0 }, "coalition: voted against, it carried -> losing side (5)");
+  assertEqual(Scoring.coalitionPoints(-1, failed, false), { points: 30, base: 30, bonus: 0 }, "coalition: voted against, it failed -> winning side (30)");
+  assertEqual(Scoring.coalitionPoints(0, carried, false), { points: 12, base: 12, bonus: 0 }, "coalition: abstained -> 12 regardless of outcome");
+  assertEqual(Scoring.coalitionPoints(1, carried, true), { points: 45, base: 30, bonus: 15 }, "coalition: winning side + sponsored/seconded the carried amendment -> +15 bonus");
+  assertEqual(Scoring.coalitionPoints(-1, carried, true), { points: 20, base: 5, bonus: 15 }, "coalition: bonus applies even on the losing side (sponsoring != voting for)");
+
+  // ---- Axis 3: Diplomacy ----
+  assertEqual(Scoring.diplomacyPoints([]), { points: 0, average: 0, count: 0 }, "diplomacy: no statements -> 0");
+  assertEqual(Scoring.diplomacyPoints([{ total: 30, max: 30 }]).points, 15, "diplomacy: one perfect statement is capped at half (15) — one-and-done shouldn't max it");
+  assertEqual(Scoring.diplomacyPoints([{ total: 15, max: 30 }]).points, 15, "diplomacy: one statement below the cap scores its own average, not further reduced");
+  assertEqual(Scoring.diplomacyPoints([{ total: 30, max: 30 }, { total: 30, max: 30 }]).points, 30, "diplomacy: two perfect statements -> full 30, cap lifted");
+  assertEqual(Scoring.diplomacyPoints([{ total: 30, max: 30 }, { total: 0, max: 30 }]).points, 15, "diplomacy: two statements average correctly (30 and 0 -> 15)");
+
+  // ---- total ----
+  assertEqual(Scoring.totalScore({ points: 40 }, { points: 30 }, { points: 20 }), 90, "totalScore: sums the three axes");
+
+  // ---- Delegate Profile ----
+  assertEqual(Scoring.classifyProfile(40, 30).profile, "Statesman", "profile: high fidelity + high coalition -> Statesman");
+  assertEqual(Scoring.classifyProfile(40, 5).profile, "Principled Isolate", "profile: high fidelity + low coalition -> Principled Isolate");
+  assertEqual(Scoring.classifyProfile(8, 30).profile, "Gone Native", "profile: low fidelity + high coalition -> Gone Native");
+  assertEqual(Scoring.classifyProfile(0, 12).profile, "Passenger", "profile: low fidelity + low coalition -> Passenger");
+  assertEqual(Scoring.classifyProfile(24, 30).profile, "Statesman", "profile: 1-bucket-off fidelity (24) still counts as high");
+
+  results.push("", `${pass} passed, ${fail} failed`);
+  const text = results.join("\n");
+  document.getElementById("out").textContent = text;
+  console.log(text);
+  window.__testSummary = { pass, fail };
+})();
+</script>
+</body>
+</html>

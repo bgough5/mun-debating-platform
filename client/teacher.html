@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Whip Count — Chair's Dashboard</title>
+<style>
+  /* ============ Whip Count visual identity v2 ============
+     Same design tokens as client/player.html — see that file's
+     stylesheet header for the full rationale. Formal-UN-blue x
+     modern-conference-tech; SOC's actual colours kept only as the
+     semantic FOR/AGAINST pass/fail pair; the real SOC diamond logo
+     is a small corner badge, not the header identity. */
+  :root{
+    --bg:#0A1F33; --bg-alt:#0F2E4C; --navy-chip:#1B4A73;
+    --blue:#1C4E8C; --blue-dk:#123A6B; --blue-lt:#2E7BD6;
+    --maroon:#8C332A; --maroon-dk:#5E1F18;
+    --green:#0A6B39; --green-dk:#0A4527;
+    --gold:#B8960C; --gold-lt:#D4B441;
+    --cream:#EDF1F6; --card:#FFFFFF; --ink:#16202B; --grey:#5C6B7A; --line:#E1E7EE;
+    --font-head:"Segoe UI","Segoe UI Semibold",system-ui,sans-serif;
+    --font-body:"Segoe UI",system-ui,-apple-system,sans-serif;
+    --font-mono:Consolas,"Cascadia Mono","Courier New",monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:var(--font-body);
+    background:var(--bg); background-image:radial-gradient(ellipse at top, var(--bg-alt), var(--bg) 65%);
+    background-attachment:fixed;
+    color:var(--ink);
+    min-height:100vh; padding:20px 20px 60px;
+  }
+  .shell{width:100%;max-width:1400px;margin:0 auto}
+  h1,h2,h3,.serif{font-family:var(--font-head);font-weight:800;letter-spacing:-.2px}
+
+  .topbar{display:flex;align-items:center;gap:12px;padding:6px 2px 18px;flex-wrap:wrap;row-gap:10px}
+  .appmark{flex:none;display:block}
+  .unemblem{flex:none;display:block}
+  .brandname{color:#fff;font-size:15px;font-weight:800;letter-spacing:1.8px;font-family:var(--font-head)}
+  .brandsub{color:var(--gold-lt);font-size:10.5px;letter-spacing:1.6px;margin-top:2px;text-transform:uppercase}
+  .spacer{flex:1}
+  .socbadge{flex:none;display:flex;align-items:center;gap:7px;opacity:.62;transition:opacity .15s}
+  .socbadge:hover{opacity:1}
+  .socbadge img{height:22px;width:auto;display:block}
+  .socbadge span{color:var(--gold-lt);font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;max-width:70px;line-height:1.3}
+  .scorepill{background:var(--navy-chip);border:1px solid #26618F;color:#EAF1F9;white-space:nowrap;
+    padding:7px 15px;border-radius:8px;font-size:12.5px;letter-spacing:.6px;font-family:var(--font-mono)}
+
+  .panel{background:var(--card);border-radius:10px;padding:24px 26px;box-shadow:0 12px 34px rgba(6,18,32,.38);margin-bottom:18px}
+  .kicker{color:var(--blue);font-size:11px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase}
+  h2{font-size:20px;color:var(--ink);margin:2px 0 10px;font-weight:700}
+  .lede{color:var(--grey);font-size:13.5px;line-height:1.55;max-width:80ch}
+  .hr{height:1px;background:var(--line);margin:16px 0}
+
+  label.fld{display:block;font-size:10.5px;font-weight:700;letter-spacing:1.1px;
+    text-transform:uppercase;color:var(--blue);margin-bottom:5px}
+  select,input[type=text],input[type=number]{width:100%;padding:9px 10px;font-size:14px;font-family:inherit;color:var(--ink);
+    border:1px solid #D2D9E2;border-radius:7px;background:#fff}
+  select:disabled,input:disabled{background:#EEF1F5;color:var(--grey)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .gridN{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+
+  button{font-family:inherit;cursor:pointer;border:none;border-radius:7px;transition:.13s}
+  .btn{background:var(--blue);color:#fff;padding:10px 18px;font-size:13.5px;font-weight:700;letter-spacing:.3px}
+  .btn:hover{background:var(--blue-dk)}
+  .btn:disabled{background:#B7C1CC;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--blue);border:1.5px solid var(--blue)}
+  .btn.ghost:hover{background:#EAF1FA}
+  .btn.small{padding:6px 12px;font-size:12px}
+  .actions{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--grey);
+    padding:6px 8px;border-bottom:2px solid var(--line)}
+  td{padding:8px 8px;border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:none}
+
+  .roster{list-style:none}
+  .roster li{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:13.5px}
+  .flag{display:inline-block;flex:none;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.12);margin-right:6px;vertical-align:middle}
+  .roster li:last-child{border-bottom:none}
+  .dot{width:9px;height:9px;border-radius:50%;background:#B7C1CC;flex:none}
+  .dot.on{background:var(--green-dk)}
+  .codebox{font-family:var(--font-mono);font-size:26px;letter-spacing:6px;color:var(--blue);text-align:center;
+    background:var(--cream);border-radius:8px;padding:12px;margin:10px 0;border:1px solid var(--line)}
+
+  .amcard{background:var(--cream);border-radius:8px;padding:11px 13px;border:2px solid transparent;font-size:12.5px}
+  .amcard.won{border-color:var(--green-dk);background:#E9F2EC}
+  .amcard .al{font-family:var(--font-head);font-weight:700;font-size:13.5px;color:var(--blue)}
+  .amcard.won .al{color:var(--green-dk)}
+
+  .feed{max-height:360px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:10px}
+  .feedmsg{padding:8px 6px;border-bottom:1px solid var(--line);font-size:13px}
+  .feedmsg:last-child{border-bottom:none}
+  .feedmsg .hd{font-size:11px;color:var(--grey);letter-spacing:.3px}
+  .feeddivider{text-align:center;font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);
+    margin:10px 0 6px;padding-top:8px;border-top:1px dashed var(--line)}
+
+  .tally{display:flex;gap:3px;margin:12px 0 8px;height:28px;border-radius:5px;overflow:hidden}
+  .tally div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
+  .verdict{font-family:var(--font-head);font-size:18px;font-weight:800;margin:4px 0}
+  .pass{color:var(--green-dk)} .fail{color:var(--maroon)}
+
+  .hidden{display:none}
+  .foot{text-align:center;color:#7C8AA0;font-size:11px;letter-spacing:1.6px;margin-top:10px}
+  .warnline{color:var(--maroon);font-size:12.5px}
+  .checkline{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:8px}
+  .checkline input{width:auto}
+  @media(max-width:900px){ .grid2,.grid3{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="topbar">
+    <svg class="appmark" width="30" height="30" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <rect x="5" y="5" width="22" height="22" rx="5" fill="var(--blue)" transform="rotate(45 16 16)"/>
+      <path d="M10 16.2l4.2 4.2 8-8.6" stroke="var(--gold-lt)" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <div class="brandname">WHIP COUNT</div>
+      <div class="brandsub">Chair's Dashboard</div>
+    </div>
+    <svg class="unemblem" width="24" height="24" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" title="Model United Nations (stylised, not the official UN emblem)">
+      <circle cx="32" cy="27" r="14" fill="none" stroke="var(--blue)" stroke-width="1.6"/>
+      <ellipse cx="32" cy="27" rx="14" ry="5.5" fill="none" stroke="var(--blue)" stroke-width="1"/>
+      <ellipse cx="32" cy="27" rx="14" ry="10" fill="none" stroke="var(--blue)" stroke-width="1"/>
+      <line x1="32" y1="13" x2="32" y2="41" stroke="var(--blue)" stroke-width="1.2"/>
+      <line x1="18" y1="27" x2="46" y2="27" stroke="var(--blue)" stroke-width="1"/>
+      <g fill="var(--gold)">
+        <path d="M13 33 Q7 43 11 51 Q15 58 24 61" fill="none" stroke="var(--gold)" stroke-width="2"/>
+        <ellipse cx="11" cy="38" rx="3.4" ry="1.6" transform="rotate(-40 11 38)"/>
+        <ellipse cx="9.5" cy="45" rx="3.6" ry="1.7" transform="rotate(-15 9.5 45)"/>
+        <ellipse cx="11.5" cy="52" rx="3.6" ry="1.7" transform="rotate(20 11.5 52)"/>
+        <ellipse cx="16" cy="57" rx="3.6" ry="1.7" transform="rotate(50 16 57)"/>
+        <ellipse cx="21" cy="60" rx="3.4" ry="1.6" transform="rotate(75 21 60)"/>
+      </g>
+      <g fill="var(--gold)" transform="translate(64,0) scale(-1,1)">
+        <path d="M13 33 Q7 43 11 51 Q15 58 24 61" fill="none" stroke="var(--gold)" stroke-width="2"/>
+        <ellipse cx="11" cy="38" rx="3.4" ry="1.6" transform="rotate(-40 11 38)"/>
+        <ellipse cx="9.5" cy="45" rx="3.6" ry="1.7" transform="rotate(-15 9.5 45)"/>
+        <ellipse cx="11.5" cy="52" rx="3.6" ry="1.7" transform="rotate(20 11.5 52)"/>
+        <ellipse cx="16" cy="57" rx="3.6" ry="1.7" transform="rotate(50 16 57)"/>
+        <ellipse cx="21" cy="60" rx="3.4" ry="1.6" transform="rotate(75 21 60)"/>
+      </g>
+    </svg>
+    <div class="spacer"></div>
+    <div class="scorepill" id="phasePill">No room yet</div>
+    <div class="socbadge" title="South Oakleigh College Model United Nations">
+      <img src="../assets/soc_logo.png" alt="South Oakleigh College">
+      <span>South Oakleigh College</span>
+    </div>
+  </div>
+
+  <!-- ============ CREATE ROOM ============ -->
+  <div class="panel" id="scCreate">
+    <div class="kicker">New Session</div>
+    <h2>Set up the chamber.</h2>
+    <div class="grid3">
+      <div>
+        <label class="fld">Player count</label>
+        <select id="inPlayerCount"><option>3</option><option selected>5</option><option>7</option><option>9</option></select>
+      </div>
+      <div>
+        <label class="fld">Topic pack</label>
+        <input type="text" id="inPackId" value="climate2026">
+      </div>
+      <div>
+        <label class="fld">Tone mode</label>
+        <select id="inToneMode"><option value="standard" selected>Standard</option><option value="junior">Junior (lighter tone)</option></select>
+      </div>
+    </div>
+    <div class="grid3" style="margin-top:14px">
+      <div>
+        <label class="fld">Word limit (min–max)</label>
+        <div style="display:flex;gap:8px">
+          <input type="number" id="inWordMin" value="60">
+          <input type="number" id="inWordMax" value="150">
+        </div>
+      </div>
+      <div>
+        <label class="fld">Negotiation timer (seconds)</label>
+        <input type="number" id="inNegoSeconds" value="480">
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:16px">
+        <label class="checkline"><input type="checkbox" id="inWhipCount" checked> Whip count</label>
+        <label class="checkline"><input type="checkbox" id="inFullAssembly"> Full assembly</label>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="createRoom()">Open the chamber</button>
+      <span id="createError" class="warnline"></span>
+    </div>
+  </div>
+
+  <!-- ============ DASHBOARD (shown once a room exists) ============ -->
+  <div class="hidden" id="scDashboard">
+
+    <div class="panel">
+      <div class="kicker">Room</div>
+      <div class="codebox" id="roomCode"></div>
+      <p class="lede" id="joinHint" style="text-align:center"></p>
+    </div>
+
+    <div class="grid2">
+      <!-- ---- Round control ---- -->
+      <div class="panel">
+        <div class="kicker">Round Control</div>
+        <h2 id="roundHead"></h2>
+        <div id="lobbySettings">
+          <div class="grid2">
+            <label class="checkline"><input type="checkbox" id="chkWhipCount" onchange="pushSettings()"> Whip count enabled</label>
+            <label class="checkline"><input type="checkbox" id="chkFullAssembly" onchange="pushSettings()"> Full assembly</label>
+          </div>
+        </div>
+        <div class="hr"></div>
+        <label class="fld">Clause override</label>
+        <p class="lede" style="margin-bottom:8px">Students pitch and second which clause to debate (Clause Pitch phase). Only use this to force a specific clause instead.</p>
+        <select id="clauseSelect"></select>
+        <div class="actions"><button class="btn ghost small" onclick="setClause()">Set clause</button></div>
+        <div class="hr"></div>
+        <label class="fld">Country assignment</label>
+        <div class="actions">
+          <button class="btn ghost small" onclick="assignRandom()">Assign randomly</button>
+        </div>
+        <div class="hr"></div>
+        <label class="fld">Phase: <span id="curPhase"></span></label>
+        <div class="actions">
+          <button class="btn" onclick="advancePhase()" id="btnAdvance">Advance phase →</button>
+          <select id="gotoPhase" style="width:auto">
+            <option value="lobby">Lobby</option><option value="clause_pitch">Clause Pitch</option>
+            <option value="brief">Brief</option><option value="whip">Whip</option>
+            <option value="negotiation">Negotiation</option><option value="amendment">Amendment</option>
+            <option value="division">Division</option><option value="results">Results</option>
+          </select>
+          <button class="btn ghost small" onclick="gotoPhase()">Jump to</button>
+          <button class="btn ghost small" onclick="newRound()">New round (same roster)</button>
+        </div>
+      </div>
+
+      <!-- ---- Roster ---- -->
+      <div class="panel">
+        <div class="kicker">Roster</div>
+        <h2>Who's here.</h2>
+        <ul class="roster" id="rosterList"></ul>
+      </div>
+    </div>
+
+    <!-- ---- Clause pitch status ---- -->
+    <div class="panel hidden" id="pitchPanel">
+      <div class="kicker">Clause Pitch</div>
+      <h2>Who wants to debate what.</h2>
+      <div class="gridN" id="pitchStatusGrid"></div>
+    </div>
+
+    <!-- ---- Amendment status ---- -->
+    <div class="panel hidden" id="amendPanel">
+      <div class="kicker">Amendment</div>
+      <h2>Sponsorship, live.</h2>
+      <div class="gridN" id="amendStatusGrid"></div>
+    </div>
+
+    <!-- ---- Negotiation feed (combined, every channel) ---- -->
+    <div class="panel">
+      <div class="kicker">Backroom Negotiation — Full Visibility</div>
+      <h2>Every private channel, combined.</h2>
+      <p class="lede" style="margin-bottom:10px">Delegates only see their own threads. You see all of them — this transcript is for review and moderation, not for the projector during play.</p>
+      <div class="feed" id="feed"></div>
+    </div>
+
+    <!-- ---- Division / Results ---- -->
+    <div class="panel">
+      <div class="kicker">Division Result</div>
+      <h2 id="divTitle">Awaiting a vote.</h2>
+      <div id="divStatusLine" class="lede"></div>
+      <div class="tally hidden" id="tally"></div>
+      <div class="verdict" id="verdict"></div>
+      <div class="hr"></div>
+      <label class="fld">This round's scoreboard</label>
+      <table id="scoreTable"><thead><tr><th>Delegate</th><th>Country</th><th>Fidelity</th><th>Coalition</th><th>Diplomacy</th><th>Total</th><th>Profile</th><th></th></tr></thead><tbody></tbody></table>
+      <div class="hr"></div>
+      <label class="fld">Override a fidelity score</label>
+      <div class="grid3">
+        <select id="overrideTarget"></select>
+        <input type="number" id="overridePoints" placeholder="0-40" min="0" max="40">
+        <input type="text" id="overrideNote" placeholder="Reason (shown to the student)">
+      </div>
+      <div class="actions"><button class="btn ghost small" onclick="sendOverride()">Apply override</button></div>
+    </div>
+
+    <!-- ---- Leaderboard ---- -->
+    <div class="panel">
+      <div class="kicker">Session Leaderboard</div>
+      <h2>Across every round this session.</h2>
+      <p class="lede" style="margin-bottom:10px">Wiped when this server restarts — start a new lesson, start a new leaderboard.</p>
+      <table id="leaderTable"><thead><tr><th>Delegate</th><th>Rounds played</th><th>Cumulative total</th></tr></thead><tbody></tbody></table>
+    </div>
+
+  </div>
+
+  <div class="foot">PREP TOOL — BUILD YOUR OWN ARGUMENTS. NOT FOR USE DURING THE ASSEMBLY.</div>
+</div>
+
+<script src="../shared/engine.js"></script>
+<script src="../shared/scoring.js"></script>
+<script src="../shared/flags.js"></script>
+<script>
+/* Pack files declare their own top-level `const PACK`; see client/player.html
+   for why this client must not also declare a `PACK` binding. */
+let packLoadedId = null;
+let ws = null;
+let room = null;
+let feed = [];                 // combined transcript across every channel: {from, to, text, ts, roundNumber}
+let votesLive = {};             // playerId -> cast vote, current round only
+let amendmentEvents = [];        // current round only
+let clausePitchEvents = [];       // current round only
+let scoreByRoundAndPlayer = {};  // "round|playerId" -> latest round_score payload (+playerId, +name)
+let overrides = {};              // playerId -> {points, note}
+let lastSeenRoundNumber = null;
+
+function el(id){ return document.getElementById(id); }
+
+function loadPack(packId){
+  if(packLoadedId === packId) return Promise.resolve();
+  return new Promise((resolve, reject)=>{
+    const s = document.createElement("script");
+    s.src = `../src/pack_${packId}.js`;
+    s.onload = ()=>{ packLoadedId = packId; resolve(); };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+function connect(onOpen){
+  try {
+    ws = new WebSocket(`ws://${location.hostname}:8765`);
+  } catch(e){
+    el("createError").textContent = "Could not connect — open this page using the address the server printed (e.g. http://<ip>:8100/client/teacher.html), not by double-clicking the file.";
+    return;
+  }
+  ws.onopen = () => onOpen && onOpen();
+  ws.onmessage = (ev) => handleMessage(JSON.parse(ev.data));
+  ws.onclose = () => { el("createError").textContent = "Connection lost. Reload this page."; };
+}
+function send(payload){ ws.send(JSON.stringify(payload)); }
+
+async function createRoom(){
+  el("createError").textContent = "";
+  const packId = el("inPackId").value.trim() || "climate2026";
+  try { await loadPack(packId); } catch(e){ el("createError").textContent = `Could not load pack '${packId}'.`; return; }
+  connect(() => send({type:"create_room", settings:{
+    playerCount: +el("inPlayerCount").value,
+    packId,
+    toneMode: el("inToneMode").value,
+    wordLimitMin: +el("inWordMin").value,
+    wordLimitMax: +el("inWordMax").value,
+    negotiationSeconds: +el("inNegoSeconds").value,
+    whipCountEnabled: el("inWhipCount").checked,
+    fullAssembly: el("inFullAssembly").checked,
+  }}));
+}
+
+async function handleMessage(msg){
+  if(msg.type === "error"){ el("createError").textContent = msg.message; return; }
+  if(msg.type === "room_created" || msg.type === "state"){
+    room = msg.state;
+    await loadPack(room.settings.packId);
+    render();
+    return;
+  }
+  if(msg.type === "event"){ applyEvent(msg); render(); return; }
+  if(msg.type === "channel_message"){
+    feed.push({ from: partyCountry(msg.playerId), to: msg.payload.to, text: msg.payload.text, ts: msg.ts, roundNumber: msg.roundNumber });
+    render();
+    return;
+  }
+}
+
+function partyCountry(playerId){
+  const p = room.players.find(x=>x.id===playerId);
+  return p ? (p.country || p.name) : "?";
+}
+
+function applyEvent(e){
+  if(e.kind === "vote"){ votesLive[e.playerId] = e.payload.choice; return; }
+  if(e.kind === "amendment_sponsor" || e.kind === "amendment_second"){ amendmentEvents.push(e); return; }
+  if(e.kind === "clause_sponsor" || e.kind === "clause_second"){ clausePitchEvents.push(e); return; }
+  if(e.kind === "round_score"){
+    scoreByRoundAndPlayer[`${e.payload.roundNumber}|${e.playerId}`] = { ...e.payload, playerId: e.playerId };
+    return;
+  }
+  if(e.kind === "fidelity_override"){
+    overrides[e.payload.targetPlayerId] = { points: e.payload.points, note: e.payload.note };
+    return;
+  }
+}
+
+function resetPerRoundState(){
+  votesLive = {};
+  amendmentEvents = [];
+  clausePitchEvents = [];
+}
+
+/* ---- render ---- */
+function render(){
+  el("scCreate").classList.add("hidden");
+  el("scDashboard").classList.remove("hidden");
+  el("phasePill").textContent = `${room.code} · ${room.phase.toUpperCase()} · Round ${room.roundNumber}`;
+
+  if(lastSeenRoundNumber !== null && room.roundNumber !== lastSeenRoundNumber) resetPerRoundState();
+  lastSeenRoundNumber = room.roundNumber;
+
+  el("roomCode").textContent = room.code;
+  el("joinHint").textContent = `Students join at this address's /client/player.html with this code. ${room.players.length} of ${room.settings.playerCount} joined.`;
+
+  renderRoundControl();
+  renderRoster();
+  renderClausePitchStatus();
+  renderAmendmentStatus();
+  renderFeed();
+  renderDivisionResults();
+  renderLeaderboard();
+}
+
+function renderRoundControl(){
+  el("roundHead").textContent = `${room.settings.playerCount}-player · ${room.settings.packId}`;
+  const inLobby = room.phase === "lobby";
+  el("chkWhipCount").checked = room.settings.whipCountEnabled;
+  el("chkFullAssembly").checked = room.settings.fullAssembly;
+  el("chkWhipCount").disabled = !inLobby;
+  el("chkFullAssembly").disabled = !inLobby;
+  el("lobbySettings").style.opacity = inLobby ? "1" : ".55";
+
+  if(el("clauseSelect").options.length <= 1 || el("clauseSelect").dataset.pack !== room.settings.packId){
+    el("clauseSelect").innerHTML = '<option value="">— random —</option>' +
+      PACK.clauses.map(c=>`<option value="${c.id}">${c.id} — ${c.text.slice(0,60)}…</option>`).join("");
+    el("clauseSelect").dataset.pack = room.settings.packId;
+  }
+  if(room.settings.clauseId) el("clauseSelect").value = room.settings.clauseId;
+  const canSetClause = room.phase === "lobby" || room.phase === "clause_pitch";
+  el("clauseSelect").disabled = !canSetClause;
+
+  el("curPhase").textContent = room.phase;
+  el("btnAdvance").disabled = room.phase === "results";
+}
+
+function setClause(){
+  const v = el("clauseSelect").value;
+  const clauseId = v || PACK.clauses[Math.floor(Math.random()*PACK.clauses.length)].id;
+  send({type:"update_settings", settings:{clauseId}});
+}
+function pushSettings(){
+  if(room.phase !== "lobby") return;
+  send({type:"update_settings", settings:{
+    whipCountEnabled: el("chkWhipCount").checked,
+    fullAssembly: el("chkFullAssembly").checked,
+  }});
+}
+function assignRandom(){ send({type:"assign_countries", availableCountries: PACK.countries.map(c=>c.n)}); }
+
+// Leaving CLAUSE_PITCH is the one phase transition that needs the teacher's
+// client to do something first: resolve the open pitch/second (11a) into a
+// concrete clauseId and lock it in via update_settings before advancing —
+// the server itself only relays clause_sponsor/clause_second, it never
+// resolves a winner (thin relay, as always). If the chair already set a
+// clause manually (the dropdown below), that stands; only auto-resolve
+// when nothing's been set yet. If nobody pitched anything either, fall
+// back to a random clause rather than advancing with none set at all.
+function advancePhase(){
+  if(room.phase === "clause_pitch" && !room.settings.clauseId){
+    const winner = Engine.resolveClausePitch(clausePitchEvents, PACK.clauses);
+    const clauseId = winner ? winner.id : PACK.clauses[Math.floor(Math.random()*PACK.clauses.length)].id;
+    send({type:"update_settings", settings:{clauseId}});
+  }
+  send({type:"advance_phase"});
+}
+function gotoPhase(){ send({type:"goto_phase", phase: el("gotoPhase").value}); }
+function newRound(){ send({type:"new_round"}); }
+
+function renderRoster(){
+  el("rosterList").innerHTML = room.players.map(p=>
+    `<li><span class="dot ${p.connected?"on":""}"></span><b>${escapeHtml(p.name)}</b>
+       <span style="color:var(--grey)">${p.country ? "— "+Flags.svgFor(p.country,16)+escapeHtml(p.country) : ""}</span></li>`).join("")
+    || `<li style="color:var(--grey)">Nobody has joined yet.</li>`;
+}
+
+function renderClausePitchStatus(){
+  // Stays visible through the rest of the round too (not just clause_pitch
+  // itself) so the chair can see which clause won and why, same treatment
+  // as renderAmendmentStatus below.
+  if(room.phase === "lobby"){
+    el("pitchPanel").classList.add("hidden");
+    return;
+  }
+  el("pitchPanel").classList.remove("hidden");
+  const { sponsorsOf, secondsOf } = Engine.tallyClausePitchEvents(clausePitchEvents);
+  const winner = Engine.resolveClausePitch(clausePitchEvents, PACK.clauses);
+  el("pitchStatusGrid").innerHTML = PACK.clauses.map(c=>{
+    const sponsors = [...(sponsorsOf[c.id]||[])].map(partyCountry);
+    const seconds = [...(secondsOf[c.id]||[])].filter(pid=>!(sponsorsOf[c.id]&&sponsorsOf[c.id].has(pid))).length;
+    const isWinner = room.settings.clauseId ? room.settings.clauseId === c.id : (winner && winner.id === c.id);
+    return `<div class="amcard ${isWinner ? "won" : ""}">
+        <div class="al">Clause ${c.id}${isWinner ? (room.settings.clauseId ? " — DEBATING" : " — LEADING") : ""}</div>
+        <div>${sponsors.length ? escapeHtml(sponsors.join(", ")) : "not pitched"}${seconds?` · ${seconds} second${seconds===1?"":"s"}`:""}</div>
+      </div>`;
+  }).join("");
+}
+
+function renderAmendmentStatus(){
+  if(room.phase !== "amendment" && room.phase !== "division" && room.phase !== "results"){
+    el("amendPanel").classList.add("hidden");
+    return;
+  }
+  el("amendPanel").classList.remove("hidden");
+  const { sponsorsOf, secondsOf } = Engine.tallyAmendmentEvents(amendmentEvents);
+  const winner = Engine.resolveAmendment(amendmentEvents, PACK.amendments);
+  el("amendStatusGrid").innerHTML = PACK.amendments.map(a=>{
+    const sponsors = [...(sponsorsOf[a.id]||[])].map(partyCountry);
+    const seconds = [...(secondsOf[a.id]||[])].filter(pid=>!(sponsorsOf[a.id]&&sponsorsOf[a.id].has(pid))).length;
+    return `<div class="amcard ${winner && winner.id===a.id ? "won" : ""}">
+        <div class="al">${escapeHtml(a.label)}${winner && winner.id===a.id ? " — CARRIED" : ""}</div>
+        <div>${sponsors.length ? sponsors.map(c=>Flags.svgFor(c,14)+escapeHtml(c)).join(", ") : "no sponsor"}${seconds?` · ${seconds} second${seconds===1?"":"s"}`:""}</div>
+      </div>`;
+  }).join("");
+}
+
+function renderFeed(){
+  if(!feed.length){ el("feed").innerHTML = `<p class="lede">No private messages yet.</p>`; return; }
+  let lastRound = null;
+  el("feed").innerHTML = feed.map(m=>{
+    const divider = m.roundNumber !== lastRound ? `<div class="feeddivider">Round ${m.roundNumber}</div>` : "";
+    lastRound = m.roundNumber;
+    return `${divider}<div class="feedmsg"><div class="hd">${Flags.svgFor(m.from,14)}${escapeHtml(m.from)} → ${Flags.svgFor(m.to,14)}${escapeHtml(m.to)}</div>${escapeHtml(m.text)}</div>`;
+  }).join("");
+  el("feed").scrollTop = el("feed").scrollHeight;
+}
+
+function currentClause(){
+  if(!room.settings.clauseId) return null;
+  return PACK.clauses.find(c=>c.id===room.settings.clauseId) || null;
+}
+
+function renderDivisionResults(){
+  const clause = currentClause();
+  const votedCount = Object.keys(votesLive).length;
+  if(room.phase === "division"){
+    el("divTitle").textContent = "Division in progress.";
+    el("divStatusLine").textContent = `${votedCount} of ${room.players.length} delegates have voted.`;
+    el("tally").classList.add("hidden");
+    el("verdict").innerHTML = "";
+  } else if(room.phase === "results"){
+    const cast = room.players.filter(p=>p.country).map(p=>({ s: votesLive[p.id] !== undefined ? votesLive[p.id] : 0 }));
+    let all = cast;
+    if(room.settings.fullAssembly && clause){
+      const amendment = Engine.resolveAmendment(amendmentEvents, PACK.amendments);
+      const tags = Engine.applyAmendment(clause.tags, amendment);
+      const clauseId = amendment ? null : clause.id;
+      const assigned = new Set(room.players.map(p=>p.country));
+      const rest = PACK.countries.filter(c=>!assigned.has(c.n));
+      all = cast.concat(rest.map(c=>({ s: Engine.stanceOf(c, tags, clauseId, PACK).s })));
+    }
+    const tally = Engine.tallyVotes(all);
+    el("divTitle").textContent = "Division result.";
+    el("divStatusLine").textContent = `${all.length} delegations voting${room.settings.fullAssembly?" (Full Assembly)":""}.`;
+    el("tally").classList.remove("hidden");
+    el("tally").innerHTML =
+      `<div style="flex:${tally.yes||0.001};background:var(--green-dk)">${tally.yes?tally.yes+" FOR":""}</div>
+       <div style="flex:${tally.abstain||0.001};background:#8A8078">${tally.abstain?tally.abstain+" ABS":""}</div>
+       <div style="flex:${tally.no||0.001};background:var(--maroon)">${tally.no?tally.no+" AGAINST":""}</div>`;
+    el("verdict").innerHTML = tally.passed
+      ? `<span class="pass">Carried — ${tally.yes} for, ${tally.no} against.</span>`
+      : `<span class="fail">Failed — ${tally.yes} for, ${tally.no} against.</span>`;
+  } else {
+    el("divTitle").textContent = "Awaiting a vote.";
+    el("divStatusLine").textContent = "";
+    el("tally").classList.add("hidden");
+    el("verdict").innerHTML = "";
+  }
+
+  const rows = room.players
+    .map(p => scoreByRoundAndPlayer[`${room.roundNumber}|${p.id}`] ? { ...scoreByRoundAndPlayer[`${room.roundNumber}|${p.id}`], name: p.name } : null)
+    .filter(Boolean);
+  el("scoreTable").querySelector("tbody").innerHTML = rows.length ? rows.map(r=>{
+    const ov = overrides[r.playerId];
+    return `<tr><td>${escapeHtml(r.name)}</td><td>${Flags.svgFor(r.country,16)}${escapeHtml(r.country)}</td>
+      <td>${ov ? `${ov.points} <span style="color:var(--grey);font-size:11px">(override)</span>` : r.fidelity}</td>
+      <td>${r.coalition}</td><td>${r.diplomacy}</td>
+      <td><b>${(ov ? ov.points : r.fidelity) + r.coalition + r.diplomacy}</b></td>
+      <td>${escapeHtml(r.profile)}</td>
+      <td></td></tr>`;
+  }).join("") : `<tr><td colspan="8" style="color:var(--grey)">No scores yet this round.</td></tr>`;
+
+  el("overrideTarget").innerHTML = '<option value="">— choose a delegate —</option>' +
+    room.players.filter(p=>p.country).map(p=>`<option value="${p.id}">${escapeHtml(p.name)} (${escapeHtml(p.country)})</option>`).join("");
+}
+
+function sendOverride(){
+  const targetPlayerId = el("overrideTarget").value;
+  const points = +el("overridePoints").value;
+  const note = el("overrideNote").value.trim();
+  if(!targetPlayerId || Number.isNaN(points) || points < 0 || points > 40 || !note){
+    alert("Choose a delegate, a points value (0-40), and a short note explaining the override.");
+    return;
+  }
+  send({type:"event", kind:"fidelity_override", payload:{targetPlayerId, points, note}});
+  el("overridePoints").value = ""; el("overrideNote").value = "";
+}
+
+function renderLeaderboard(){
+  const byPlayer = {};
+  Object.values(scoreByRoundAndPlayer).forEach(r=>{
+    const p = room.players.find(x=>x.id===r.playerId);
+    const name = p ? p.name : r.playerId;
+    byPlayer[r.playerId] = byPlayer[r.playerId] || { name, rounds: new Set(), total: 0 };
+    byPlayer[r.playerId].rounds.add(r.roundNumber);
+  });
+  // total should reflect each round's LATEST score, not double count if a
+  // player's round_score updated (e.g. after a fidelity override) — group
+  // then sum only the latest entry per (round, player), which is exactly
+  // what scoreByRoundAndPlayer already stores (one slot per key).
+  Object.keys(byPlayer).forEach(pid=>{
+    byPlayer[pid].total = [...byPlayer[pid].rounds].reduce((sum, rn)=>{
+      const r = scoreByRoundAndPlayer[`${rn}|${pid}`];
+      const ov = overrides[pid];
+      const fidelity = (ov && r.roundNumber === room.roundNumber) ? ov.points : r.fidelity;
+      return sum + fidelity + r.coalition + r.diplomacy;
+    }, 0);
+  });
+  const rows = Object.values(byPlayer).sort((a,b)=>b.total-a.total);
+  el("leaderTable").querySelector("tbody").innerHTML = rows.length ? rows.map(r=>
+    `<tr><td>${escapeHtml(r.name)}</td><td>${r.rounds.size}</td><td><b>${r.total}</b></td></tr>`).join("")
+    : `<tr><td colspan="3" style="color:var(--grey)">No rounds scored yet.</td></tr>`;
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+</script>
+</body>
+</html>
