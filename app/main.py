@@ -25,6 +25,42 @@ log = logging.getLogger("soc")
 APP_DIR = Path(__file__).resolve().parent
 
 
+async def _stats_loop(app, path: str, every_s: float = 60.0):
+    """Diagnostics for soak tests (only when SOC_TIMING_LOG is set): every minute, one STATS line with the sizes of
+    everything that could grow during a lesson. With SOC_TRACEMALLOC=1 it also logs the code locations whose
+    allocations grew most since start-up (slower; for finding a leak, not for timing)."""
+    import gc
+    import threading
+    import tracemalloc
+    from app.modules.chair import routes as chair_routes
+    from app.web import auth
+    trace = os.environ.get("SOC_TRACEMALLOC") == "1"
+    if trace:
+        tracemalloc.start(8)
+    base = None
+    while True:
+        await asyncio.sleep(every_s)
+        try:
+            hub = app.state.hub
+            subs = sum(len(v) for v in hub.subs.values())
+            line = (f"{time.time():.3f} STATS pooled={app.state.db.pooled_count()} threads={threading.active_count()} "
+                    f"session_cache={len(auth._SESSION_CACHE)} view_cache={len(chair_routes._VIEW_CACHE)} "
+                    f"hub_channels={len(hub.subs)} hub_subs={subs} gc_objects={len(gc.get_objects())} "
+                    f"throttle={len(auth.login_throttle.fails) + len(auth.join_throttle.fails)}")
+            if trace:
+                snap = tracemalloc.take_snapshot()
+                if base is None:
+                    base = snap
+                else:
+                    top = snap.compare_to(base, "traceback")[:6]
+                    line += " TOP " + " | ".join(f"{st.size_diff / 1024:.0f}KiB {st.traceback.format()[-1].strip()[:120]}"
+                                                 for st in top)
+            with open(path, "a") as f:
+                f.write(line + "\n")
+        except Exception:      # diagnostics must never take the server down
+            log.exception("stats loop")
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings().load()
     hub = Hub()
@@ -39,6 +75,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         tasks = []
         from app.backup import nightly_loop
         tasks.append(asyncio.create_task(nightly_loop(app)))
+        if os.environ.get("SOC_TIMING_LOG"):
+            tasks.append(asyncio.create_task(_stats_loop(app, os.environ["SOC_TIMING_LOG"])))
         yield
         for t in tasks:
             t.cancel()

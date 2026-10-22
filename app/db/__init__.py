@@ -12,6 +12,7 @@ import sqlite3
 import threading
 import time
 import uuid
+import weakref
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -177,7 +178,10 @@ class Database:
         self.path = Path(path)
         self.hub = hub
         self._local = threading.local()
-        self._pooled: list[sqlite3.Connection] = []
+        # One read connection per thread, with a weak reference to its thread. The server's worker threads come and
+        # go (anyio retires idle ones), so connections of finished threads are closed when the next one is opened;
+        # before Phase 7 they were kept forever, which grew memory through a long lesson (D-064).
+        self._pooled: list[tuple[weakref.ref, sqlite3.Connection]] = []
         self._pool_lock = threading.Lock()
         self.disposed = False
 
@@ -191,12 +195,30 @@ class Database:
         """Close every pooled connection before the database file is replaced or switched."""
         self.disposed = True
         with self._pool_lock:
-            for c in self._pooled:
+            for _, c in self._pooled:
                 try:
                     c.close()
                 except sqlite3.Error:
                     pass
             self._pooled.clear()
+
+    def _prune(self) -> None:
+        """Close connections whose thread has finished (call with _pool_lock held)."""
+        keep = []
+        for ref, c in self._pooled:
+            t = ref()
+            if t is not None and t.is_alive():
+                keep.append((ref, c))
+            else:
+                try:
+                    c.close()
+                except sqlite3.Error:
+                    pass
+        self._pooled = keep
+
+    def pooled_count(self) -> int:
+        with self._pool_lock:
+            return len(self._pooled)
 
     @contextmanager
     def read(self) -> Iterator[sqlite3.Connection]:
@@ -209,7 +231,8 @@ class Database:
             conn = self.connect()
             self._local.conn = conn
             with self._pool_lock:
-                self._pooled.append(conn)
+                self._prune()
+                self._pooled.append((weakref.ref(threading.current_thread()), conn))
         try:
             yield conn
         finally:
