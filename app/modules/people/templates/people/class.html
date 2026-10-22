@@ -7,6 +7,7 @@
   <section class="card" aria-labelledby="h-code"><h2 id="h-code">Class code</h2>
     <p class="bigstat" aria-label="Class code {{ c.code|list|join(' ') }}">{{ c.code }}</p>
     <p class="small">Set {{ c.code_set_at|when }} UTC. Rotate it each term (spec §8.4). Students join at <strong>/join</strong>.</p>
+    <p><a class="button secondary" href="/people/classes/{{ c.id }}/join-cards">{{ icon("qr") }} Print join cards</a> <a class="button secondary" href="/people/classes/{{ c.id }}/poster">{{ icon("print") }} Print a poster</a></p>
     <form method="post" action="/people/classes/{{ c.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="rotate_code"><button type="submit" class="secondary">New class code</button></form>
   </section>
   <section class="card" aria-labelledby="h-conn"><h2 id="h-conn">Connected</h2>

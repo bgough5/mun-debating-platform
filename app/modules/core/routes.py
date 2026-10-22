@@ -70,7 +70,7 @@ def setup_save(request: Request, form=Depends(form_data)):
     with request.app.state.db.read() as conn:
         token = create_session(conn, "coordinator")
         conn.commit()
-    return _set_session(redirect("/", "Coordinator passphrase set. You're signed in."), token)
+    return _set_session(redirect("/welcome", "Coordinator passphrase set. You're signed in. Here is how to get started."), token)
 
 
 @router.get("/login")
@@ -129,7 +129,7 @@ SOLO_BUILD = REPO_ROOT / "src" / "WhipCount_v2_solo_built.html"
 @router.get("/practice-game")
 def practice_game(request: Request):
     host = request.url.hostname or "localhost"
-    return render(request, "core/practice_game.html", {"title": "Practice game (Whip Count v2)", "host": host,
+    return render(request, "core/practice_game.html", {"title": "Classic practice game: Whip Count v2", "host": host,
                                                        "solo_available": SOLO_BUILD.exists()})
 
 

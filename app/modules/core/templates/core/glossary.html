@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Help", "/help"), ("Glossary", None)]) }}
+<h1>{{ icon("glossary") }} Glossary</h1>
+<p class="lede">How this platform, and most school conferences and competitions, use these words. Rules differ between competitions: check the handbook for yours.</p>
+<dl class="glossary">
+{% for term, meaning in terms %}<dt id="{{ term|lower|replace(' ', '-')|replace(',', '') }}">{{ term }}</dt><dd>{{ meaning }}</dd>{% endfor %}
+</dl>
+{% endblock %}

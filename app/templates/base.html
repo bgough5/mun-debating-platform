@@ -41,6 +41,7 @@
       </ul>
     </nav>
     <div class="who">
+      <a class="help-link" href="/help#here" data-dialog-open="help-dialog">{{ icon("help") }} Help</a>
       {% if actor %}
         <span>Signed in: <strong>{{ actor.label }}</strong></span>
         <form method="post" action="/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="secondary" type="submit">{{ icon("sign-out") }} Sign out</button></form>
@@ -56,6 +57,11 @@
 {% if flash %}<div class="flash" role="status">{{ flash }}</div>{% endif %}
 {% block content %}{% endblock %}
 </main>
+<dialog id="help-dialog" aria-labelledby="help-dialog-title">
+  <div class="dialog-head"><h2 id="help-dialog-title">{{ icon("help") }} Help: {{ hp[0] }}</h2><button type="button" class="secondary icon-only" data-dialog-close aria-label="Close help">{{ icon("x") }}</button></div>
+  <div class="dialog-body"><ul>{% for p in hp[1] %}<li>{{ p }}</li>{% endfor %}</ul>
+    <p><a href="/help">All help</a> · <a href="/help/glossary">Glossary</a>{% if actor and actor.is_staff %} · <a href="/help/staff">Staff guide</a>{% else %} · <a href="/help/students">Student quick-start</a>{% endif %}</p></div>
+</dialog>
 {% block footer %}
 <footer class="site">
   <p>Prep tool: build your own arguments. The platform supports preparation and running events; it never writes your speech, clause or amendment.

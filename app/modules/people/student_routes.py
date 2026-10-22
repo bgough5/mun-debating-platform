@@ -36,7 +36,8 @@ def join_form(request: Request):
     s = request.state.session
     if s and s.kind == "student":
         return RedirectResponse("/me", status_code=303)
-    return render(request, "people/join.html", {"title": "Join your class"})
+    code = "".join(ch for ch in (request.query_params.get("code") or "").upper() if ch.isalnum())[:12]
+    return render(request, "people/join.html", {"title": "Join your class", "code": code})
 
 
 @router.post("/join")

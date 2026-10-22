@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import hidden_csrf %}
+{% from "_macros.html" import hidden_csrf, empty_state %}
 {% block content %}
 <h1>{{ icon("practice") }} Practice speeches</h1>
 <p class="lede">Students' own self-reviews. Add a comment to coach them; you never need to grade a practice speech.</p>
@@ -11,5 +11,5 @@
   <form method="post" action="/debating/practice-speeches/{{ d.id }}" class="stack">{{ hidden_csrf(csrf) }}
     <div class="field"><label for="sc{{ d.id }}">Your comment</label><textarea id="sc{{ d.id }}" name="staff_comment" rows="2">{{ d.staff_comment }}</textarea></div>
     <button type="submit" class="secondary">Save comment</button></form></section>
-{% else %}<p>No practice speeches yet.</p>{% endfor %}
+{% else %}{{ empty_state("No practice speeches yet.", "Students record them from Practise on their own page; they appear here for your comments.", icon_name="practice") }}{% endfor %}
 {% endblock %}

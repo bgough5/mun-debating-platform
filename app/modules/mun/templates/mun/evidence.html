@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% from "_macros.html" import hidden_csrf %}
+{% from "_macros.html" import hidden_csrf, breadcrumb %}
 {% block content %}
-<p><a href="/mun/committees/{{ com.id }}">Back to {{ com.name }}</a></p>
+{{ breadcrumb([("Model UN", "/mun" if actor.is_staff else None), (com.name, "/mun/committees/" ~ com.id), ("Evidence", None)]) }}
 <h1>{{ icon("evidence") }} Evidence</h1>
 <p class="lede">Every position needs a source. What a delegate tells you in caucus is <strong>student intel</strong>: record who said it and when. Nothing is shown as fact without a source.</p>
 <section class="card no-print" aria-labelledby="h-new"><h2 id="h-new">Record evidence</h2>

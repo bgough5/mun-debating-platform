@@ -13,7 +13,7 @@ def test_first_run_setup_then_login(tmp_path):
         r = c.post("/setup", {"passphrase": "short", "passphrase2": "short"})
         assert r.status_code == 400 and "at least 10" in r.text
         r = c.post("/setup", {"passphrase": "four random words here", "passphrase2": "four random words here"})
-        assert r.status_code == 200 and "Dashboard" in r.text
+        assert r.status_code == 200 and "Getting started" in r.text      # Phase 6: first run opens the wizard
         assert s.get("coordinator_hash").startswith("scrypt$")
         # setup can't be repeated
         r = c.post("/setup", {"passphrase": "another long passphrase", "passphrase2": "another long passphrase"})

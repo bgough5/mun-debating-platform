@@ -2,7 +2,8 @@
 {% from "_macros.html" import hidden_csrf, breadcrumb %}
 {% block content %}
 {{ breadcrumb([("Debating", "/debating"), (e.name, "/debating/events/" ~ e.id), ("Round " ~ r.number, None)]) }}
-<h1>Round {{ r.number }} <span class="small muted">({{ 'random draw' if r.kind == 'random' else 'power-paired' }}, {{ r.status }})</span></h1>
+<h1>{{ e.name }}: round {{ r.number }}</h1>
+<p class="lede">{{ 'Random draw' if r.kind == 'random' else 'Power-paired' }} · {{ r.status|capitalize }}</p>
 <form method="post" action="/debating/rounds/{{ r.id }}" class="stack no-print" style="max-width:none">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="motion_text">
   <div class="field"><label for="mt">Motion</label><input id="mt" type="text" name="motion" value="{{ r.motion }}"></div>
   <div class="field"><label for="mi">Information</label><textarea id="mi" name="info" rows="2">{{ r.info }}</textarea></div>

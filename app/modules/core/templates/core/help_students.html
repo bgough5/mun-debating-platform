@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Help", "/help"), ("Student quick-start", None)]) }}
+<h1>{{ icon("student") }} Student quick-start</h1>
+<ol class="steps">
+  <li><strong>Join.</strong> Scan the QR code on your join card, or go to the address on the board and type your class code. Tap <strong>your own</strong> first name. Your device stays signed in as you.</li>
+  <li><strong>Your page.</strong> "My page" shows your delegation, tasks, live sessions, debates and practice.</li>
+  <li><strong>In a live session.</strong> The stage tracker shows where the committee is. "What you can do now" tells you what to do: answer the roll, add yourself to the speakers list, raise or second a motion, predict votes in a whip count, and vote.</li>
+  <li><strong>Debating.</strong> Your draws and results appear on your page. You see only your own scores and feedback.</li>
+  <li><strong>Practise.</strong> Timed speech practice with a rubric self-review; a practice committee against computed delegations; a practice negotiation with an AI delegation (offline unless your school has approved an AI service).</li>
+  <li><strong>If something goes wrong.</strong> Wrong name? Tell your teacher, who can release it. "Waiting for a teacher"? Your name is in use on another device: your teacher approves it.</li>
+</ol>
+<p>The platform never writes your speech, clause or amendment. Predictions are estimates, not facts. <a href="/help/glossary">Glossary</a> · <a href="/privacy">Privacy</a></p>
+{% endblock %}

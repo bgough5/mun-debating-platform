@@ -63,17 +63,58 @@ def classes_redirect(request: Request, s=Depends(require_staff)):
     return redirect("/people")
 
 
-@router.post("/classes")
-def class_create(request: Request, s=Depends(require_coordinator), form=Depends(form_data)):
-    name = (form.get("name") or "").strip()
-    year = form_int(form.get("year"), int(today_iso()[:4]))
+def create_class(w, name: str, year: int | None) -> tuple[int, str]:
+    name = (name or "").strip()
     if not name:
         raise UserError("Give the class a name, e.g. “Year 9 Model UN”.")
-    with request.app.state.db.write(request.state.actor) as w:
+    code = new_code()
+    while one(w.conn, "SELECT 1 FROM class WHERE code = ?", (code,)):
         code = new_code()
-        while one(w.conn, "SELECT 1 FROM class WHERE code = ?", (code,)):
-            code = new_code()
-        cid = w.insert("class", {"name": name, "year": year, "code": code, "code_set_at": now_iso()})
+    cid = w.insert("class", {"name": name[:80], "year": year or int(today_iso()[:4]), "code": code, "code_set_at": now_iso()})
+    return cid, code
+
+
+def add_students(w, class_id: int, lines: list[str]) -> str:
+    """One name per line: "Sam" or "Sam L". Only first names and an initial are kept (privacy rule 1)."""
+    lines = [ln for ln in lines if ln.strip()]
+    if not lines:
+        raise UserError("Type at least one first name (one per line).")
+    added = []
+    for ln in lines:
+        parts = ln.split()
+        first, initial = clean_name(parts[0], parts[1] if len(parts) > 1 else "")
+        sid = w.insert("student", {"class_id": class_id, "first_name": first, "last_initial": initial}, channel=f"class:{class_id}")
+        added.append((sid, first, initial))
+    # If two students now share a first name and either lacks an initial, say so.
+    clashes = [f for _, f, i in added if needs_initial(w.conn, class_id, f) and not i]
+    msg = f"Added {len(added)} student(s)."
+    if clashes:
+        msg += f" Two or more students are called {', '.join(sorted(set(clashes)))}: add a last initial so they can tell their names apart."
+    return msg
+
+
+def roster_lines_from_csv(data: bytes) -> list[str]:
+    """A roster CSV with a first_name column (and optionally last_initial), or a single name column.
+    Any other column (surname, email, date of birth) is ignored and never stored."""
+    from app.exports import read_csv
+    try:
+        recs = read_csv(data)
+    except UnicodeDecodeError:
+        raise UserError("That file isn't UTF-8 CSV. In Excel, use Save As → CSV UTF-8.")
+    if not recs:
+        raise UserError("The file has no rows.")
+    cols = {k.strip().lower().replace(" ", "_"): k for k in recs[0]}
+    if "first_name" in cols:
+        return [f"{r[cols['first_name']]} {(r.get(cols['last_initial'], '') if 'last_initial' in cols else '')}".strip() for r in recs]
+    if "name" in cols:
+        return [r[cols["name"]] for r in recs]
+    raise UserError("The file needs a first_name column (and optionally last_initial), or a name column.")
+
+
+@router.post("/classes")
+def class_create(request: Request, s=Depends(require_coordinator), form=Depends(form_data)):
+    with request.app.state.db.write(request.state.actor) as w:
+        cid, code = create_class(w, form.get("name"), form_int(form.get("year")))
     return redirect(f"/people/classes/{cid}", f"Class created. Class code: {code}")
 
 
@@ -104,23 +145,9 @@ def class_view(request: Request, class_id: int, s=Depends(require_staff)):
 @router.post("/classes/{class_id}/students")
 def students_add(request: Request, class_id: int, s=Depends(require_staff), form=Depends(form_data)):
     """Add one name per line: "Sam" or "Sam L". Only first names and an initial are kept."""
-    lines = [ln for ln in (form.get("names") or "").splitlines() if ln.strip()]
-    if not lines:
-        raise UserError("Type at least one first name (one per line).")
-    added = []
     with request.app.state.db.write(request.state.actor) as w:
         _check_class(w.conn, request, class_id)
-        for ln in lines:
-            parts = ln.split()
-            first, initial = clean_name(parts[0], parts[1] if len(parts) > 1 else "")
-            sid = w.insert("student", {"class_id": class_id, "first_name": first, "last_initial": initial},
-                           channel=f"class:{class_id}")
-            added.append((sid, first, initial))
-        # If two students now share a first name and either lacks an initial, say so.
-        clashes = [f for _, f, i in added if needs_initial(w.conn, class_id, f) and not i]
-    msg = f"Added {len(added)} student(s)."
-    if clashes:
-        msg += f" Two or more students are called {', '.join(sorted(set(clashes)))}: add a last initial so they can tell their names apart."
+        msg = add_students(w, class_id, (form.get("names") or "").splitlines())
     return redirect(f"/people/classes/{class_id}", msg)
 
 
@@ -206,6 +233,36 @@ def class_edit(request: Request, class_id: int, s=Depends(require_staff), form=D
         else:
             raise UserError("Unknown action.")
     return redirect(f"/people/classes/{class_id}", msg)
+
+
+# ---------- join cards and poster (printable, with a QR code made on this laptop) ----------
+
+def _qr_svg(url: str, scale: int = 4) -> str:
+    import segno      # BSD-3-Clause; pure Python, runs offline (D-062)
+    return segno.make(url, error="m").svg_inline(scale=scale, dark="#2A2320", light="#FFFFFF", omitsize=True)
+
+
+@router.get("/classes/{class_id}/join-cards")
+def join_cards(request: Request, class_id: int, s=Depends(require_staff)):
+    from app.web.net import student_base_url
+    with request.app.state.db.read() as conn:
+        c = _check_class(conn, request, class_id)
+        n = scalar(conn, "SELECT COUNT(*) FROM student WHERE class_id = ? AND active = 1 AND deleted_at IS NULL", (class_id,))
+    base = student_base_url(request)
+    url = f"{base}/join?code={c['code']}"
+    return render(request, "people/join_cards.html", {"title": f"Join cards: {c['name']}", "c": c, "base": base, "url": url,
+                                                      "qr": _qr_svg(url), "count": max(8, min(32, ((n + 7) // 8) * 8))})
+
+
+@router.get("/classes/{class_id}/poster")
+def join_poster(request: Request, class_id: int, s=Depends(require_staff)):
+    from app.web.net import student_base_url
+    with request.app.state.db.read() as conn:
+        c = _check_class(conn, request, class_id)
+    base = student_base_url(request)
+    url = f"{base}/join?code={c['code']}"
+    return render(request, "people/join_poster.html", {"title": f"Join {c['name']}", "c": c, "base": base, "url": url,
+                                                       "qr": _qr_svg(url, scale=10)})
 
 
 # ---------- pathway ----------

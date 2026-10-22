@@ -1,4 +1,4 @@
-{% from "_macros.html" import hidden_csrf %}
+{% from "_macros.html" import hidden_csrf, empty_state %}
 {% set op_count = namespace(n=0) %}
 {% for p in paras %}
 {% set can_edit = access == 'manage' or (mine and p.owner_delegation_id == mine.id) %}
@@ -66,4 +66,4 @@
   </div>
   {% endfor %}
 </article>
-{% else %}<p>No paragraphs yet.</p>{% endfor %}
+{% else %}{{ empty_state("No paragraphs yet.", "Add the first preambular or operative paragraph below.", icon_name="resolution") }}{% endfor %}

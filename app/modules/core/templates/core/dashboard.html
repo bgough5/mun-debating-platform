@@ -1,15 +1,18 @@
 {% extends "base.html" %}
+{% from "_macros.html" import empty_state %}
 {% block content %}
-<h1>Dashboard</h1>
+<h1>{{ icon("home") }} Dashboard</h1>
+{% if actor.is_coordinator and (not classes or not committees) %}<section class="card accent" aria-labelledby="h-start"><h2 id="h-start">{{ icon("help") }} Getting started</h2>
+<p>Create a class, add the students, set up a committee and print join cards, step by step.</p><p><a class="button" href="/welcome">{{ icon("next") }} Open the getting-started guide</a></p></section>{% endif %}
 <div class="grid">
   <section class="card" aria-labelledby="h-c"><h2 id="h-c">{{ icon("class") }} Classes</h2>
     {% if classes %}<ul>{% for c in classes %}<li><a href="/people/classes/{{ c.id }}">{{ c.name }}</a> <span class="muted">· code <strong>{{ c.code }}</strong></span></li>{% endfor %}</ul>
-    {% else %}<p>No classes yet.{% if actor.is_coordinator %} <a href="/people/classes">Create one</a>.{% endif %}</p>{% endif %}</section>
-  <section class="card" aria-labelledby="h-m"><h2 id="h-m">Model UN committees</h2>
+    {% else %}{{ empty_state("No classes yet.", "Start with the getting-started guide." if actor.is_coordinator else "Ask the coordinator to add you to a class.", "/welcome" if actor.is_coordinator else None, "Getting started" if actor.is_coordinator else None, "class") }}{% endif %}</section>
+  <section class="card" aria-labelledby="h-m"><h2 id="h-m">{{ icon("committee") }} Model UN committees</h2>
     {% if committees %}<ul>{% for c in committees %}<li><a href="/mun/committees/{{ c.id }}">{{ c.name }}</a> <span class="muted">· {{ c.conference }}</span></li>{% endfor %}</ul>
-    {% else %}<p>No committees yet. <a href="/mun">Set up a conference</a>.</p>{% endif %}
+    {% else %}{{ empty_state("No committees yet.", "Set up a conference and committee for your class.", "/mun", "Model UN", "committee") }}{% endif %}
     <p class="small">{{ tasks_open }} open lobbying task(s).</p></section>
-  <section class="card" aria-labelledby="h-q"><h2 id="h-q">Quick links</h2>
+  <section class="card" aria-labelledby="h-q"><h2 id="h-q">{{ icon("next") }} Quick links</h2>
     <ul>
       {% if modules.chair %}<li><a href="/chair">Run a live session</a></li>{% endif %}
       {% if modules.debating %}<li><a href="/debating">Debating events and practice</a></li>{% endif %}

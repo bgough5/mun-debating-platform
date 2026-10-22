@@ -190,10 +190,16 @@ details > summary { cursor: pointer; font-weight: 700; min-height: 24px; padding
 .stages li.done::after { content: "✓"; font-weight: 700; }
 .stages li[aria-current="step"] { background: var(--maroon); border-color: var(--maroon); color: var(--white); font-weight: 700; }
 .stages li[aria-current="step"]::before { color: var(--white); }
+@media (max-width: 600px) {
+  .stages li:not([aria-current]) { display: none; }               /* phones: only the current stage */
+  .stages li[aria-current]::before { content: counter(stage) " of " attr(data-total) ":"; }
+  nav.main ul { gap: .1rem .7rem; font-size: .92rem; }
+  .brand .product { font-size: 1.05rem; }
+}
 .script { font-family: var(--serif); font-size: 1.1rem; border-left: 4px solid var(--gold); background: var(--warn-bg); padding: .7rem 1rem; border-radius: 0 6px 6px 0; }
 
 /* ---------- live session and projector ---------- */
-.timer { font-size: 3rem; font-variant-numeric: tabular-nums; font-weight: 700; font-family: var(--serif); }
+.timer { font-size: 3rem; font-variant-numeric: tabular-nums; font-weight: 700; font-family: var(--serif); margin: .2rem 0; line-height: 1.05; }
 .timer.low { color: var(--maroon); }
 ol.speakers { padding-left: 1.6rem; }
 ol.speakers li { padding: .3rem 0; border-bottom: 1px solid var(--line); }
@@ -214,10 +220,37 @@ ol.speakers li.current { font-weight: 700; }
 .projector a { color: var(--proj-accent); }
 .projector ol.speakers li { border-color: var(--proj-line); font-size: 1.6rem; }
 .projector .badge { font-size: 1.2rem; }
-.projector .bigstat { color: var(--proj-text); }
+.projector .bigstat { color: var(--proj-text); margin: .2rem 0; }
+.projector .card .card { background: transparent; border: none; padding: 0; margin: 0; }
 .proj-brand { display: flex; align-items: center; gap: .6rem; font-size: 1rem; letter-spacing: .08em; text-transform: uppercase; color: var(--proj-accent); margin-bottom: .5rem; }
 .proj-brand img { width: 40px; height: 40px; background: var(--cream); border-radius: 6px; padding: 2px; }
 @media (max-width: 600px) { .projector main { padding: 1rem; } .projector .timer { font-size: 4rem; } .projector h1 { font-size: 2rem; } }
+
+/* ---------- help ---------- */
+.help-link { display: inline-flex; align-items: center; gap: .3rem; min-height: 24px; }
+dl.glossary dt { font-weight: 700; font-family: var(--serif); color: var(--maroon-dk); margin-top: .8rem; }
+dl.glossary dd { margin: .2rem 0 0 0; max-width: 48rem; }
+ol.steps li { margin: .5rem 0; max-width: 48rem; }
+.guide { max-width: 50rem; }
+
+/* ---------- join cards and poster ---------- */
+.join-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(17rem, 100%), 1fr)); gap: .6rem; }
+.join-card { border: 2px dashed var(--control); border-radius: var(--radius); padding: .6rem .8rem; background: var(--white); break-inside: avoid; }
+.jc-head { display: flex; align-items: center; gap: .5rem; font-size: .8rem; color: var(--maroon-dk); border-bottom: 2px solid var(--maroon); padding-bottom: .3rem; margin-bottom: .4rem; }
+.jc-head img { width: 32px; height: 32px; }
+.jc-body { display: flex; gap: .7rem; align-items: center; }
+.jc-qr svg { width: 7.5rem; height: 7.5rem; display: block; }
+.jc-label { margin: 0; font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.jc-url { margin: 0 0 .3rem; font-family: var(--mono); font-weight: 700; overflow-wrap: anywhere; }
+.jc-code { margin: 0 0 .2rem; font-family: var(--mono); font-size: 1.7rem; font-weight: 700; letter-spacing: .15em; color: var(--maroon-dk); }
+.jc-foot { margin: .3rem 0 0; font-size: .8rem; }
+.join-poster { text-align: center; max-width: 44rem; margin: 0 auto; }
+.join-poster h1 { font-size: clamp(1.8rem, 8vw, 2.6rem); }
+.join-poster .jc-head { justify-content: center; font-size: 1rem; }
+.jp-qr svg { width: min(22rem, 80vw); height: auto; }
+.jp-url { font-family: var(--mono); font-size: 1.6rem; font-weight: 700; margin: 0 0 .6rem; overflow-wrap: anywhere; }
+.jp-code { font-family: var(--mono); font-size: clamp(2rem, 11vw, 4rem); overflow-wrap: anywhere; font-weight: 700; letter-spacing: .2em; color: var(--maroon-dk); margin: 0 0 .6rem; }
+@media print { .join-cards { grid-template-columns: 1fr 1fr; } .join-card { border-color: var(--control); } .join-poster .letterhead { display: none !important; } }
 
 /* ---------- print: SOC letterhead on every printed page ---------- */
 .print-only { display: none; }

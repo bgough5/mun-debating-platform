@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ icon("help") }} Help</h1>
+<div class="grid">
+  <section class="card" aria-labelledby="h-g"><h2 id="h-g">{{ icon("glossary") }} Glossary</h2><p>Model UN and debating words, in plain English.</p><p><a href="/help/glossary">Open the glossary</a></p></section>
+  <section class="card" aria-labelledby="h-s"><h2 id="h-s">{{ icon("student") }} Students: quick-start</h2><p>Joining your class, the live session, practising.</p><p><a href="/help/students">Student quick-start</a></p></section>
+  {% if actor and actor.is_staff %}<section class="card" aria-labelledby="h-t"><h2 id="h-t">{{ icon("people") }} Staff guide</h2><p>Running classes, live sessions, debating events and practice.</p><p><a href="/help/staff">Read the staff guide</a>{% if actor.is_coordinator %} · <a href="/welcome">Getting started</a>{% endif %}</p></section>{% endif %}
+</div>
+<h2 id="here">Help for each part of the platform</h2>
+{% for prefix, title, points in topics %}<section aria-labelledby="t{{ loop.index }}"><h3 id="t{{ loop.index }}">{{ title }}</h3><ul>{% for p in points %}<li>{{ p }}</li>{% endfor %}</ul></section>{% endfor %}
+{% endblock %}

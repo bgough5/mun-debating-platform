@@ -1,6 +1,6 @@
 {# Stage tracker: the committee's place in the procedure. Done stages carry a tick and the word "done", not colour alone. #}
 {% macro tracker(sim) %}
 <nav aria-label="Committee stages"><ol class="stages">
-{% for st in sim.stages %}<li{% if loop.index0 == sim.stage_index %} aria-current="step"{% elif loop.index0 < sim.stage_index %} class="done"{% endif %}>{{ st.name }}{% if loop.index0 < sim.stage_index %}<span class="visually-hidden"> (done)</span>{% elif loop.index0 == sim.stage_index %}<span class="visually-hidden"> (now)</span>{% endif %}</li>{% endfor %}
+{% for st in sim.stages %}<li data-total="{{ sim.stages|length }}"{% if loop.index0 == sim.stage_index %} aria-current="step"{% elif loop.index0 < sim.stage_index %} class="done"{% endif %}>{{ st.name }}{% if loop.index0 < sim.stage_index %}<span class="visually-hidden"> (done)</span>{% elif loop.index0 == sim.stage_index %}<span class="visually-hidden"> (now)</span>{% endif %}</li>{% endfor %}
 </ol></nav>
 {% endmacro %}

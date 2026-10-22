@@ -94,6 +94,7 @@ def render(request: Request, template: str, ctx: dict | None = None, status: int
         "flash": getattr(request.state, "flash", None),
         "req_path": request.url.path,
         "printed_on": today_long(),
+        "hp": env.globals["page_help"](request.url.path) if "page_help" in env.globals else ("Help", []),
     }
     base.update(ctx or {})
     html = env.get_template(template).render(**base)

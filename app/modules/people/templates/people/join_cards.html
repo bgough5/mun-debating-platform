@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb %}
+{% block content %}
+{{ breadcrumb([("People", "/people"), (c.name, "/people/classes/" ~ c.id), ("Join cards", None)]) }}
+<h1 class="no-print">{{ icon("qr") }} Join cards: {{ c.name }}</h1>
+<p class="no-print">Print on A4 (8 cards a page) and cut out, one per student or one per desk. Students scan the code, or type the address, then tap their own name. Print with Ctrl+P.</p>
+<p class="no-print small">Address on the cards: <code>{{ base }}/join</code>. If that isn't the address students can reach, set <code>"join_base_url"</code> in <code>data/config.json</code> and reload.</p>
+<div class="join-cards">
+{% for _ in range(count) %}
+<div class="join-card">
+  <div class="jc-head"><img src="/static/soc_logo.png" alt=""><span>South Oakleigh College<br><strong>Debating &amp; Model UN</strong></span></div>
+  <div class="jc-body"><div class="jc-qr" role="img" aria-label="QR code that opens {{ url }}">{{ qr|safe }}</div>
+  <div><p class="jc-label">Go to</p><p class="jc-url">{{ base }}/join</p><p class="jc-label">Class code</p><p class="jc-code">{{ c.code }}</p><p class="jc-label">{{ c.name }}</p></div></div>
+  <p class="jc-foot">Tap your own first name only.</p>
+</div>{% endfor %}
+</div>
+{% endblock %}

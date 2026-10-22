@@ -5,22 +5,11 @@ Students on the school Wi-Fi open http://<this laptop's IP>:8080/join
 from __future__ import annotations
 
 import argparse
-import socket
 
 import uvicorn
 
 from app.config import Settings
-
-
-def local_ip() -> str:
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("10.255.255.255", 1))     # no packet is sent; this just picks the outgoing interface
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except OSError:
-        return "127.0.0.1"
+from app.web.net import local_ip
 
 
 def main() -> None:

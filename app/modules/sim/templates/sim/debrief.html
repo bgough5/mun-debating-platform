@@ -5,7 +5,7 @@
 {% if staff %}{{ breadcrumb([("Chair", "/chair"), (s.committee, "/chair/" ~ s.id), ("Debrief", None)]) }}
 {% else %}{{ breadcrumb([(s.committee, "/live/" ~ s.id), ("Debrief", None)]) }}{% endif %}
 <h1>{{ icon("calibration") }} Debrief: {{ dv.title }}</h1>
-<p class="lede">{{ "Passed" if dv.passed else "Failed" }}: {{ dv.summary }} · {{ d.rule.name }}</p>
+<p class="lede">{{ dv.summary }} · {{ d.rule.name }}</p>
 <div class="grid">
 <section class="card" aria-labelledby="h-res">
   <h2 id="h-res">{{ icon("vote") }} The result</h2>

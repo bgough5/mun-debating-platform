@@ -98,6 +98,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     from app.modules.core.routes import router as core_router
     app.include_router(core_router)
+    from app.modules.core.wizard import router as wizard_router
+    from app.modules.core.help import router as help_router
+    app.include_router(wizard_router)
+    app.include_router(help_router)
     from app.modules.admin.routes import router as admin_router
     app.include_router(admin_router)
     from app.web.ws import router as ws_router

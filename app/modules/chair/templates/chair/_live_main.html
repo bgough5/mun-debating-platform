@@ -61,7 +61,7 @@
 {% for m in motions %}<p>{{ m.name }}{% if m.topic %}: {{ m.topic }}{% endif %} — proposed by {{ m.proposer or 'chair' }}{% if m.seconder %}, seconded by {{ m.seconder }}{% endif %}
   {% if m.status == 'proposed' and m.needs_second and not m.seconder and m.proposer != mine.iso3 %}
   <form method="post" action="/live/{{ s.id }}/second/{{ m.id }}" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Second it<span class="visually-hidden"> ({{ m.name }})</span></button></form>{% endif %}</p>
-{% else %}<p class="muted">None on the floor.</p>{% endfor %}
+{% else %}<p class="muted">No motions on the floor. You can raise one below.</p>{% endfor %}
 <details><summary>Raise a motion</summary>
 <form method="post" action="/live/{{ s.id }}/motion" class="stack">{{ hidden_csrf(csrf) }}
   <div class="field"><label for="lpm">Motion</label><select id="lpm" name="procedure_motion_id">{% for p in proc_motions %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></div>
