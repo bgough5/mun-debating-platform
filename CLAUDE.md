@@ -32,7 +32,6 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
 
 ## Gotchas
 
-- Git's global `user.name` on this machine is the placeholder "Your Name"; see `docs/decisions.md` D-001.
 - The browser-testing tool can't execute pages opened via `file://`. Serve over local HTTP to test.
 - Classic `<script>` top-level `const` and `let` share one scope across scripts: a second `const PACK` silently breaks pack loading.
 - Never use `JSON.stringify` inside a double-quoted HTML attribute; it produced the July negotiation-channel bug.
