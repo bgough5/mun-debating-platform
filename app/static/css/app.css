@@ -62,14 +62,14 @@ caption { text-align: left; font-weight: 600; padding: .4rem 0; }
 th, td { border-bottom: 1px solid var(--line); padding: .4rem .5rem; text-align: left; vertical-align: top; }
 th { background: #E4EAF1; font-weight: 600; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-.table-wrap { overflow-x: auto; }
+.table-wrap { overflow-x: auto; position: relative; }
 
 form.stack { display: grid; gap: .75rem; max-width: 640px; }
 form.inline { display: inline-flex; flex-wrap: wrap; gap: .4rem; align-items: end; }
 label { font-weight: 600; display: block; }
 .field { display: grid; gap: .25rem; }
 .hint { font-weight: 400; color: var(--grey); font-size: .875rem; }
-input[type=text], input[type=password], input[type=number], input[type=date], input[type=search], input[type=url], select, textarea {
+input:not([type]), input[type=text], input[type=email], input[type=file], input[type=password], input[type=number], input[type=date], input[type=search], input[type=url], select, textarea {
   font: inherit; padding: .45rem .55rem; border: 1px solid #7A8794; border-radius: 6px; background: #fff; color: var(--ink); min-height: 2.5rem; max-width: 100%;
 }
 textarea { min-height: 6rem; width: 100%; }
@@ -83,7 +83,8 @@ button:hover, .button:hover { background: var(--blue); border-color: var(--blue)
 button.secondary, .button.secondary { background: #fff; color: var(--blue-dk); }
 button.secondary:hover, .button.secondary:hover { background: #E4EAF1; color: var(--blue-dk); }
 button.danger { background: var(--maroon); border-color: var(--maroon); }
-button.link { background: none; border: none; color: var(--blue-dk); text-decoration: underline; padding: 0; min-height: auto; font-weight: 400; }
+button.link { background: none; border: none; color: var(--blue-dk); text-decoration: underline; padding: 0 .1rem; min-height: 24px; min-width: 24px; font-weight: 400; display: inline-flex; align-items: center; }
+button.link:hover { background: none; color: var(--blue); }
 button.big, .button.big { font-size: 1.15rem; padding: .7rem 1.2rem; }
 button[disabled] { opacity: .6; cursor: not-allowed; }
 
@@ -137,3 +138,5 @@ ol.speakers li.current { font-weight: 700; }
 }
 .print-only { display: none; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+main li { margin: .3rem 0; }
+main li > a, main li > form { min-height: 24px; }

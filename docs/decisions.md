@@ -101,3 +101,55 @@ Ben asked for the build to move to the cloud and to "completely rebuild and reim
 - `docs/spec.md` is the **floor, not the ceiling**: the cloud session may extend it, logging every new decision here.
 - `CLAUDE.md`'s non-negotiables still bind: privacy, no real student data, no hosting decision beyond the laptop pilot, AI labelled as estimates, and measure, don't assert.
 - The cloud session is code-only: it never receives student data.
+
+---
+
+## Build session (cloud, from 22 Oct 2026)
+
+Entries D-025 onward were made during the cloud build (D-024). "Decided (build)" means I chose it so the work could proceed; Ben can overturn any of them.
+
+### D-025 Evidence is combined as a weighted average, not added as shifts — Decided (build)
+Spec §5.2 wrote μ = prior + Σ evidence shifts. Built instead: every source (archetype prior, bloc position, statements, class intel…) gives a position from −2 to +2 and a weight; μ is their weighted average and the spread σ narrows as total weight grows (σ = σ_min + (σ_unknown − σ_min)/(1 + Σw)).
+- **Why:** additive shifts are unbounded (ten pieces of class intel would push a country to +10) and can't express "they will abstain". A weighted average stays on the scale, and "no sources" falls out naturally as *unknown* (μ = 0, σ = σ_unknown).
+- It is still easy to explain to a student: "each source gives a position; better sources count more".
+
+### D-026 Model constants v2.0-default — Decided (build), unvalidated
+σ_unknown 1.5, σ_min 0.45, cut-points ±0.4 (the v2 abstain band), archetype weight 1, source weights 4/2/1 (high/medium/low, spec §5.3), strength ×0.5/1/1.5, conditional ×0.5, stale after 180 days ×0.5, bloc cohesion 0.15–0.6 by bloc. All are data (`model_version`, Admin → Model versions) and **none has been calibrated**: there are no real outcomes yet. Change them only from a calibration report.
+
+### D-027 No numpy — Decided (build), measured
+Spec §7.2: add numpy only if a GA simulation of 193 countries × 10,000 runs takes over 1 s. Measured in the cloud container: **1.02 s** (1.64 s including the swing analysis). That is on the line, so: no numpy; interactive predictions use 4,000 runs (31-country GA with swing: 0.12 s). Re-measure on Ben's laptop; numpy is only worth it if 193-member GA committees become routine.
+
+### D-028 Bloc membership lists entered from memory and flagged unverified — Decided (build)
+UN regional groups (193 members), EU, Arab Group, AOSIS and LDCs are seeded with a source URL each and `verified = 0`. They were typed from memory in the build session, not copied from the sources, so they must be checked before they are relied on. G77 was **not** seeded: I couldn't list its 134 members reliably. Security Council 2026 elected members in the demo are also from memory.
+
+### D-029 Paragraph evidence carries over to its amendments — Decided (build)
+Fixes audit §5.2 (in v2, any amendment discarded every override). Evidence about a paragraph still counts when predicting the paragraph as amended; evidence about a specific amendment counts only for that amendment. A *delete* amendment is predicted as the vote to delete, so positions are negated. Resolution-level evidence counts at half weight for individual paragraphs. Tested: the US override (−2) on clause 2.1 still dominates under the "soften" amendment.
+
+### D-030 Pathway milestones are suggested from records, confirmed by staff — Decided (build), beyond spec
+The pathway page detects evidence in the records (amendments sponsored, lobbying tasks done, speeches on a speakers list, debates scored, practice speeches) and shows it as a *suggestion*. Only staff record a milestone. Keeps the pathway a teacher's judgement while making it cheap to keep up to date.
+
+### D-031 Branches — Done
+The build uses one long-running branch, `platform-build`, with a draft PR into `main` (Ben merges). The cloud session's own branch `claude/kind-cori-1rh98q` is kept pointing at the same commits.
+
+### D-032 Ports — Decided (build)
+The platform serves on port 8080 (`start_platform.bat`). The frozen v2 game keeps 8000 and 8765, so both can run at once; the platform's "Practice game" page links to it and serves the offline solo build directly.
+
+### D-033 Calibration report details — Decided (build), measured
+- Reliability bins are flagged when the mean prediction lies outside the Bonferroni-corrected 95% Wilson interval of what happened. Measured on synthetic data (3,000 items, 100 seeds): a perfectly calibrated model was flagged in 4 of 100 runs; a deliberately over-confident one was flagged in 100 of 100 (87 "over-confident", 13 "miscalibrated").
+- Deterministic baselines (everyone votes yes; bloc majority) give 0.9/0.05/0.05 so log loss stays finite. The bloc baseline uses the majority of the *other* bloc members on the same vote (leave-one-out), which is generous to the baseline.
+- The model only "beats" a baseline when the whole 90% paired-bootstrap interval of the Brier difference is below zero; otherwise the report says it doesn't clearly beat it.
+
+### D-034 Swing ranking — Decided (build)
+ΔP(pass) for moving one step (one point on the −2..+2 scale) toward yes, computed on the same simulated draws as the baseline, multiplied by σ/σ_unknown so movable (uncertain) targets rank above settled ones. Ties: score, then ISO-3/bloc code (D-012).
+
+### D-035 Seed comes from the inputs — Decided (build)
+A prediction's seed is the first 32 bits of the SHA-256 of its inputs, so the same inputs always show the same number (no flicker on reload) and a stored snapshot replays exactly ("Check it reproduces" on the prediction page).
+
+### D-036 Confirmations work without JavaScript — Decided (build)
+Every delete, archive, reset or restore needs a ticked checkbox that names the item ("Yes, delete Fiji") and is checked on the server (spec R4).
+
+### D-037 Sessions and forms — Decided (build)
+Server-side sessions: the browser holds a random token, the database holds only its SHA-256, so staff can sign any device out. Every form carries a CSRF token (double-submit cookie) and cookies are SameSite=Lax. Five wrong passphrases lock that account's sign-in for 60 s.
+
+### D-038 Full names are cut to a first name and initial — Decided (build)
+If staff type "Sam Lee" into the roster, it is stored as "Sam L." (spec §8.1: first names only). The last initial is kept only if needed; the class page warns when two students share a first name with no initial.
