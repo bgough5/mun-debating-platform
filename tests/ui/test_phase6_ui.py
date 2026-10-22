@@ -96,3 +96,20 @@ def test_practice_committee_in_browser(browser, live):
     # 320 px reflow on the practice result.
     page.set_viewport_size({"width": 320, "height": 800})
     assert page.evaluate("() => document.documentElement.scrollWidth - document.documentElement.clientWidth") <= 1
+
+
+def test_phone_stage_label_shows_the_real_stage_number(browser, live):
+    """Regression: on phones only the current stage is shown, and CSS counters skip hidden items,
+    so the label must come from the markup (it read "1 of 9" at stage 7)."""
+    from app.db import SYSTEM
+    from app.modules.chair.service import open_session as open_s
+    from app.modules.sim import service as SIM
+    m = ga_member(live, 5)
+    with live.app.state.db.write(SYSTEM) as w:
+        sid = open_s(w, m["committee_id"])
+        SIM.set_stage(w, sid, "voting_procedure")
+    page = browser.new_context(viewport={"width": 390, "height": 844}).new_page()
+    join(page, live, m["student_id"])
+    page.goto(f"{live.url}/live/{sid}")
+    label = page.evaluate("() => getComputedStyle(document.querySelector('.stages li[aria-current]'), '::before').content")
+    assert label == '"7 of 9:"'

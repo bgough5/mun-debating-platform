@@ -192,7 +192,7 @@ details > summary { cursor: pointer; font-weight: 700; min-height: 24px; padding
 .stages li[aria-current="step"]::before { color: var(--white); }
 @media (max-width: 600px) {
   .stages li:not([aria-current]) { display: none; }               /* phones: only the current stage */
-  .stages li[aria-current]::before { content: counter(stage) " of " attr(data-total) ":"; }
+  .stages li[aria-current]::before { content: attr(data-step) " of " attr(data-total) ":"; }   /* counters skip hidden items */
   nav.main ul { gap: .1rem .7rem; font-size: .92rem; }
   .brand .product { font-size: 1.05rem; }
 }

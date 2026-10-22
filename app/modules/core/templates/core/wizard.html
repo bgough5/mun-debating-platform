@@ -3,7 +3,7 @@
 {% block content %}
 <h1>{{ icon("help") }} Getting started</h1>
 <p class="lede">Four steps to your first class session. You can leave and come back: this page shows what's done.</p>
-<ol class="stages">{% for code, label, done in steps %}<li data-total="{{ steps|length }}"{% if code == current %} aria-current="step"{% elif done %} class="done"{% endif %}>{{ label }}{% if done %}<span class="visually-hidden"> (done)</span>{% elif code == current %}<span class="visually-hidden"> (next)</span>{% endif %}</li>{% endfor %}</ol>
+<ol class="stages">{% for code, label, done in steps %}<li data-step="{{ loop.index }}" data-total="{{ steps|length }}"{% if code == current %} aria-current="step"{% elif done %} class="done"{% endif %}>{{ label }}{% if done %}<span class="visually-hidden"> (done)</span>{% elif code == current %}<span class="visually-hidden"> (next)</span>{% endif %}</li>{% endfor %}</ol>
 
 <section class="card{% if current == 'class' %} accent{% endif %}" aria-labelledby="w1"><h2 id="w1">{{ icon("class") }} 1. Create a class</h2>
 {% if c %}<p>{{ icon("ok") }} <strong>{{ c.name }}</strong>, class code <strong>{{ c.code }}</strong>.{% if classes|length > 1 %} Working on a different class?{% endif %}</p>

@@ -69,7 +69,11 @@ def prepare(app) -> dict:
     pairing = q(app, "SELECT id FROM pairing WHERE round_id = ? AND neg_team_id IS NOT NULL LIMIT 1", (rnd,))[0]["id"]
     cls = q(app, "SELECT id FROM class WHERE code = 'DEMO9M'")[0]["id"]
     res = q(app, "SELECT id FROM resolution WHERE committee_id = ?", (com["id"],))[0]["id"]
-    return {"sid": sid, "did": did, "tok": tok, "ev": ev, "rnd": rnd, "pairing": pairing, "cls": cls, "com": com["id"],
+    evatt = q(app, "SELECT id FROM committee WHERE name LIKE 'Security Council: the situation in Veloria%'")
+    evatt_para = q(app, "SELECT p.id FROM paragraph p JOIN resolution r ON r.id = p.resolution_id JOIN paragraph_version v ON v.id = p.current_version_id "
+                        "WHERE r.committee_id = ? AND v.tags = 'sanctions'", (evatt[0]["id"],)) if evatt else []
+    return {"evatt": evatt[0]["id"] if evatt else None, "evatt_para": evatt_para[0]["id"] if evatt_para else None,
+            "sid": sid, "did": did, "tok": tok, "ev": ev, "rnd": rnd, "pairing": pairing, "cls": cls, "com": com["id"],
             "res": res, "para": para, "student": members[0]["student_id"]}
 
 
@@ -102,6 +106,9 @@ def main() -> None:
         ("admin", "/admin", "Admin home"),
         ("glossary", "/help/glossary", "Glossary"),
     ]
+    if st["evatt"]:
+        staff_pages += [("evatt-committee", f"/mun/committees/{st['evatt']}", "Evatt-style Security Council demo (fictional crisis)"),
+                        ("evatt-prediction", f"/mun/predict/paragraph/{st['evatt_para']}", "Security Council prediction with vetoes")]
     student_pages = [
         ("student-live", f"/live/{st['sid']}", "Student live page: stage and whip count"),
         ("student-me", "/me", "Student home"),
