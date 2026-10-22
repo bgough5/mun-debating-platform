@@ -1,0 +1,12 @@
+{% from "chair/_timer.html" import timer %}
+<h1>{{ s.committee }}</h1>
+<p>{{ {'formal':'Formal debate','moderated':'Moderated caucus','unmoderated':'Unmoderated caucus','voting':'Voting procedure'}[s.mode] }}{% if s.mode_topic %}: {{ s.mode_topic }}{% endif %}{% if s.state != 'open' %} — session {{ s.state }}{% endif %}</p>
+<div class="grid">
+  <div class="card"><h2>Now speaking</h2><p class="bigstat" style="font-size:3rem">{{ current.country if current else '—' }}</p>
+    {% for t in timers %}{{ timer(t) }}{% endfor %}</div>
+  <div class="card"><h2>Speakers list</h2><ol class="speakers" style="font-size:1.5rem">{% for e in queue[:10] %}<li>{{ e.country }}</li>{% else %}<li>Empty</li>{% endfor %}</ol></div>
+</div>
+{% if division %}<div class="card"><h2>Voting: {{ division.title }}</h2>
+  <p class="bigstat">{{ division.cast }} of {{ division.voters|length }} voted</p>
+  <p style="font-size:1.6rem">▲ {{ division.counts.yes }} yes · ▼ {{ division.counts.no }} no · ● {{ division.counts.abstain }} abstain</p></div>{% endif %}
+{% if recent %}<div class="card"><h2>Last result</h2><p style="font-size:1.6rem">{{ recent[0].title }}: {{ recent[0].summary }}</p></div>{% endif %}

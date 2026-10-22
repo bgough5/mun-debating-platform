@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ s.committee }}</h1>
+<p id="live-status" class="small muted">Connecting…</p>
+<div id="live-main" data-live-channel="session:{{ s.id }}" hx-get="/live/{{ s.id }}/f" hx-trigger="live-update" hx-swap="innerHTML">
+{% include "chair/_live_main.html" %}
+</div>
+{% endblock %}

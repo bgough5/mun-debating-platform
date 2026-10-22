@@ -3,15 +3,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import FileResponse, RedirectResponse
 
 from app.config import REPO_ROOT
 from app.db import one, rows, scalar
 from app.errors import UserError
 from app.util import check_passphrase, hash_passphrase
-from app.web.auth import SESSION_COOKIE, create_session, login_throttle
-from app.web.http import redirect
+from app.web.auth import SESSION_COOKIE, create_session, login_throttle, revoke_devices
+from app.web.http import redirect, form_data
 from app.web.templating import render
 
 router = APIRouter()
@@ -57,11 +57,10 @@ def setup_form(request: Request):
 
 
 @router.post("/setup")
-async def setup_save(request: Request):
+def setup_save(request: Request, form=Depends(form_data)):
     s = request.app.state.settings
     if s.get("coordinator_hash"):
         raise UserError("Setup is already done. Sign in instead.", 409)
-    form = await request.form()
     p1, p2 = form.get("passphrase") or "", form.get("passphrase2") or ""
     if len(p1) < MIN_PASSPHRASE:
         raise UserError(f"Use a passphrase of at least {MIN_PASSPHRASE} characters, e.g. four random words.")
@@ -82,8 +81,7 @@ def login_form(request: Request, next: str = "/"):
 
 
 @router.post("/login")
-async def login(request: Request):
-    form = await request.form()
+def login(request: Request, form=Depends(form_data)):
     who = form.get("who") or "coordinator"
     passphrase = form.get("passphrase") or ""
     nxt = form.get("next") or "/"
@@ -112,11 +110,11 @@ async def login(request: Request):
 
 
 @router.post("/logout")
-async def logout(request: Request):
+def logout(request: Request):
     sess = request.state.session
     if sess:
         with request.app.state.db.read() as conn:
-            conn.execute("UPDATE device_session SET revoked_at = datetime('now') WHERE id = ?", (sess.id,))
+            revoke_devices(conn, "id = ?", (sess.id,))
             conn.commit()
     resp = redirect("/", "Signed out.")
     resp.delete_cookie(SESSION_COOKIE)

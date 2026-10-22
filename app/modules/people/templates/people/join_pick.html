@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<h1>{{ c.name }}: tap your name</h1>
+<p class="lede">Only tap your own name. Your device then stays signed in as you. If your name is already in use on another device, your teacher will be asked to approve.</p>
+<ul class="grid" style="list-style:none;padding:0;grid-template-columns:repeat(auto-fill,minmax(10rem,1fr))">
+{% for st in students %}<li><form method="post" action="/join/{{ c.code }}/{{ st.id }}">{{ hidden_csrf(csrf) }}
+  <button type="submit" class="big {{ 'secondary' if st.locked else '' }}" style="width:100%">{{ st.first_name }}{% if st.last_initial %} {{ st.last_initial }}.{% endif %}{% if st.locked %}<span class="small"> (in use)</span>{% endif %}</button></form></li>
+{% else %}<li>No names in this class yet. Ask your teacher.</li>{% endfor %}
+</ul>
+{% endblock %}

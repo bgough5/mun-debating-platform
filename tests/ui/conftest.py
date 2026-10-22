@@ -33,7 +33,7 @@ class LiveServer:
     def __init__(self, app, port):
         self.app, self.port = app, port
         self.url = f"http://127.0.0.1:{port}"
-        self.server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning"))
+        self.server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level=__import__("os").environ.get("UVLOG","warning")))
         self.thread = threading.Thread(target=self.server.run, daemon=True)
 
     def start(self):
@@ -97,3 +97,10 @@ def axe(page, name: str, impacts=("serious", "critical")) -> list:
                "passes": len(res["passes"]), "incomplete": len(res["incomplete"])}
     (AXE_RESULTS / f"{name}.json").write_text(json.dumps(summary, indent=1))
     return [v for v in res["violations"] if v["impact"] in impacts]
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _fresh_axe_results():
+    import shutil
+    shutil.rmtree(AXE_RESULTS, ignore_errors=True)
+    yield

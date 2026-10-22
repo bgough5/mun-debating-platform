@@ -140,3 +140,6 @@ ol.speakers li.current { font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 main li { margin: .3rem 0; }
 main li > a, main li > form { min-height: 24px; }
+.projector .card, .projector p, .projector li, .projector h1, .projector h2, .projector .muted, .projector .small { color: #fff; }
+.projector .timer.low { color: #FFC2B8; }
+.projector a { color: #CFE3FF; }

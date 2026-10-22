@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, Request
 from app.db import one, rows, scalar
 from app.errors import UserError
 from app.util import display_name, hash_passphrase, new_code, now_iso, today_iso
-from app.web.auth import can_run_class, require_coordinator, require_staff, staff_class_ids
-from app.web.http import form_int, redirect
+from app.web.auth import can_run_class, require_coordinator, require_staff, staff_class_ids, revoke_devices
+from app.web.http import form_int, redirect, form_data
 from app.web.templating import render
 
 router = APIRouter(prefix="/people")
@@ -64,8 +64,7 @@ def classes_redirect(request: Request, s=Depends(require_staff)):
 
 
 @router.post("/classes")
-async def class_create(request: Request, s=Depends(require_coordinator)):
-    form = await request.form()
+def class_create(request: Request, s=Depends(require_coordinator), form=Depends(form_data)):
     name = (form.get("name") or "").strip()
     year = form_int(form.get("year"), int(today_iso()[:4]))
     if not name:
@@ -103,9 +102,8 @@ def class_view(request: Request, class_id: int, s=Depends(require_staff)):
 
 
 @router.post("/classes/{class_id}/students")
-async def students_add(request: Request, class_id: int, s=Depends(require_staff)):
+def students_add(request: Request, class_id: int, s=Depends(require_staff), form=Depends(form_data)):
     """Add one name per line: "Sam" or "Sam L". Only first names and an initial are kept."""
-    form = await request.form()
     lines = [ln for ln in (form.get("names") or "").splitlines() if ln.strip()]
     if not lines:
         raise UserError("Type at least one first name (one per line).")
@@ -127,8 +125,7 @@ async def students_add(request: Request, class_id: int, s=Depends(require_staff)
 
 
 @router.post("/students/{student_id}")
-async def student_edit(request: Request, student_id: int, s=Depends(require_staff)):
-    form = await request.form()
+def student_edit(request: Request, student_id: int, s=Depends(require_staff), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         st = one(w.conn, "SELECT * FROM student WHERE id = ?", (student_id,))
         if not st:
@@ -142,7 +139,7 @@ async def student_edit(request: Request, student_id: int, s=Depends(require_staf
             msg = "Name updated."
         elif action == "deactivate":
             w.update("student", student_id, {"active": 0}, ch)
-            w.conn.execute("UPDATE device_session SET revoked_at = ? WHERE student_id = ? AND revoked_at IS NULL", (now_iso(), student_id))
+            revoke_devices(w.conn, "student_id = ?", (student_id,))
             msg = "Student marked as left. Their device was signed out."
         elif action == "activate":
             w.update("student", student_id, {"active": 1}, ch)
@@ -151,11 +148,10 @@ async def student_edit(request: Request, student_id: int, s=Depends(require_staf
             if form.get("confirm") != "yes":
                 raise UserError("Tick the confirmation box to delete.")
             w.soft_delete("student", student_id, ch)
-            w.conn.execute("UPDATE device_session SET revoked_at = ? WHERE student_id = ? AND revoked_at IS NULL", (now_iso(), student_id))
+            revoke_devices(w.conn, "student_id = ?", (student_id,))
             msg = "Student deleted (restorable for 30 days)."
         elif action == "release":
-            n = w.conn.execute("UPDATE device_session SET revoked_at = ? WHERE student_id = ? AND revoked_at IS NULL",
-                               (now_iso(), student_id)).rowcount
+            n = revoke_devices(w.conn, "student_id = ?", (student_id,))
             w.log("student", student_id, "release_name", None, {"devices_signed_out": n}, ch)
             msg = f"Name released: {n} device(s) signed out. The student can now join from any device."
         else:
@@ -164,8 +160,7 @@ async def student_edit(request: Request, student_id: int, s=Depends(require_staf
 
 
 @router.post("/classes/{class_id}")
-async def class_edit(request: Request, class_id: int, s=Depends(require_staff)):
-    form = await request.form()
+def class_edit(request: Request, class_id: int, s=Depends(require_staff), form=Depends(form_data)):
     action = form.get("action")
     with request.app.state.db.write(request.state.actor) as w:
         c = _check_class(w.conn, request, class_id)
@@ -185,7 +180,7 @@ async def class_edit(request: Request, class_id: int, s=Depends(require_staff)):
             if not request.state.actor.is_coordinator:
                 raise UserError("Only the coordinator can archive a class.", 403)
             w.update("class", class_id, {"archived_at": now_iso(), "active": 0})
-            w.conn.execute("UPDATE device_session SET revoked_at = ? WHERE class_id = ? AND revoked_at IS NULL", (now_iso(), class_id))
+            revoke_devices(w.conn, "class_id = ?", (class_id,))
             msg = "Class archived (end of year). Students are signed out; records are kept read-only."
         elif action == "unarchive":
             if not request.state.actor.is_coordinator:
@@ -224,8 +219,7 @@ def student_view(request: Request, student_id: int, s=Depends(require_staff)):
 
 
 @router.post("/students/{student_id}/milestones")
-async def milestone_record(request: Request, student_id: int, s=Depends(require_staff)):
-    form = await request.form()
+def milestone_record(request: Request, student_id: int, s=Depends(require_staff), form=Depends(form_data)):
     mid = form_int(form.get("milestone_id"))
     with request.app.state.db.write(request.state.actor) as w:
         st = one(w.conn, "SELECT * FROM student WHERE id = ?", (student_id,))
@@ -259,8 +253,7 @@ def staff_list(request: Request, s=Depends(require_coordinator)):
 
 
 @router.post("/staff")
-async def staff_save(request: Request, s=Depends(require_coordinator)):
-    form = await request.form()
+def staff_save(request: Request, s=Depends(require_coordinator), form=Depends(form_data)):
     action = form.get("action", "create")
     with request.app.state.db.write(request.state.actor) as w:
         if action == "create":
@@ -282,7 +275,7 @@ async def staff_save(request: Request, s=Depends(require_coordinator)):
                 if len(pp) < 10:
                     raise UserError("Passphrases need at least 10 characters.")
                 w.update("staff", sid, {"pass_hash": hash_passphrase(pp)})
-                w.conn.execute("UPDATE device_session SET revoked_at = ? WHERE staff_id = ? AND revoked_at IS NULL", (now_iso(), sid))
+                revoke_devices(w.conn, "staff_id = ?", (sid,))
                 msg = "Passphrase changed; their other sessions were signed out."
             elif action == "classes":
                 wanted = {int(x) for x in form.getlist("class_id")}
@@ -299,7 +292,7 @@ async def staff_save(request: Request, s=Depends(require_coordinator)):
                 msg = "Classes updated."
             elif action == "deactivate":
                 w.update("staff", sid, {"active": 0})
-                w.conn.execute("UPDATE device_session SET revoked_at = ? WHERE staff_id = ? AND revoked_at IS NULL", (now_iso(), sid))
+                revoke_devices(w.conn, "staff_id = ?", (sid,))
                 msg = "Staff member deactivated and signed out."
             elif action == "activate":
                 w.update("staff", sid, {"active": 1})

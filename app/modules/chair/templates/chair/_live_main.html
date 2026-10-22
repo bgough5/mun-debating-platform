@@ -1,0 +1,50 @@
+{% from "_macros.html" import hidden_csrf %}
+{% from "chair/_timer.html" import timer %}
+{% if s.state != 'open' %}<div class="notice" role="status">The session is {{ s.state }}.</div>{% endif %}
+{% if not mine %}<div class="notice">You aren't in a delegation in this committee yet. Ask your teacher.</div>{% else %}
+<p>You are <strong>{{ mine.iso3 }}</strong>{% if mine.role == 'head' %} (head of delegation){% endif %}.</p>{% endif %}
+<div class="grid">
+  <section class="card" aria-labelledby="h-now" data-announce="{{ 'Now speaking: ' ~ current.country if current else 'No one has the floor' }}" data-announce-key="speaker">
+    <h2 id="h-now">Now speaking</h2>
+    <p class="bigstat">{{ current.country if current else '—' }}</p>
+    {% for t in timers %}{{ timer(t) }}{% endfor %}
+  </section>
+  <section class="card" aria-labelledby="h-me">
+    <h2 id="h-me">Speakers list</h2>
+    {% if my_place %}<p data-announce="{{ 'You are number ' ~ my_place ~ ' on the speakers list' }}" data-announce-key="place">You are <strong>number {{ my_place }}</strong> on the list{% if my_place <= 2 %} — get ready{% endif %}.</p>
+      <form method="post" action="/live/{{ s.id }}/withdraw">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Take me off the list</button></form>
+    {% elif mine and s.state == 'open' %}<form method="post" action="/live/{{ s.id }}/speak">{{ hidden_csrf(csrf) }}<button type="submit" class="big">Add me to the speakers list</button></form>{% endif %}
+    <ol class="speakers">{% for e in queue[:8] %}<li>{{ e.country }}</li>{% else %}<li class="muted">Empty</li>{% endfor %}</ol>
+  </section>
+</div>
+{% if division %}
+<section class="card" aria-labelledby="h-vote" data-announce="Voting is open: {{ division.title }}" data-announce-key="division-open">
+  <h2 id="h-vote">Vote: {{ division.title }}</h2>
+  {% if mine %}
+    {% if my_vote and my_vote.computed %}<p>Your delegation is voted by the engine.</p>
+    {% else %}
+    <p>{% if my_vote and my_vote.vote %}Your delegation voted <strong>{{ my_vote.vote }}</strong>. You can change it until voting closes.{% else %}Your delegation hasn't voted.{% endif %}</p>
+    <form method="post" action="/live/{{ s.id }}/vote" class="row">{{ hidden_csrf(csrf) }}
+      <button type="submit" name="vote" value="yes" class="big"><span aria-hidden="true">▲</span> Yes</button>
+      {% if not division.procedural %}<button type="submit" name="vote" value="abstain" class="big secondary"><span aria-hidden="true">●</span> Abstain</button>{% endif %}
+      <button type="submit" name="vote" value="no" class="big secondary"><span aria-hidden="true">▼</span> No</button>
+    </form>{% endif %}
+  {% endif %}
+  <p class="small">{{ division.cast }} of {{ division.voters|length }} have voted.</p>
+</section>
+{% endif %}
+{% if recent %}<section aria-labelledby="h-res"><h2 id="h-res">Results</h2><ul>{% for d in recent %}<li data-announce="{{ d.title ~ ': ' ~ d.summary }}" data-announce-key="result-{{ loop.index }}">{{ d.title }}: {{ d.summary }}</li>{% endfor %}</ul></section>{% endif %}
+{% if mine and s.state == 'open' %}
+<section class="card" aria-labelledby="h-mot"><h2 id="h-mot">Motions</h2>
+{% for m in motions %}<p>{{ m.name }}{% if m.topic %}: {{ m.topic }}{% endif %} — proposed by {{ m.proposer or 'chair' }}{% if m.seconder %}, seconded by {{ m.seconder }}{% endif %}
+  {% if m.status == 'proposed' and m.needs_second and not m.seconder and m.proposer != mine.iso3 %}
+  <form method="post" action="/live/{{ s.id }}/second/{{ m.id }}" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Second it<span class="visually-hidden"> ({{ m.name }})</span></button></form>{% endif %}</p>
+{% else %}<p class="muted">None on the floor.</p>{% endfor %}
+<details><summary>Raise a motion</summary>
+<form method="post" action="/live/{{ s.id }}/motion" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="lpm">Motion</label><select id="lpm" name="procedure_motion_id">{% for p in proc_motions %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></div>
+  <div class="row"><div class="field"><label for="ldm">Duration (minutes)</label><input id="ldm" type="number" name="duration_min" min="1" max="60" style="width:6rem"></div>
+  <div class="field"><label for="lst">Speaking time (s)</label><input id="lst" type="number" name="speaking_time_s" min="10" max="300" style="width:6rem"></div></div>
+  <div class="field"><label for="ltp">Topic</label><input id="ltp" type="text" name="topic"></div>
+  <button type="submit" class="secondary">Raise motion</button></form></details>
+</section>{% endif %}

@@ -7,7 +7,10 @@ the "who changed what" record.
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
+import threading
+import time
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -16,6 +19,7 @@ from typing import Any, Iterable, Iterator
 
 from app.util import now_iso
 
+_TIMING = os.environ.get("SOC_TIMING_LOG")
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
 
 # Tables whose primary key is not `id`.
@@ -172,26 +176,60 @@ class Database:
     def __init__(self, path: Path | str, hub=None):
         self.path = Path(path)
         self.hub = hub
+        self._local = threading.local()
+        self._pooled: list[sqlite3.Connection] = []
+        self._pool_lock = threading.Lock()
+        self.disposed = False
 
     def connect(self) -> sqlite3.Connection:
+        if self.disposed:
+            from app.errors import UserError
+            raise UserError("The data was just switched or restored. Reload the page.", 409)
         return connect(self.path)
+
+    def dispose(self) -> None:
+        """Close every pooled connection before the database file is replaced or switched."""
+        self.disposed = True
+        with self._pool_lock:
+            for c in self._pooled:
+                try:
+                    c.close()
+                except sqlite3.Error:
+                    pass
+            self._pooled.clear()
 
     @contextmanager
     def read(self) -> Iterator[sqlite3.Connection]:
-        conn = self.connect()
+        """A connection for reading, reused per thread (opening one costs ~0.5 ms).
+
+        If the caller wrote something without committing, it is rolled back here,
+        so a reused connection never carries an open transaction."""
+        conn = getattr(self._local, "conn", None)
+        if conn is None or self.disposed:
+            conn = self.connect()
+            self._local.conn = conn
+            with self._pool_lock:
+                self._pooled.append(conn)
         try:
             yield conn
         finally:
-            conn.close()
+            if conn.in_transaction:
+                conn.rollback()
 
     @contextmanager
     def write(self, actor: Actor) -> Iterator[Writer]:
         conn = self.connect()
         w = Writer(conn, actor)
         try:
+            t0 = time.perf_counter()
             conn.execute("BEGIN IMMEDIATE")
+            t1 = time.perf_counter()
             yield w
             conn.commit()
+            if _TIMING:
+                with open(_TIMING, "a") as f:
+                    f.write(f"{time.time():.3f} WRITE wait={t1 - t0:.4f} held={time.perf_counter() - t1:.4f} "
+                            f"thread={threading.current_thread().name} actor={actor.kind}\n")
         except BaseException:
             conn.rollback()
             raise

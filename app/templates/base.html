@@ -9,9 +9,11 @@
 <link rel="icon" href="/static/soc_logo.png">
 <script src="/static/vendor/htmx-2.0.4.min.js" defer></script>
 <script src="/static/js/app.js" defer></script>
+<script src="/static/js/live.js" defer></script>
 {% block head %}{% endblock %}
 </head>
-<body hx-boost="true" hx-headers='{"X-CSRF-Token": "{{ csrf }}"}' class="{% block bodyclass %}{% endblock %}">
+<body hx-boost="true" hx-headers='{"X-CSRF-Token": "{{ csrf }}"}' class="{% block bodyclass %}{% endblock %}" {% block bodyattrs %}{% endblock %}>
+<div id="live-announcer" class="visually-hidden" role="status" aria-live="polite"></div>
 <a class="skip" href="#main">Skip to main content</a>
 {% if demo %}<div class="demo-banner" role="status">DEMO — fake data only. Nothing here is a real student.</div>{% endif %}
 {% block header %}

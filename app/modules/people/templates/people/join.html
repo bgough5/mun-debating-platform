@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<h1>Join your class</h1>
+<form method="post" action="/join" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="code">Class code <span class="hint">On the board. Letters and numbers.</span></label>
+    <input id="code" type="text" name="code" autocomplete="off" autocapitalize="characters" spellcheck="false" required maxlength="12" style="font-size:1.6rem;letter-spacing:.2em;max-width:12rem"></div>
+  <button type="submit" class="big">Next</button>
+</form>
+{% endblock %}

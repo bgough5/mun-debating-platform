@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import flag, hidden_csrf %}
+{% block content %}
+<h1>Hi {{ st.first_name }}</h1>
+<p class="lede">{{ st.class_name }}</p>
+<div id="me-live" data-live-channel="class:{{ st.class_id }}" hx-get="/me" hx-select="#me-live" hx-swap="outerHTML" hx-trigger="live-update">
+{% set lives = (dels|selectattr('live')|list) %}
+{% if lives or class_live %}
+<section class="ok-box" aria-labelledby="h-live"><h2 id="h-live">Live now</h2>
+  <ul>{% for d in lives %}<li><a class="button big" href="/live/{{ d.live }}">Join {{ d.committee }} as {{ d.country }}</a></li>{% endfor %}
+  {% for l in class_live if l.id not in (lives|map(attribute='live')|list) %}<li><a class="button" href="/live/{{ l.id }}">Join {{ l.name }}</a></li>{% endfor %}</ul>
+</section>{% endif %}
+</div>
+<div class="grid">
+  <section class="card" aria-labelledby="h-del"><h2 id="h-del">My delegations</h2>
+    {% for d in dels %}<p>{{ flag(d.flag_svg, d.country) }} <strong>{{ d.country }}</strong> in <a href="/mun/committees/{{ d.committee_id }}">{{ d.committee }}</a>{% if d.role == 'head' %} (head of delegation){% endif %}</p>
+    {% else %}<p>No delegation yet.</p>{% endfor %}
+    {% if resolutions %}<h3>Resolutions</h3><ul>{% for r in resolutions %}<li><a href="/mun/resolutions/{{ r.id }}">{{ r.title }}</a> <span class="muted small">({{ r.committee }})</span></li>{% endfor %}</ul>{% endif %}
+  </section>
+  <section class="card" aria-labelledby="h-tasks"><h2 id="h-tasks">My tasks</h2>
+    {% for t in tasks %}<form method="post" action="/mun/tasks/{{ t.id }}" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="back" value="/me">
+      <p><strong>{{ t.title }}</strong><br><span class="small muted">{{ t.notes }}</span></p>
+      <div class="field"><label for="ms{{ t.id }}">Status</label><select id="ms{{ t.id }}" name="status">{% for s_ in ['todo','doing','done'] %}<option value="{{ s_ }}" {% if s_ == t.status %}selected{% endif %}>{{ {'todo':'To do','doing':'Doing','done':'Done'}[s_] }}</option>{% endfor %}</select></div>
+      <button type="submit" class="secondary">Save<span class="visually-hidden"> {{ t.title }}</span></button>
+      <a href="/mun/committees/{{ t.committee_id }}/evidence?iso3={{ t.target_iso3 or '' }}">Record what you learned</a></form>
+    {% else %}<p>No tasks yet.</p>{% endfor %}
+  </section>
+</div>
+{% if debating is defined %}{% include "debating/_me.html" ignore missing %}{% endif %}
+{% include "people/_pathway.html" %}
+{% endblock %}

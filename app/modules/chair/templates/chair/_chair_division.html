@@ -1,0 +1,30 @@
+{% from "_macros.html" import hidden_csrf %}
+{% if division %}
+<div class="card" data-announce="{{ 'Voting: ' ~ division.cast ~ ' of ' ~ division.voters|length ~ ' delegations have voted' }}" data-announce-key="division">
+  <p><strong>{{ division.title }}</strong> · {{ division.rule_name }}{% if division.procedural %} (procedural: only delegations with students vote){% endif %}</p>
+  <p>{{ division.cast }} of {{ division.voters|length }} have voted: {{ division.counts.yes }} yes, {{ division.counts.no }} no, {{ division.counts.abstain }} abstaining.</p>
+  <div class="table-wrap"><table><thead><tr><th scope="col">Delegation</th><th scope="col">Vote</th><th scope="col">Record for them</th></tr></thead><tbody>
+  {% for v in division.voters %}<tr><td>{{ v.name }}{% if v.computed %} <span class="label-computed">computed</span>{% endif %}</td>
+    <td>{% if v.vote %}{{ v.vote|stance }}{% else %}<span class="muted">not yet</span>{% endif %}</td>
+    <td>{% if not v.computed %}{% for opt in (['yes','no'] if division.procedural else ['yes','abstain','no']) %}
+      <form method="post" action="/chair/{{ s.id }}/divisions/{{ division.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="vote"><input type="hidden" name="delegation_id" value="{{ v.id }}"><input type="hidden" name="vote" value="{{ opt }}">
+        <button type="submit" class="link">{{ opt }}<span class="visually-hidden"> for {{ v.name }}</span></button></form>{% endfor %}{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+  <div class="row">
+    <form method="post" action="/chair/{{ s.id }}/divisions/{{ division.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="close"><button type="submit">Close voting and announce</button></form>
+    <form method="post" action="/chair/{{ s.id }}/divisions/{{ division.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="cancel"><button type="submit" class="secondary">Cancel this vote</button></form>
+  </div>
+</div>
+{% else %}
+<form method="post" action="/chair/{{ s.id }}/divisions" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="dt">Vote on</label><select id="dt" name="target">
+    {% for r in resolutions %}<option value="resolution:{{ r.id }}">Resolution: {{ r.title }}</option>{% endfor %}
+    {% for p in paragraphs %}<option value="paragraph:{{ p.id }}">Operative paragraph {{ p.position }} ({{ p.title[:40] }})</option>{% endfor %}
+    {% for a in amendments %}<option value="amendment:{{ a.id }}">Amendment {{ a.id }} to paragraph {{ a.position }}{% if a.sponsor %} ({{ a.sponsor }}){% endif %}</option>{% endfor %}
+    <option value="custom:">Something else (straw poll)</option></select></div>
+  <div class="field"><label for="dtt">Title (optional)</label><input id="dtt" type="text" name="title"></div>
+  <button type="submit">Open voting</button>
+  <p class="small muted">Delegations with no student are voted by the engine, from a prediction saved at this moment, and labelled computed. Only human votes are used to calibrate the engine.</p>
+</form>
+{% endif %}
+{% if recent %}<h3>Results</h3><ul>{% for d in recent %}<li>{{ d.title }}: {{ d.summary }}</li>{% endfor %}</ul>{% endif %}

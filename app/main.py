@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -14,7 +16,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.config import Settings
 from app.datasets import open_dataset
 from app.errors import UserError
-from app.web.auth import CSRF_COOKIE, SESSION_COOKIE, NeedsLogin, load_session, touch
+from app.web.auth import CSRF_COOKIE, SESSION_COOKIE, NeedsLogin, session_for
 from app.web.http import FLASH_COOKIE, csrf_protect, ensure_csrf, read_flash
 from app.web.live import Hub
 from app.web.templating import render
@@ -30,6 +32,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         hub.bind(asyncio.get_running_loop())
+        # Request handlers are mostly Python (GIL-bound): a few worker threads keep up
+        # better than anyio's default 40, which starve each other and the writer.
+        import anyio.to_thread
+        anyio.to_thread.current_default_thread_limiter().total_tokens = int(os.environ.get("SOC_THREADS", "8"))
         tasks = []
         from app.backup import nightly_loop
         tasks.append(asyncio.create_task(nightly_loop(app)))
@@ -45,18 +51,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.mount("/static", StaticFiles(directory=str(APP_DIR / "static")), name="static")
 
+    timing_log = os.environ.get("SOC_TIMING_LOG")
+
     @app.middleware("http")
     async def session_middleware(request: Request, call_next):
+        t0 = time.perf_counter()
         ensure_csrf(request)
         request.state.flash = read_flash(request)
         db = request.app.state.db
-        conn = db.connect()
-        try:
-            sess = load_session(conn, request.cookies.get(SESSION_COOKIE))
-            if sess:
-                touch(conn, sess)
-        finally:
-            conn.close()
+        token = request.cookies.get(SESSION_COOKIE)
+        sess = await asyncio.to_thread(session_for, db, token) if token else None
         request.state.session = sess
         request.state.actor = sess.actor if sess else None
         response = await call_next(request)
@@ -67,6 +71,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("Referrer-Policy", "same-origin")
         response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+        if timing_log:
+            with open(timing_log, "a") as f:
+                f.write(f"{time.time():.3f} {time.perf_counter() - t0:.4f} {request.method} {request.url.path} {response.status_code}\n")
         return response
 
     @app.exception_handler(NeedsLogin)
@@ -93,9 +100,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(core_router)
     from app.modules.admin.routes import router as admin_router
     app.include_router(admin_router)
+    from app.web.ws import router as ws_router
+    app.include_router(ws_router)
     if settings.module_on("people"):
         from app.modules.people.routes import router as people_router
+        from app.modules.people.student_routes import router as student_router
         app.include_router(people_router)
+        app.include_router(student_router)
     if settings.module_on("mun"):
         from app.modules.mun.routes import router as mun_router
         app.include_router(mun_router)

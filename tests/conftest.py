@@ -1,6 +1,7 @@
 """Shared fixtures. Every test gets its own temporary data folder: fake data only."""
 from __future__ import annotations
 
+import html
 import re
 from pathlib import Path
 
@@ -30,6 +31,13 @@ class Client(TestClient):
             self.get("/healthz")
             tok = self.cookies.get("soc_csrf")
         return tok
+
+    def request(self, *a, **kw):
+        # Unescape HTML entities so tests can look for plain English like "didn't".
+        r = super().request(*a, **kw)
+        if "text/html" in r.headers.get("content-type", ""):
+            r._text = html.unescape(r.text)
+        return r
 
     def post(self, url, data=None, files=None, follow_redirects=True, **kw):
         data = dict(data or {})

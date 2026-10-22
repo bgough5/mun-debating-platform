@@ -22,7 +22,7 @@ from app.modules.mun import predict as P
 from app.modules.mun import service as S
 from app.util import display_name
 from app.web.auth import committee_access, require_any, require_coordinator, require_staff, staff_class_ids
-from app.web.http import form_int, redirect
+from app.web.http import form_int, redirect, form_data
 from app.web.templating import render
 
 router = APIRouter(prefix="/mun")
@@ -103,17 +103,15 @@ def mun_home(request: Request, s=Depends(require_staff)):
 
 
 @router.post("/conferences")
-async def conference_create(request: Request, s=Depends(require_coordinator)):
-    form = await request.form()
+def conference_create(request: Request, s=Depends(require_coordinator), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         cid = S.create_conference(w, form.get("name"), form.get("starts_on"), form.get("ends_on"), form.get("organiser"))
     return redirect(f"/mun/conferences/{cid}", "Conference created. Now add a committee.")
 
 
 @router.post("/load-pack")
-async def load_pack(request: Request, s=Depends(require_coordinator)):
+def load_pack(request: Request, s=Depends(require_coordinator), form=Depends(form_data)):
     from app.modules.mun.packs import load_climate_conference
-    form = await request.form()
     with request.app.state.db.write(request.state.actor) as w:
         info = load_climate_conference(w, form_int(form.get("class_id")))
     return redirect(f"/mun/committees/{info['committee_id']}", "Loaded the UNAA 2026 climate pack as a conference. "
@@ -134,8 +132,7 @@ def conference_view(request: Request, conf_id: int, s=Depends(require_staff)):
 
 
 @router.post("/conferences/{conf_id}/committees")
-async def committee_create(request: Request, conf_id: int, s=Depends(require_coordinator)):
-    form = await request.form()
+def committee_create(request: Request, conf_id: int, s=Depends(require_coordinator), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         cid = S.create_committee(w, conf_id, form.get("name"), form_int(form.get("committee_type_id")),
                                  form_int(form.get("voting_rule_id")), form_int(form.get("topic_id")),
@@ -178,8 +175,7 @@ def committee_view(request: Request, committee_id: int, s=Depends(require_any)):
 
 
 @router.post("/committees/{committee_id}/delegations")
-async def delegations_add(request: Request, committee_id: int, s=Depends(require_staff)):
-    form = await request.form()
+def delegations_add(request: Request, committee_id: int, s=Depends(require_staff), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         _access(w.conn, request, committee_id, "manage")
         isos = [x for x in form.getlist("iso3") if x]
@@ -196,8 +192,7 @@ async def delegations_add(request: Request, committee_id: int, s=Depends(require
 
 
 @router.post("/delegations/{delegation_id}/remove")
-async def delegation_remove(request: Request, delegation_id: int, s=Depends(require_staff)):
-    form = await request.form()
+def delegation_remove(request: Request, delegation_id: int, s=Depends(require_staff), form=Depends(form_data)):
     if form.get("confirm") != "yes":
         raise UserError("Tick the confirmation box to remove the delegation.")
     with request.app.state.db.write(request.state.actor) as w:
@@ -210,8 +205,7 @@ async def delegation_remove(request: Request, delegation_id: int, s=Depends(requ
 
 
 @router.post("/committees/{committee_id}/allocate")
-async def allocate(request: Request, committee_id: int, s=Depends(require_staff)):
-    form = await request.form()
+def allocate(request: Request, committee_id: int, s=Depends(require_staff), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         _access(w.conn, request, committee_id, "manage")
         sid, did = form_int(form.get("student_id")), form_int(form.get("delegation_id"))
@@ -229,7 +223,7 @@ async def allocate(request: Request, committee_id: int, s=Depends(require_staff)
 
 
 @router.post("/members/{member_id}/remove")
-async def member_remove(request: Request, member_id: int, s=Depends(require_staff)):
+def member_remove(request: Request, member_id: int, s=Depends(require_staff)):
     with request.app.state.db.write(request.state.actor) as w:
         m = one(w.conn, "SELECT dm.*, d.committee_id FROM delegation_member dm JOIN delegation d ON d.id = dm.delegation_id WHERE dm.id = ?",
                 (member_id,))
@@ -241,8 +235,7 @@ async def member_remove(request: Request, member_id: int, s=Depends(require_staf
 
 
 @router.post("/committees/{committee_id}/settings")
-async def committee_settings(request: Request, committee_id: int, s=Depends(require_coordinator)):
-    form = await request.form()
+def committee_settings(request: Request, committee_id: int, s=Depends(require_coordinator), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         changes = {"name": (form.get("name") or "").strip() or None, "voting_rule_id": form_int(form.get("voting_rule_id")),
                    "topic_id": form_int(form.get("topic_id")), "class_id": form_int(form.get("class_id"))}
@@ -254,8 +247,7 @@ async def committee_settings(request: Request, committee_id: int, s=Depends(requ
 # ---------- resolution workspace ----------
 
 @router.post("/committees/{committee_id}/resolutions")
-async def resolution_create(request: Request, committee_id: int, s=Depends(require_any)):
-    form = await request.form()
+def resolution_create(request: Request, committee_id: int, s=Depends(require_any), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         access = _access(w.conn, request, committee_id)
         if access != "manage" and not _my_delegation(w.conn, request.state.actor, committee_id):
@@ -297,7 +289,7 @@ def workspace_context(conn, request, resolution_id: int) -> dict:
     locks = {}
     if one(conn, "SELECT 1 FROM sqlite_master WHERE name = 'paragraph_lock'"):
         from app.modules.mun.locks import active_locks
-        locks = active_locks(conn, resolution_id)
+        locks = active_locks(conn, resolution_id, request.state.actor)
     return {"res": res, "com": com, "paras": paras, "by_para": by_para, "sup": sup, "floor": floor, "dels": dels,
             "tags": tags, "access": access, "mine": mine, "locks": locks}
 
@@ -324,8 +316,7 @@ def _can_edit_paragraph(conn, request, p: dict, access: str) -> bool:
 
 
 @router.post("/resolutions/{resolution_id}/paragraphs")
-async def paragraph_add(request: Request, resolution_id: int, s=Depends(require_any)):
-    form = await request.form()
+def paragraph_add(request: Request, resolution_id: int, s=Depends(require_any), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         committee_id = _committee_of_resolution(w.conn, resolution_id)
         access = _access(w.conn, request, committee_id)
@@ -340,8 +331,7 @@ async def paragraph_add(request: Request, resolution_id: int, s=Depends(require_
 
 
 @router.post("/paragraphs/{paragraph_id}")
-async def paragraph_edit(request: Request, paragraph_id: int, s=Depends(require_any)):
-    form = await request.form()
+def paragraph_edit(request: Request, paragraph_id: int, s=Depends(require_any), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         p = S.paragraph(w.conn, paragraph_id)
         access = _access(w.conn, request, p["committee_id"])
@@ -358,6 +348,36 @@ async def paragraph_edit(request: Request, paragraph_id: int, s=Depends(require_
             from app.modules.mun.locks import release
             release(w, paragraph_id)
     return redirect(f"/mun/resolutions/{p['resolution_id']}#p{paragraph_id}", "Saved as a new version.")
+
+
+@router.post("/paragraphs/{paragraph_id}/lock")
+def paragraph_lock(request: Request, paragraph_id: int, s=Depends(require_any)):
+    """Called by the page when an editor opens (and every 20 s while it stays open)."""
+    from fastapi.responses import JSONResponse
+
+    from app.modules.mun.locks import acquire
+    with request.app.state.db.write(request.state.actor) as w:
+        p = S.paragraph(w.conn, paragraph_id)
+        access = _access(w.conn, request, p["committee_id"])
+        if not _can_edit_paragraph(w.conn, request, p, access):
+            raise UserError("Only the delegation that owns this paragraph can edit it.", 403)
+        try:
+            res = acquire(w, paragraph_id)
+        except UserError as e:
+            return JSONResponse({"state": "taken", "message": e.message}, status_code=409)
+    return JSONResponse(res)
+
+
+@router.post("/paragraphs/{paragraph_id}/unlock")
+def paragraph_unlock(request: Request, paragraph_id: int, s=Depends(require_any)):
+    from fastapi.responses import JSONResponse
+
+    from app.modules.mun.locks import release
+    with request.app.state.db.write(request.state.actor) as w:
+        p = S.paragraph(w.conn, paragraph_id)
+        _access(w.conn, request, p["committee_id"])
+        release(w, paragraph_id)
+    return JSONResponse({"state": "released"})
 
 
 @router.get("/paragraphs/{paragraph_id}/history")
@@ -387,7 +407,7 @@ def word_diff(a: str, b: str) -> Markup:
 
 
 @router.post("/paragraphs/{paragraph_id}/restore/{version_id}")
-async def paragraph_restore(request: Request, paragraph_id: int, version_id: int, s=Depends(require_staff)):
+def paragraph_restore(request: Request, paragraph_id: int, version_id: int, s=Depends(require_staff)):
     with request.app.state.db.write(request.state.actor) as w:
         p = S.paragraph(w.conn, paragraph_id)
         _access(w.conn, request, p["committee_id"], "manage")
@@ -396,8 +416,7 @@ async def paragraph_restore(request: Request, paragraph_id: int, version_id: int
 
 
 @router.post("/paragraphs/{paragraph_id}/delete")
-async def paragraph_delete(request: Request, paragraph_id: int, s=Depends(require_staff)):
-    form = await request.form()
+def paragraph_delete(request: Request, paragraph_id: int, s=Depends(require_staff), form=Depends(form_data)):
     if form.get("confirm") != "yes":
         raise UserError("Tick the confirmation box to delete the paragraph.")
     with request.app.state.db.write(request.state.actor) as w:
@@ -408,8 +427,7 @@ async def paragraph_delete(request: Request, paragraph_id: int, s=Depends(requir
 
 
 @router.post("/paragraphs/{paragraph_id}/amendments")
-async def amendment_table(request: Request, paragraph_id: int, s=Depends(require_any)):
-    form = await request.form()
+def amendment_table(request: Request, paragraph_id: int, s=Depends(require_any), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         p = S.paragraph(w.conn, paragraph_id)
         access = _access(w.conn, request, p["committee_id"])
@@ -425,8 +443,7 @@ async def amendment_table(request: Request, paragraph_id: int, s=Depends(require
 
 
 @router.post("/amendments/{amendment_id}/support")
-async def amendment_support(request: Request, amendment_id: int, s=Depends(require_any)):
-    form = await request.form()
+def amendment_support(request: Request, amendment_id: int, s=Depends(require_any), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         cid = _committee_of_amendment(w.conn, amendment_id)
         access = _access(w.conn, request, cid)
@@ -448,8 +465,7 @@ async def amendment_support(request: Request, amendment_id: int, s=Depends(requi
 
 
 @router.post("/amendments/{amendment_id}/status")
-async def amendment_status(request: Request, amendment_id: int, s=Depends(require_any)):
-    form = await request.form()
+def amendment_status(request: Request, amendment_id: int, s=Depends(require_any), form=Depends(form_data)):
     status = form.get("status")
     with request.app.state.db.write(request.state.actor) as w:
         cid = _committee_of_amendment(w.conn, amendment_id)
@@ -467,8 +483,7 @@ async def amendment_status(request: Request, amendment_id: int, s=Depends(requir
 
 
 @router.post("/resolutions/{resolution_id}/status")
-async def resolution_status(request: Request, resolution_id: int, s=Depends(require_staff)):
-    form = await request.form()
+def resolution_status(request: Request, resolution_id: int, s=Depends(require_staff), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         cid = _committee_of_resolution(w.conn, resolution_id)
         _access(w.conn, request, cid, "manage")
@@ -480,7 +495,7 @@ async def resolution_status(request: Request, resolution_id: int, s=Depends(requ
 
 
 @router.post("/undo")
-async def mun_undo(request: Request, s=Depends(require_any)):
+def mun_undo(request: Request, s=Depends(require_any)):
     entities = {"paragraph", "paragraph_version", "amendment", "amendment_support", "evidence", "task", "resolution",
                 "delegation", "delegation_member", "committee", "conference", "actual_vote"}
     with request.app.state.db.write(request.state.actor) as w:
@@ -560,8 +575,7 @@ def evidence_page(request: Request, committee_id: int, iso3: str = "", target_ki
 
 
 @router.post("/committees/{committee_id}/evidence")
-async def evidence_add(request: Request, committee_id: int, s=Depends(require_any)):
-    form = await request.form()
+def evidence_add(request: Request, committee_id: int, s=Depends(require_any), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         access = _access(w.conn, request, committee_id)
         com = one(w.conn, "SELECT * FROM committee WHERE id = ?", (committee_id,))
@@ -583,8 +597,7 @@ async def evidence_add(request: Request, committee_id: int, s=Depends(require_an
 
 
 @router.post("/evidence/{evidence_id}/delete")
-async def evidence_delete(request: Request, evidence_id: int, s=Depends(require_any)):
-    form = await request.form()
+def evidence_delete(request: Request, evidence_id: int, s=Depends(require_any), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         e = one(w.conn, "SELECT * FROM evidence WHERE id = ?", (evidence_id,))
         if not e:
@@ -629,7 +642,7 @@ def prediction_page(request: Request, kind: str, tid: int, runs: int = P.DEFAULT
 
 
 @router.post("/predict/{kind}/{tid}/snapshot")
-async def prediction_snapshot(request: Request, kind: str, tid: int, s=Depends(require_any)):
+def prediction_snapshot(request: Request, kind: str, tid: int, s=Depends(require_any)):
     with request.app.state.db.write(request.state.actor) as w:
         cid = _committee_of_target(w.conn, kind, tid)
         _access(w.conn, request, cid)
@@ -668,8 +681,7 @@ def prediction_replay(request: Request, pid: int, s=Depends(require_staff)):
 
 
 @router.post("/predict/{kind}/{tid}/tasks")
-async def prediction_tasks(request: Request, kind: str, tid: int, s=Depends(require_any)):
-    form = await request.form()
+def prediction_tasks(request: Request, kind: str, tid: int, s=Depends(require_any), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         cid = _committee_of_target(w.conn, kind, tid)
         access = _access(w.conn, request, cid)
@@ -704,8 +716,7 @@ def compare_page(request: Request, paragraph_id: int, s=Depends(require_any)):
 # ---------- tasks ----------
 
 @router.post("/tasks/{task_id}")
-async def task_update(request: Request, task_id: int, s=Depends(require_any)):
-    form = await request.form()
+def task_update(request: Request, task_id: int, s=Depends(require_any), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         t = one(w.conn, "SELECT t.*, d.committee_id FROM task t JOIN delegation d ON d.id = t.delegation_id WHERE t.id = ?", (task_id,))
         if not t:
@@ -747,8 +758,7 @@ def votes_form(request: Request, kind: str, tid: int, s=Depends(require_staff)):
 
 
 @router.post("/votes/{kind}/{tid}")
-async def votes_save(request: Request, kind: str, tid: int, s=Depends(require_staff)):
-    form = await request.form()
+def votes_save(request: Request, kind: str, tid: int, s=Depends(require_staff), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         cid = _committee_of_target(w.conn, kind, tid)
         _access(w.conn, request, cid, "manage")

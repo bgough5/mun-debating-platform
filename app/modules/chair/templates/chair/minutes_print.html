@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="no-print"><a href="/chair/{{ s.id }}/minutes">Back</a> · Print with Ctrl+P and choose “Save as PDF”.</p>
+<h1>{{ title }}</h1>
+<pre style="white-space:pre-wrap;font-family:inherit">{{ body }}</pre>
+{% endblock %}

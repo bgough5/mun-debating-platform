@@ -10,8 +10,8 @@ from app.db import columns, history, one, pk_of, restore_from_event, rows, scala
 from app.errors import UserError
 from app.exports import csv_bytes, read_csv
 from app.modules.admin.tables import BY_NAME, EXPORT_ONLY, REFERENCE, SECRET_COLUMNS, Col, Table
-from app.web.auth import require_coordinator
-from app.web.http import redirect
+from app.web.auth import require_coordinator, revoke_devices
+from app.web.http import redirect, form_data
 from app.web.templating import render
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(require_coordinator)])
@@ -121,9 +121,8 @@ def table_new(request: Request, name: str):
 
 
 @router.post("/t/{name}/new")
-async def table_create(request: Request, name: str):
+def table_create(request: Request, name: str, form=Depends(form_data)):
     t = _table(name)
-    form = await request.form()
     with request.app.state.db.write(request.state.actor) as w:
         vals = _values(t, form, w.conn)
         if t.natural_key and all(vals.get(k) not in (None, "") for k in t.natural_key):
@@ -149,9 +148,8 @@ def table_edit(request: Request, name: str, key: str):
 
 
 @router.post("/t/{name}/{key}")
-async def table_save(request: Request, name: str, key: str):
+def table_save(request: Request, name: str, key: str, form=Depends(form_data)):
     t = _table(name)
-    form = await request.form()
     with request.app.state.db.write(request.state.actor) as w:
         k = int(key) if pk_of(name) == "id" else key
         if not w.get(name, k):
@@ -166,9 +164,8 @@ async def table_save(request: Request, name: str, key: str):
 
 
 @router.post("/t/{name}/{key}/delete")
-async def table_delete(request: Request, name: str, key: str):
+def table_delete(request: Request, name: str, key: str, form=Depends(form_data)):
     t = _table(name)
-    form = await request.form()
     if form.get("confirm") != "yes":
         raise UserError("Tick the confirmation box to delete.")
     with request.app.state.db.write(request.state.actor) as w:
@@ -177,7 +174,7 @@ async def table_delete(request: Request, name: str, key: str):
 
 
 @router.post("/t/{name}/{key}/restore")
-async def table_restore(request: Request, name: str, key: str):
+def table_restore(request: Request, name: str, key: str):
     _table(name)
     with request.app.state.db.write(request.state.actor) as w:
         w.restore(name, int(key) if pk_of(name) == "id" else key)
@@ -185,7 +182,7 @@ async def table_restore(request: Request, name: str, key: str):
 
 
 @router.post("/history/{seq}/restore")
-async def history_restore(request: Request, seq: int):
+def history_restore(request: Request, seq: int):
     with request.app.state.db.write(request.state.actor) as w:
         ev = one(w.conn, "SELECT entity, entity_id FROM event_log WHERE seq = ?", (seq,))
         if not ev:
@@ -196,7 +193,7 @@ async def history_restore(request: Request, seq: int):
 
 
 @router.post("/undo")
-async def undo(request: Request):
+def undo(request: Request):
     with request.app.state.db.write(request.state.actor) as w:
         res = undo_last(w)
     if not res:
@@ -294,10 +291,9 @@ def data_page(request: Request):
 
 
 @router.post("/data/switch")
-async def switch_dataset(request: Request):
+def switch_dataset(request: Request, form=Depends(form_data)):
     from app.datasets import open_dataset
     from app.web.auth import SESSION_COOKIE, create_session
-    form = await request.form()
     target = form.get("dataset")
     s = request.app.state.settings
     if target not in ("real", "demo") or target == s.dataset:
@@ -306,9 +302,10 @@ async def switch_dataset(request: Request):
         if one(conn, "SELECT 1 FROM sqlite_master WHERE name = 'live_session'") and \
                 scalar(conn, "SELECT COUNT(*) FROM live_session WHERE state != 'closed'"):
             raise UserError("Close every live session before switching datasets. Real and demo data are never open together.")
-        conn.execute("UPDATE device_session SET revoked_at = datetime('now') WHERE revoked_at IS NULL")
+        revoke_devices(conn, "1=1")
         conn.commit()
     s.set("dataset", target)
+    request.app.state.db.dispose()
     request.app.state.db = open_dataset(s, target, request.app.state.hub)
     with request.app.state.db.read() as conn:
         token = create_session(conn, "coordinator")
@@ -319,8 +316,7 @@ async def switch_dataset(request: Request):
 
 
 @router.post("/data/reset-demo")
-async def reset_demo(request: Request):
-    form = await request.form()
+def reset_demo(request: Request, form=Depends(form_data)):
     s = request.app.state.settings
     if form.get("confirm") != "yes":
         raise UserError("Tick the confirmation box to reset the demo data.")
@@ -328,6 +324,7 @@ async def reset_demo(request: Request):
         raise UserError("Reset only works while the demo dataset is open.")
     from app.datasets import open_dataset
     from app.web.auth import SESSION_COOKIE, create_session
+    request.app.state.db.dispose()
     path = s.db_path("demo")
     for suffix in ("", "-wal", "-shm"):
         p = path.with_name(path.name + suffix)
@@ -342,7 +339,7 @@ async def reset_demo(request: Request):
 
 
 @router.post("/data/backup-now")
-async def backup_now(request: Request):
+def backup_now(request: Request):
     from app.backup import nightly_backup
     p = nightly_backup(request.app.state.settings)
     return redirect("/admin/data", f"Backup saved: {p.name}")
@@ -366,7 +363,9 @@ async def restore_backup(request: Request, file: UploadFile = File(...)):
     if form.get("confirm") != "yes":
         raise UserError("Tick the confirmation box: restoring replaces the current data (a copy is kept first).")
     s = request.app.state.settings
-    manifest = restore(s, s.dataset, await file.read())
+    data = await file.read()
+    request.app.state.db.dispose()       # close pooled connections before the file is replaced
+    manifest = restore(s, s.dataset, data)
     request.app.state.db = open_dataset(s, s.dataset, request.app.state.hub)
     with request.app.state.db.read() as conn:
         token = create_session(conn, "coordinator")
@@ -387,10 +386,9 @@ def model_versions(request: Request):
 
 
 @router.post("/model")
-async def model_create(request: Request):
+def model_create(request: Request, form=Depends(form_data)):
     from app.engine.model import ModelParams
     from app.util import now_iso
-    form = await request.form()
     name = (form.get("name") or "").strip()
     if not name:
         raise UserError("Give the model version a name.")
@@ -408,7 +406,7 @@ async def model_create(request: Request):
 
 
 @router.post("/model/{mid}/activate")
-async def model_activate(request: Request, mid: int):
+def model_activate(request: Request, mid: int):
     with request.app.state.db.write(request.state.actor) as w:
         for r in rows(w.conn, "SELECT id FROM model_version WHERE active = 1"):
             w.update("model_version", r["id"], {"active": 0})

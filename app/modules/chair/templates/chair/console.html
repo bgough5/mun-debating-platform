@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<h1>Chair: {{ s.committee }}</h1>
+<div id="status" data-live-channel="session:{{ s.id }}" hx-get="/chair/{{ s.id }}/f/status" hx-trigger="live-update" hx-swap="innerHTML">
+{% include "chair/_chair_status.html" %}
+</div>
+<p id="live-status" class="small muted">Connecting…</p>
+<div class="cols-2">
+  <div>
+    <section aria-labelledby="h-floor"><h2 id="h-floor">Floor</h2>
+      <div id="floor" data-live-channel="session:{{ s.id }}" hx-get="/chair/{{ s.id }}/f/floor" hx-trigger="live-update" hx-swap="innerHTML">
+        {% include "chair/_chair_floor.html" %}
+      </div>
+    </section>
+    <section aria-labelledby="h-div"><h2 id="h-div">Voting</h2>
+      <div id="division" data-live-channel="session:{{ s.id }}" hx-get="/chair/{{ s.id }}/f/division" hx-trigger="live-update" hx-swap="innerHTML">
+        {% include "chair/_chair_division.html" %}
+      </div>
+    </section>
+  </div>
+  <div>
+    <section aria-labelledby="h-mot"><h2 id="h-mot">Motions</h2>
+      <div id="motions" data-live-channel="session:{{ s.id }}" hx-get="/chair/{{ s.id }}/f/motions" hx-trigger="live-update" hx-swap="innerHTML">
+        {% include "chair/_chair_motions.html" %}
+      </div>
+    </section>
+    <section class="card" aria-labelledby="h-tools"><h2 id="h-tools">Tools</h2>
+      <form method="post" action="/chair/{{ s.id }}/timer" class="inline">{{ hidden_csrf(csrf) }}
+        <div class="field"><label for="tl">Timer label</label><input id="tl" type="text" name="label" value="Timer" size="10"></div>
+        <div class="field"><label for="tm">Minutes</label><input id="tm" type="number" name="minutes" min="0" max="180" value="5" style="width:5rem"></div>
+        <div class="field"><label for="tsx">Seconds</label><input id="tsx" type="number" name="seconds" min="0" max="59" value="0" style="width:5rem"></div>
+        <button type="submit" class="secondary">New timer</button></form>
+      <form method="post" action="/chair/{{ s.id }}/speaking-time" class="inline">{{ hidden_csrf(csrf) }}
+        <div class="field"><label for="st">Speaking time (seconds)</label><input id="st" type="number" name="seconds" min="10" max="900" value="{{ s.speaking_time_s }}" style="width:6rem"></div>
+        <button type="submit" class="secondary">Set</button></form>
+      {% if students %}
+      <details><summary>Extra speaking time for a student</summary>
+        <p class="small">Applied automatically whenever that student speaks (WCAG 2.2.1). Students listed with extra time: {% for st in students if st.extra_percent %}{{ st.first_name }} (+{{ st.extra_percent }}%){% if not loop.last %}, {% endif %}{% else %}none{% endfor %}.</p>
+        <form method="post" action="/chair/{{ s.id }}/adjust" class="inline">{{ hidden_csrf(csrf) }}
+          <div class="field"><label for="ast">Student</label><select id="ast" name="student_id">{% for st in students %}<option value="{{ st.id }}">{{ st.first_name }}{% if st.last_initial %} {{ st.last_initial }}.{% endif %}</option>{% endfor %}</select></div>
+          <div class="field"><label for="ape">Extra time (%)</label><input id="ape" type="number" name="extra_percent" min="0" max="200" value="50" style="width:5rem"></div>
+          <button type="submit" class="secondary">Save</button></form>
+      </details>{% endif %}
+      <p><a href="/projector/{{ s.projector_token }}" target="_blank" rel="noopener">Open the projector view</a> <span class="small muted">(no sign-in; share the link only on the projector)</span></p>
+      <p><a href="/chair/{{ s.id }}/minutes">Minutes</a> · <a href="/mun/committees/{{ s.committee_id }}">Committee and resolutions</a></p>
+      <div class="row">
+        {% if s.state == 'open' %}<form method="post" action="/chair/{{ s.id }}/state">{{ hidden_csrf(csrf) }}<input type="hidden" name="state" value="suspended"><button type="submit" class="secondary">Suspend</button></form>
+        {% elif s.state == 'suspended' %}<form method="post" action="/chair/{{ s.id }}/state">{{ hidden_csrf(csrf) }}<input type="hidden" name="state" value="open"><button type="submit">Resume</button></form>{% endif %}
+        {% if s.state != 'closed' %}<details><summary>Close the session…</summary><form method="post" action="/chair/{{ s.id }}/state" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="state" value="closed">
+          <label class="checks"><input type="checkbox" name="confirm" value="yes" required> Yes, close this session</label><button type="submit" class="danger">Close</button></form></details>{% endif %}
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

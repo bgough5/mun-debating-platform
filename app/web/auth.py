@@ -96,6 +96,43 @@ def touch(conn, session: Session) -> None:
     conn.commit()
 
 
+# ---------- per-process session cache ----------
+
+_SESSION_CACHE: dict = {}
+SESSION_CACHE_S = 5.0
+
+
+def session_for(db, token):
+    """Look up a browser's session. Cached for a few seconds: in a live session 30
+    browsers each make several requests a second, and this lookup was a large
+    share of the cost. Signing a device out clears the cache (revoke_devices)."""
+    key = (id(db), token)
+    hit = _SESSION_CACHE.get(key)
+    t = time.monotonic()
+    if hit and t - hit[0] < SESSION_CACHE_S:
+        return hit[1]
+    with db.read() as conn:
+        sess = load_session(conn, token)
+        if sess:
+            touch(conn, sess)
+    if len(_SESSION_CACHE) > 5000:
+        _SESSION_CACHE.clear()
+    _SESSION_CACHE[key] = (t, sess)
+    return sess
+
+
+def forget_sessions() -> None:
+    _SESSION_CACHE.clear()
+
+
+def revoke_devices(conn, where: str, params=()) -> int:
+    """Sign devices out (UPDATE device_session ... WHERE <where>) and drop cached sessions."""
+    n = conn.execute(f"UPDATE device_session SET revoked_at = ? WHERE revoked_at IS NULL AND ({where})",
+                     (now_iso(), *params)).rowcount
+    forget_sessions()
+    return n
+
+
 # ---------- login throttling (in memory, per process) ----------
 
 class Throttle:

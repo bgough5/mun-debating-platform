@@ -6,6 +6,7 @@ from urllib.parse import quote, unquote
 
 from fastapi import HTTPException, Request
 from fastapi.responses import RedirectResponse
+from starlette.requests import HTTPConnection
 
 from app.web.auth import CSRF_COOKIE
 
@@ -34,9 +35,13 @@ def ensure_csrf(request: Request) -> str:
     return tok
 
 
-async def csrf_protect(request: Request) -> None:
+async def csrf_protect(conn: HTTPConnection) -> None:
     """Double-submit check on every unsafe request: the form field or header must
-    match the cookie. Cookies are SameSite=Lax as a second layer."""
+    match the cookie. Cookies are SameSite=Lax as a second layer. (WebSockets carry
+    no forms; their subscriptions are checked one by one in app/web/ws.py.)"""
+    if not isinstance(conn, Request):
+        return
+    request = conn
     if request.method not in UNSAFE:
         return
     cookie = request.cookies.get(CSRF_COOKIE, "")
@@ -62,3 +67,9 @@ def form_float(value, default=None):
         return float(value) if value not in (None, "") else default
     except (TypeError, ValueError):
         return default
+
+
+async def form_data(request: Request):
+    """Reads the form on the event loop, so the handler itself can be a plain `def`
+    and do its database work in the thread pool, never blocking live updates."""
+    return await request.form()

@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import io
 import json
+import os
 import logging
 import shutil
 import sqlite3
@@ -122,9 +123,11 @@ def restore(settings, dataset: str, data: bytes) -> dict:
         target = settings.db_path(dataset)
         if target.exists():
             backup_to(target, settings.backup_dir / f"{dataset}-before-restore-{stamp()}.db")
+        staged = target.with_name(target.name + ".restoring")
+        shutil.copyfile(restored, staged)
         for suffix in ("-wal", "-shm"):
             Path(str(target) + suffix).unlink(missing_ok=True)
-        shutil.copyfile(restored, target)
+        os.replace(staged, target)
     conn = connect(target)
     try:
         migrate(conn)     # bring an older backup up to the current schema
