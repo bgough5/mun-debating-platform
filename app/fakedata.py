@@ -66,6 +66,9 @@ def populate_demo(conn, seed: int = 2026) -> dict:
         service.allocate_round_robin(w, ga["committee_id"], mun_students)
         sc = packs.load_security_council(w, info["small_class"])
         service.allocate_round_robin(w, sc["committee_id"], small)
+        evatt = packs.load_evatt_scenario(w, info["small_class"])          # fictional crisis, invented positions (D-063)
+        service.allocate_round_robin(w, evatt["committee_id"], small)
+        info["evatt"] = evatt
         info.update(ga=ga, sc=sc, staff_id=staff_id)
         try:
             from app.modules.debating.demo import populate_debating_demo

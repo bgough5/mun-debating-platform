@@ -1,0 +1,22 @@
+CHAIRPERSON'S SCRIPT — {{ event.name }}
+(One copy per room. The chairperson reads the parts in plain text; fill in the blanks.)
+
+{% for r in rounds %}
+ROUND {{ r.number }}
+Good {{ time_of_day }}, adjudicator, speakers and audience, and welcome to round {{ r.number }} of the {{ event.name }}.
+{% if r.motion %}The motion for this debate is: "{{ r.motion }}".{% else %}The motion for this debate is: "______________________".{% endif %}
+
+The affirmative team is: ______________________ (1st speaker __________, 2nd speaker __________, 3rd speaker __________).
+The negative team is: ______________________ (1st speaker __________, 2nd speaker __________, 3rd speaker __________).
+Our adjudicator is __________ and our timekeeper is __________.
+
+Each speaker has {{ (format.speech_seconds // 60) if format.speech_seconds else "__" }} minutes. There will be one knock at one minute to go and two knocks when time is up.
+{% if format.reply %}Reply speeches are {{ (format.reply_seconds // 60) if format.reply_seconds else "__" }} minutes, given by the first or second speaker; the negative replies first.{% endif %}
+
+I now call on the first speaker of the affirmative team to open the debate.
+(After each speech:) Thank you. I now call on the ______ speaker of the ______ team.
+(After the last speech:) Thank you. That concludes the debate. While the adjudicator considers the result, please thank both teams.
+
+The adjudicator will now give the result and feedback.
+(After the result:) Thank you to our adjudicator, our timekeeper, and both teams. Please shake hands with your opponents.
+{% endfor %}

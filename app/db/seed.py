@@ -134,6 +134,9 @@ def seed_later_phases(conn: sqlite3.Connection) -> None:
             tid = _id(conn, "topic", r["topic_code"])
             if tid:
                 conn.execute("INSERT INTO history_tag_rule (topic_id, tag_code, keyword) VALUES (?,?,?)", (tid, r["tag_code"], r["keyword"]))
+    if _empty(conn, "feedback_prompt"):
+        for r in _csv("feedback_prompts.csv"):
+            conn.execute("INSERT INTO feedback_prompt (criterion, position, prompt) VALUES (?,?,?)", (r["criterion"], int(r["position"]), r["prompt"]))
     if _empty(conn, "procedure_stage"):
         for r in _csv("procedure_stages.csv"):
             rs = _id(conn, "procedure_rule_set", r["rule_set"])
@@ -141,7 +144,30 @@ def seed_later_phases(conn: sqlite3.Connection) -> None:
                 conn.execute("INSERT INTO procedure_stage (rule_set_id, code, position, name, chair_script, chair_next, student_prompt) "
                              "VALUES (?,?,?,?,?,?,?)", (rs, r["code"], int(r["position"]), r["name"], r["chair_script"],
                                                          r["chair_next"], r["student_prompt"]))
+    seed_content_updates(conn)
     conn.commit()
+
+
+def seed_content_updates(conn: sqlite3.Connection) -> None:
+    """New reference content added after a database was created (Phase 6): templates, motions and source types that
+    are missing are added by their key. Nothing existing is changed or removed, so an edited template or motion
+    is never overwritten."""
+    if _table_exists(conn, "template"):
+        for r in _csv("templates.csv"):
+            if not conn.execute("SELECT 1 FROM template WHERE code = ?", (r["code"],)).fetchone():
+                body = (SEED_DIR / "templates" / r["file"]).read_text(encoding="utf-8")
+                conn.execute("INSERT INTO template (code, kind, name, body) VALUES (?,?,?,?)", (r["code"], r["kind"], r["name"], body))
+    if _table_exists(conn, "motion_bank"):
+        have = {m for (m,) in conn.execute("SELECT motion FROM motion_bank")}
+        for r in _csv("motion_bank.csv"):
+            if r["motion"] not in have:
+                conn.execute("INSERT INTO motion_bank (motion, topic, level, source) VALUES (?,?,?,?)",
+                             (r["motion"], r["topic"], r["level"], "Original practice motion, written for the platform"))
+    if _table_exists(conn, "source_type"):
+        for r in _csv("source_types.csv"):
+            if not conn.execute("SELECT 1 FROM source_type WHERE code = ?", (r["code"],)).fetchone():
+                conn.execute("INSERT INTO source_type (code, label, shown_as, weight, requires_source, notes) VALUES (?,?,?,?,?,?)",
+                             (r["code"], r["label"], r["shown_as"], float(r["weight"]), int(r["requires_source"]), r["notes"]))
 
 
 def _seed_pack(conn, pack):

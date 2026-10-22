@@ -4,3 +4,7 @@ run_sheet_carnival,run_sheet,Carnival run sheet,run_sheet_carnival.j2
 mc_script_carnival,mc_script,Carnival MC script,mc_script_carnival.j2
 position_paper_scaffold,position_paper,Position paper scaffold (headings only),position_paper_scaffold.j2
 certificate_participation,certificate,Participation certificate,certificate_participation.j2
+run_sheet_house_carnival,run_sheet,House carnival run sheet (325 students),run_sheet_house_carnival.j2
+mc_script_house_carnival,mc_script,House carnival MC script,mc_script_house_carnival.j2
+run_sheet_interschool,run_sheet,Inter-school round run sheet,run_sheet_interschool.j2
+mc_script_interschool,mc_script,Inter-school chairperson's script,mc_script_interschool.j2

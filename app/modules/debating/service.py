@@ -493,9 +493,10 @@ def document_context(conn, event_id: int) -> dict:
     e = get_event(conn, event_id)
     rounds = rows(conn, "SELECT * FROM debate_round WHERE event_id = ? AND deleted_at IS NULL ORDER BY number", (event_id,))
     for r in rounds:
-        ps = rows(conn, "SELECT * FROM pairing WHERE round_id = ? AND deleted_at IS NULL", (r["id"],))
-        r["pairings"] = [p for p in ps if p["neg_team_id"]]
-        r["byes"] = sum(1 for p in ps if not p["neg_team_id"])
+        draw = round_draw(conn, r["id"])
+        r["debates"] = [d for d in draw if d["neg"]]
+        r["pairings"] = r["debates"]
+        r["byes"] = sum(1 for d in draw if not d["neg"])
     teams = rows(conn, "SELECT * FROM team WHERE event_id = ? AND deleted_at IS NULL", (event_id,))
     house_ids = {t["house_id"] for t in teams if t["house_id"]}
     houses = [h for h in rows(conn, "SELECT * FROM house WHERE deleted_at IS NULL ORDER BY name") if h["id"] in house_ids]
@@ -513,14 +514,31 @@ def document_context(conn, event_id: int) -> dict:
     schedule.append({"time": _hhmm_add(e["start_time"], t), "what": "Results, house points and close", "who": "MC"})
     totals = house_totals(conn, event_id)
     lad = ladder(conn, event_id) if rounds else []
-    return {"event": e, "format": {"name": e["format_name"]}, "rounds": rounds, "teams": teams, "houses": houses, "rooms": rooms,
+    fmt = {"name": e["format_name"], "speakers_per_team": e["speakers_per_team"], "reply": bool(e["reply"]),
+           "speech_seconds": e["speech_seconds"], "reply_seconds": e["reply_seconds"]}
+    prompts = rows(conn, "SELECT * FROM feedback_prompt WHERE deleted_at IS NULL ORDER BY criterion, position") \
+        if one(conn, "SELECT 1 FROM sqlite_master WHERE name = 'feedback_prompt'") else []
+    return {"event": e, "format": fmt, "prompts": prompts, "rounds": rounds, "teams": teams, "houses": houses, "rooms": rooms,
             "schedule": schedule, "ladder": lad, "house_totals": [h for h in totals if h["id"] in house_ids],
             "time_of_day": "morning" if e["start_time"] < "12:00" else "afternoon"}
 
 
-def generate_document(conn, event_id: int, kind: str) -> str:
-    code = {"run_sheet": "run_sheet", "mc_script": "mc_script"}[kind]
-    body = scalar(conn, "SELECT body FROM template WHERE kind = ? AND deleted_at IS NULL ORDER BY id LIMIT 1", (code,))
+DEFAULT_TEMPLATE = {("carnival", "run_sheet"): "run_sheet_house_carnival", ("carnival", "mc_script"): "mc_script_house_carnival",
+                    ("competition", "run_sheet"): "run_sheet_interschool", ("competition", "mc_script"): "mc_script_interschool"}
+
+
+def templates_for(conn, kind: str) -> list[dict]:
+    return rows(conn, "SELECT id, code, name FROM template WHERE kind = ? AND deleted_at IS NULL ORDER BY name", (kind,))
+
+
+def generate_document(conn, event_id: int, kind: str, template_code: str | None = None) -> str:
+    if kind not in ("run_sheet", "mc_script"):
+        raise UserError("Not found.", 404)
+    e = get_event(conn, event_id)
+    code = template_code or DEFAULT_TEMPLATE.get((e["kind"], kind))
+    body = scalar(conn, "SELECT body FROM template WHERE kind = ? AND code = ? AND deleted_at IS NULL", (kind, code)) if code else None
+    if body is None:
+        body = scalar(conn, "SELECT body FROM template WHERE kind = ? AND deleted_at IS NULL ORDER BY id LIMIT 1", (kind,))
     if not body:
         raise UserError(f"There is no {kind.replace('_', ' ')} template. Add one under Admin → Templates.")
     try:

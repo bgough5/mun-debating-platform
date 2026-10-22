@@ -139,6 +139,10 @@ REFERENCE = [
     Table("motion_bank", "Motion bank", (C("motion", "Motion", required=True), C("topic", "Topic"),
                                          C("level", "Level", "choice", choices=("junior", "middle", "senior")), C("source", "Source")),
           order_by="level, id", group="Debating"),
+    Table("feedback_prompt", "Adjudicator feedback prompts", (
+        C("criterion", "Criterion", "choice", choices=("matter", "manner", "method", "reply", "overall"), required=True),
+        C("position", "Order", "int"), C("prompt", "Prompt", "textarea", required=True)),
+        order_by="criterion, position", group="Debating", note="Shown to adjudicators on the ballot page."),
     Table("house_points_rule", "House points rules", (
         C("code", "Code", required=True), C("label", "Label", required=True),
         C("kind", "Kind", "choice", choices=("win", "participation", "team_place", "speaker_place")),

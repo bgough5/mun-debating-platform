@@ -7,4 +7,5 @@ student_intel,Class intel,Student intel,2,1,Medium weight at a conference. What 
 model_estimate,Model estimate,Model estimate,1,0,Low weight. The archetype prior.
 ai_estimate,AI estimate,AI estimate — verify,1,1,Low weight. Only counted with at least one source; otherwise stored as unknown.
 voting_history,Voting history,Voting history (similar resolutions),0,1,"Weight comes from the number of past votes (model parameters), not this column."
-unsourced_note,Unsourced note,Unsourced note — needs a source,2,0,"Hand-entered judgements carried over from the v2 pack (overrides). Weight 2 until a source is attached; facts with no position do not move the estimate."
+unsourced_note,Unsourced note,Unsourced note — needs a source,2,0,Hand-entered judgements carried over from the v2 pack (overrides). Weight 2 until a source is attached; facts with no position do not move the estimate.
+demo_unverified,Unverified demo,Unverified demo — invented for practice,2,0,Positions invented for a demo scenario. Not a statement of any country's real position.

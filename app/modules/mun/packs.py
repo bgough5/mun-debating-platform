@@ -79,3 +79,83 @@ def load_security_council(w: Writer, class_id: int | None = None) -> dict:
         cl = next(c for c in pack["clauses"] if c["id"] == cid)
         paras[cid] = service.add_paragraph(w, res, "operative", cl["text"], cl["tags"])
     return {"conference_id": conf, "committee_id": com, "resolution_id": res, "delegations": dels, "paragraphs": paras}
+
+
+# ---------- Evatt-style Security Council demo scenario (Phase 6, D-063) ----------
+# A crisis in a fictional state, so no real conflict or real country's position is presented as fact.
+# Every position below was invented for practice and is stored as "Unverified demo" evidence.
+
+VELORIA_TOPIC = ("SC_VELORIA", "The situation in Veloria (fictional demo scenario)")
+VELORIA_TAGS = {
+    "ceasefire": "Calls for an immediate ceasefire",
+    "humanitarian_access": "Requires safe, unimpeded humanitarian access",
+    "arms_embargo": "Imposes an arms embargo",
+    "sanctions": "Imposes targeted sanctions on individuals",
+    "peacekeeping": "Authorises a UN mission under Chapter VII",
+    "accountability": "Sets up an independent commission of inquiry",
+    "sovereignty": "Respects sovereignty and regional mediation",
+}
+VELORIA_PREAMBULAR = [
+    ("Reaffirming its strong commitment to the sovereignty, independence, unity and territorial integrity of Veloria,", "sovereignty"),
+    ("Expressing grave concern at the deteriorating humanitarian situation in the eastern provinces of Veloria and the displacement of civilians,", "humanitarian_access"),
+    ("Welcoming the mediation efforts of the regional organisation and encouraging all parties to engage with them in good faith,", "sovereignty"),
+]
+VELORIA_OPERATIVE = [
+    ("Demands that all parties to the conflict in Veloria immediately cease hostilities and observe a nationwide ceasefire;", "ceasefire"),
+    ("Calls upon all parties to allow and facilitate the safe, rapid and unimpeded passage of humanitarian relief to all civilians in need;", "humanitarian_access"),
+    ("Decides that all Member States shall prevent the direct or indirect supply, sale or transfer of arms and related materiel to Veloria for twelve months;", "arms_embargo"),
+    ("Decides that all Member States shall impose travel bans and asset freezes on individuals designated by the Committee as obstructing the peace process;", "sanctions"),
+    ("Authorises, acting under Chapter VII of the Charter, the deployment of a United Nations stabilisation mission to protect civilians in the eastern provinces;", "peacekeeping,humanitarian_access"),
+    ("Requests the Secretary-General to establish an independent commission of inquiry into alleged violations of international humanitarian law in Veloria;", "accountability"),
+]
+# Invented positions (-2 strongly oppose .. +2 strongly support) per tag, for practice only.
+VELORIA_POSITIONS = {
+    "USA": {"ceasefire": 2, "humanitarian_access": 2, "arms_embargo": 1, "sanctions": 2, "peacekeeping": 1, "accountability": 2, "sovereignty": 0},
+    "GBR": {"ceasefire": 2, "humanitarian_access": 2, "arms_embargo": 1, "sanctions": 1, "peacekeeping": 1, "accountability": 2, "sovereignty": 0},
+    "FRA": {"ceasefire": 2, "humanitarian_access": 2, "arms_embargo": 1, "sanctions": 1, "peacekeeping": 2, "accountability": 1, "sovereignty": 0},
+    "CHN": {"ceasefire": 1, "humanitarian_access": 1, "arms_embargo": -1, "sanctions": -2, "peacekeeping": -1, "accountability": -2, "sovereignty": 2},
+    "RUS": {"ceasefire": 1, "humanitarian_access": 0, "arms_embargo": -2, "sanctions": -2, "peacekeeping": -2, "accountability": -2, "sovereignty": 2},
+    "DNK": {"ceasefire": 2, "humanitarian_access": 2, "arms_embargo": 1, "sanctions": 1, "peacekeeping": 1, "accountability": 2, "sovereignty": 0},
+    "GRC": {"ceasefire": 2, "humanitarian_access": 2, "arms_embargo": 1, "sanctions": 0, "peacekeeping": 1, "accountability": 1, "sovereignty": 1},
+    "PAK": {"ceasefire": 1, "humanitarian_access": 1, "arms_embargo": 0, "sanctions": -1, "peacekeeping": 0, "accountability": -1, "sovereignty": 2},
+    "PAN": {"ceasefire": 2, "humanitarian_access": 2, "arms_embargo": 1, "sanctions": 0, "peacekeeping": 1, "accountability": 1, "sovereignty": 1},
+    "SOM": {"ceasefire": 2, "humanitarian_access": 2, "arms_embargo": 0, "sanctions": -1, "peacekeeping": 0, "accountability": 0, "sovereignty": 2},
+    "BHR": {"ceasefire": 1, "humanitarian_access": 1, "arms_embargo": 0, "sanctions": 0, "peacekeeping": 0, "accountability": -1, "sovereignty": 1},
+    "COL": {"ceasefire": 2, "humanitarian_access": 2, "arms_embargo": 1, "sanctions": 0, "peacekeeping": 1, "accountability": 1, "sovereignty": 1},
+    "COD": {"ceasefire": 2, "humanitarian_access": 2, "arms_embargo": 1, "sanctions": 0, "peacekeeping": 0, "accountability": 0, "sovereignty": 2},
+    "LVA": {"ceasefire": 2, "humanitarian_access": 2, "arms_embargo": 2, "sanctions": 2, "peacekeeping": 1, "accountability": 2, "sovereignty": 0},
+    "LBR": {"ceasefire": 2, "humanitarian_access": 2, "arms_embargo": 1, "sanctions": 0, "peacekeeping": 1, "accountability": 1, "sovereignty": 1},
+}
+UNVERIFIED = ("Invented for a practice scenario about a fictional country. This is not {name}'s real position on any issue; "
+              "research the real position before using it.")
+
+
+def load_evatt_scenario(w: Writer, class_id: int | None = None) -> dict:
+    """An Evatt-style Security Council practice committee (15 members, SC voting rule with veto) on a fictional crisis."""
+    code, name = VELORIA_TOPIC
+    topic_id = scalar(w.conn, "SELECT id FROM topic WHERE code = ?", (code,))
+    if not topic_id:
+        topic_id = w.insert("topic", {"code": code, "name": name,
+                                      "notes": "Fictional demo scenario. Every country position is invented and labelled Unverified demo."})
+        for t, label in VELORIA_TAGS.items():
+            w.insert("tag", {"topic_id": topic_id, "code": t, "label": label})
+    ct = one(w.conn, "SELECT * FROM committee_type WHERE code = 'sc'")
+    conf = service.create_conference(w, "Evatt-style practice: the situation in Veloria (demo)", organiser="South Oakleigh College",
+                                     notes="Fictional scenario for practice. Council membership as remembered for 2026; check before use.")
+    com = service.create_committee(w, conf, "Security Council: the situation in Veloria (demo)", ct["id"], None, topic_id, class_id)
+    dels = dict(zip(SC_2026, service.add_delegations(w, com, SC_2026)))
+    res = service.create_resolution(w, com, "The situation in Veloria")
+    paras = []
+    for text, tags in VELORIA_PREAMBULAR:
+        paras.append(service.add_paragraph(w, res, "preambular", text, tags))
+    for text, tags in VELORIA_OPERATIVE:
+        paras.append(service.add_paragraph(w, res, "operative", text, tags))
+    n = 0
+    for iso, positions in VELORIA_POSITIONS.items():
+        cname = scalar(w.conn, "SELECT name FROM country WHERE iso3 = ?", (iso,)) or iso
+        for tag, pos in positions.items():
+            service.add_evidence(w, subject_kind="country", iso3=iso, target_kind="tag", tag_code=tag, topic_id=topic_id,
+                                 position=pos, strength="moderate", source_type="demo_unverified",
+                                 summary=UNVERIFIED.format(name=cname))
+            n += 1
+    return {"conference_id": conf, "committee_id": com, "resolution_id": res, "delegations": dels, "paragraphs": paras, "evidence": n}

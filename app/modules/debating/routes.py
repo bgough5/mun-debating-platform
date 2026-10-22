@@ -272,7 +272,8 @@ def _ballot_context(conn, request, pairing_id: int):
         descriptors.setdefault(d["criterion_id"], []).append(d)
     return {"p": p, "e": e, "teams": teams, "panel": panel, "existing": existing, "crit": crit, "descriptors": descriptors,
             "my_adj": my_adj, "access": access, "result": S.pairing_result(conn, pairing_id),
-            "roles": ROLES.get(e["speakers_per_team"], [])}
+            "roles": ROLES.get(e["speakers_per_team"], []),
+            "prompts": rows(conn, "SELECT * FROM feedback_prompt WHERE deleted_at IS NULL ORDER BY criterion = 'overall', criterion, position")}
 
 
 @router.get("/debating/pairings/{pairing_id}/ballot")
@@ -372,9 +373,11 @@ def documents(request: Request, event_id: int, kind: str, sess=Depends(require_s
         e = _event(conn, request, event_id)
         versions = rows(conn, "SELECT * FROM event_document WHERE event_id = ? AND kind = ? ORDER BY version DESC", (event_id, kind))
         draft = versions[0]["body"] if versions else S.generate_document(conn, event_id, kind)
+        templates = S.templates_for(conn, kind)
     label = {"run_sheet": "Run sheet", "mc_script": "MC script"}[kind]
     return render(request, "debating/document.html", {"title": f"{label}: {e['name']}", "e": e, "kind": kind, "label": label,
-                                                      "versions": versions, "draft": draft})
+                                                      "versions": versions, "draft": draft, "templates": templates,
+                                                      "default_template": S.DEFAULT_TEMPLATE.get((e["kind"], kind))})
 
 
 @router.post("/debating/events/{event_id}/documents/{kind}")
@@ -384,7 +387,7 @@ def documents_save(request: Request, event_id: int, kind: str, sess=Depends(requ
     with request.app.state.db.write(request.state.actor) as w:
         _event(w.conn, request, event_id)
         if form.get("action") == "generate":
-            S.save_document(w, event_id, kind, S.generate_document(w.conn, event_id, kind), True)
+            S.save_document(w, event_id, kind, S.generate_document(w.conn, event_id, kind, form.get("template") or None), True)
             msg = "Regenerated from the template as a new version."
         else:
             body = (form.get("body") or "").strip()

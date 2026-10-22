@@ -28,6 +28,10 @@
   <div class="field"><label for="bc">Reason for decision and general feedback</label><textarea id="bc" name="comments" rows="4"></textarea></div>
   <button type="submit" class="big">Submit ballot</button>
 </form>
+<details class="small"><summary>{{ icon("help") }} Feedback prompts for adjudicators</summary>
+<p>Questions to help you give feedback a speaker can use. Edit them under Admin → Adjudicator feedback prompts.</p>
+{% for crit_name, group in prompts|groupby("criterion") %}<h3>{{ crit_name|capitalize }}</h3><ul>{% for pr in group %}<li>{{ pr.prompt }}</li>{% endfor %}</ul>{% endfor %}
+</details>
 <details class="small"><summary>What the score bands mean</summary>
 {% for c in crit %}<h3>{{ c.name }} ({{ c.min_score|int }}–{{ c.max_score|int }})</h3><ol>{% for d in descriptors.get(c.id, []) %}<li>{{ d.descriptor }}</li>{% endfor %}</ol>{% endfor %}
 </details>
