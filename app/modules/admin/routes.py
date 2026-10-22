@@ -249,30 +249,34 @@ async def import_csv(request: Request, name: str, file: UploadFile = File(...)):
         records = read_csv(data)
     except UnicodeDecodeError:
         raise UserError("That file isn't UTF-8 CSV. In Excel, use Save As → CSV UTF-8.")
-    added = updated = 0
-    with request.app.state.db.write(request.state.actor) as w:
-        for i, rec in enumerate(records, start=2):
-            try:
-                vals = {c.name: parse_value(c, rec.get(c.name), w.conn) for c in t.cols if c.name in rec}
-            except UserError as e:
-                raise UserError(f"Row {i}: {e.message} Nothing was imported; fix the file and try again.")
-            missing = [c.label for c in t.cols if c.required and c.name not in vals]
-            if missing:
-                raise UserError(f"The file is missing column(s): {', '.join(missing)}. Nothing was imported.")
-            key_cols = t.natural_key or (pk_of(name),)
-            existing = None
-            if all(vals.get(k) not in (None, "") for k in key_cols):
-                existing = one(w.conn, f"SELECT {pk_of(name)} AS k FROM {name} WHERE " +
-                               " AND ".join(f"{k} = ?" for k in key_cols), [vals[k] for k in key_cols])
-            elif rec.get("id"):
-                existing = one(w.conn, f"SELECT id AS k FROM {name} WHERE id = ?", (rec["id"],))
-            if existing:
-                vals.pop(pk_of(name), None)
-                if w.update(name, existing["k"], vals):
-                    updated += 1
-            else:
-                w.insert(name, vals)
-                added += 1
+
+    def run():      # database work off the event loop (D-042)
+        added = updated = 0
+        with request.app.state.db.write(request.state.actor) as w:
+            for i, rec in enumerate(records, start=2):
+                try:
+                    vals = {c.name: parse_value(c, rec.get(c.name), w.conn) for c in t.cols if c.name in rec}
+                except UserError as e:
+                    raise UserError(f"Row {i}: {e.message} Nothing was imported; fix the file and try again.")
+                missing = [c.label for c in t.cols if c.required and c.name not in vals]
+                if missing:
+                    raise UserError(f"The file is missing column(s): {', '.join(missing)}. Nothing was imported.")
+                key_cols = t.natural_key or (pk_of(name),)
+                existing = None
+                if all(vals.get(k) not in (None, "") for k in key_cols):
+                    existing = one(w.conn, f"SELECT {pk_of(name)} AS k FROM {name} WHERE " +
+                                   " AND ".join(f"{k} = ?" for k in key_cols), [vals[k] for k in key_cols])
+                elif rec.get("id"):
+                    existing = one(w.conn, f"SELECT id AS k FROM {name} WHERE id = ?", (rec["id"],))
+                if existing:
+                    vals.pop(pk_of(name), None)
+                    if w.update(name, existing["k"], vals):
+                        updated += 1
+                else:
+                    w.insert(name, vals)
+                    added += 1
+        return added, updated
+    added, updated = await asyncio.to_thread(run)
     return redirect(f"/admin/t/{name}", f"Imported {len(records)} row(s): {added} added, {updated} changed.")
 
 

@@ -48,9 +48,19 @@ def _checks(dependant) -> set[str]:
     return found
 
 
+def _routes(routes):
+    """Flatten included routers (newer FastAPI keeps them nested; app.main adds no prefix or dependencies)."""
+    for r in routes:
+        inner = getattr(r, "original_router", None)
+        if inner is not None:
+            yield from _routes(inner.routes)
+        else:
+            yield r
+
+
 def classify(app) -> list[dict]:
     out = []
-    for r in app.routes:
+    for r in _routes(app.routes):
         if isinstance(r, APIRoute):
             methods = sorted(m for m in r.methods if m != "HEAD")
             found = _checks(r.dependant)

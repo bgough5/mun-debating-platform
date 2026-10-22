@@ -36,7 +36,18 @@ standing in for the laptop and a second machine: A is set up and used through it
 conference), then a backup is downloaded; B is a fresh install that restores A's backup. Result in
 `test-results/restore-drill.json`:
 
-RESULTS_PLACEHOLDER
+| Check | Result (22 Oct 2026, cloud build container) |
+|---|---|
+| Every table's row count identical after restore | **Yes**: 79 tables, 973 rows, 0 differences |
+| Class and all 5 students visible on B's pages | **Yes** |
+| SQLite integrity check on B | **ok** |
+| B's data before the restore kept as a file | **Yes** (`real-before-restore-<time>.db`) |
+| B's own coordinator passphrase still works (passphrase isn't in the backup) | **Yes** |
+| Time to restore | 0.07 s (46 KB zip); whole drill 2.1 s |
+
+Also tested in `tests/api/test_backup_restore.py`: restoring needs the confirmation box; a non-zip, a zip without a
+backup, a zip from another app and a damaged database are each refused **without** touching the open data; a
+student signed in when the backup was made has to sign in again afterwards.
 
 **Not verified:** a restore onto a genuinely different computer (the drill runs on one machine), and on Windows.
 Ben should do it once (pilot checklist item C3): download a backup on the laptop, restore it on another computer

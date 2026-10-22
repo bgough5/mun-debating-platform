@@ -44,9 +44,9 @@ h3 { font-size: 1.1rem; margin: 1.2rem 0 .4rem; }
 .breadcrumb li + li::before { content: "›"; margin-right: .3rem; color: var(--grey); }
 
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem 1.1rem; margin: 0 0 1rem; }
-.grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); }
 .cols-2 { display: grid; gap: 1rem; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
-@media (max-width: 800px) { .cols-2 { grid-template-columns: 1fr; } }
+@media (max-width: 800px) { .cols-2 { grid-template-columns: minmax(0, 1fr); } }
 .row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
 .muted { color: var(--grey); }
 .small { font-size: .875rem; }
@@ -67,7 +67,12 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 form.stack { display: grid; gap: .75rem; max-width: 640px; }
 form.inline { display: inline-flex; flex-wrap: wrap; gap: .4rem; align-items: end; }
 label { font-weight: 600; display: block; }
-.field { display: grid; gap: .25rem; }
+.field { display: grid; gap: .25rem; grid-template-columns: minmax(0, 1fr); min-width: 0; max-width: 100%; }
+/* Reflow at 320 px (WCAG 1.4.10): let form controls and flex/grid children shrink, and long words wrap. */
+form.inline, .row { max-width: 100%; }
+form.inline > *, .row > *, form.stack > * { min-width: 0; max-width: 100%; }
+select { text-overflow: ellipsis; }
+code, kbd, samp, a { overflow-wrap: anywhere; }
 .hint { font-weight: 400; color: var(--grey); font-size: .875rem; }
 input:not([type]), input[type=text], input[type=email], input[type=file], input[type=password], input[type=number], input[type=date], input[type=search], input[type=url], select, textarea {
   font: inherit; padding: .45rem .55rem; border: 1px solid #7A8794; border-radius: 6px; background: #fff; color: var(--ink); min-height: 2.5rem; max-width: 100%;
@@ -117,6 +122,7 @@ details > summary { cursor: pointer; font-weight: 600; min-height: 24px; padding
 .timer.low { color: var(--maroon); }
 .projector { background: var(--navy); color: #fff; min-height: 100vh; }
 .projector main { max-width: none; padding: 2rem 3rem; }
+@media (max-width: 600px) { .projector main { padding: 1rem; } .projector .timer { font-size: 4rem; } }
 .projector h1 { font-size: 2.6rem; }
 .projector .timer { font-size: 8rem; }
 .projector table { background: transparent; color: #fff; font-size: 1.4rem; }

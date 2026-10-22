@@ -4,10 +4,10 @@
 {{ breadcrumb([("Model UN", "/mun"), (conf.name, None)]) }}
 <h1>{{ conf.name }}</h1>
 <p class="lede">{{ conf.organiser }}{% if conf.starts_on %} · {{ conf.starts_on }}{% endif %}{% if conf.notes %} · {{ conf.notes }}{% endif %}</p>
-<table><caption>Committees</caption>
+<div class="table-wrap"><table><caption>Committees</caption>
 <thead><tr><th scope="col">Committee</th><th scope="col">Voting rule</th><th scope="col" class="num">Delegations</th></tr></thead>
 <tbody>{% for c in coms %}<tr><td><a href="/mun/committees/{{ c.id }}">{{ c.name }}</a></td><td>{{ c.rule }}</td><td class="num">{{ c.n }}</td></tr>
-{% else %}<tr><td colspan="3">No committees yet.</td></tr>{% endfor %}</tbody></table>
+{% else %}<tr><td colspan="3">No committees yet.</td></tr>{% endfor %}</tbody></table></div>
 {% if actor.is_coordinator %}
 <section class="card" style="margin-top:1rem" aria-labelledby="h-ncm"><h2 id="h-ncm">New committee</h2>
 <form method="post" action="/mun/conferences/{{ conf.id }}/committees" class="stack">{{ hidden_csrf(csrf) }}

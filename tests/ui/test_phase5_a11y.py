@@ -22,7 +22,19 @@ from tests.ui.conftest import axe, login
 pytestmark = pytest.mark.ui
 SKIP = re.compile(r"(/logout|\.docx|\.csv|\.zip|/admin/data/download|/practice-game/solo|^/join|/static/|/healthz|javascript:|mailto:|#)")
 OUT = Path(__file__).resolve().parents[2] / "test-results" / "a11y-pages.json"
-LIMIT = 150
+LIMIT = 400
+# The outermost elements sticking out past the right edge (not inside a scrolling box), to say what to fix.
+OVERFLOWING = """() => { const W = document.documentElement.clientWidth, out = [];
+  for (const el of document.querySelectorAll('body *')) {
+    const r = el.getBoundingClientRect();
+    if (r.right <= W + 1 || !r.width) continue;
+    let p = el.parentElement, skip = false;
+    while (p && p !== document.body) {
+      if (/(auto|scroll|hidden)/.test(getComputedStyle(p).overflowX) || p.getBoundingClientRect().right > W + 1) { skip = true; break; }
+      p = p.parentElement; }
+    if (!skip) out.push(el.tagName.toLowerCase() + (el.className ? '.' + String(el.className).split(' ')[0] : '') + ': ' + (el.textContent || '').trim().slice(0, 30));
+  }
+  return out.slice(0, 4); }"""
 
 
 def _pattern(path: str) -> str:
@@ -41,13 +53,15 @@ def _check_page(page, name: str) -> list:
     size = page.viewport_size
     page.set_viewport_size({"width": 320, "height": 800})
     over = page.evaluate("() => document.documentElement.scrollWidth - document.documentElement.clientWidth")
+    culprits = page.evaluate(OVERFLOWING) if over > 1 else []
     page.set_viewport_size(size)
     if over > 1:
-        problems.append(("reflow-320px", over))
-    page.evaluate("() => { document.activeElement && document.activeElement.blur(); window.scrollTo(0, 0); }")
-    page.keyboard.press("Tab")
-    first = page.evaluate("() => document.activeElement && (document.activeElement.className + ' ' + document.activeElement.getAttribute('href'))")
-    if "#main" not in (first or ""):
+        problems.append(("reflow-320px", over, culprits))
+    # The skip link must be the first thing Tab reaches on a freshly loaded page (htmx-boosted navigation
+    # deliberately moves focus to <main> instead, so check document order rather than pressing Tab).
+    first = page.evaluate("""() => { const el = document.querySelector('a[href], button, input:not([type=hidden]), select, textarea, [tabindex]:not([tabindex="-1"])');
+        return el ? el.getAttribute('href') : null; }""")
+    if first != "#main":
         problems.append(("skip-link-not-first", first))
     return problems
 
@@ -82,9 +96,9 @@ def _crawl(page, live, role: str, starts: list[str]) -> tuple[dict, list]:
     return failures, visited
 
 
-def _record(role, visited):
+def _record(role, visited, failures=None):
     data = json.loads(OUT.read_text()) if OUT.exists() else {}
-    data[role] = visited
+    data[role] = {"pages": visited, "failures": failures or {}}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, indent=1))
 
@@ -106,7 +120,7 @@ def session_id(live):
 def test_a11y_every_coordinator_page(page, live, session_id):
     login(page, live)
     failures, visited = _crawl(page, live, "coordinator", ["/", f"/chair/{session_id}", f"/chair/{session_id}/minutes"])
-    _record("coordinator", visited)
+    _record("coordinator", visited, failures)
     assert failures == {}
     assert len(visited) >= 60
 
@@ -115,7 +129,7 @@ def test_a11y_every_staff_page(page, live, session_id):
     staff = _q(live, "SELECT id FROM staff WHERE name = 'Demo Chair'")[0]["id"]
     login(page, live, str(staff), DEMO_STAFF_PASSPHRASE)
     failures, visited = _crawl(page, live, "staff", ["/"])
-    _record("staff", visited)
+    _record("staff", visited, failures)
     assert failures == {}
     assert len(visited) >= 20
 
@@ -139,7 +153,7 @@ def test_a11y_every_student_page(page, live, session_id):
     page.wait_for_load_state("networkidle")
     more, visited = _crawl(page, live, "student", ["/me", f"/live/{session_id}", "/me/practice", "/me/ai-practice"])
     failures.update(more)
-    _record("student", ["/join", "/join/{code}"] + visited)
+    _record("student", ["/join", "/join/{code}"] + visited, failures)
     assert failures == {}
     assert len(visited) >= 4
 
@@ -157,5 +171,5 @@ def test_a11y_projector_and_public_pages(page, live, session_id):
         probs = _check_page(page, "p5_public_" + re.sub(r"[^a-z0-9]+", "_", path.lower())[:40])
         if probs:
             failures[path] = probs
-    _record("public_and_projector", visited)
+    _record("public_and_projector", visited, failures)
     assert failures == {}

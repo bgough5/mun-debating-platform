@@ -1,6 +1,7 @@
 """Intelligence: data sources and licences, imports, backtests, AI settings, AI estimates, AI practice and coaching."""
 from __future__ import annotations
 
+import asyncio
 import json
 
 from fastapi import APIRouter, Depends, File, Request, UploadFile
@@ -13,9 +14,7 @@ from app.util import now_iso
 from app.web.auth import committee_access, require_coordinator, require_staff, require_student
 from app.web.http import form_data, form_int, redirect
 from app.web.templating import render
-
 router = APIRouter()
-
 
 def _provider(request):
     try:
@@ -24,7 +23,6 @@ def _provider(request):
         raise UserError(str(e), 403)
     except RuntimeError as e:
         raise UserError(str(e), 503)
-
 
 @router.get("/intel")
 def intel_home(request: Request, sess=Depends(require_staff)):
@@ -48,7 +46,6 @@ def intel_home(request: Request, sess=Depends(require_staff)):
                                                       "topics": topics, "ai": ai, "prov_name": prov_name, "off_device": off_device,
                                                       "calls": calls})
 
-
 @router.post("/intel/sources/{source_id}/confirm")
 def confirm(request: Request, source_id: int, sess=Depends(require_coordinator), form=Depends(form_data)):
     if form.get("confirm") != "yes":
@@ -57,20 +54,19 @@ def confirm(request: Request, source_id: int, sess=Depends(require_coordinator),
         I.confirm_licence(w, source_id, form.get("licence_text"), form.get("note"))
     return redirect("/intel", "Licence recorded. Import is now allowed for this source.")
 
-
 @router.post("/intel/sources/{source_id}/import")
-async def import_file(request: Request, source_id: int, file: UploadFile = File(...)):
-    from app.web.auth import require_coordinator as rc
-    rc(request)
+async def import_file(request: Request, source_id: int, file: UploadFile = File(...), sess=Depends(require_coordinator)):
     form = await request.form()
     data = await file.read()
-    with request.app.state.db.write(request.state.actor) as w:
-        s = I.source(w.conn, source_id)
-        if s["synthetic"] and not request.app.state.settings.is_demo:
-            raise UserError("Synthetic data can only be loaded into the demo dataset, so it never mixes with real records.")
-        out = I.import_votes(w, source_id, data, form.get("preset") or "generic", form_int(form.get("topic_id")))
-    return redirect("/intel", f"Imported {out['votes']} votes on {out['resolutions']} resolutions ({out['skipped']} rows skipped).")
 
+    def run():      # database work off the event loop (D-042)
+        with request.app.state.db.write(request.state.actor) as w:
+            s = I.source(w.conn, source_id)
+            if s["synthetic"] and not request.app.state.settings.is_demo:
+                raise UserError("Synthetic data can only be loaded into the demo dataset, so it never mixes with real records.")
+            return I.import_votes(w, source_id, data, form.get("preset") or "generic", form_int(form.get("topic_id")))
+    out = await asyncio.to_thread(run)
+    return redirect("/intel", f"Imported {out['votes']} votes on {out['resolutions']} resolutions ({out['skipped']} rows skipped).")
 
 @router.post("/intel/sources/{source_id}/load-synthetic")
 def load_synthetic(request: Request, source_id: int, sess=Depends(require_coordinator)):
@@ -86,7 +82,6 @@ def load_synthetic(request: Request, source_id: int, sess=Depends(require_coordi
         out = I.import_votes(w, source_id, data, "generic", topic)
     return redirect("/intel", f"Loaded synthetic test data: {out['resolutions']} resolutions, {out['votes']} votes.")
 
-
 @router.post("/intel/backtest/{source_id}")
 def run_backtest(request: Request, source_id: int, sess=Depends(require_coordinator)):
     with request.app.state.db.read() as conn:
@@ -94,7 +89,6 @@ def run_backtest(request: Request, source_id: int, sess=Depends(require_coordina
     with request.app.state.db.write(request.state.actor) as w:
         bid = I.store_backtest(w, source_id, result)
     return redirect(f"/intel/backtests/{bid}", "Backtest finished.")
-
 
 @router.get("/intel/backtests/{bid}")
 def backtest_view(request: Request, bid: int, sess=Depends(require_staff)):
@@ -104,7 +98,6 @@ def backtest_view(request: Request, bid: int, sess=Depends(require_staff)):
             raise UserError("Not found.", 404)
     res = json.loads(b["results_json"])
     return render(request, "intelligence/backtest.html", {"title": "Backtest report", "b": b, "r": res})
-
 
 @router.post("/intel/ai")
 def ai_settings(request: Request, sess=Depends(require_coordinator), form=Depends(form_data)):
@@ -123,7 +116,6 @@ def ai_settings(request: Request, sess=Depends(require_coordinator), form=Depend
     s.set("ai", ai)
     return redirect("/intel", "AI settings saved.")
 
-
 @router.post("/intel/ai/estimate")
 def ai_estimate(request: Request, sess=Depends(require_staff), form=Depends(form_data)):
     committee_id = form_int(form.get("committee_id"))
@@ -136,16 +128,13 @@ def ai_estimate(request: Request, sess=Depends(require_staff), form=Depends(form
            "The AI couldn't cite a source, so this was stored as unknown: it does not change the prediction.")
     return redirect(f"/mun/committees/{committee_id}/evidence?iso3={form.get('iso3', '')}", msg)
 
-
 # ---------- students: practice against an AI delegation (S-7) ----------
-
 def _archetype_lines(conn, iso3: str) -> dict:
     top = one(conn, "SELECT a.id FROM country_archetype ca JOIN archetype a ON a.id = ca.archetype_id WHERE ca.iso3 = ? "
                     "AND ca.deleted_at IS NULL ORDER BY ca.weight DESC, ca.id LIMIT 1", (iso3,))
     if not top:
         return {}
     return {r["stance"]: r["line"] for r in rows(conn, "SELECT stance, line FROM archetype_line WHERE archetype_id = ?", (top["id"],))}
-
 
 @router.get("/me/ai-practice")
 def ai_practice_home(request: Request, sess=Depends(require_student)):
@@ -164,7 +153,6 @@ def ai_practice_home(request: Request, sess=Depends(require_student)):
     return render(request, "intelligence/ai_practice_home.html", {"title": "Practise with an AI delegation", "paras": paras,
                                                                    "countries": countries, "past": past, "prov": prov})
 
-
 @router.post("/me/ai-practice")
 def ai_practice_start(request: Request, sess=Depends(require_student), form=Depends(form_data)):
     _provider(request)
@@ -179,13 +167,11 @@ def ai_practice_start(request: Request, sess=Depends(require_student), form=Depe
         aid = w.insert("ai_practice", {"student_id": sess.actor.id, "iso3": iso3, "paragraph_id": pid, "created_at": now_iso()})
     return redirect(f"/me/ai-practice/{aid}")
 
-
 def _practice(conn, request, aid):
     ap = one(conn, "SELECT ap.*, c.name AS country FROM ai_practice ap JOIN country c ON c.iso3 = ap.iso3 WHERE ap.id = ? AND ap.deleted_at IS NULL", (aid,))
     if not ap or ap["student_id"] != request.state.actor.id:
         raise UserError("That practice isn't yours.", 403)
     return ap
-
 
 def _stance_hint(conn, ap) -> int | None:
     if not ap["paragraph_id"]:
@@ -200,7 +186,6 @@ def _stance_hint(conn, ap) -> int | None:
         return None
     return int(max(-2, min(2, round(d.mu))))
 
-
 @router.get("/me/ai-practice/{aid}")
 def ai_practice_view(request: Request, aid: int, sess=Depends(require_student)):
     with request.app.state.db.read() as conn:
@@ -210,7 +195,6 @@ def ai_practice_view(request: Request, aid: int, sess=Depends(require_student)):
                    (ap["paragraph_id"],)) if ap["paragraph_id"] else None
     return render(request, "intelligence/ai_practice.html", {"title": f"AI practice: {ap['country']}", "ap": ap, "msgs": msgs, "para": para,
                                                              "prov": _provider(request)})
-
 
 @router.post("/me/ai-practice/{aid}")
 def ai_practice_send(request: Request, aid: int, sess=Depends(require_student), form=Depends(form_data)):
@@ -226,7 +210,6 @@ def ai_practice_send(request: Request, aid: int, sess=Depends(require_student), 
             w.conn.execute("INSERT INTO ai_practice_message (practice_id, role, text, created_at) VALUES (?,?,?,?)", (aid, role, t, now_iso()))
         I.log_ai(w.conn, provider, "roleplay", "student", f"practice {aid} with {ap['iso3']}", 0, "transcript")
     return redirect(f"/me/ai-practice/{aid}")
-
 
 @router.get("/me/practice/{ps_id}/coach")
 def coach(request: Request, ps_id: int, sess=Depends(require_student)):
