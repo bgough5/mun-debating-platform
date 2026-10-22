@@ -20,7 +20,7 @@ from pathlib import Path
 
 from app.db import connect, migrate
 from app.errors import UserError
-from app.util import now
+from app.util import now, now_iso
 
 log = logging.getLogger("soc.backup")
 DAY_S = 24 * 3600
@@ -105,7 +105,12 @@ def validate_backup_zip(data: bytes, workdir: Path) -> tuple[Path, dict]:
     names = set(z.namelist())
     if not {"dataset.db", "manifest.json"} <= names:
         raise UserError("That zip doesn't contain a platform backup.")
-    manifest = json.loads(z.read("manifest.json"))
+    try:
+        manifest = json.loads(z.read("manifest.json"))
+    except ValueError:
+        raise UserError("That zip doesn't contain a platform backup.")
+    if not isinstance(manifest, dict):
+        raise UserError("That zip doesn't contain a platform backup.")
     if manifest.get("app") != "soc-platform":
         raise UserError("That zip wasn't made by this platform.")
     out = workdir / "restore.db"
@@ -113,11 +118,19 @@ def validate_backup_zip(data: bytes, workdir: Path) -> tuple[Path, dict]:
     conn = sqlite3.connect(str(out))
     try:
         ok = conn.execute("PRAGMA integrity_check").fetchone()[0]
-        if ok != "ok":
-            raise UserError("The backup file is damaged (integrity check failed). Try an older backup.")
+    except sqlite3.DatabaseError:
+        ok = "not a database"
     finally:
         conn.close()
+    if ok != "ok":
+        raise UserError("The backup file is damaged (integrity check failed). Try an older backup.")
     return out, manifest
+
+
+def check_backup(data: bytes) -> dict:
+    """Validate a backup without touching the open data (call before closing connections)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        return validate_backup_zip(data, Path(tmp))[1]
 
 
 def restore(settings, dataset: str, data: bytes) -> dict:
@@ -135,6 +148,11 @@ def restore(settings, dataset: str, data: bytes) -> dict:
     conn = connect(target)
     try:
         migrate(conn)     # bring an older backup up to the current schema
+        # Devices signed in when the backup was made must not come back to life: everyone signs in again.
+        conn.execute("UPDATE device_session SET revoked_at = ? WHERE revoked_at IS NULL", (now_iso(),))
+        conn.commit()
     finally:
         conn.close()
+    from app.web.auth import forget_sessions
+    forget_sessions()
     return manifest

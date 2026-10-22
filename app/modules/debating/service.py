@@ -416,8 +416,9 @@ def award_house_points(w: Writer, event_id: int, round_id: int | None = None, fi
         nonlocal made
         if not house or not pts:
             return
+        # Already awarded, or awarded and then reversed by staff: a reversal is a decision, so never re-award it.
         if one(w.conn, "SELECT 1 FROM house_points_entry WHERE event_id = ? AND source_kind = ? AND source_id = ? AND house_id = ? "
-                       "AND reversed_by_id IS NULL AND reverses_id IS NULL", (event_id, kind, src, house)):
+                       "AND reverses_id IS NULL", (event_id, kind, src, house)):
             return
         w.insert("house_points_entry", {"event_id": event_id, "house_id": house, "points": pts, "reason": reason, "source_kind": kind,
                                         "source_id": src, "entered_by": w.actor.label, "created_at": now_iso()}, ch(event_id))
@@ -435,6 +436,11 @@ def award_house_points(w: Writer, event_id: int, round_id: int | None = None, fi
                 for code, r_ in rules.items():
                     if r_["kind"] == "participation":
                         add(teams[t]["house_id"], r_["points"], f"Round {r['number']}: {teams[t]['name']} debated", "participation", f"{p['id']}:{t}")
+            win_house = teams[res["winner"]]["house_id"]
+            for stale in rows(w.conn, "SELECT id FROM house_points_entry WHERE event_id = ? AND source_kind = 'win' AND source_id = ? "
+                                      "AND house_id IS NOT ? AND reverses_id IS NULL AND reversed_by_id IS NULL",
+                              (event_id, f"{p['id']}", win_house)):
+                reverse_entry(w, stale["id"], "ballot corrected: the other team won")
             for code, r_ in rules.items():
                 if r_["kind"] == "win":
                     add(teams[res["winner"]]["house_id"], r_["points"], f"Round {r['number']}: {teams[res['winner']]['name']} won",

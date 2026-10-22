@@ -202,3 +202,34 @@ def test_debating_projector_and_live_channel(app, coord, client):
     with client.websocket_connect(f"/ws?projector={ev['projector_token']}") as ws:
         ws.send_text(json.dumps({"subscribe": [f"debate:{ev['id']}"]}))
         assert json.loads(ws.receive_text())["subscribed"] == [f"debate:{ev['id']}"]
+
+
+def test_corrected_ballot_moves_win_points(app):
+    """A corrected ballot that changes the winner reverses the old win entry and awards the new winner's house."""
+    from app.db import SYSTEM
+    from app.modules.debating import service as S
+    from tests.conftest import db_one as one_
+    with app.state.db.write(SYSTEM) as w:
+        fmt = one_(app, "SELECT id FROM debate_format WHERE code = 'duo_1v1'")["id"]
+        houses = [r[0] for r in w.conn.execute("SELECT id FROM house ORDER BY id LIMIT 2")]
+        eid = S.create_event(w, "Correction test", "carnival", fmt)
+        sids = [r[0] for r in w.conn.execute("SELECT id FROM student LIMIT 2")]
+        a = S.add_team(w, eid, "A", houses[0], [sids[0]])
+        b = S.add_team(w, eid, "B", houses[1], [sids[1]])
+        rid = w.insert("debate_round", {"event_id": eid, "number": 1, "kind": "random", "seed": 1, "created_at": "x"})
+        pid = w.insert("pairing", {"round_id": rid, "aff_team_id": a, "neg_team_id": b, "position": 1})
+        crit = S.criteria(w.conn, S.get_event(w.conn, eid)["rubric_id"])
+
+        def ballot(sa, sb):
+            S.submit_ballot(w, pid, None, {(a, 1): {c["id"]: sa for c in crit}, (b, 1): {c["id"]: sb for c in crit}}, {}, None)
+        ballot(18, 15)                                   # A wins
+        S.award_house_points(w, eid, rid)
+        ballot(15, 18)                                   # corrected: B won
+        S.award_house_points(w, eid, rid)
+        S.award_house_points(w, eid, rid)                # and again: nothing changes
+        wins = {h: w.conn.execute("SELECT COALESCE(SUM(points), 0) FROM house_points_entry WHERE event_id = ? AND house_id = ? "
+                                  "AND source_kind IN ('win', 'reversal')", (eid, h)).fetchone()[0] for h in houses}
+        win_pts = w.conn.execute("SELECT points FROM house_points_rule WHERE kind = 'win'").fetchone()[0]
+    assert wins == {houses[0]: 0, houses[1]: win_pts}
+    rev = one_(app, "SELECT reason FROM house_points_entry WHERE event_id = ? AND source_kind = 'reversal'", (eid,))
+    assert "ballot corrected" in rev["reason"]

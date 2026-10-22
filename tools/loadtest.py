@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import bisect
 import json
 import os
 import random
@@ -45,6 +46,7 @@ PASS = "load test coordinator passphrase"
 
 actions: list[float] = []          # start times of every write action (chair and students)
 errors: list[str] = []
+transport_retries: list[str] = []   # client-side keep-alive races, retried once and counted
 slow: list = []
 
 
@@ -69,6 +71,7 @@ class Client:
         self.http = httpx.AsyncClient(base_url=base, timeout=30)
         self.received: dict[int, float] = {}
         self.latencies: list[float] = []
+        self.lat_at: list[float] = []
         self.notify: list[float] = []
         self.first_seq = None
         self.reconnects = 0
@@ -85,7 +88,7 @@ class Client:
         d = dict(data or {})
         d["csrf"] = await self.csrf()
         t0 = time.time()
-        actions.append(t0)
+        bisect.insort(actions, t0)
         r = await self.http.post(url, data=d, follow_redirects=False)
         slow.append((time.time() - t0, "POST " + url))
         if r.status_code >= 500:
@@ -97,16 +100,21 @@ class Client:
 
     async def fetch(self, started: float):
         t0 = time.time()
-        r = await self.http.get(self.frag)
+        try:
+            r = await self.http.get(self.frag)
+        except httpx.TransportError as e:       # e.g. keep-alive connection closed under us: retry once, count it
+            transport_retries.append(f"{self.name} GET {self.frag}: {e!r}")
+            r = await self.http.get(self.frag)
         slow.append((time.time() - t0, "GET " + self.frag))
         if r.status_code != 200:
             errors.append(f"{self.name} GET {self.frag} -> {r.status_code}")
             return
         self.fragment = r.text
         done = time.time()
-        prior = [a for a in actions if a <= started + 0.001]
-        if prior:
-            self.latencies.append(done - prior[-1])
+        i = bisect.bisect_right(actions, started + 0.001)
+        if i:
+            self.latencies.append(done - actions[i - 1])
+            self.lat_at.append(done)
 
     def schedule_fetch(self, started: float):
         """Same throttle as app/static/js/live.js: at once, then at most every 250 ms, never dropping the last."""
@@ -146,9 +154,9 @@ class Client:
                                 self.received[msg["seq"]] = now
                                 self.last_seq = max(self.last_seq, msg["seq"])
                                 if "t" in msg:
-                                    prior = [a for a in actions if a <= msg["t"] + 0.001]
-                                    if prior:
-                                        self.notify.append(now - prior[-1])
+                                    i = bisect.bisect_right(actions, msg["t"] + 0.001)
+                                    if i:
+                                        self.notify.append(now - actions[i - 1])
                                 self.schedule_fetch(msg.get("t", now))
                             if self.stop:
                                 break
@@ -172,12 +180,15 @@ async def student_loop(c: Client, sid: int, rng: random.Random):
     while not c.stop:
         await asyncio.sleep(rng.uniform(1, 3))
         m = re.search(r"<h2 id=\"h-vote\">Vote: ([^<]+)</h2>", c.fragment)
-        if m and m.group(1) not in voted and 'name="vote"' in c.fragment:
-            voted.add(m.group(1))
-            await asyncio.sleep(rng.uniform(0.5, 6))
-            await c.post(f"/live/{sid}/vote", {"vote": rng.choice(["yes", "yes", "no", "abstain"])})
-        elif "Add me to the speakers list" in c.fragment and rng.random() < 0.02:
-            await c.post(f"/live/{sid}/speak")
+        try:
+            if m and m.group(1) not in voted and 'name="vote"' in c.fragment:
+                voted.add(m.group(1))
+                await asyncio.sleep(rng.uniform(0.5, 6))
+                await c.post(f"/live/{sid}/vote", {"vote": rng.choice(["yes", "yes", "no", "abstain"])})
+            elif "Add me to the speakers list" in c.fragment and rng.random() < 0.02:
+                await c.post(f"/live/{sid}/speak")
+        except httpx.HTTPError as e:
+            errors.append(f"{c.name}: {e!r}")
 
 
 async def chair_loop(chair: Client, sid: int, db_path: Path, rng: random.Random, until: float):
@@ -195,7 +206,7 @@ async def chair_loop(chair: Client, sid: int, db_path: Path, rng: random.Random,
         try:
             if step in (1, 2, 3):
                 await chair.post(f"/chair/{sid}/speakers", {"delegation_id": rng.choice(dels)})
-            elif step in (4, 8):
+            elif step in (4, 8, 11):     # the chair calls speakers about as fast as they are added
                 await chair.post(f"/chair/{sid}/next")
             elif step in (5, 9):
                 tid = _latest_timer(db_path, sid)
@@ -345,6 +356,12 @@ async def main(minutes: float, seed: int) -> dict:
             lost[c.name] = len(missing)
             missing_examples.update(missing[:3])
     all_lat = [x for c in clients for x in c.latencies]
+    windows = []
+    for k in range(int(minutes // 5) + 1):
+        lo, hi = start + k * 300, start + (k + 1) * 300
+        xs = [x for c in clients for x, at in zip(c.latencies, c.lat_at) if lo <= at < hi]
+        if xs:
+            windows.append({"from_min": k * 5, "n": len(xs), "p50": pct(xs, 50), "p95": pct(xs, 95), "max": max(xs)})
     all_notify = [x for c in clients for x in c.notify]
     proc.terminate()
     try:
@@ -360,7 +377,9 @@ async def main(minutes: float, seed: int) -> dict:
         "update_latency_s": {"n": len(all_lat), "p50": pct(all_lat, 50), "p95": pct(all_lat, 95), "p99": pct(all_lat, 99),
                              "max": max(all_lat) if all_lat else None},
         "notify_latency_s": {"n": len(all_notify), "p50": pct(all_notify, 50), "p95": pct(all_notify, 95), "max": max(all_notify) if all_notify else None},
+        "update_latency_by_5_min": windows,
         "reconnects": sum(c.reconnects for c in clients), "errors": errors[:50], "error_count": len(errors),
+        "client_transport_retries": len(transport_retries), "transport_retry_examples": transport_retries[:5],
         "server_rss_mb": {"first": mem[0] if mem else None, "last": mem[-1] if mem else None, "max": max([m for m in mem if m] or [0])},
         "machine": "cloud build container (not Ben's laptop)",
         "http_s": {"n": len(slow), "p50": pct([x[0] for x in slow], 50), "p95": pct([x[0] for x in slow], 95),

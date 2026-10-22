@@ -1,6 +1,7 @@
 """Coordinator admin: reference tables, CSV, history/undo, datasets, backups, model versions."""
 from __future__ import annotations
 
+import asyncio
 import json
 
 from fastapi import APIRouter, Depends, File, Request, UploadFile
@@ -356,7 +357,7 @@ def download_backup(request: Request):
 
 @router.post("/data/restore")
 async def restore_backup(request: Request, file: UploadFile = File(...)):
-    from app.backup import restore
+    from app.backup import check_backup, restore
     from app.datasets import open_dataset
     from app.web.auth import SESSION_COOKIE, create_session
     form = await request.form()
@@ -364,9 +365,12 @@ async def restore_backup(request: Request, file: UploadFile = File(...)):
         raise UserError("Tick the confirmation box: restoring replaces the current data (a copy is kept first).")
     s = request.app.state.settings
     data = await file.read()
+    await asyncio.to_thread(check_backup, data)      # refuse a bad file before touching the open data
     request.app.state.db.dispose()       # close pooled connections before the file is replaced
-    manifest = restore(s, s.dataset, data)
-    request.app.state.db = open_dataset(s, s.dataset, request.app.state.hub)
+    try:
+        manifest = await asyncio.to_thread(restore, s, s.dataset, data)
+    finally:
+        request.app.state.db = open_dataset(s, s.dataset, request.app.state.hub)
     with request.app.state.db.read() as conn:
         token = create_session(conn, "coordinator")
         conn.commit()

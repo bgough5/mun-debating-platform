@@ -4,8 +4,9 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
 
 ## Current state
 
-- **Phase 0 is complete and the spec is approved (22 Oct 2026).** Class size is 1–25 live students (D-022). The full build runs in a cloud session (D-024) on branch `platform-build`, draft PR #1 into `main`.
-- Build progress and measured exit criteria: `docs/phase-reports.md`. Phase tags: `phase-N-complete`.
+- **Phases 1–5 are built (22 Oct 2026)** on branch `platform-build`, draft PR #1 into `main` (Ben merges). Class size is 1–25 live students (D-022). Not done: the student pilot and everything in `docs/pilot-checklist.md` that needs Ben, staff or the school.
+- Build progress and measured exit criteria: `docs/phase-reports.md`. Phase tags: `phase-N-complete` (created locally in the build; the cloud session couldn't push tags, so the PR lists the commits for Ben to tag).
+- Guides: `docs/staff-guide.md`, `docs/privacy-summary.md` (for school sign-off), `docs/permissions.md` (generated), `docs/backup-restore.md`, `docs/pilot-checklist.md`.
 - Read first: `docs/spec.md` (what we're building), `docs/decisions.md` (what's decided and why; D-025 onward are build-session decisions), `docs/audit.md` (state of the old code).
 - Rollback point: tag `pre-platform-baseline` (commit `67543a3`), the v2 whip-count game as left in July 2026.
 - The existing v2 game (`shared/`, `server/`, `client/`, `src/`, `test/`) is **frozen**. Don't extend it. New work goes in `app/` per spec §7.3. `HANDOVER.md` is historical context; where it disagrees with `docs/decisions.md`, the decisions log wins.
@@ -31,6 +32,10 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
 - `python -m pytest` runs engine, API and Playwright+axe browser tests; `-m "not ui"` skips the browser. Browser tests need `python -m playwright install chromium` once.
 - Engine changes must keep `tests/engine/test_parity.py` green (fixture from `node tools/parity/gen_fixture.js`).
 - New tables go in a new numbered file in `app/db/migrations/`; never edit an applied migration. Every data change goes through `app.db.Writer` so it is logged and undoable.
+- Every new route needs a `require_*` dependency from `app/web/auth.py`, or an entry in `PUBLIC` in `app/web/route_audit.py` with a reason; `tests/api/test_permissions_matrix.py` enforces it. Re-run `python tools/permissions_report.py` after adding routes.
+- Phase 2 load test: `python tools/loadtest.py --minutes 45` (30 clients; results in `test-results/load/`). Backup drill: `python tools/restore_drill.py`.
+- AI: `app/ai/` provider interface; the offline `FakeProvider` is the default and the only one tested. Never enable a real provider without the school's approval recorded in Intelligence → AI settings.
+- UN voting data import stays locked until a licence is confirmed in the app (D-051). Tests use `tests/fixtures/synthetic_un_votes.csv` only.
 
 ## Running the frozen v2 game and its tests
 
@@ -43,6 +48,8 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
 - Jinja: don't pass a context key called `path` or a dict key called `items` (clash with the base template's `req_path` and `dict.items`).
 - FastAPI routes match in order: a literal path like `/t/{name}/import` must not sit under a `/t/{name}/{key}` route.
 - `<input>` without a `type` attribute misses the form CSS; always give one (axe flagged it as a target-size failure).
+- Request handlers that touch the database are plain `def` (run in the thread pool), with forms read by `form=Depends(form_data)`. An `async def` handler doing SQLite work blocks every client (it caused 10 s stalls in the load test, D-042).
+- Close pooled connections with `db.dispose()` before replacing or switching the database file, and validate a backup before disposing (D-057).
 
 - The browser-testing tool can't execute pages opened via `file://`. Serve over local HTTP to test.
 - Classic `<script>` top-level `const` and `let` share one scope across scripts: a second `const PACK` silently breaks pack loading.
