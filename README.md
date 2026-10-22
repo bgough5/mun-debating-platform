@@ -33,3 +33,14 @@ fallback; it's no longer the one to hand students.
 - `client/` — `player.html` and `teacher.html`, the multiplayer clients.
 - `src/` — single-player dev source (`engine.v2.html`), topic packs, and built artifacts.
 - `test/` — Python unit tests (`test/test_*.py`) and browser-run JS test pages (`test/*.test.html`).
+
+## Platform work (from October 2026)
+
+This repo is being evolved into a single debating and Model UN platform. **Phase 0 (audit and spec) is done and approved; the build is under way.** Nothing above has been changed.
+
+- `docs/audit.md` — what the existing code does, what's solid, what fell short, with measurements.
+- `docs/spec.md` — the platform spec: user stories, data model, architecture, privacy, roadmap.
+- `docs/decisions.md` — decisions and assumptions, with reasons.
+- `CLAUDE.md` — working rules for development sessions.
+
+Rollback point: git tag `pre-platform-baseline`. The v2 game described above is frozen and stays runnable.
