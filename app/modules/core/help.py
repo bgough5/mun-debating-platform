@@ -41,7 +41,7 @@ CONTEXT = [
     ]),
     ("/me", "Your page", [
         "Your delegation, tasks, live sessions, debates, practice speeches and pathway milestones.",
-        "Practise: timed speeches with rubric self-review. AI delegation: practise negotiating (offline unless your school has approved an AI service).",
+        "Practise: timed speeches with rubric self-review. Practice negotiation: practise negotiating with a rule-based partner, which is not AI (an AI service is used only if your school has approved one).",
     ]),
     ("/mun", "Model UN", [
         "Conference → committee → delegations and resolutions. Allocate students to countries on the committee page.",

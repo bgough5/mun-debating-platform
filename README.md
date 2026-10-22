@@ -4,7 +4,7 @@ One browser-based platform for South Oakleigh College's Model UN and debating wo
 the resolution workspace and chair tools, debating draws and ballots, and student pathways. It runs on the
 coordinator's laptop over school Wi-Fi (D-002). Students join with a class code and tap their name; no installs.
 
-**Status:** Phases 1–6 built (except the student pilot, which needs Ben, staff and the school). Phase 6 added the
+**Status:** Phases 1–6 built (except the student pilot, which needs Ben, staff and the school). Phase 7 (reliability and honesty fixes) is in progress: see `docs/phase-reports.md`. Phase 6 added the
 South Oakleigh design system, icons, the guided committee simulation with the whip-count exercise, onboarding and
 help, new content, and robustness tests. See
 `docs/phase-reports.md` for what is built and the measured exit criteria of each phase, and

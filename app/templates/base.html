@@ -35,7 +35,7 @@
         <li><a href="/me" {% if req_path == '/me' %}aria-current="page"{% endif %}>{{ icon("student") }} My page</a></li>
         {% if modules.chair %}<li><a href="/me/sim" {% if req_path.startswith('/me/sim') %}aria-current="page"{% endif %}>{{ icon("committee") }} Practice committee</a></li>{% endif %}
         {% if modules.debating %}<li><a href="/me/practice" {% if req_path.startswith('/me/practice') %}aria-current="page"{% endif %}>{{ icon("practice") }} Practise</a></li>{% endif %}
-        {% if modules.intelligence %}<li><a href="/me/ai-practice" {% if req_path.startswith('/me/ai-practice') %}aria-current="page"{% endif %}>{{ icon("ai") }} AI delegation</a></li>{% endif %}
+        {% if modules.intelligence %}<li><a href="/me/ai-practice" {% if req_path.startswith('/me/ai-practice') %}aria-current="page"{% endif %}>{{ icon("ai") }} {{ negotiation_label }}</a></li>{% endif %}
         <li><a href="/practice-game">{{ icon("practice") }} Classic practice game</a></li>
       {% endif %}
       </ul>

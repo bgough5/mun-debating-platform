@@ -2,11 +2,11 @@
 {% from "_macros.html" import hidden_csrf %}
 {% block content %}
 <p><a href="/me/ai-practice">Back</a></p>
-<h1>Negotiating with {{ ap.country }} <span class="label-ai">AI</span></h1>
-<p class="small">Played by {{ prov.name }}. Its positions are estimates, not facts. Make a concrete offer and see how they react.</p>
+<h1>{{ title }}</h1>
+<p class="small">{% if ai_live %}<span class="label-ai">AI</span> Played by an approved AI service ({{ prov.name }}).{% else %}Played by a rule-based practice partner, <strong>not AI</strong>.{% endif %} Its positions are estimates, not facts. Make a concrete offer and see how they react.</p>
 {% if para %}<p class="card small">Paragraph {{ para.position }}: {{ para.text }}</p>{% endif %}
 <ol class="speakers" aria-label="Conversation">
-{% for m in msgs %}<li>{% if m.role == 'ai' %}<strong>{{ ap.country }} <span class="label-ai">AI</span>:</strong>{% else %}<strong>You:</strong>{% endif %} {{ m.text }}</li>{% else %}<li class="muted">Open the negotiation.</li>{% endfor %}
+{% for m in msgs %}<li>{% if m.role == 'ai' %}<strong>{{ ap.country }}{% if ai_live %} <span class="label-ai">AI</span>{% else %} <span class="label-computed">rule-based</span>{% endif %}:</strong>{% else %}<strong>You:</strong>{% endif %} {{ m.text }}</li>{% else %}<li class="muted">Open the negotiation.</li>{% endfor %}
 </ol>
 <form method="post" action="/me/ai-practice/{{ ap.id }}" class="stack">{{ hidden_csrf(csrf) }}
   <div class="field"><label for="msg">Your message</label><textarea id="msg" name="message" rows="3" required maxlength="1500"></textarea></div>

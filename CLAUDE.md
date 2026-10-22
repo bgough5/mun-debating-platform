@@ -4,7 +4,7 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
 
 ## Current state
 
-- **Phases 1–6 are built (22 Oct 2026)** on branch `platform-build`, draft PR #1 into `main` (Ben merges). Phase 6 (design system, icons, guided simulation, onboarding, content, robustness) is D-058 to D-063. Class size is 1–25 live students (D-022). Not done: the student pilot and everything in `docs/pilot-checklist.md` that needs Ben, staff or the school.
+- **Phases 1–6 are built (22 Oct 2026); Phase 7 in progress** (items 3 and 4 done, item 1 part done; status table in `docs/phase-reports.md`) on branch `platform-build`, draft PR #1 into `main` (Ben merges). Phase 6 (design system, icons, guided simulation, onboarding, content, robustness) is D-058 to D-063. Class size is 1–25 live students (D-022). Not done: the student pilot and everything in `docs/pilot-checklist.md` that needs Ben, staff or the school.
 - Build progress and measured exit criteria: `docs/phase-reports.md`. Phase tags: `phase-N-complete` (created locally in the build; the cloud session couldn't push tags, so the PR lists the commits for Ben to tag).
 - Guides: `docs/staff-guide.md`, `docs/privacy-summary.md` (for school sign-off), `docs/permissions.md` (generated), `docs/backup-restore.md`, `docs/pilot-checklist.md`.
 - Read first: `docs/spec.md` (what we're building), `docs/decisions.md` (what's decided and why; D-025 onward are build-session decisions), `docs/audit.md` (state of the old code).

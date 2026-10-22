@@ -122,3 +122,20 @@ Work package from PR #1 (22 Oct 2026), done in its priority order; decisions D-0
 | Live-update latency after the redesign | **0 lost events; p95 0.77 s (under 1 s), p50 0.33 s, p99 1.30 s, max 1.61 s** over 10 minutes with 30 clients (6,719 updates, 16 divisions; 0 errors, 6 retried keep-alive races). Compared with the first 10 minutes of the Phase 2 run, p95 is unchanged but **p50 rose from about 0.23 s to 0.33 s**: the student live fragment now carries the stage tracker and prompts and costs 9.8 ms instead of 6.6 ms to render (measured on the Phase 5 and Phase 6 code side by side). Server memory went from 99 to 136 MB in 10 minutes, faster than in Phase 2 (97 to 127 MB in 45 minutes); not investigated. | `python tools/loadtest.py --minutes 10` |
 
 **Not verified in Phase 6:** anything on Windows (smoke script, start-up, exports in Word/Excel); a screen-reader (NVDA) pass of the new screens; Ben's review of the design from the screenshots; the chair scripts' wording against the UNAA and Evatt handbooks (they follow common practice and are editable); the 2026 Security Council membership used by both SC demos.
+
+## Phase 7 — Reliability and honesty fixes (in progress)
+
+Work package: the Phase 7 comment on PR #1. Done in the cloud session; the rest continues on `platform-build` in the local session.
+
+| Item | State | Evidence |
+|---|---|---|
+| 1. Memory growth and latency drift | **Part done** | Found and fixed a leak: pooled SQLite read connections of retired thread-pool threads were never closed (D-064; 200 threads left 200 connections before, at most 1 after, `tests/engine/test_db_pool.py`). Added per-minute server diagnostics (`SOC_TIMING_LOG` STATS lines; `SOC_TRACEMALLOC=1` adds top growth sites). **Not yet measured:** the 90-minute, 30-client soak with memory and p95 per 5-minute window, and whether the target (<10 MB over 60 min after a 10-min warm-up; flat p95) is met. A 15-minute diagnostic run was stopped at 5 minutes for budget; its first lines showed pooled connections steady at 16 and the session cache at 29. `tools/loadtest.py` still records RSS only as first/last/max; per-window memory needs adding. |
+| 2. Kill-and-restart failure rate | Not started | |
+| 3. Evidence quality instead of "0% unknown" | **Done** | D-065; `tests/api/test_phase7_quality.py` (demo GA: >99% estimate only, 0% unknown). |
+| 4. Honest label for the offline bot | **Done** | D-066; `tests/api/test_phase7_ai_label.py` covers both states. |
+| 5. Phone header Menu button | Not started | |
+| 6. One-row laptop header at 1366 px | Not started | |
+| 7. Windows smoke script pip errors and path length | Not started | |
+| 8. Whip-count wording breakdown | Not started | |
+
+Full suite after item 4: 600 passed (engine, API, Playwright and axe), 350 s.

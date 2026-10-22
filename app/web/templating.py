@@ -89,6 +89,16 @@ def today_long() -> str:
     return f"{d.day} {d:%B %Y}"
 
 
+def _ai_live(settings) -> bool:
+    from app.ai import ai_live
+    return ai_live(settings)
+
+
+def _negotiation_label(settings) -> str:
+    from app.ai import negotiation_label
+    return negotiation_label(settings)
+
+
 def render(request: Request, template: str, ctx: dict | None = None, status: int = 200,
            headers: dict | None = None) -> HTMLResponse:
     st = request.app.state
@@ -104,6 +114,7 @@ def render(request: Request, template: str, ctx: dict | None = None, status: int
         "flash": getattr(request.state, "flash", None),
         "req_path": request.url.path,
         "printed_on": today_long(),
+        "ai_live": _ai_live(st.settings), "negotiation_label": _negotiation_label(st.settings),
         "hp": env.globals["page_help"](request.url.path) if "page_help" in env.globals else ("Help", []),
     }
     base.update(ctx or {})

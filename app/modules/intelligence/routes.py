@@ -6,7 +6,7 @@ import json
 
 from fastapi import APIRouter, Depends, File, Request, UploadFile
 
-from app.ai import AIDisabled, get_provider
+from app.ai import AIDisabled, get_provider, negotiation_label
 from app.db import one, rows, scalar
 from app.errors import UserError
 from app.modules.intelligence import service as I
@@ -150,7 +150,7 @@ def ai_practice_home(request: Request, sess=Depends(require_student)):
         prov = get_provider(request.app.state.settings)
     except AIDisabled:
         prov = None
-    return render(request, "intelligence/ai_practice_home.html", {"title": "Practise with an AI delegation", "paras": paras,
+    return render(request, "intelligence/ai_practice_home.html", {"title": negotiation_label(request.app.state.settings), "paras": paras,
                                                                    "countries": countries, "past": past, "prov": prov})
 
 @router.post("/me/ai-practice")
@@ -193,7 +193,7 @@ def ai_practice_view(request: Request, aid: int, sess=Depends(require_student)):
         msgs = rows(conn, "SELECT * FROM ai_practice_message WHERE practice_id = ? ORDER BY id", (aid,))
         para = one(conn, "SELECT v.text, p.position FROM paragraph p JOIN paragraph_version v ON v.id = p.current_version_id WHERE p.id = ?",
                    (ap["paragraph_id"],)) if ap["paragraph_id"] else None
-    return render(request, "intelligence/ai_practice.html", {"title": f"AI practice: {ap['country']}", "ap": ap, "msgs": msgs, "para": para,
+    return render(request, "intelligence/ai_practice.html", {"title": f"Negotiating with {ap['country']}", "ap": ap, "msgs": msgs, "para": para,
                                                              "prov": _provider(request)})
 
 @router.post("/me/ai-practice/{aid}")

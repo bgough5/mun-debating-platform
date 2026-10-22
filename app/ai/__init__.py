@@ -17,6 +17,17 @@ class AIDisabled(Exception):
     pass
 
 
+def ai_live(settings) -> bool:
+    """True only when a real AI provider is selected AND the school's approval is recorded (D-053, D-066)."""
+    cfg = settings.get("ai", {}) or {}
+    return cfg.get("provider", "fake") not in ("fake", "off") and bool(cfg.get("school_approved"))
+
+
+def negotiation_label(settings) -> str:
+    """What students see: never call the offline rule-based partner "AI" (D-066)."""
+    return "AI delegation" if ai_live(settings) else "Practice negotiation (rule-based)"
+
+
 def get_provider(settings) -> AIProvider:
     cfg = settings.get("ai", {}) or {}
     name = cfg.get("provider", "fake")
@@ -31,4 +42,4 @@ def get_provider(settings) -> AIProvider:
     raise AIDisabled(f"Unknown AI provider {name!r}.")
 
 
-__all__ = ["AIProvider", "PositionSuggestion", "FakeProvider", "get_provider", "AIDisabled"]
+__all__ = ["AIProvider", "PositionSuggestion", "FakeProvider", "get_provider", "AIDisabled", "ai_live", "negotiation_label"]
