@@ -1,0 +1,15 @@
+code,name,track,position,description
+first_speech,First speech to the class,speaking,10,Gave a prepared speech of any length to the class.
+solo_practice_5,Five solo practice speeches,speaking,15,Recorded five solo practice speeches with a self-review against the rubric.
+first_debate,First debate round,debating,20,Spoke in a debate round (any format).
+house_carnival,House debating carnival,debating,30,Represented a house at the debating carnival.
+first_mun_speech,First MUN speech,mun,25,Spoke on a speakers list in a class session.
+first_amendment,First amendment tabled,mun,35,Tabled an amendment to an operative paragraph.
+lobbying_task,Completed a lobbying task,mun,36,Completed a lobbying task and recorded the evidence gathered.
+interschool_debate,Interschool debate,debating,50,Debated for the school against another school.
+adjudicated,Adjudicated a round,debating,55,Adjudicated a practice or carnival round and gave oral feedback.
+chaired,Chaired a session,mun,60,Chaired a class MUN session.
+conference,MUN conference delegate,mun,65,Represented the school at a Model UN conference.
+evatt_regional,Evatt regional round,mun,80,Competed in an Evatt (UN Youth Australia) round.
+evatt_state,Evatt state final,mun,90,Competed in the Evatt state final.
+mentor,Mentored a younger student,both,95,Coached a younger student through their first speech or debate.

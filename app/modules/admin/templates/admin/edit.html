@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, hidden_csrf, confirm_delete %}
+{% block content %}
+{{ breadcrumb([("Admin", "/admin"), (t.label, "/admin/t/" ~ t.name), ("New" if is_new else "Edit", None)]) }}
+<h1>{{ title }}</h1>
+{% if row.deleted_at %}<div class="notice" role="status">This row was deleted on {{ row.deleted_at|when }}.
+  <form method="post" action="/admin/t/{{ t.name }}/{{ key }}/restore" class="inline">{{ hidden_csrf(csrf) }}<button type="submit">Restore it</button></form></div>{% endif %}
+<form method="post" class="stack" action="{{ '/admin/t/' ~ t.name ~ ('/new' if is_new else '/' ~ key) }}">
+  {{ hidden_csrf(csrf) }}
+  {% for c in t.cols %}
+    {% set v = row.get(c.name) %}
+    {% if c.type == 'bool' %}
+      <div class="field checks"><label><input type="checkbox" name="{{ c.name }}" value="1" {% if v %}checked{% endif %}> {{ c.label }}</label>{% if c.hint %}<span class="hint">{{ c.hint }}</span>{% endif %}</div>
+    {% elif c.type == 'ref' %}
+      <div class="field"><label for="f-{{ c.name }}">{{ c.label }}{% if c.required %} (required){% endif %}</label>
+        <select id="f-{{ c.name }}" name="{{ c.name }}" {% if c.required %}required{% endif %}>
+          {% if not c.required %}<option value="">— none —</option>{% endif %}
+          {% for val, text in opts[c.name] %}<option value="{{ val }}" {% if v is not none and val|string == v|string %}selected{% endif %}>{{ text }}</option>{% endfor %}
+        </select></div>
+    {% elif c.type == 'choice' %}
+      <div class="field"><label for="f-{{ c.name }}">{{ c.label }}{% if c.hint %} <span class="hint">{{ c.hint }}</span>{% endif %}</label>
+        <select id="f-{{ c.name }}" name="{{ c.name }}">{% for ch in c.choices %}<option {% if ch == v %}selected{% endif %}>{{ ch }}</option>{% endfor %}</select></div>
+    {% elif c.type in ('textarea', 'json') %}
+      <div class="field"><label for="f-{{ c.name }}">{{ c.label }}{% if c.hint %} <span class="hint">{{ c.hint }}</span>{% endif %}</label>
+        <textarea id="f-{{ c.name }}" name="{{ c.name }}" rows="{{ 14 if c.name == 'body' else 4 }}">{{ v if v is not none else '' }}</textarea></div>
+    {% else %}
+      <div class="field"><label for="f-{{ c.name }}">{{ c.label }}{% if c.required %} (required){% endif %}{% if c.hint %} <span class="hint">{{ c.hint }}</span>{% endif %}</label>
+        <input id="f-{{ c.name }}" name="{{ c.name }}" type="{{ 'number' if c.type in ('int','real') else 'text' }}" {% if c.type == 'real' %}step="any"{% endif %}
+               value="{{ v if v is not none else '' }}" {% if c.required %}required{% endif %} {% if not is_new and c.name == 'iso3' %}readonly{% endif %}></div>
+    {% endif %}
+  {% endfor %}
+  <div class="row"><button type="submit">{{ 'Add' if is_new else 'Save' }}</button> <a href="/admin/t/{{ t.name }}">Cancel</a></div>
+</form>
+{% if not is_new and not row.deleted_at %}
+  <h2>Delete</h2>
+  {{ confirm_delete('/admin/t/' ~ t.name ~ '/' ~ key ~ '/delete', '“' ~ (row.get('name') or row.get('label') or row.get('code') or key) ~ '”', csrf) }}
+{% endif %}
+{% if events %}
+  <h2>History</h2>
+  {% include "admin/_events.html" %}
+{% endif %}
+{% endblock %}

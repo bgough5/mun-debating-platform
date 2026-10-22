@@ -1,0 +1,65 @@
+[
+ {
+  "code": "mun_negotiation", "name": "MUN negotiation", "kind": "mun", "levels": 5,
+  "notes": "Criteria carried over from the v2 rubric (shared/rubric.js). Scored by staff. The old keyword scorer survives only as optional checklist hints (D-010).",
+  "criteria": [
+   {"code": "protocol", "name": "Protocol and register", "min": 1, "max": 5, "weight": 1,
+    "hint": "Third person, formal address to the chair or committee.",
+    "levels": ["Speaks as themselves; informal.", "Mostly informal with some formal phrases.", "Third person throughout; little formal address.", "Third person, formal address, occasional slips.", "Consistently formal and diplomatic; addresses the chair and committee correctly."]},
+   {"code": "interest", "name": "National interest", "min": 1, "max": 5, "weight": 1,
+    "hint": "Connects the position to the country's real situation.",
+    "levels": ["No link to the country's situation.", "Names the country but not its interests.", "States an interest without evidence.", "Explains an interest with one concrete fact.", "Builds the position from the country's interests with specific, sourced facts."]},
+   {"code": "specificity", "name": "Specificity", "min": 1, "max": 5, "weight": 1,
+    "hint": "Refers to particular paragraphs, figures or mechanisms.",
+    "levels": ["Vague throughout.", "One general reference.", "Refers to a paragraph or figure.", "Refers precisely to text and numbers.", "Precise references that drive the argument (paragraph, wording, figures)."]},
+   {"code": "engagement", "name": "Engagement", "min": 1, "max": 5, "weight": 1,
+    "hint": "Responds to what other delegates actually said.",
+    "levels": ["Ignores others.", "Acknowledges others in passing.", "Responds to one point.", "Responds directly and accurately to others' points.", "Shapes the debate by answering, linking and building on others' points."]},
+   {"code": "trade", "name": "Trade and compromise", "min": 1, "max": 5, "weight": 1,
+    "hint": "Makes a conditional offer or proposes compromise wording.",
+    "levels": ["No offer.", "Vague willingness to talk.", "A conditional offer without detail.", "A clear conditional offer tied to specific wording.", "A credible deal: what is offered, what is asked, and the wording that would secure it."]},
+   {"code": "concision", "name": "Concision", "min": 1, "max": 5, "weight": 1,
+    "hint": "Says it clearly within the time.",
+    "levels": ["Hard to follow or far over time.", "Rambling.", "Clear but padded.", "Clear and within time.", "Every sentence earns its place."]}
+  ]
+ },
+ {
+  "code": "debate_speaker", "name": "Debating speaker (matter, manner, method)", "kind": "debate_speaker", "levels": 5,
+  "notes": "Assumed common Australian schools scale: matter 40, manner 40, method 20 (total 100). Check against the competition's rules and edit as needed.",
+  "criteria": [
+   {"code": "matter", "name": "Matter", "min": 0, "max": 40, "weight": 1,
+    "hint": "Arguments, examples and rebuttal: what was said.",
+    "levels": ["Assertions without reasons.", "Some reasons, little support.", "Relevant arguments with examples; some rebuttal.", "Well-supported arguments; rebuttal engages the other side's best points.", "Compelling, well-chosen arguments and incisive rebuttal."]},
+   {"code": "manner", "name": "Manner", "min": 0, "max": 40, "weight": 1,
+    "hint": "Delivery: voice, eye contact, presence, persuasion.",
+    "levels": ["Read without engagement.", "Some eye contact; monotone.", "Clear delivery with some variety.", "Confident, persuasive delivery.", "Commanding and persuasive throughout."]},
+   {"code": "method", "name": "Method", "min": 0, "max": 20, "weight": 1,
+    "hint": "Structure, role fulfilment, timing, teamwork.",
+    "levels": ["No visible structure.", "Some structure; role partly done.", "Clear structure; role done.", "Signposted structure; role done well; good timing.", "Structure and teamwork make the case easy to follow."]}
+  ]
+ },
+ {
+  "code": "speech_practice", "name": "Solo speech practice", "kind": "speech", "levels": 5,
+  "notes": "For solo practice and self-review. A student rates their own speech; staff can add a rating.",
+  "criteria": [
+   {"code": "content", "name": "Content", "min": 1, "max": 5, "weight": 1, "hint": "Clear point, reasons and examples.",
+    "levels": ["No clear point.", "A point but few reasons.", "A point with reasons.", "A point with reasons and a good example.", "A memorable point, well reasoned and illustrated."]},
+   {"code": "structure", "name": "Structure", "min": 1, "max": 5, "weight": 1, "hint": "Opening, body and conclusion.",
+    "levels": ["Hard to follow.", "Some order.", "Opening, body and end are visible.", "Clear signposting throughout.", "Structure makes the speech feel effortless."]},
+   {"code": "delivery", "name": "Delivery", "min": 1, "max": 5, "weight": 1, "hint": "Voice, pace, eye contact.",
+    "levels": ["Read from notes, quiet.", "Some eye contact.", "Clear voice, steady pace.", "Varied voice and pace for effect.", "Confident, natural and engaging."]},
+   {"code": "time", "name": "Time management", "min": 1, "max": 5, "weight": 1, "hint": "Uses the time well.",
+    "levels": ["Far under or over time.", "Noticeably off time.", "Within time.", "Within time and well paced.", "Uses every second deliberately."]}
+  ]
+ },
+ {
+  "code": "adjudicator_feedback", "name": "Adjudicator feedback (from teams)", "kind": "adjudicator", "levels": 5,
+  "notes": "Optional. Teams rate the adjudication they received. Used to support adjudicator development, not to grade staff.",
+  "criteria": [
+   {"code": "reasoning", "name": "Clear reasoning", "min": 1, "max": 5, "weight": 1, "hint": "Was the decision explained?",
+    "levels": ["No reasons given.", "Vague reasons.", "Reasons given.", "Clear reasons linked to the debate.", "Clear, specific reasons that both teams could follow."]},
+   {"code": "helpful", "name": "Helpful feedback", "min": 1, "max": 5, "weight": 1, "hint": "Could the team act on it?",
+    "levels": ["None.", "General comments.", "One useful point.", "Several actionable points.", "Specific, actionable feedback for each speaker."]}
+  ]
+ }
+]

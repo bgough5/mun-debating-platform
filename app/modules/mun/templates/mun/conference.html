@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, hidden_csrf, select %}
+{% block content %}
+{{ breadcrumb([("Model UN", "/mun"), (conf.name, None)]) }}
+<h1>{{ conf.name }}</h1>
+<p class="lede">{{ conf.organiser }}{% if conf.starts_on %} · {{ conf.starts_on }}{% endif %}{% if conf.notes %} · {{ conf.notes }}{% endif %}</p>
+<table><caption>Committees</caption>
+<thead><tr><th scope="col">Committee</th><th scope="col">Voting rule</th><th scope="col" class="num">Delegations</th></tr></thead>
+<tbody>{% for c in coms %}<tr><td><a href="/mun/committees/{{ c.id }}">{{ c.name }}</a></td><td>{{ c.rule }}</td><td class="num">{{ c.n }}</td></tr>
+{% else %}<tr><td colspan="3">No committees yet.</td></tr>{% endfor %}</tbody></table>
+{% if actor.is_coordinator %}
+<section class="card" style="margin-top:1rem" aria-labelledby="h-ncm"><h2 id="h-ncm">New committee</h2>
+<form method="post" action="/mun/conferences/{{ conf.id }}/committees" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="cmn">Name</label><input id="cmn" name="name" required placeholder="e.g. Security Council"></div>
+  <div class="field"><label for="ct">Committee type <span class="hint">Sets the default voting rule and procedure</span></label>
+    <select id="ct" name="committee_type_id"><option value="">— none —</option>{% for t in types %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="vr">Voting rule <span class="hint">Leave as default to use the committee type's</span></label>
+    <select id="vr" name="voting_rule_id"><option value="">Default for the type</option>{% for r in rules %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="tp">Topic <span class="hint">Tags and archetype priors come from the topic</span></label>
+    <select id="tp" name="topic_id"><option value="">— none —</option>{% for t in topics %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="cl">Class <span class="hint">Students of this class can join its sessions</span></label>
+    <select id="cl" name="class_id"><option value="">— none —</option>{% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div>
+  <button type="submit">Create committee</button></form></section>
+{% endif %}
+{% endblock %}

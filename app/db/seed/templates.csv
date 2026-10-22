@@ -1,0 +1,6 @@
+code,kind,name,file
+minutes_default,minutes,Session minutes,minutes_default.j2
+run_sheet_carnival,run_sheet,Carnival run sheet,run_sheet_carnival.j2
+mc_script_carnival,mc_script,Carnival MC script,mc_script_carnival.j2
+position_paper_scaffold,position_paper,Position paper scaffold (headings only),position_paper_scaffold.j2
+certificate_participation,certificate,Participation certificate,certificate_participation.j2

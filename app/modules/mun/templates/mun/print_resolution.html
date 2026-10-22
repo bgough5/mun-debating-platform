@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="no-print"><a href="/mun/resolutions/{{ res.id }}">Back</a> · Use your browser's Print (Ctrl+P) and choose “Save as PDF”.</p>
+<article>
+<h1>{{ res.title }}</h1>
+<p><strong>{{ com.name }}</strong></p>
+{% if sponsors %}<p>Sponsors: {{ sponsors|join(', ') }}</p>{% endif %}
+{% for p in pre %}<p style="margin-left:1.5rem"><em>{{ p.text }}</em></p>{% endfor %}
+{% for p in op %}<p><strong>{{ p.position }}.</strong> {{ p.text }}</p>{% endfor %}
+</article>
+{% endblock %}

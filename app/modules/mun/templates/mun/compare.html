@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<p><a href="/mun/resolutions/{{ p.resolution_id }}#p{{ p.id }}">Back to the resolution</a></p>
+<h1>{{ title }}</h1>
+<p class="lede">Each tabled amendment against the paragraph as it stands, on the same simulated votes (so differences aren't noise).</p>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Version</th><th scope="col" class="num">P(pass)</th><th scope="col" class="num">Change</th><th scope="col">Countries that move</th></tr></thead>
+<tbody>
+<tr><th scope="row">As it stands</th><td class="num">{{ cmp.base.result.p_pass|pct }}</td><td class="num">—</td><td></td></tr>
+{% for a in cmp.amendments %}
+<tr><th scope="row"><a href="/mun/predict/amendment/{{ a.amendment_id }}">Amendment {{ a.amendment_id }}</a> ({{ amends[a.amendment_id].kind }}{% if amends[a.amendment_id].sponsor %}, {{ amends[a.amendment_id].sponsor }}{% endif %})</th>
+<td class="num">{{ a.pred.result.p_pass|pct }}</td><td class="num">{{ '%+.0f'|format(a.delta*100) }} pts</td>
+<td class="small">{% for m in a.movers[:12] %}{{ m.name }}: {{ m.from }} → {{ m.to }} ({{ '%+.0f'|format(m.dp_yes*100) }} pts yes){% if not loop.last %}; {% endif %}{% else %}none{% endfor %}</td></tr>
+{% else %}<tr><td colspan="4">No tabled amendments.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}

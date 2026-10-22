@@ -1,0 +1,52 @@
+{% macro csrf_input() %}<input type="hidden" name="csrf" value="{{ caller_csrf if caller_csrf is defined else '' }}">{% endmacro %}
+
+{% macro hidden_csrf(csrf) %}<input type="hidden" name="csrf" value="{{ csrf }}">{% endmacro %}
+
+{# Destructive actions: a confirmation that names the item, without needing JavaScript (spec R4). #}
+{% macro confirm_delete(action, item, csrf, label="Delete", verb="delete") %}
+<details class="no-print">
+  <summary>{{ label }}…</summary>
+  <form method="post" action="{{ action }}" class="inline">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="checks"><input type="checkbox" name="confirm" value="yes" required> Yes, {{ verb }} {{ item }}</label>
+    <button type="submit" class="danger">{{ label }}</button>
+  </form>
+</details>
+{% endmacro %}
+
+{% macro flag(svg, name="") %}{% if svg %}<span role="img" aria-label="Flag of {{ name }}">{{ svg|safe }}</span>{% endif %}{% endmacro %}
+
+{% macro meter(py, pa, pn) %}
+<div class="meter" role="img" aria-label="Yes {{ (py*100)|round|int }}%, abstain {{ (pa*100)|round|int }}%, no {{ (pn*100)|round|int }}%"
+     style="grid-template-columns: {{ py*100 }}% {{ pa*100 }}% {{ pn*100 }}%"><span class="y"></span><span class="a"></span><span class="n"></span></div>
+{% endmacro %}
+
+{% macro breadcrumb(items) %}
+<nav class="breadcrumb" aria-label="Breadcrumb"><ol>
+{% for label, href in items %}<li>{% if href %}<a href="{{ href }}">{{ label }}</a>{% else %}<span aria-current="page">{{ label }}</span>{% endif %}</li>{% endfor %}
+</ol></nav>
+{% endmacro %}
+
+{% macro select(name, options, selected=None, label=None, hint=None, blank=None, id=None, required=False) %}
+<div class="field">
+  {% if label %}<label for="{{ id or name }}">{{ label }}{% if hint %} <span class="hint">{{ hint }}</span>{% endif %}</label>{% endif %}
+  <select name="{{ name }}" id="{{ id or name }}" {% if required %}required{% endif %}>
+    {% if blank is not none %}<option value="">{{ blank }}</option>{% endif %}
+    {% for value, text in options %}<option value="{{ value }}" {% if selected is not none and value|string == selected|string %}selected{% endif %}>{{ text }}</option>{% endfor %}
+  </select>
+</div>
+{% endmacro %}
+
+{% macro input(name, label, value="", type="text", hint=None, required=False, id=None, extra="") %}
+<div class="field">
+  <label for="{{ id or name }}">{{ label }}{% if hint %} <span class="hint">{{ hint }}</span>{% endif %}</label>
+  <input type="{{ type }}" name="{{ name }}" id="{{ id or name }}" value="{{ value if value is not none else '' }}" {% if required %}required{% endif %} {{ extra|safe }}>
+</div>
+{% endmacro %}
+
+{% macro textarea(name, label, value="", hint=None, required=False, id=None, rows=4) %}
+<div class="field">
+  <label for="{{ id or name }}">{{ label }}{% if hint %} <span class="hint">{{ hint }}</span>{% endif %}</label>
+  <textarea name="{{ name }}" id="{{ id or name }}" rows="{{ rows }}" {% if required %}required{% endif %}>{{ value or '' }}</textarea>
+</div>
+{% endmacro %}

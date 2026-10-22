@@ -1,0 +1,10 @@
+code,label,shown_as,weight,requires_source,notes
+recorded_vote,Recorded vote,Voting record,4,1,High weight. A recorded UN vote on a similar resolution.
+official_statement,Official statement,Official statement,4,1,High weight. Statement in GA debate or national policy.
+treaty_status,Treaty status,Treaty status,4,1,High weight. Ratified or not.
+bloc_position,Bloc position,Bloc position,2,1,Medium weight. Applied to each member scaled by the bloc's cohesion.
+student_intel,Class intel,Student intel,2,1,Medium weight at a conference. What a delegate said in caucus. The source is who said it and when.
+model_estimate,Model estimate,Model estimate,1,0,Low weight. The archetype prior.
+ai_estimate,AI estimate,AI estimate — verify,1,1,Low weight. Only counted with at least one source; otherwise stored as unknown.
+voting_history,Voting history,Voting history (similar resolutions),0,1,"Weight comes from the number of past votes (model parameters), not this column."
+unsourced_note,Unsourced note,Unsourced note — needs a source,2,0,"Hand-entered judgements carried over from the v2 pack (overrides). Weight 2 until a source is attached; facts with no position do not move the estimate."

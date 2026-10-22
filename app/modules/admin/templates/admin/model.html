@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, hidden_csrf %}
+{% block content %}
+{{ breadcrumb([("Admin", "/admin"), ("Model versions", None)]) }}
+<h1>Prediction model versions</h1>
+<p class="lede">All model constants are data (spec §5.2). A version is never edited after it is saved: every stored prediction records the version it used,
+so it can be reproduced exactly. Change constants only on the evidence of a calibration report.</p>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Name</th><th scope="col">Active</th><th scope="col">Created</th><th scope="col">Parameters</th><th scope="col"><span class="visually-hidden">Activate</span></th></tr></thead>
+<tbody>{% for m in data %}
+<tr><td>{{ m.name }}<br><span class="small muted">{{ m.notes }}</span></td><td>{{ 'Yes' if m.active else 'No' }}</td><td>{{ m.created_at|when }}</td>
+<td><code class="small">{{ m.params_json }}</code></td>
+<td>{% if not m.active %}<form method="post" action="/admin/model/{{ m.id }}/activate">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Activate<span class="visually-hidden"> {{ m.name }}</span></button></form>{% endif %}</td></tr>
+{% endfor %}</tbody></table></div>
+<h2>New version</h2>
+<form method="post" action="/admin/model" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="mname">Name</label><input id="mname" name="name" required></div>
+  <div class="field"><label for="mparams">Parameters (JSON)</label><textarea id="mparams" name="params" rows="8">{{ data[0].params_json if data else '{}' }}</textarea></div>
+  <div class="field"><label for="mnotes">Why (which calibration report justifies it)</label><textarea id="mnotes" name="notes" rows="3"></textarea></div>
+  <button type="submit">Save new version</button>
+</form>
+{% endblock %}

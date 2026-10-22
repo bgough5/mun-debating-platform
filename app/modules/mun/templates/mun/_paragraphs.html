@@ -1,0 +1,69 @@
+{% from "_macros.html" import hidden_csrf %}
+{% set op_count = namespace(n=0) %}
+{% for p in paras %}
+{% set can_edit = access == 'manage' or (mine and p.owner_delegation_id == mine.id) %}
+<article class="paragraph {{ p.kind }}" id="p{{ p.id }}" aria-labelledby="ph{{ p.id }}">
+  <h3 id="ph{{ p.id }}" class="visually-hidden">{{ 'Operative paragraph ' ~ p.position if p.kind == 'operative' else 'Preambular paragraph' }}</h3>
+  <p>{% if p.kind == 'operative' %}<span class="num">{{ p.position }}.</span>{% endif %}{% if p.kind == 'preambular' %}<em>{{ p.text }}</em>{% else %}{{ p.text }}{% endif %}</p>
+  <p class="meta">
+    {% for t in p.tags.split(',') if t %}<span class="tag">{{ t }}</span>{% endfor %}
+    Owner: {{ p.owner_name or 'staff' }} · Version {{ p.versions }} by {{ p.author_label }}, {{ p.version_at|when }}
+    · <a href="/mun/paragraphs/{{ p.id }}/history">History<span class="visually-hidden"> of paragraph {{ p.position }}</span></a>
+    {% if p.kind == 'operative' %} · <a href="/mun/predict/paragraph/{{ p.id }}">Predict<span class="visually-hidden"> paragraph {{ p.position }}</span></a>{% endif %}
+    {% if by_para.get(p.id) %} · <a href="/mun/paragraphs/{{ p.id }}/compare">Compare amendments<span class="visually-hidden"> to paragraph {{ p.position }}</span></a>{% endif %}
+  </p>
+  {% if locks.get(p.id) %}<p class="lockline" role="status">Being edited by {{ locks[p.id].holder_label }}</p>{% endif %}
+  <div class="no-print">
+  {% if can_edit %}
+  <details {% if locks.get(p.id) and locks[p.id].mine %}open{% endif %}><summary>Edit<span class="visually-hidden"> paragraph {{ p.position }}</span></summary>
+    {% if modules.chair %}<p class="small muted">Opening the editor reserves the paragraph so no one else edits it at the same time.</p>{% endif %}
+    <form method="post" action="/mun/paragraphs/{{ p.id }}" class="stack" data-lock-paragraph="{{ p.id }}">{{ hidden_csrf(csrf) }}
+      <input type="hidden" name="version_id" value="{{ p.current_version_id }}">
+      <div class="field"><label for="et{{ p.id }}">Text</label><textarea id="et{{ p.id }}" name="text" rows="4" required>{{ p.text }}</textarea></div>
+      {% if tags %}<fieldset><legend>Tags</legend><div class="checks">{% for t in tags %}<label><input type="checkbox" name="tags" value="{{ t.code }}" {% if t.code in p.tags.split(',') %}checked{% endif %}> {{ t.label }}</label>{% endfor %}</div></fieldset>{% endif %}
+      {% if access == 'manage' %}<div class="field"><label for="eo{{ p.id }}">Owner</label><select id="eo{{ p.id }}" name="owner_delegation_id"><option value="">— staff only —</option>{% for d in dels %}<option value="{{ d.id }}" {% if d.id == p.owner_delegation_id %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>{% endif %}
+      <div class="field"><label for="en{{ p.id }}">Note about this change (optional)</label><input id="en{{ p.id }}" name="note" type="text"></div>
+      <button type="submit">Save new version</button></form>
+    {% if access == 'manage' %}<details><summary>Delete paragraph…</summary><form method="post" action="/mun/paragraphs/{{ p.id }}/delete" class="inline">{{ hidden_csrf(csrf) }}
+      <label class="checks"><input type="checkbox" name="confirm" value="yes" required> Yes, delete this paragraph</label><button type="submit" class="danger">Delete</button></form></details>{% endif %}
+  </details>
+  {% endif %}
+  {% if access == 'manage' or mine %}
+  <details><summary>Table an amendment<span class="visually-hidden"> to paragraph {{ p.position }}</span></summary>
+    <form method="post" action="/mun/paragraphs/{{ p.id }}/amendments" class="stack">{{ hidden_csrf(csrf) }}
+      <div class="field"><label for="ak{{ p.id }}">Type</label><select id="ak{{ p.id }}" name="kind"><option value="replace">Replace the text</option><option value="add">Add a new paragraph after this one</option><option value="delete">Delete this paragraph</option></select></div>
+      <div class="field"><label for="at{{ p.id }}">Proposed text <span class="hint">Your own wording. Not needed for a deletion.</span></label><textarea id="at{{ p.id }}" name="proposed_text" rows="3">{{ p.text }}</textarea></div>
+      {% if tags %}<fieldset><legend>Tags of the amended text</legend><div class="checks">{% for t in tags %}<label><input type="checkbox" name="tags" value="{{ t.code }}" {% if t.code in p.tags.split(',') %}checked{% endif %}> {{ t.label }}</label>{% endfor %}</div></fieldset>{% endif %}
+      {% if access == 'manage' %}<div class="field"><label for="as{{ p.id }}">Sponsor</label><select id="as{{ p.id }}" name="sponsor_delegation_id">{% for d in dels %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}</select></div>{% endif %}
+      <div class="field"><label for="ar{{ p.id }}">Why (optional)</label><input id="ar{{ p.id }}" name="rationale" type="text"></div>
+      <button type="submit">Table amendment</button></form></details>
+  {% endif %}
+  </div>
+  {% for a in by_para.get(p.id, []) %}
+  <div class="card" id="a{{ a.id }}" style="margin:.5rem 0 .5rem 1rem">
+    <p><strong>Amendment {{ a.id }}</strong> ({{ a.kind }}) by {{ a.sponsor_name or '—' }} · <strong>{{ a.status }}</strong>
+      {% if floor.get(p.id) == a.id %}<span class="badge st-yes">On the floor next</span>{% endif %}</p>
+    {% if a.kind != 'delete' %}<p>{{ a.proposed_text }}</p>{% endif %}
+    {% if a.rationale %}<p class="small muted">{{ a.rationale }}</p>{% endif %}
+    <p class="small">Support: {% for s_ in sup.get(a.id, []) %}{{ s_.iso3 }} ({{ s_.kind }}){% if not loop.last %}, {% endif %}{% else %}none{% endfor %}</p>
+    <div class="row no-print">
+      <a href="/mun/predict/amendment/{{ a.id }}">Predict as amended<span class="visually-hidden"> (amendment {{ a.id }})</span></a>
+      {% if a.status == 'tabled' and mine and mine.id != a.sponsor_delegation_id %}
+        <form method="post" action="/mun/amendments/{{ a.id }}/support" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="kind" value="second"><button type="submit" class="secondary">Second<span class="visually-hidden"> amendment {{ a.id }}</span></button></form>
+      {% endif %}
+      {% if a.status == 'tabled' and access == 'manage' %}
+        <form method="post" action="/mun/amendments/{{ a.id }}/support" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="kind" value="second">
+          <label class="visually-hidden" for="sd{{ a.id }}">Delegation seconding amendment {{ a.id }}</label><select id="sd{{ a.id }}" name="delegation_id">{% for d in dels %}<option value="{{ d.id }}">{{ d.iso3 }}</option>{% endfor %}</select>
+          <button type="submit" class="secondary">Record a second</button></form>
+        {% for st_, lbl in [('passed','Passed'),('failed','Failed'),('friendly','Accept as friendly'),('withdrawn','Withdrawn')] %}
+          <form method="post" action="/mun/amendments/{{ a.id }}/status" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="status" value="{{ st_ }}"><button type="submit" class="secondary">{{ lbl }}<span class="visually-hidden"> (amendment {{ a.id }})</span></button></form>
+        {% endfor %}
+        <a href="/mun/votes/amendment/{{ a.id }}">Record vote</a>
+      {% elif a.status == 'tabled' and mine and mine.id == a.sponsor_delegation_id %}
+        <form method="post" action="/mun/amendments/{{ a.id }}/status" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="status" value="withdrawn"><button type="submit" class="secondary">Withdraw<span class="visually-hidden"> amendment {{ a.id }}</span></button></form>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</article>
+{% else %}<p>No paragraphs yet.</p>{% endfor %}

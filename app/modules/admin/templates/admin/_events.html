@@ -1,0 +1,15 @@
+{% from "_macros.html" import hidden_csrf %}
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col">#</th><th scope="col">When (UTC)</th><th scope="col">Who</th><th scope="col">What</th><th scope="col">Action</th><th scope="col"><span class="visually-hidden">Restore</span></th></tr></thead>
+  <tbody>
+  {% for e in events %}
+  <tr>
+    <td class="num">{{ e.seq }}</td><td>{{ e.at|when }}</td><td>{{ e.actor_label or e.actor_kind }}</td>
+    <td>{{ e.entity }} {{ e.entity_id }}</td>
+    <td>{{ e.action }}{% if e.undone_by %} <span class="muted">(undone)</span>{% endif %}</td>
+    <td>{% if e.after_json and e.action in ('create','update','restore','restore_version') and actor and actor.is_coordinator %}
+      <form method="post" action="/admin/history/{{ e.seq }}/restore" class="inline">{{ hidden_csrf(csrf) }}<button class="link" type="submit">Restore this version<span class="visually-hidden"> (change {{ e.seq }})</span></button></form>{% endif %}</td>
+  </tr>
+  {% else %}<tr><td colspan="6">No changes yet.</td></tr>{% endfor %}
+  </tbody>
+</table></div>

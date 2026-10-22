@@ -1,0 +1,15 @@
+Minutes — {{ committee }}
+{{ conference }}
+Session opened {{ opened_at }}{% if chair %} · Chair: {{ chair }}{% endif %}
+
+Attendance: {{ present_count }} delegations present ({{ student_count }} students; {{ computed_count }} delegations voted by the engine and labelled computed).
+
+{% for item in items -%}
+{{ item.time }}  {{ item.text }}
+{% endfor %}
+{% if divisions %}
+Divisions
+{% for d in divisions -%}
+- {{ d.title }}: {{ d.summary }} ({{ d.rule }})
+{% endfor %}{% endif %}
+Minutes generated automatically from the session log. Edited versions are kept in the history.

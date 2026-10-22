@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<p><a href="/mun/resolutions/{{ p.resolution_id }}#p{{ p.id }}">Back to the resolution</a></p>
+<h1>{{ title }}</h1>
+<p class="lede">Every saved version is kept. Changes are shown against the version before: <ins>added</ins>, <del>removed</del>.</p>
+{% for v in versions %}
+<section class="card diff" aria-labelledby="v{{ v.id }}">
+  <h2 id="v{{ v.id }}" class="small">Version {{ v.id }}{% if v.id == p.current_version_id %} (current){% endif %} · {{ v.author_label }} · {{ v.created_at|when }}{% if v.note %} · {{ v.note }}{% endif %}</h2>
+  <p>{{ v.diff }}</p>
+  <p class="small">Tags: {{ v.tags or 'none' }}</p>
+  {% if can_restore and v.id != p.current_version_id %}
+  <form method="post" action="/mun/paragraphs/{{ p.id }}/restore/{{ v.id }}">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Restore version {{ v.id }}</button></form>{% endif %}
+</section>
+{% endfor %}
+{% endblock %}

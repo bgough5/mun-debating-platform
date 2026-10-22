@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<p><a href="/mun/committees/{{ com.id }}">Back to {{ com.name }}</a></p>
+<h1>Evidence</h1>
+<p class="lede">Every position needs a source. What a delegate tells you in caucus is <strong>student intel</strong>: record who said it and when. Nothing is shown as fact without a source.</p>
+<section class="card no-print" aria-labelledby="h-new"><h2 id="h-new">Record evidence</h2>
+<form method="post" action="/mun/committees/{{ com.id }}/evidence" class="stack">{{ hidden_csrf(csrf) }}
+  <fieldset><legend>About</legend>
+    <div class="checks"><label><input type="radio" name="subject_kind" value="country" checked> A country</label><label><input type="radio" name="subject_kind" value="bloc"> A bloc</label></div>
+    <div class="field"><label for="eiso">Country</label><select id="eiso" name="iso3">{% for d in dels %}<option value="{{ d.iso3 }}" {% if d.iso3 == iso3 %}selected{% endif %}>{{ d.name }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="ebloc">Bloc (if about a bloc)</label><select id="ebloc" name="bloc_id"><option value="">—</option>{% for b in blocs %}<option value="{{ b.id }}">{{ b.name }}</option>{% endfor %}</select></div>
+  </fieldset>
+  <fieldset><legend>On what</legend>
+    <div class="field"><label for="etk">Applies to</label><select id="etk" name="target_kind">
+      {% for v, l in [('paragraph','An operative paragraph'),('amendment','An amendment'),('resolution','The whole resolution'),('tag','Anything with a tag'),('topic','The whole topic')] %}
+      <option value="{{ v }}" {% if v == target_kind %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="etp">Paragraph</label><select id="etp" name="target_id_paragraph">{% for p in paras %}<option value="{{ p.id }}" {% if target_kind == 'paragraph' and p.id == target_id %}selected{% endif %}>{{ p.position }}. {{ p.text[:70] }}…</option>{% endfor %}</select></div>
+    <div class="field"><label for="eta">Amendment</label><select id="eta" name="target_id_amendment"><option value="">—</option>{% for a in amends %}<option value="{{ a.id }}" {% if target_kind == 'amendment' and a.id == target_id %}selected{% endif %}>Amendment {{ a.id }} ({{ a.kind }} paragraph {{ a.position }})</option>{% endfor %}</select></div>
+    <div class="field"><label for="etr">Resolution</label><select id="etr" name="target_id_resolution">{% for r in resolutions %}<option value="{{ r.id }}">{{ r.title }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="etg">Tag</label><select id="etg" name="tag_code"><option value="">—</option>{% for t in tags %}<option value="{{ t.code }}">{{ t.label }}</option>{% endfor %}</select></div>
+  </fieldset>
+  <div class="field"><label for="epos">Position</label><select id="epos" name="position">
+    <option value="2">Strongly support (+2)</option><option value="1">Support (+1)</option><option value="0">Neutral or abstain (0)</option>
+    <option value="-1">Oppose (−1)</option><option value="-2">Strongly oppose (−2)</option><option value="">No position: just a note</option></select></div>
+  <div class="field"><label for="estr">How strong is this evidence?</label><select id="estr" name="strength"><option value="weak">Weak</option><option value="moderate" selected>Moderate</option><option value="strong">Strong</option></select></div>
+  <div class="checks"><label><input type="checkbox" name="conditional" value="1"> It's conditional</label></div>
+  <div class="field"><label for="econd">Condition (if any) <span class="hint">e.g. “if a review clause is added”</span></label><input id="econd" name="condition_text"></div>
+  <div class="field"><label for="est">Source type</label><select id="est" name="source_type">{% for t in stypes %}<option value="{{ t.code }}" {% if t.code == 'student_intel' %}selected{% endif %}>{{ t.label }} (weight {{ t.weight }})</option>{% endfor %}</select></div>
+  <div class="field"><label for="esrc">Source <span class="hint">A link, a citation, or who said it and when</span></label><input id="esrc" name="source"></div>
+  <div class="field"><label for="edate">Date of the statement</label><input id="edate" type="date" name="stated_on"></div>
+  <div class="field"><label for="esum">What it says (your own words)</label><textarea id="esum" name="summary" rows="2"></textarea></div>
+  <button type="submit">Record evidence</button></form></section>
+<h2>Recorded evidence{% if iso3 %} for {{ iso3 }} <a class="small" href="/mun/committees/{{ com.id }}/evidence">(show all)</a>{% endif %}</h2>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">About</th><th scope="col">On</th><th scope="col">Position</th><th scope="col">Shown as</th><th scope="col">Source</th><th scope="col">Recorded</th><th scope="col"><span class="visually-hidden">Remove</span></th></tr></thead>
+<tbody>{% for e in ev %}
+<tr><td>{{ e.country or e.bloc_name }}</td><td>{{ e.target_kind }}{% if e.target_id %} {{ e.target_id }}{% endif %}{% if e.tag_code %} ({{ e.tag_code }}){% endif %}</td>
+<td>{{ e.position|position }}{% if e.conditional %} <em>if {{ e.condition_text }}</em>{% endif %}<br><span class="small muted">{{ e.summary }}</span></td>
+<td>{% if e.source_type == 'ai_estimate' %}<span class="label-ai">{{ e.shown_as }}</span>{% else %}{{ e.shown_as }}{% endif %} ({{ e.strength }})</td>
+<td class="small">{{ e.source or '—' }}{% if e.stated_on %}<br>{{ e.stated_on }}{% endif %}</td><td class="small">{{ e.recorded_by }}<br>{{ e.recorded_on|when }}</td>
+<td>{% if access == 'manage' or e.recorded_by == actor.label %}<form method="post" action="/mun/evidence/{{ e.id }}/delete">{{ hidden_csrf(csrf) }}<input type="hidden" name="committee_id" value="{{ com.id }}"><button type="submit" class="link">Remove<span class="visually-hidden"> evidence {{ e.id }}</span></button></form>{% endif %}</td></tr>
+{% else %}<tr><td colspan="7">No evidence yet.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

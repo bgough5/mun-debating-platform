@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, hidden_csrf %}
+{% block content %}
+{{ breadcrumb([(com.name, "/mun/committees/" ~ com.id), (res.title, None)]) }}
+<h1>{{ res.title }}</h1>
+<p class="lede">{{ com.name }} · Status: {{ res.status }} · Voting rule: {{ com.rule }}</p>
+<div class="row no-print">
+  <a class="button" href="/mun/predict/resolution/{{ res.id }}">Predict the whole resolution</a>
+  <a class="button secondary" href="/mun/resolutions/{{ res.id }}/export.docx" hx-boost="false">Export to Word</a>
+  <a class="button secondary" href="/mun/resolutions/{{ res.id }}/print">Print / PDF</a>
+  <form method="post" action="/mun/undo" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Undo my last change</button></form>
+</div>
+{% if access == 'manage' %}
+<form method="post" action="/mun/resolutions/{{ res.id }}/status" class="inline no-print" style="margin-top:.5rem">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="rst">Resolution status</label><select id="rst" name="status">{% for s_ in ['draft','tabled','passed','failed','withdrawn'] %}<option {% if s_ == res.status %}selected{% endif %}>{{ s_ }}</option>{% endfor %}</select></div>
+  <button type="submit" class="secondary">Set status</button></form>
+{% endif %}
+<p class="small muted">Rule: one editor per paragraph. Only the delegation that owns a paragraph (or staff) can edit it; anyone else tables an amendment (decision D-004).</p>
+<div id="paragraphs" data-live-channel="resolution:{{ res.id }}" hx-get="/mun/resolutions/{{ res.id }}/fragment" hx-trigger="live-update" hx-swap="innerHTML">
+{% include "mun/_paragraphs.html" %}
+</div>
+{% if access == 'manage' or mine %}
+<section class="card no-print" aria-labelledby="h-addp"><h2 id="h-addp">Add a paragraph</h2>
+<form method="post" action="/mun/resolutions/{{ res.id }}/paragraphs" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="pk">Kind</label><select id="pk" name="kind"><option value="operative">Operative (numbered action)</option><option value="preambular">Preambular (context)</option></select></div>
+  <div class="field"><label for="ptext">Text</label><textarea id="ptext" name="text" rows="4" required></textarea></div>
+  {% if tags %}<fieldset><legend>Tags (what the paragraph does)</legend><div class="checks">{% for t in tags %}<label><input type="checkbox" name="tags" value="{{ t.code }}"> {{ t.label }}</label>{% endfor %}</div></fieldset>{% endif %}
+  {% if access == 'manage' %}<div class="field"><label for="po">Owned by</label><select id="po" name="owner_delegation_id"><option value="">— no owner (staff only) —</option>{% for d in dels %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}</select></div>{% endif %}
+  <button type="submit">Add paragraph</button></form></section>
+{% endif %}
+{% endblock %}

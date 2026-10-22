@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<h1>Model UN</h1>
+{% for c in confs %}
+<section class="card" aria-labelledby="cf{{ c.id }}">
+  <h2 id="cf{{ c.id }}"><a href="/mun/conferences/{{ c.id }}">{{ c.name }}</a></h2>
+  <p class="small muted">{{ c.organiser }}{% if c.starts_on %} · {{ c.starts_on }}{% if c.ends_on %} to {{ c.ends_on }}{% endif %}{% endif %}</p>
+  {% if by_conf.get(c.id) %}<ul>{% for cm in by_conf[c.id] %}<li><a href="/mun/committees/{{ cm.id }}">{{ cm.name }}</a> <span class="muted">· {{ cm.rule }}</span></li>{% endfor %}</ul>
+  {% else %}<p class="muted">No committees you can see.</p>{% endif %}
+</section>
+{% else %}<p>No conferences yet.</p>{% endfor %}
+{% if actor.is_coordinator %}
+<div class="grid">
+<section class="card" aria-labelledby="h-nc"><h2 id="h-nc">New conference</h2>
+<form method="post" action="/mun/conferences" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="cn">Name</label><input id="cn" name="name" required></div>
+  <div class="row"><div class="field"><label for="cs">Starts</label><input id="cs" type="date" name="starts_on"></div>
+  <div class="field"><label for="ce">Ends</label><input id="ce" type="date" name="ends_on"></div></div>
+  <div class="field"><label for="co">Organiser</label><input id="co" name="organiser" placeholder="e.g. UNAA Victoria, UN Youth Australia"></div>
+  <button type="submit">Create conference</button></form></section>
+<section class="card" aria-labelledby="h-pack"><h2 id="h-pack">Start from the 2026 climate pack</h2>
+<p>Creates the UNAA Victoria 2026 General Assembly: 31 delegations, the draft resolution's nine operative clauses, the v2 overrides as evidence and three example amendments.
+Every value is labelled an unsourced estimate.</p>
+<form method="post" action="/mun/load-pack" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Load the climate pack</button></form></section>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,15 @@
+rule_set_code,code,name,precedence,voting_rule_code,needs_second,has_duration,has_speaking_time,description
+ga_simplified,suspend,Suspend the meeting,90,proc_simple,1,1,0,Pause the session for a set time (e.g. a break).
+ga_simplified,adjourn,Adjourn the meeting,95,proc_simple,1,0,0,End the session.
+ga_simplified,close_debate,Close debate and move to voting,80,proc_two_thirds,1,0,0,Ends debate on the current item and moves to a vote.
+ga_simplified,unmod,Unmoderated caucus,60,proc_simple,1,1,0,Informal lobbying time.
+ga_simplified,mod,Moderated caucus,50,proc_simple,1,1,1,Chair calls on speakers for short speeches on a sub-topic.
+ga_simplified,speaking_time,Set speaking time,40,proc_simple,1,0,1,Change the speaking time for the general speakers list.
+ga_simplified,introduce_amendment,Introduce an amendment,30,proc_simple,1,0,0,Puts a tabled amendment before the committee.
+ga_simplified,divide,Divide the question,70,proc_simple,1,0,0,Vote on operative paragraphs separately.
+sc_simplified,suspend,Suspend the meeting,90,sc_procedural,1,1,0,Pause the session for a set time.
+sc_simplified,adjourn,Adjourn the meeting,95,sc_procedural,1,0,0,End the session.
+sc_simplified,close_debate,Close debate and move to voting,80,sc_procedural,1,0,0,Ends debate on the current item.
+sc_simplified,unmod,Unmoderated caucus,60,sc_procedural,1,1,0,Informal negotiation time.
+sc_simplified,mod,Moderated caucus,50,sc_procedural,1,1,1,Chair calls on speakers for short speeches on a sub-topic.
+sc_simplified,introduce_amendment,Introduce an amendment,30,sc_procedural,1,0,0,Puts a tabled amendment before the Council.

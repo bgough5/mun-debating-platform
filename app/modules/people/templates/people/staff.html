@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, hidden_csrf %}
+{% block content %}
+{{ breadcrumb([("People", "/people"), ("Staff", None)]) }}
+<h1>Staff</h1>
+<p class="lede">Staff run sessions and debating rounds for the classes they're given. They can't see admin data.</p>
+{% for sf in staff %}
+<section class="card" aria-labelledby="sf{{ sf.id }}">
+  <h2 id="sf{{ sf.id }}">{{ sf.name }}{% if not sf.active %} <span class="muted">(inactive)</span>{% endif %}</h2>
+  <form method="post" action="/people/staff" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="classes"><input type="hidden" name="staff_id" value="{{ sf.id }}">
+    <fieldset><legend>Classes</legend><div class="checks">
+      {% for c in classes %}<label><input type="checkbox" name="class_id" value="{{ c.id }}" {% if c.id in by_staff.get(sf.id, []) %}checked{% endif %}> {{ c.name }}</label>{% endfor %}
+    </div></fieldset><button type="submit" class="secondary">Save classes<span class="visually-hidden"> for {{ sf.name }}</span></button></form>
+  <form method="post" action="/people/staff" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="passphrase"><input type="hidden" name="staff_id" value="{{ sf.id }}">
+    <div class="field"><label for="pp{{ sf.id }}">New passphrase</label><input id="pp{{ sf.id }}" type="password" name="passphrase" minlength="10" autocomplete="new-password"></div>
+    <button type="submit" class="secondary">Set passphrase</button></form>
+  <form method="post" action="/people/staff" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="{{ 'deactivate' if sf.active else 'activate' }}"><input type="hidden" name="staff_id" value="{{ sf.id }}">
+    <button type="submit" class="secondary">{{ 'Deactivate' if sf.active else 'Reactivate' }}<span class="visually-hidden"> {{ sf.name }}</span></button></form>
+</section>
+{% endfor %}
+<section class="card" aria-labelledby="h-ns"><h2 id="h-ns">Add a staff member</h2>
+<form method="post" action="/people/staff" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="create">
+  <div class="field"><label for="sname">Name as students see it</label><input id="sname" name="name" required></div>
+  <div class="field"><label for="spp">Passphrase <span class="hint">At least 10 characters. Tell them in person.</span></label><input id="spp" type="password" name="passphrase" minlength="10" required autocomplete="new-password"></div>
+  <button type="submit">Add staff member</button></form></section>
+{% endblock %}

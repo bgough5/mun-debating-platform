@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, meter, flag %}
+{% set r = pred.result %}
+{% block content %}
+<p><a href="/mun/resolutions/{{ pred.target.resolution_id }}">Back to the resolution</a></p>
+<h1>{{ pred.target.label }}</h1>
+<div class="grid">
+  <section class="card" aria-labelledby="h-pp">
+    <h2 id="h-pp">Chance it passes</h2>
+    <p class="bigstat">{{ r.p_pass|pct }}</p>
+    <p>Simulation error ±{{ (r.mc_se*100)|round(1) }} points ({{ r.runs }} runs, seed {{ pred.seed }}).
+      {% if pred.exact_independent is not none %}<span class="small muted">If countries voted independently: {{ pred.exact_independent|pct }}.</span>{% endif %}</p>
+    <p>Yes votes: about {{ r.yes_mean|round(1) }}; 90% interval {{ r.yes_lo }} to {{ r.yes_hi }}.</p>
+    <p>Voting rule: <strong>{{ pred.rule.name }}</strong>. {{ pred.rule.describe() }}</p>
+    {% if pred.target.negate %}<p class="notice">This is a deletion: the prediction is for the vote to delete, so supporting the paragraph counts against it.</p>{% endif %}
+  </section>
+  <section class="card" aria-labelledby="h-unk">
+    <h2 id="h-unk">How much is unknown</h2>
+    {% set unknowns = pred.dists|selectattr('unknown')|list %}
+    <p class="bigstat">{{ pred.unknown_share|pct }}</p>
+    <p>of the uncertainty in the outcome comes from {{ unknowns|length }} countr{{ 'y' if unknowns|length == 1 else 'ies' }} with no evidence at all{% if unknowns %}:
+      {{ unknowns|map(attribute='name')|join(', ') }}{% endif %}.</p>
+    {% if unknowns %}<p class="small">These are shown as <span class="badge st-unk"><span aria-hidden="true">?</span> Unknown</span>, never as a confident number. Recording evidence for them is the quickest way to sharpen the prediction.</p>{% endif %}
+  </section>
+  <section class="card no-print" aria-labelledby="h-act">
+    <h2 id="h-act">Act on it</h2>
+    <form method="post" action="/mun/predict/{{ kind }}/{{ tid }}/tasks" class="stack">{{ hidden_csrf(csrf) }}
+      {% if access == 'manage' %}<div class="field"><label for="tdel">Tasks for delegation</label><select id="tdel" name="delegation_id">{% for d in dels %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}</select></div>{% endif %}
+      <div class="field"><label for="tn">How many top swing targets</label><input id="tn" type="number" name="top_n" value="3" min="1" max="10"></div>
+      <button type="submit">Create lobbying tasks</button></form>
+    <form method="post" action="/mun/predict/{{ kind }}/{{ tid }}/snapshot" style="margin-top:.75rem">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Save this prediction (for calibration)</button></form>
+    {% if access == 'manage' %}<p><a href="/mun/votes/{{ kind }}/{{ tid }}">Record the actual vote</a></p>{% endif %}
+    <p><a href="/mun/committees/{{ committee_id }}/evidence?target_kind={{ 'paragraph' if kind == 'paragraph' else kind }}&target_id={{ tid }}">Record new evidence</a></p>
+  </section>
+</div>
+
+<section aria-labelledby="h-swing">
+<h2 id="h-swing">Who decides it (swing list)</h2>
+<p class="small">ΔP is the change in the chance of passing if that country or bloc moves one step toward yes. Rows are ranked by ΔP weighted by how uncertain we are about them
+(movable targets first); ties go to the alphabetically first code (D-012).</p>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">#</th><th scope="col">Country or bloc</th><th scope="col" class="num">ΔP(pass)</th><th scope="col" class="num">Uncertainty</th><th scope="col">Evidence</th></tr></thead>
+<tbody>{% for s_ in swing %}
+{% set det = pred.detail.get(s_.key) %}
+<tr><td class="num">{{ loop.index }}</td>
+<td>{% if s_.kind == 'bloc' %}<strong>{{ s_.name }}</strong> <span class="small muted">(bloc: {{ s_.members|join(', ') }})</span>{% else %}{{ flag(flags.get(s_.key), s_.name) }} {{ s_.name }} <span class="iso">{{ s_.key }}</span>{% endif %}</td>
+<td class="num">{{ '%+.1f'|format(s_.delta_p*100) }} pts</td><td class="num">{{ s_.movability|pct }}</td>
+<td class="small">{% if det %}{% set evs = det.sources|rejectattr('kind','equalto','model_estimate')|list %}
+  {{ evs|length }} item(s){% if evs|selectattr('stale')|list %}, {{ evs|selectattr('stale')|list|length }} stale{% endif %}{% if not evs %} — only the model estimate{% endif %}
+  {% elif s_.kind == 'bloc' %}{{ s_.members|length }} members here{% endif %}</td></tr>
+{% else %}<tr><td colspan="5">No country or bloc would change the outcome by moving one step.</td></tr>{% endfor %}</tbody></table></div>
+</section>
+
+<section aria-labelledby="h-countries">
+<h2 id="h-countries">Every country</h2>
+<p class="small">Each country's position is a weighted average of its sources (−2 strongly oppose to +2 strongly support); more and better evidence narrows it.
+<span class="label-computed">computed</span> means no student holds that delegation, so in a live vote the engine casts its most likely vote.</p>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Country</th><th scope="col">Most likely</th><th scope="col">Yes / abstain / no</th><th scope="col" class="num">Position</th><th scope="col" class="num">Spread</th><th scope="col">Sources</th></tr></thead>
+<tbody>{% for d in pred.dists|sort(attribute='name') %}
+{% set det = pred.detail[d.iso3] %}
+<tr><td>{{ flag(flags.get(d.iso3), d.name) }} {{ d.name }} {% if d.iso3 in computed %}<span class="label-computed">computed</span>{% endif %}</td>
+<td>{% if d.unknown %}{{ 'unknown'|stance }}{% else %}{{ d.modal_vote|stance }}{% endif %}</td>
+<td style="min-width:9rem">{{ meter(d.p_yes, d.p_abstain, d.p_no) }}<span class="small">{{ d.p_yes|pct }} / {{ d.p_abstain|pct }} / {{ d.p_no|pct }}</span></td>
+<td class="num">{{ '%+.2f'|format(d.mu) }}</td><td class="num">{{ d.sigma|num }}</td>
+<td class="small"><details><summary>{{ det.sources|length }} source(s){% if det.notes %}, {{ det.notes|length }} note(s){% endif %}<span class="visually-hidden"> for {{ d.name }}</span></summary>
+  <ul>{% for src in det.sources %}
+    {% set eid = src.ref.split(':')[1]|int if src.ref.startswith('evidence:') else none %}
+    <li><strong>{{ src.label }}</strong>: {{ src.position|position }} ({{ '%+.2f'|format(src.position) }}), weight {{ src.weight|num }}{% if src.stale %} <strong>stale</strong>{% endif %}
+      {% if eid and ev_index.get(eid) %}<br><span class="muted">{{ ev_index[eid].summary }} — source: {{ ev_index[eid].source or 'none' }}{% if ev_index[eid].stated_on %}, {{ ev_index[eid].stated_on }}{% endif %}</span>{% elif src.note %}<br><span class="muted">{{ src.note }}</span>{% endif %}</li>
+  {% else %}<li>No sources: unknown.</li>{% endfor %}
+  {% for n in det.notes %}<li class="muted">Note: {{ n.summary }}{% if n.excluded %} — {{ n.excluded }}{% endif %}</li>{% endfor %}</ul></details></td></tr>
+{% endfor %}</tbody></table></div>
+</section>
+
+{% if snapshots %}
+<section aria-labelledby="h-snap"><h2 id="h-snap">Saved snapshots</h2>
+<ul class="small">{% for sn in snapshots %}<li>#{{ sn.id }} · {{ sn.created_at|when }} · P(pass) {{ sn.p_pass|pct }} · seed {{ sn.seed }} ·
+  <a href="/mun/predictions/{{ sn.id }}.csv" hx-boost="false">CSV</a>{% if access == 'manage' %} · <a href="/mun/predictions/{{ sn.id }}/replay">Check it reproduces</a>{% endif %}</li>{% endfor %}</ul></section>
+{% endif %}
+<details class="small"><summary>How this is calculated</summary>
+<p>Each country's sources give a position and a weight (official statements and recorded votes count most, the archetype model estimate least). The weighted average is the country's expected
+position; the spread shrinks as evidence grows. Members of a bloc share part of their randomness (cohesion), so the simulation doesn't treat them as independent coin flips.
+The simulation runs the vote {{ r.runs }} times under the committee's rule. Model version {{ pred.model_version_id }}; inputs hash <code>{{ pred.inputs_hash[:12] }}</code>.
+These are estimates, not facts: check the sources.</p></details>
+{% endblock %}

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ title|default("South Oakleigh Debating & MUN") }}{% endblock %} — SOC Debating & MUN</title>
+<meta name="csrf-token" content="{{ csrf }}">
+<link rel="stylesheet" href="/static/css/app.css">
+<link rel="icon" href="/static/soc_logo.png">
+<script src="/static/vendor/htmx-2.0.4.min.js" defer></script>
+<script src="/static/js/app.js" defer></script>
+{% block head %}{% endblock %}
+</head>
+<body hx-boost="true" hx-headers='{"X-CSRF-Token": "{{ csrf }}"}' class="{% block bodyclass %}{% endblock %}">
+<a class="skip" href="#main">Skip to main content</a>
+{% if demo %}<div class="demo-banner" role="status">DEMO — fake data only. Nothing here is a real student.</div>{% endif %}
+{% block header %}
+<header class="site">
+  <div class="bar">
+    <a class="brand" href="/"><img src="/static/soc_logo.png" alt="" width="36" height="36"><span>SOC Debating &amp; MUN</span></a>
+    <nav class="main" aria-label="Main">
+      <ul>
+      {% if actor and actor.is_staff %}
+        {% if modules.mun %}<li><a href="/mun" {% if req_path.startswith('/mun') %}aria-current="page"{% endif %}>Model UN</a></li>{% endif %}
+        {% if modules.chair %}<li><a href="/chair" {% if req_path.startswith('/chair') %}aria-current="page"{% endif %}>Chair</a></li>{% endif %}
+        {% if modules.debating %}<li><a href="/debating" {% if req_path.startswith('/debating') %}aria-current="page"{% endif %}>Debating</a></li>{% endif %}
+        {% if modules.people %}<li><a href="/people" {% if req_path.startswith('/people') %}aria-current="page"{% endif %}>People</a></li>{% endif %}
+        {% if modules.intelligence %}<li><a href="/intel" {% if req_path.startswith('/intel') %}aria-current="page"{% endif %}>Intelligence</a></li>{% endif %}
+        {% if actor.is_coordinator %}<li><a href="/admin" {% if req_path.startswith('/admin') %}aria-current="page"{% endif %}>Admin</a></li>{% endif %}
+        <li><a href="/practice-game">Practice game</a></li>
+      {% elif actor and actor.kind == 'student' %}
+        <li><a href="/me" {% if req_path == '/me' %}aria-current="page"{% endif %}>My page</a></li>
+        {% if modules.debating %}<li><a href="/me/practice" {% if req_path.startswith('/me/practice') %}aria-current="page"{% endif %}>Practise</a></li>{% endif %}
+        <li><a href="/practice-game">Practice game</a></li>
+      {% endif %}
+      </ul>
+    </nav>
+    <div class="who">
+      {% if actor %}
+        <span>Signed in: <strong>{{ actor.label }}</strong></span>
+        <form method="post" action="/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="secondary" type="submit">Sign out</button></form>
+      {% else %}
+        <a href="/join">Students: join</a> · <a href="/login">Staff sign in</a>
+      {% endif %}
+    </div>
+  </div>
+</header>
+{% endblock %}
+<main id="main" tabindex="-1">
+{% if flash %}<div class="flash" role="status">{{ flash }}</div>{% endif %}
+{% block content %}{% endblock %}
+</main>
+{% block footer %}
+<footer class="site">
+  <p>Prep tool: build your own arguments. The platform supports preparation and running events; it never writes your speech, clause or amendment.
+  Predictions are estimates with their evidence shown, not facts.</p>
+  <p><button type="button" class="link" id="easy-read-toggle" aria-pressed="false">Easy-read text</button> · <a href="/accessibility">Accessibility</a> · <a href="/privacy">Privacy</a></p>
+</footer>
+{% endblock %}
+</body>
+</html>

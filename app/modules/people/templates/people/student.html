@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, hidden_csrf %}
+{% block content %}
+{{ breadcrumb([("People", "/people"), (st.class_name, "/people/classes/" ~ st.class_id), (title, None)]) }}
+<h1>{{ title }}</h1>
+{% if delegations %}<p>Delegations: {% for d in delegations %}{{ d.country }} ({{ d.committee }}{% if d.role == 'head' %}, head{% endif %}){% if not loop.last %}; {% endif %}{% endfor %}</p>{% endif %}
+{% include "people/_pathway.html" %}
+{% endblock %}

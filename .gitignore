@@ -1,3 +1,11 @@
 __pycache__/
 *.pyc
 .claude/settings.local.json
+# Real and demo databases, backups and local config (passphrase hash) never go in git.
+data/
+*.db
+*.db-wal
+*.db-shm
+.venv/
+.pytest_cache/
+test-results/

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Practice game: Whip Count v2</h1>
+<p class="lede">The original classroom game from July 2026, kept exactly as it was (decision D-007). It is not extended.</p>
+<div class="notice"><p>Its predictions are the old archetype buckets with no evidence, and its rubric scores vocabulary rather than argument (audit §4–5).
+Use it as a warm-up game, not as a source of country positions or grades.</p></div>
+<div class="grid">
+  <section class="card"><h2>Single player (offline)</h2>
+    {% if solo_available %}<p><a class="button" href="/practice-game/solo" hx-boost="false">Open the solo game</a></p>{% else %}<p>Not available in this copy.</p>{% endif %}</section>
+  <section class="card"><h2>Multiplayer (3–9 players)</h2>
+    <p>Start it separately on the laptop: run <code>start_server.bat</code> (or <code>python server/server.py</code>). Students then open:</p>
+    <p><code>http://{{ host }}:8000/client/player.html</code></p>
+    <p class="small muted">It uses ports 8000 and 8765, so it can run alongside this platform (port 8080).</p></section>
+</div>
+{% endblock %}

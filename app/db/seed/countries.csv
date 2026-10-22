@@ -1,0 +1,196 @@
+iso3,name,un_member,p5,region
+AFG,Afghanistan,1,0,APG
+AGO,Angola,1,0,AFR
+ALB,Albania,1,0,EEG
+AND,Andorra,1,0,WEOG
+ARE,United Arab Emirates,1,0,APG
+ARG,Argentina,1,0,GRULAC
+ARM,Armenia,1,0,EEG
+ATG,Antigua and Barbuda,1,0,GRULAC
+AUS,Australia,1,0,WEOG
+AUT,Austria,1,0,WEOG
+AZE,Azerbaijan,1,0,EEG
+BDI,Burundi,1,0,AFR
+BEL,Belgium,1,0,WEOG
+BEN,Benin,1,0,AFR
+BFA,Burkina Faso,1,0,AFR
+BGD,Bangladesh,1,0,APG
+BGR,Bulgaria,1,0,EEG
+BHR,Bahrain,1,0,APG
+BHS,Bahamas,1,0,GRULAC
+BIH,Bosnia and Herzegovina,1,0,EEG
+BLR,Belarus,1,0,EEG
+BLZ,Belize,1,0,GRULAC
+BOL,Bolivia,1,0,GRULAC
+BRA,Brazil,1,0,GRULAC
+BRB,Barbados,1,0,GRULAC
+BRN,Brunei Darussalam,1,0,APG
+BTN,Bhutan,1,0,APG
+BWA,Botswana,1,0,AFR
+CAF,Central African Republic,1,0,AFR
+CAN,Canada,1,0,WEOG
+CHE,Switzerland,1,0,WEOG
+CHL,Chile,1,0,GRULAC
+CHN,China,1,1,APG
+CIV,Côte d'Ivoire,1,0,AFR
+CMR,Cameroon,1,0,AFR
+COD,Democratic Republic of the Congo,1,0,AFR
+COG,Congo,1,0,AFR
+COL,Colombia,1,0,GRULAC
+COM,Comoros,1,0,AFR
+CPV,Cabo Verde,1,0,AFR
+CRI,Costa Rica,1,0,GRULAC
+CUB,Cuba,1,0,GRULAC
+CYP,Cyprus,1,0,APG
+CZE,Czechia,1,0,EEG
+DEU,Germany,1,0,WEOG
+DJI,Djibouti,1,0,AFR
+DMA,Dominica,1,0,GRULAC
+DNK,Denmark,1,0,WEOG
+DOM,Dominican Republic,1,0,GRULAC
+DZA,Algeria,1,0,AFR
+ECU,Ecuador,1,0,GRULAC
+EGY,Egypt,1,0,AFR
+ERI,Eritrea,1,0,AFR
+ESP,Spain,1,0,WEOG
+EST,Estonia,1,0,EEG
+ETH,Ethiopia,1,0,AFR
+FIN,Finland,1,0,WEOG
+FJI,Fiji,1,0,APG
+FRA,France,1,1,WEOG
+FSM,Micronesia,1,0,APG
+GAB,Gabon,1,0,AFR
+GBR,United Kingdom,1,1,WEOG
+GEO,Georgia,1,0,EEG
+GHA,Ghana,1,0,AFR
+GIN,Guinea,1,0,AFR
+GMB,Gambia,1,0,AFR
+GNB,Guinea-Bissau,1,0,AFR
+GNQ,Equatorial Guinea,1,0,AFR
+GRC,Greece,1,0,WEOG
+GRD,Grenada,1,0,GRULAC
+GTM,Guatemala,1,0,GRULAC
+GUY,Guyana,1,0,GRULAC
+HND,Honduras,1,0,GRULAC
+HRV,Croatia,1,0,EEG
+HTI,Haiti,1,0,GRULAC
+HUN,Hungary,1,0,EEG
+IDN,Indonesia,1,0,APG
+IND,India,1,0,APG
+IRL,Ireland,1,0,WEOG
+IRN,Iran,1,0,APG
+IRQ,Iraq,1,0,APG
+ISL,Iceland,1,0,WEOG
+ISR,Israel,1,0,WEOG
+ITA,Italy,1,0,WEOG
+JAM,Jamaica,1,0,GRULAC
+JOR,Jordan,1,0,APG
+JPN,Japan,1,0,APG
+KAZ,Kazakhstan,1,0,APG
+KEN,Kenya,1,0,AFR
+KGZ,Kyrgyzstan,1,0,APG
+KHM,Cambodia,1,0,APG
+KIR,Kiribati,1,0,APG
+KNA,Saint Kitts and Nevis,1,0,GRULAC
+KOR,Republic of Korea,1,0,APG
+KWT,Kuwait,1,0,APG
+LAO,Lao People's Democratic Republic,1,0,APG
+LBN,Lebanon,1,0,APG
+LBR,Liberia,1,0,AFR
+LBY,Libya,1,0,AFR
+LCA,Saint Lucia,1,0,GRULAC
+LIE,Liechtenstein,1,0,WEOG
+LKA,Sri Lanka,1,0,APG
+LSO,Lesotho,1,0,AFR
+LTU,Lithuania,1,0,EEG
+LUX,Luxembourg,1,0,WEOG
+LVA,Latvia,1,0,EEG
+MAR,Morocco,1,0,AFR
+MCO,Monaco,1,0,WEOG
+MDA,Republic of Moldova,1,0,EEG
+MDG,Madagascar,1,0,AFR
+MDV,Maldives,1,0,APG
+MEX,Mexico,1,0,GRULAC
+MHL,Marshall Islands,1,0,APG
+MKD,North Macedonia,1,0,EEG
+MLI,Mali,1,0,AFR
+MLT,Malta,1,0,WEOG
+MMR,Myanmar,1,0,APG
+MNE,Montenegro,1,0,EEG
+MNG,Mongolia,1,0,APG
+MOZ,Mozambique,1,0,AFR
+MRT,Mauritania,1,0,AFR
+MUS,Mauritius,1,0,AFR
+MWI,Malawi,1,0,AFR
+MYS,Malaysia,1,0,APG
+NAM,Namibia,1,0,AFR
+NER,Niger,1,0,AFR
+NGA,Nigeria,1,0,AFR
+NIC,Nicaragua,1,0,GRULAC
+NLD,Netherlands,1,0,WEOG
+NOR,Norway,1,0,WEOG
+NPL,Nepal,1,0,APG
+NRU,Nauru,1,0,APG
+NZL,New Zealand,1,0,WEOG
+OMN,Oman,1,0,APG
+PAK,Pakistan,1,0,APG
+PAN,Panama,1,0,GRULAC
+PER,Peru,1,0,GRULAC
+PHL,Philippines,1,0,APG
+PLW,Palau,1,0,APG
+PNG,Papua New Guinea,1,0,APG
+POL,Poland,1,0,EEG
+PRK,Democratic People's Republic of Korea,1,0,APG
+PRT,Portugal,1,0,WEOG
+PRY,Paraguay,1,0,GRULAC
+PSE,State of Palestine,0,0,
+QAT,Qatar,1,0,APG
+ROU,Romania,1,0,EEG
+RUS,Russian Federation,1,1,EEG
+RWA,Rwanda,1,0,AFR
+SAU,Saudi Arabia,1,0,APG
+SDN,Sudan,1,0,AFR
+SEN,Senegal,1,0,AFR
+SGP,Singapore,1,0,APG
+SLB,Solomon Islands,1,0,APG
+SLE,Sierra Leone,1,0,AFR
+SLV,El Salvador,1,0,GRULAC
+SMR,San Marino,1,0,WEOG
+SOM,Somalia,1,0,AFR
+SRB,Serbia,1,0,EEG
+SSD,South Sudan,1,0,AFR
+STP,Sao Tome and Principe,1,0,AFR
+SUR,Suriname,1,0,GRULAC
+SVK,Slovakia,1,0,EEG
+SVN,Slovenia,1,0,EEG
+SWE,Sweden,1,0,WEOG
+SWZ,Eswatini,1,0,AFR
+SYC,Seychelles,1,0,AFR
+SYR,Syria,1,0,APG
+TCD,Chad,1,0,AFR
+TGO,Togo,1,0,AFR
+THA,Thailand,1,0,APG
+TJK,Tajikistan,1,0,APG
+TKM,Turkmenistan,1,0,APG
+TLS,Timor-Leste,1,0,APG
+TON,Tonga,1,0,APG
+TTO,Trinidad and Tobago,1,0,GRULAC
+TUN,Tunisia,1,0,AFR
+TUR,Türkiye,1,0,WEOG
+TUV,Tuvalu,1,0,APG
+TZA,United Republic of Tanzania,1,0,AFR
+UGA,Uganda,1,0,AFR
+UKR,Ukraine,1,0,EEG
+URY,Uruguay,1,0,GRULAC
+USA,United States of America,1,1,WEOG
+UZB,Uzbekistan,1,0,APG
+VAT,Holy See,0,0,
+VCT,Saint Vincent and the Grenadines,1,0,GRULAC
+VEN,Venezuela,1,0,GRULAC
+VNM,Viet Nam,1,0,APG
+VUT,Vanuatu,1,0,APG
+WSM,Samoa,1,0,APG
+YEM,Yemen,1,0,APG
+ZAF,South Africa,1,0,AFR
+ZMB,Zambia,1,0,AFR
+ZWE,Zimbabwe,1,0,AFR

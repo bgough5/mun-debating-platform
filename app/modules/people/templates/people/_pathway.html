@@ -1,0 +1,16 @@
+{% from "_macros.html" import hidden_csrf %}
+<section class="card" aria-labelledby="h-path"><h2 id="h-path">Pathway: {{ path.done }} of {{ path.total }} milestones</h2>
+{% if path.next %}<p>Next step: <strong>{{ path.next.name }}</strong> — {{ path.next.description }}</p>{% endif %}
+<ol class="small">
+{% for m in path.milestones %}
+  <li>{% if m.achieved %}<span aria-hidden="true">✔</span> <strong>{{ m.name }}</strong> <span class="muted">({{ m.achieved.achieved_on }}{% if m.achieved.evidence_note %}: {{ m.achieved.evidence_note }}{% endif %})</span>
+      {% else %}{{ m.name }} <span class="muted">({{ m.track }})</span>{% if m.suggested %} — <em>suggested: {{ m.suggested }}</em>{% endif %}{% endif %}
+    {% if not m.achieved and actor and actor.is_staff and st is defined %}
+      <form method="post" action="/people/students/{{ st.id }}/milestones" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="milestone_id" value="{{ m.id }}">
+        <label class="visually-hidden" for="note{{ m.id }}">Evidence for {{ m.name }}</label><input id="note{{ m.id }}" name="note" placeholder="Evidence (optional)" value="{{ m.suggested or '' }}">
+        <button type="submit" class="secondary">Record<span class="visually-hidden"> {{ m.name }}</span></button></form>
+    {% endif %}
+  </li>
+{% endfor %}
+</ol>
+</section>

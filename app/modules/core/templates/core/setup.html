@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<h1>First-run setup</h1>
+<p class="lede">Choose the coordinator passphrase. It is stored only as a scrypt hash on this computer (in <code>data/config.json</code>), never in the code repository.</p>
+<form method="post" action="/setup" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="p1">Coordinator passphrase <span class="hint">At least 10 characters. Four random words work well.</span></label>
+    <input id="p1" type="password" name="passphrase" autocomplete="new-password" required minlength="10"></div>
+  <div class="field"><label for="p2">Type it again</label><input id="p2" type="password" name="passphrase2" autocomplete="new-password" required minlength="10"></div>
+  <button type="submit">Save and sign in</button>
+</form>
+{% endblock %}

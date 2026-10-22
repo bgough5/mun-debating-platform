@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, hidden_csrf %}
+{% block content %}
+{{ breadcrumb([("Admin", "/admin"), (t.label, None)]) }}
+<h1>{{ t.label }}</h1>
+{% if t.note %}<p class="lede">{{ t.note }}</p>{% endif %}
+<div class="row no-print">
+  <a class="button" href="/admin/t/{{ t.name }}/new">Add</a>
+  <a class="button secondary" href="/admin/csv/{{ t.name }}.csv">Export CSV</a>
+  {% if show == 'deleted' %}<a href="/admin/t/{{ t.name }}">Show current rows</a>{% else %}<a href="/admin/t/{{ t.name }}?show=deleted">Show deleted rows</a>{% endif %}
+</div>
+<form method="get" class="inline no-print" role="search" style="margin:.75rem 0">
+  <div class="field"><label for="q">Search</label><input type="search" id="q" name="q" value="{{ q }}"></div>
+  <button type="submit" class="secondary">Search</button>
+</form>
+<div class="table-wrap"><table>
+  <caption>{{ data|length }} row(s){% if data|length == 1000 %} (first 1000){% endif %}</caption>
+  <thead><tr>{% for c in t.cols[:6] %}<th scope="col">{{ c.label }}</th>{% endfor %}<th scope="col"><span class="visually-hidden">Edit</span></th></tr></thead>
+  <tbody>
+  {% for r in data %}
+  <tr>
+    {% for c in t.cols[:6] %}<td>
+      {% if c.type == 'bool' %}{{ 'Yes' if r[c.name] else 'No' }}
+      {% elif c.type == 'ref' %}{{ refs[c.name].get(r[c.name], r[c.name]) }}
+      {% elif c.name == 'flag_svg' %}{{ r[c.name]|safe if r[c.name] else '' }}
+      {% else %}{{ (r[c.name]|string)[:120] if r[c.name] is not none else '' }}{% endif %}
+    </td>{% endfor %}
+    <td><a href="/admin/t/{{ t.name }}/{{ r[pk] }}">Edit<span class="visually-hidden"> {{ r[t.cols[0].name] }} {{ r[t.cols[1].name] if t.cols|length > 1 else '' }}</span></a></td>
+  </tr>
+  {% else %}<tr><td colspan="7">Nothing here yet.</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+<section class="card no-print" aria-labelledby="h-import" style="margin-top:1rem">
+  <h2 id="h-import">Import CSV</h2>
+  <p class="small">Columns: {{ t.cols|map(attribute='name')|join(', ') }}. Rows matching an existing {{ (t.natural_key or ['id'])|join(' + ') }} are updated; others are added. If any row has a problem, nothing is imported.</p>
+  <form method="post" action="/admin/import/{{ t.name }}" enctype="multipart/form-data" class="inline">
+    {{ hidden_csrf(csrf) }}
+    <div class="field"><label for="file">CSV file (UTF-8)</label><input type="file" id="file" name="file" accept=".csv,text/csv" required></div>
+    <button type="submit">Import</button>
+  </form>
+</section>
+{% endblock %}

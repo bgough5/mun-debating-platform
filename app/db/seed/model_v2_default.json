@@ -1,0 +1,11 @@
+{
+ "name": "v2.0-default",
+ "notes": "Initial constants. Unvalidated: chosen to match the v2 abstain band (c = ±0.4) and give unknown countries a wide distribution. Tune only by calibration (spec §5.6).",
+ "params": {
+  "sigma_unknown": 1.5, "sigma_min": 0.45, "c_yes": 0.4, "c_no": -0.4,
+  "archetype_weight": 1.0,
+  "strength": {"weak": 0.5, "moderate": 1.0, "strong": 1.5},
+  "conditional_factor": 0.5, "stale_days": 180, "stale_factor": 0.5,
+  "history_weight_per_vote": 0.25, "history_weight_cap": 4.0, "swing_step": 1.0
+ }
+}

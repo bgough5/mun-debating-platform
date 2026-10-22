@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, hidden_csrf %}
+{% block content %}
+{{ breadcrumb([("Admin", "/admin"), ("Data, demo mode and backups", None)]) }}
+<h1>Data, demo mode and backups</h1>
+<section class="card" aria-labelledby="h-ds">
+  <h2 id="h-ds">Dataset</h2>
+  <p>Open now: <strong>{{ settings.dataset }}</strong>. The demo dataset holds only generated fake people, for training staff.
+  Switching signs everyone else out, so real and demo data are never open together.</p>
+  {% if live %}<div class="notice">{{ live }} live session(s) are open. Close them before switching.</div>{% endif %}
+  <form method="post" action="/admin/data/switch" class="inline">{{ hidden_csrf(csrf) }}
+    <input type="hidden" name="dataset" value="{{ 'real' if demo else 'demo' }}">
+    <button type="submit">Switch to {{ 'real data' if demo else 'demo mode' }}</button></form>
+  {% if demo %}
+  <details style="margin-top:.75rem"><summary>Reset the demo data…</summary>
+    <form method="post" action="/admin/data/reset-demo" class="inline">{{ hidden_csrf(csrf) }}
+      <label class="checks"><input type="checkbox" name="confirm" value="yes" required> Yes, delete all demo changes and regenerate the fake dataset</label>
+      <button type="submit" class="danger">Reset demo data</button></form></details>
+  {% endif %}
+</section>
+<section class="card" aria-labelledby="h-bk">
+  <h2 id="h-bk">Backups</h2>
+  <p>A backup is made automatically when the newest is more than a day old (checked hourly while the app runs). Folder: <code>{{ settings.backup_dir }}</code>.
+  Last backup: {% if backup_age is none %}<strong>none yet</strong>{% else %}{{ (backup_age/3600)|round(1) }} hours ago{% endif %}.</p>
+  <div class="row">
+    <form method="post" action="/admin/data/backup-now">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Back up now</button></form>
+    <a class="button" href="/admin/data/download" hx-boost="false">Download a backup (.zip)</a>
+  </div>
+  {% if files %}<h3>Recent backup files</h3><ul class="small">{% for f in files %}<li>{{ f.name }}</li>{% endfor %}</ul>{% endif %}
+  <h3>Restore from a backup</h3>
+  <p>Use this to move to another laptop: download a backup here, copy the app to the new machine, start it, then restore the file there.
+  The data open now is saved as a backup file first.</p>
+  <form method="post" action="/admin/data/restore" enctype="multipart/form-data" class="stack" hx-boost="false">{{ hidden_csrf(csrf) }}
+    <div class="field"><label for="bfile">Backup file (.zip)</label><input id="bfile" type="file" name="file" accept=".zip" required></div>
+    <label class="checks"><input type="checkbox" name="confirm" value="yes" required> Yes, replace the {{ settings.dataset }} data with this backup</label>
+    <button type="submit" class="danger">Restore</button>
+  </form>
+</section>
+{% endblock %}
