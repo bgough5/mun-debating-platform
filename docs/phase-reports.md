@@ -43,3 +43,53 @@ Audit figures re-checked with `node tools/audit/engine_audit.js` (output in `too
 - Computed delegations in a division are labelled and excluded from calibration (`test_division_with_computed_delegations_records_calibration`); the Security Council veto live (`test_security_council_veto_live`).
 - One editor per paragraph and lock expiry (`test_one_editor_per_paragraph`, `test_lock_lapses_without_heartbeat`); WebSocket channel access per role (`test_websocket_access_and_live_message`).
 - axe: 0 serious or critical on all Phase 2 pages (chair console, student live page, projector, minutes).
+
+## Phase 3 — Debating (tag `phase-3-complete`)
+
+| Exit criterion (spec §10) | Result | How measured |
+|---|---|---|
+| Draw tests: no repeat pairings where avoidable, side balance, determinism | **Pass** | `tests/engine/test_draw.py` (12 tests). Over 100 simulated 16-team events of 4 rounds: 0 repeat pairings; 97.5% of teams within one of an even aff/neg split, none worse than two. 108 teams × 4 rounds: 99.98% exactly 2 aff / 2 neg. Same seed → identical draw. Byes rotate; same-house debates avoided in carnivals; any rule the draw had to break is shown on it (D-045). |
+| Ladder maths tests | **Pass** | `test_round_ballot_validation_and_ladder`, `test_panel_majority_and_chair_casting` (2–1 panel; 1–1 goes to the chair), `test_house_points_reversible_and_attributed`, `test_corrected_ballot_moves_win_points`; the carnival test checks house totals equal the sum of entries exactly |
+| A 325-student carnival generated from fake data runs end to end | **Pass: 325 students, 108 teams, 216 debates over 4 rounds (random, then power-paired), every debate with a ballot, in 0.2 s** | `test_carnival_325_students_end_to_end`: every student on a team, one house per team, no repeat pairings, no same-house debates, ladder, speaker tab (≥300 speakers), house points, run sheet and MC script for all 4 rounds, and the event, setup, round and results pages render |
+| Staff dry-run done | **Not done** (needs staff; pilot checklist E1) | |
+
+Also: class practice for every group size 1–25 gives everyone a role (`test_practice_small_groups`, `test_practice_plan_uses_everyone`); a student adjudicator enters a ballot and students see only their own scores (`test_student_adjudicator_enters_ballot_and_student_sees_own_scores`); solo speech practice counts toward the pathway; the ballot works on a 360 px phone screen with touch (`test_ballot_on_a_phone`); axe 0 serious/critical on all debating pages. Bug found and fixed while closing the phase: re-awarding house points re-created entries staff had reversed (D-047).
+
+## Phase 4 — Intelligence (tag `phase-4-complete`)
+
+| Exit criterion (spec §10) | Result | How measured |
+|---|---|---|
+| Licence-checked UN voting data import | **Built; real import locked.** Neither licence could be confirmed: both hosts were unreachable from the build environment (D-051). | `test_real_import_locked_until_licence_confirmed`: import is refused until the coordinator records the licence text; then the importer runs. The UN Digital Library column mapping is from memory and unverified. |
+| Backtest report against baselines published in docs | **Published below, on SYNTHETIC data only.** No real backtest is possible until a real dataset is imported. | `test_backtest_beats_naive_baseline_on_synthetic`; numbers below from the same code |
+| Any AI output without a source is stored as unknown (tested) | **Pass** | `test_ai_estimate_without_source_is_stored_as_unknown`, `test_ai_estimate_with_sources_is_labelled_estimate` |
+| AI use approved by the school before it's switched on | **Enforced in code; approval not obtained.** The default provider is offline; a real provider is used only when the coordinator records the school's approval (`test_default_provider_is_offline_and_approval_required`). The Anthropic adapter was tested only with a mock client. | |
+
+**Backtest on synthetic data — these numbers say nothing about real UN voting.** The fixture (`tools/make_synthetic_votes.py`: 120 resolutions × 70 countries, generated with a known per-country, per-topic tendency) was split 70/30 by date: 84 resolutions to learn from, 36 to test on (2,440 test votes). Brier is the three-outcome score (0 best, 2 worst); intervals are 95% bootstrap; "beats" means the paired-bootstrap interval of the difference is entirely below 0.
+
+| Predictor | Brier | Log loss | Difference vs voting-history prior (95% CI) |
+|---|---|---|---|
+| **Voting-history prior (the platform)** | **0.395** (0.377–0.414) | **0.682** (0.651–0.715) | — |
+| Each country's past vote shares | 0.515 | 0.876 | prior better by 0.121 (0.108–0.132) |
+| Everyone votes yes | 0.747 | 1.349 | prior better by 0.352 (0.329–0.375) |
+| Regional group majority (leave-one-out) | 0.786 | 1.416 | prior better by 0.391 (0.367–0.418) |
+
+Calibration verdict on the same data: **over-confident** (expected calibration error 0.061; 7 of 10 reliability bins flagged after Bonferroni correction, e.g. outcomes the prior gave about 85% happened 70% of the time). So on data generated to contain the signal the prior looks for, the prior finds it, but its probabilities are too extreme. Tuning `history_weight_per_vote` or `sigma_min` against a **real** backtest is the next step once a licence is confirmed; tuning against synthetic data would only fit the generator.
+
+Other Phase 4 checks: synthetic data loads only into the demo dataset; the history prior is used in predictions and labelled "Voting history (SYNTHETIC test data)"; position requests carry no student fields (checked on the dataclass); student AI practice is labelled as AI and private to the student; coaching points to rubric levels and asks questions, never rewrites the student's text.
+
+## Phase 5 — Hardening (tag `phase-5-complete`)
+
+| Exit criterion (spec §10) | Result | How measured |
+|---|---|---|
+| Permissions audit | **Pass: 164 route/method pairs, every one with a server-side check or a listed public reason; 309 refused requests made, all refused, 0 data changes; cross-class access refused** | `tests/api/test_permissions_matrix.py`; table in `docs/permissions.md` (generated from the code). Found and fixed: the UN-vote import route checked the role inside the function, invisible to the audit; it now uses the standard dependency. |
+| Restore from backup on a second machine | **Done between two separate app processes with separate data folders on one computer; not on a second physical machine or on Windows.** 79 tables, 973 rows, 0 differences; integrity ok; 0.07 s | `python tools/restore_drill.py`, `docs/backup-restore.md`. Found and fixed: a damaged backup left the app refusing requests until restarted; restored backups revived old device sign-ins (D-057). |
+| Accessibility audit with no AA failures outstanding | **Automated: 0 serious or critical axe issues and no horizontal scroll at 320 px on all 337 distinct pages reachable by the coordinator (276), staff (37), students (18) and projector/public (6). Manual NVDA pass not done.** | `tests/ui/test_phase5_a11y.py` follows every link per role; page list in `test-results/a11y-pages.json`. Found and fixed: 25+ pages overflowed at 320 px (dropdowns sized to their longest option, grid columns with fixed minimums, an unwrapped URL), printable documents lacked an h1. axe checks only what can be automated (roughly a third to a half of WCAG). |
+| Privacy summary for school sign-off | **Written; not yet reviewed by the school** | `docs/privacy-summary.md`, with 6 open questions for the school |
+| Performance check | See Phase 2 (45-minute load test) | |
+| Staff guide | **Written** | `docs/staff-guide.md` |
+| Pilot go/no-go checklist signed off by Ben | **Checklist written; not signed (needs Ben)** | `docs/pilot-checklist.md` |
+| The pilot with a class of 25 | **Not done** (out of scope for the build) | |
+
+Also in Phase 5: the nightly retention purge (D-054) and coordinator-only student erasure (D-055), both tested; the CSV and UN-vote imports moved off the event loop.
+
+**Test suite at the end of the build:** 519 tests, all passing (engine, API, Playwright + axe), 5 min 22 s in the cloud container, most of it the accessibility crawl.
