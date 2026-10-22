@@ -9,3 +9,4 @@ data/
 .venv/
 .pytest_cache/
 test-results/
+.venv-smoke/

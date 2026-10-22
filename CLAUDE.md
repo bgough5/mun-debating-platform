@@ -4,7 +4,7 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
 
 ## Current state
 
-- **Phases 1–5 are built (22 Oct 2026)** on branch `platform-build`, draft PR #1 into `main` (Ben merges). Class size is 1–25 live students (D-022). Not done: the student pilot and everything in `docs/pilot-checklist.md` that needs Ben, staff or the school.
+- **Phases 1–6 are built (22 Oct 2026)** on branch `platform-build`, draft PR #1 into `main` (Ben merges). Phase 6 (design system, icons, guided simulation, onboarding, content, robustness) is D-058 to D-063. Class size is 1–25 live students (D-022). Not done: the student pilot and everything in `docs/pilot-checklist.md` that needs Ben, staff or the school.
 - Build progress and measured exit criteria: `docs/phase-reports.md`. Phase tags: `phase-N-complete` (created locally in the build; the cloud session couldn't push tags, so the PR lists the commits for Ben to tag).
 - Guides: `docs/staff-guide.md`, `docs/privacy-summary.md` (for school sign-off), `docs/permissions.md` (generated), `docs/backup-restore.md`, `docs/pilot-checklist.md`.
 - Read first: `docs/spec.md` (what we're building), `docs/decisions.md` (what's decided and why; D-025 onward are build-session decisions), `docs/audit.md` (state of the old code).
@@ -36,6 +36,11 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
 - Phase 2 load test: `python tools/loadtest.py --minutes 45` (30 clients; results in `test-results/load/`). Backup drill: `python tools/restore_drill.py`.
 - AI: `app/ai/` provider interface; the offline `FakeProvider` is the default and the only one tested. Never enable a real provider without the school's approval recorded in Intelligence → AI settings.
 - UN voting data import stays locked until a licence is confirmed in the app (D-051). Tests use `tests/fixtures/synthetic_un_votes.csv` only.
+- Design: colours only as tokens in `app/web/design.py` and `:root` of `app.css`; `tests/test_design_contrast.py` checks AA and rejects raw colours. Icons only through `icon("concept")` (`app/web/icons.py`); add a concept there and rerun `tools/build_icons.py`.
+- Every page's `<title>` must equal its `<h1>` and pages below a section need breadcrumbs (`tests/api/test_crawl.py`). Empty lists say what to do next (`empty_state` macro).
+- The guided simulation's chair scripts are data (`procedure_stage`, Admin → Procedure stages). Whip counts are scored against actual votes, never the model (D-061).
+- Demo content that invents positions uses source type `demo_unverified` and must say it isn't a real position (D-063).
+- `tools/screenshots.py` regenerates `docs/screens/` for design review; `tools/windows_smoke.ps1` is for Ben's laptop.
 
 ## Running the frozen v2 game and its tests
 

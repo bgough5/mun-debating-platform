@@ -4,7 +4,9 @@ One browser-based platform for South Oakleigh College's Model UN and debating wo
 the resolution workspace and chair tools, debating draws and ballots, and student pathways. It runs on the
 coordinator's laptop over school Wi-Fi (D-002). Students join with a class code and tap their name; no installs.
 
-**Status:** Phases 1–5 built (except the student pilot, which needs Ben, staff and the school). See
+**Status:** Phases 1–6 built (except the student pilot, which needs Ben, staff and the school). Phase 6 added the
+South Oakleigh design system, icons, the guided committee simulation with the whip-count exercise, onboarding and
+help, new content, and robustness tests. See
 `docs/phase-reports.md` for what is built and the measured exit criteria of each phase, and
 `docs/pilot-checklist.md` for what must happen before any class uses it.
 
@@ -24,9 +26,19 @@ coordinator's laptop over school Wi-Fi (D-002). Students join with a class code 
 - **Intelligence:** licence-gated UN voting-history import (locked: licences not confirmed, D-051), voting-history
   priors, backtests against baselines, and AI features behind a provider interface that is offline by default (D-053).
 - **Hardening:** permissions audit, backups and restore, retention purge and student erasure, accessibility checks.
+- **Guided simulation (Phase 6):** nine stages of real committee procedure with the chair's script (editable data),
+  roll call and agenda, a whip-count exercise scored against the votes actually cast, a debrief with pivotal votes,
+  the engine's calibration on the vote and delegate profiles; practice for 1–3 students against a computed chamber.
+- **Onboarding and help:** a getting-started wizard, printable join cards and posters with QR codes made on the
+  laptop, a Help dialog on every page, a glossary, a student quick-start and the staff guide inside the app.
 
 Guides: `docs/staff-guide.md` (for teachers), `docs/privacy-summary.md` (for school sign-off),
-`docs/permissions.md`, `docs/backup-restore.md`, `docs/pilot-checklist.md`.
+`docs/permissions.md`, `docs/backup-restore.md`, `docs/pilot-checklist.md`. Design review: `docs/screens/index.md`
+(screenshots of every key page on a laptop and a phone).
+
+**On Ben's laptop, first:** `powershell -ExecutionPolicy Bypass -File tools\windows_smoke.ps1` (add `-Browser` for the
+browser and accessibility tests). It installs into its own `.venv-smoke`, runs the tests, starts the platform on demo
+data, checks it answers and prints a PASS/FAIL table.
 
 ## Run it (Windows)
 
@@ -53,6 +65,8 @@ python tools/check_exports.py                 # open every export in LibreOffice
 python tools/loadtest.py --minutes 45         # Phase 2 load test: 30 clients, writes test-results/load/
 python tools/permissions_report.py            # rewrite docs/permissions.md from the code
 python tools/restore_drill.py                 # backup and restore into a separate app process
+python tools/screenshots.py                   # screenshot gallery -> docs/screens/
+python tools/build_icons.py <lucide-static>   # rebuild the icon sprite from lucide-static (ISC)
 ```
 
 ## Layout
