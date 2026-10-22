@@ -29,7 +29,7 @@
   <div class="field"><label for="dr">Rounds</label><input id="dr" type="number" name="rounds" value="4" min="1" max="8" style="width:5rem"></div>
   <button type="submit" class="secondary">Generate</button></form></section>
 {% endif %}
-<section class="card" aria-labelledby="h-hp"><h2 id="h-hp">House points (all events)</h2>
+<section class="card" aria-labelledby="h-hp"><h2 id="h-hp">{{ icon("house") }} House points (all events)</h2>
 {% if totals %}<ol>{% for h in totals %}<li><strong>{{ h.name }}</strong>: {{ h.points|num(0) }}</li>{% endfor %}</ol>{% else %}<p>No houses yet.{% if actor.is_coordinator %} <a href="/admin/t/house">Add houses</a>.{% endif %}</p>{% endif %}
 </section>
 </div>

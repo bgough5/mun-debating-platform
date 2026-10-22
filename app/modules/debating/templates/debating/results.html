@@ -2,15 +2,15 @@
 {% from "_macros.html" import hidden_csrf, breadcrumb %}
 {% block content %}
 {{ breadcrumb([("Debating", "/debating"), (e.name, "/debating/events/" ~ e.id), ("Results", None)]) }}
-<h1>Results: {{ e.name }}</h1>
+<h1>{{ icon("ladder") }} Results: {{ e.name }}</h1>
 <p class="no-print"><a href="/debating/events/{{ e.id }}/results.csv?what=ladder" hx-boost="false">Ladder CSV</a> · <a href="/debating/events/{{ e.id }}/results.csv?what=speakers" hx-boost="false">Speaker tab CSV</a></p>
 <div class="cols-2">
-<section aria-labelledby="h-lad"><h2 id="h-lad">Team ladder</h2>
+<section aria-labelledby="h-lad"><h2 id="h-lad">{{ icon("ladder") }} Team ladder</h2>
 <p class="small">Ranked by wins, then total team points, then margin, then a fixed order (no ties left open).</p>
 <div class="table-wrap"><table><thead><tr><th scope="col" class="num">#</th><th scope="col">Team</th><th scope="col">House</th><th scope="col" class="num">Wins</th><th scope="col" class="num">Points</th><th scope="col" class="num">Margin</th><th scope="col">Sides</th></tr></thead>
 <tbody>{% for t in ladder %}<tr><td class="num">{{ t.rank }}</td><td>{{ t.team }}</td><td>{{ t.house }}</td><td class="num">{{ t.wins|num(0) }}</td><td class="num">{{ t.points }}</td><td class="num">{{ t.margin }}</td><td class="small">{{ t.aff }}A {{ t.neg }}N{% if t.byes %} {{ t.byes }} bye{% endif %}</td></tr>
 {% else %}<tr><td colspan="7">No results yet.</td></tr>{% endfor %}</tbody></table></div></section>
-<section aria-labelledby="h-hp"><h2 id="h-hp">House points</h2>
+<section aria-labelledby="h-hp"><h2 id="h-hp">{{ icon("house") }} House points</h2>
 <ol>{% for h in totals %}<li><strong>{{ h.name }}</strong>: {{ h.points|num(1) }}</li>{% endfor %}</ol>
 <form method="post" action="/debating/events/{{ e.id }}/housepoints" class="inline no-print">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="all_rounds"><button type="submit" class="secondary">Award for all rounds</button></form>
 <form method="post" action="/debating/events/{{ e.id }}/housepoints" class="inline no-print">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="final"><button type="submit" class="secondary">Award final placings</button></form>
@@ -21,7 +21,7 @@
   <div class="field"><label for="hr">Reason</label><input id="hr" type="text" name="reason" required></div>
   <button type="submit" class="secondary">Add</button></form></details>
 </section></div>
-<h2>Speaker tab</h2>
+<h2>{{ icon("award") }} Speaker tab</h2>
 <div class="table-wrap"><table><thead><tr><th scope="col" class="num">#</th><th scope="col">Speaker</th><th scope="col">House</th><th scope="col" class="num">Debates</th><th scope="col" class="num">Average</th></tr></thead>
 <tbody>{% for s_ in tab[:50] %}<tr><td class="num">{{ s_.rank }}</td><td>{{ s_.name }}</td><td>{{ s_.house or '' }}</td><td class="num">{{ s_.debates }}</td><td class="num">{{ s_.average }}</td></tr>
 {% else %}<tr><td colspan="5">No speaker scores yet.</td></tr>{% endfor %}</tbody></table></div>

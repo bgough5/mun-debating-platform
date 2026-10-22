@@ -3,7 +3,7 @@
 {% block content %}
 {{ breadcrumb([("Debating", "/debating"), (e.name, "/debating/events/" ~ e.id), ("Set up", None)]) }}
 <h1>Set up: {{ e.name }}</h1>
-<h2>Teams ({{ teams|length }})</h2>
+<h2>{{ icon("people") }} Teams ({{ teams|length }})</h2>
 <div class="table-wrap"><table>
 <thead><tr><th scope="col">Team</th><th scope="col">House</th><th scope="col">Speakers</th><th scope="col"><span class="visually-hidden">Remove</span></th></tr></thead>
 <tbody>{% for t in teams %}<tr><td>{{ t.name }}{% if t.needs_accessible %} <span class="small">(accessible room)</span>{% endif %}</td><td>{{ t.house or '—' }}</td>
@@ -32,7 +32,7 @@
   {% if not e.class_id %}<p class="small muted">For a school-wide event, use “Make teams from a class” for each year group.</p>{% endif %}</form></section>
 </div>
 <div class="grid">
-<section class="card" aria-labelledby="h-rooms"><h2 id="h-rooms">Rooms ({{ rooms|length }})</h2>
+<section class="card" aria-labelledby="h-rooms"><h2 id="h-rooms">{{ icon("room") }} Rooms ({{ rooms|length }})</h2>
   <ul class="small">{% for r in rooms %}<li>{{ r.name }}{% if not r.accessible %} (not accessible){% endif %}
     <form method="post" action="/debating/events/{{ e.id }}/setup" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="remove"><input type="hidden" name="table" value="room"><input type="hidden" name="id" value="{{ r.id }}"><button type="submit" class="link">remove<span class="visually-hidden"> {{ r.name }}</span></button></form></li>{% endfor %}</ul>
   <form method="post" action="/debating/events/{{ e.id }}/setup" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="rooms">
@@ -40,7 +40,7 @@
     <div class="field"><label for="rc">…or just how many</label><input id="rc" type="number" name="count" min="1" max="200"></div>
     <label class="checks"><input type="checkbox" name="not_accessible" value="1"> These rooms are not wheelchair accessible</label>
     <button type="submit" class="secondary">Add rooms</button></form></section>
-<section class="card" aria-labelledby="h-adj"><h2 id="h-adj">Adjudicators ({{ adjs|length }})</h2>
+<section class="card" aria-labelledby="h-adj"><h2 id="h-adj">{{ icon("adjudicator") }} Adjudicators ({{ adjs|length }})</h2>
   <ul class="small">{% for a in adjs %}<li>{{ a.name }} · rating {{ a.rating }}{% if a.house %} · {{ a.house }} (won't judge {{ a.house }} teams){% endif %}{% if a.student_id %} · student{% endif %}
     <form method="post" action="/debating/events/{{ e.id }}/setup" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="remove"><input type="hidden" name="table" value="adjudicator"><input type="hidden" name="id" value="{{ a.id }}"><button type="submit" class="link">remove<span class="visually-hidden"> {{ a.name }}</span></button></form></li>{% endfor %}</ul>
   <form method="post" action="/debating/events/{{ e.id }}/setup" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="adjudicator">

@@ -27,4 +27,4 @@
   <p class="small muted">Delegations with no student are voted by the engine, from a prediction saved at this moment, and labelled computed. Only human votes are used to calibrate the engine.</p>
 </form>
 {% endif %}
-{% if recent %}<h3>Results</h3><ul>{% for d in recent %}<li>{{ d.title }}: {{ d.summary }}</li>{% endfor %}</ul>{% endif %}
+{% if recent %}<h3>{{ icon("ladder") }} Results</h3><ul>{% for d in recent %}<li>{{ d.title }}: {{ d.summary }}</li>{% endfor %}</ul>{% endif %}

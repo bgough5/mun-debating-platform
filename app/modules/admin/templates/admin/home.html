@@ -14,7 +14,7 @@
       <li><a href="/admin/model">Prediction model versions</a></li>
       <li><a href="/people/staff">Staff accounts</a></li>
     </ul>
-    <form method="post" action="/admin/undo">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Undo my last change</button></form>
+    <form method="post" action="/admin/undo">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">{{ icon("undo") }} Undo my last change</button></form>
   </section>
   <section class="card" aria-labelledby="h-ref">
     <h2 id="h-ref">Reference tables</h2>
@@ -23,7 +23,7 @@
       <tbody>
       {% for t in tables %}
         <tr><td><a href="/admin/t/{{ t.name }}">{{ t.label }}</a></td><td class="num">{{ counts[t.name] }}</td>
-            <td><a href="/admin/csv/{{ t.name }}.csv">Export<span class="visually-hidden"> {{ t.label }}</span></a></td></tr>
+            <td><a href="/admin/csv/{{ t.name }}.csv">{{ icon("export") }} Export<span class="visually-hidden"> {{ t.label }}</span></a></td></tr>
       {% endfor %}
       </tbody>
     </table>

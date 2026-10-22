@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_macros.html" import hidden_csrf %}
 {% block content %}
-<h1>Ballot: round {{ p.number }}</h1>
+<h1>{{ icon("ballot") }} Ballot: round {{ p.number }}</h1>
 {% if p.motion %}<p class="lede">Motion: {{ p.motion }}</p>{% endif %}
 {% if existing %}<div class="notice"><p>{{ existing|length }} ballot(s) already in{% if result %}: {{ teams[result.winner].name }} won ({{ result.split }}){% endif %}. Saving again replaces that adjudicator's ballot.</p></div>{% endif %}
 <form method="post" action="/debating/pairings/{{ p.id }}/ballot" class="stack" style="max-width:none">{{ hidden_csrf(csrf) }}

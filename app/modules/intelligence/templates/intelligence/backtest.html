@@ -9,7 +9,7 @@
   <section class="card"><h2>Sample</h2><p class="bigstat">{{ r.n }}</p><p>country-votes</p></section>
   <section class="card"><h2>Brier</h2><p class="bigstat">{{ r.brier|num(3) }}</p><p>90% interval {{ r.brier_ci[0]|num(3) }}–{{ r.brier_ci[1]|num(3) }}</p></section>
   <section class="card"><h2>Log loss</h2><p class="bigstat">{{ r.log_loss|num(3) }}</p><p>90% interval {{ r.log_loss_ci[0]|num(3) }}–{{ r.log_loss_ci[1]|num(3) }}</p></section>
-  <section class="card"><h2>Calibration</h2><p class="bigstat" style="font-size:1.3rem">{{ r.verdict }}</p><p>ECE {{ r.ece|num(3) }}</p></section>
+  <section class="card"><h2>{{ icon("calibration") }} Calibration</h2><p class="bigstat" style="font-size:1.3rem">{{ r.verdict }}</p><p>ECE {{ r.ece|num(3) }}</p></section>
 </div>
 <h2>Against baselines</h2>
 <div class="table-wrap"><table><thead><tr><th scope="col">Baseline</th><th scope="col" class="num">Brier</th><th scope="col" class="num">Model minus baseline (90% interval)</th><th scope="col">Result</th></tr></thead>

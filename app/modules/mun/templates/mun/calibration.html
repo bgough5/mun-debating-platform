@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Calibration report</h1>
+<h1>{{ icon("calibration") }} Calibration report</h1>
 <p class="lede">Does the engine's confidence match what happened? Two separate targets, never pooled (D-013):
 <a href="/mun/calibration?context=conference" {% if context == 'conference' %}aria-current="page"{% endif %}>conference votes</a> ·
 <a href="/mun/calibration?context=real_un" {% if context == 'real_un' %}aria-current="page"{% endif %}>real UN votes (backtests)</a>.</p>

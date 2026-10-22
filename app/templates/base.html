@@ -16,7 +16,7 @@
 <div id="live-announcer" class="visually-hidden" role="status" aria-live="polite"></div>
 <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 <a class="skip" href="#main">Skip to main content</a>
-{% if demo %}<div class="demo-banner" role="status">DEMO — fake data only. Nothing here is a real student.</div>{% endif %}
+{% if demo %}<div class="demo-banner" role="status">{{ icon("demo") }} DEMO — fake data only. Nothing here is a real student.</div>{% endif %}
 {% block header %}
 <header class="site">
   <div class="bar">
@@ -24,25 +24,25 @@
     <nav class="main" aria-label="Main">
       <ul>
       {% if actor and actor.is_staff %}
-        {% if modules.mun %}<li><a href="/mun" {% if req_path.startswith('/mun') %}aria-current="page"{% endif %}>Model UN</a></li>{% endif %}
-        {% if modules.chair %}<li><a href="/chair" {% if req_path.startswith('/chair') %}aria-current="page"{% endif %}>Chair</a></li>{% endif %}
-        {% if modules.debating %}<li><a href="/debating" {% if req_path.startswith('/debating') %}aria-current="page"{% endif %}>Debating</a></li>{% endif %}
-        {% if modules.people %}<li><a href="/people" {% if req_path.startswith('/people') %}aria-current="page"{% endif %}>People</a></li>{% endif %}
-        {% if modules.intelligence %}<li><a href="/intel" {% if req_path.startswith('/intel') %}aria-current="page"{% endif %}>Intelligence</a></li>{% endif %}
-        {% if actor.is_coordinator %}<li><a href="/admin" {% if req_path.startswith('/admin') %}aria-current="page"{% endif %}>Admin</a></li>{% endif %}
-        <li><a href="/practice-game">Practice game</a></li>
+        {% if modules.mun %}<li><a href="/mun" {% if req_path.startswith('/mun') %}aria-current="page"{% endif %}>{{ icon("conference") }} Model UN</a></li>{% endif %}
+        {% if modules.chair %}<li><a href="/chair" {% if req_path.startswith('/chair') %}aria-current="page"{% endif %}>{{ icon("chair") }} Chair</a></li>{% endif %}
+        {% if modules.debating %}<li><a href="/debating" {% if req_path.startswith('/debating') %}aria-current="page"{% endif %}>{{ icon("debate") }} Debating</a></li>{% endif %}
+        {% if modules.people %}<li><a href="/people" {% if req_path.startswith('/people') %}aria-current="page"{% endif %}>{{ icon("people") }} People</a></li>{% endif %}
+        {% if modules.intelligence %}<li><a href="/intel" {% if req_path.startswith('/intel') %}aria-current="page"{% endif %}>{{ icon("prediction") }} Intelligence</a></li>{% endif %}
+        {% if actor.is_coordinator %}<li><a href="/admin" {% if req_path.startswith('/admin') %}aria-current="page"{% endif %}>{{ icon("settings") }} Admin</a></li>{% endif %}
+        <li><a href="/practice-game">{{ icon("practice") }} Classic practice game</a></li>
       {% elif actor and actor.kind == 'student' %}
-        <li><a href="/me" {% if req_path == '/me' %}aria-current="page"{% endif %}>My page</a></li>
-        {% if modules.debating %}<li><a href="/me/practice" {% if req_path.startswith('/me/practice') %}aria-current="page"{% endif %}>Practise</a></li>{% endif %}
-        {% if modules.intelligence %}<li><a href="/me/ai-practice" {% if req_path.startswith('/me/ai-practice') %}aria-current="page"{% endif %}>AI delegation</a></li>{% endif %}
-        <li><a href="/practice-game">Practice game</a></li>
+        <li><a href="/me" {% if req_path == '/me' %}aria-current="page"{% endif %}>{{ icon("student") }} My page</a></li>
+        {% if modules.debating %}<li><a href="/me/practice" {% if req_path.startswith('/me/practice') %}aria-current="page"{% endif %}>{{ icon("practice") }} Practise</a></li>{% endif %}
+        {% if modules.intelligence %}<li><a href="/me/ai-practice" {% if req_path.startswith('/me/ai-practice') %}aria-current="page"{% endif %}>{{ icon("ai") }} AI delegation</a></li>{% endif %}
+        <li><a href="/practice-game">{{ icon("practice") }} Classic practice game</a></li>
       {% endif %}
       </ul>
     </nav>
     <div class="who">
       {% if actor %}
         <span>Signed in: <strong>{{ actor.label }}</strong></span>
-        <form method="post" action="/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="secondary" type="submit">Sign out</button></form>
+        <form method="post" action="/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="secondary" type="submit">{{ icon("sign-out") }} Sign out</button></form>
       {% else %}
         <a href="/join">Students: join</a> · <a href="/login">Staff sign in</a>
       {% endif %}

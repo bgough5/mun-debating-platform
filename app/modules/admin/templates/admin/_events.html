@@ -8,7 +8,7 @@
     <td>{{ e.entity }} {{ e.entity_id }}</td>
     <td>{{ e.action }}{% if e.undone_by %} <span class="muted">(undone)</span>{% endif %}</td>
     <td>{% if e.after_json and e.action in ('create','update','restore','restore_version') and actor and actor.is_coordinator %}
-      <form method="post" action="/admin/history/{{ e.seq }}/restore" class="inline">{{ hidden_csrf(csrf) }}<button class="link" type="submit">Restore this version<span class="visually-hidden"> (change {{ e.seq }})</span></button></form>{% endif %}</td>
+      <form method="post" action="/admin/history/{{ e.seq }}/restore" class="inline">{{ hidden_csrf(csrf) }}<button class="link" type="submit">{{ icon("restore") }} Restore this version<span class="visually-hidden"> (change {{ e.seq }})</span></button></form>{% endif %}</td>
   </tr>
   {% else %}<tr><td colspan="6">No changes yet.</td></tr>{% endfor %}
   </tbody>

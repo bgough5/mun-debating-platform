@@ -6,9 +6,9 @@
 <p class="lede">{{ com.name }} · Status: {{ res.status }} · Voting rule: {{ com.rule }}</p>
 <div class="row no-print">
   <a class="button" href="/mun/predict/resolution/{{ res.id }}">Predict the whole resolution</a>
-  <a class="button secondary" href="/mun/resolutions/{{ res.id }}/export.docx" hx-boost="false">Export to Word</a>
-  <a class="button secondary" href="/mun/resolutions/{{ res.id }}/print">Print / PDF</a>
-  <form method="post" action="/mun/undo" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Undo my last change</button></form>
+  <a class="button secondary" href="/mun/resolutions/{{ res.id }}/export.docx" hx-boost="false">{{ icon("export") }} Export to Word</a>
+  <a class="button secondary" href="/mun/resolutions/{{ res.id }}/print">{{ icon("print") }} Print / PDF</a>
+  <form method="post" action="/mun/undo" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">{{ icon("undo") }} Undo my last change</button></form>
 </div>
 {% if access == 'manage' %}
 <form method="post" action="/mun/resolutions/{{ res.id }}/status" class="inline no-print" style="margin-top:.5rem">{{ hidden_csrf(csrf) }}

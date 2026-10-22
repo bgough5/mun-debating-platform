@@ -13,14 +13,14 @@
         {% include "chair/_chair_floor.html" %}
       </div>
     </section>
-    <section aria-labelledby="h-div"><h2 id="h-div">Voting</h2>
+    <section aria-labelledby="h-div"><h2 id="h-div">{{ icon("vote") }} Voting</h2>
       <div id="division" data-live-channel="session:{{ s.id }}" hx-get="/chair/{{ s.id }}/f/division" hx-trigger="live-update" hx-swap="innerHTML">
         {% include "chair/_chair_division.html" %}
       </div>
     </section>
   </div>
   <div>
-    <section aria-labelledby="h-mot"><h2 id="h-mot">Motions</h2>
+    <section aria-labelledby="h-mot"><h2 id="h-mot">{{ icon("motion") }} Motions</h2>
       <div id="motions" data-live-channel="session:{{ s.id }}" hx-get="/chair/{{ s.id }}/f/motions" hx-trigger="live-update" hx-swap="innerHTML">
         {% include "chair/_chair_motions.html" %}
       </div>

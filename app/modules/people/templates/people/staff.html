@@ -2,7 +2,7 @@
 {% from "_macros.html" import breadcrumb, hidden_csrf %}
 {% block content %}
 {{ breadcrumb([("People", "/people"), ("Staff", None)]) }}
-<h1>Staff</h1>
+<h1>{{ icon("people") }} Staff</h1>
 <p class="lede">Staff run sessions and debating rounds for the classes they're given. They can't see admin data.</p>
 {% for sf in staff %}
 <section class="card" aria-labelledby="sf{{ sf.id }}">

@@ -15,7 +15,7 @@
   <section class="card" aria-labelledby="h-del"><h2 id="h-del">My delegations</h2>
     {% for d in dels %}<p>{{ flag(d.flag_svg, d.country) }} <strong>{{ d.country }}</strong> in <a href="/mun/committees/{{ d.committee_id }}">{{ d.committee }}</a>{% if d.role == 'head' %} (head of delegation){% endif %}</p>
     {% else %}<p>No delegation yet.</p>{% endfor %}
-    {% if resolutions %}<h3>Resolutions</h3><ul>{% for r in resolutions %}<li><a href="/mun/resolutions/{{ r.id }}">{{ r.title }}</a> <span class="muted small">({{ r.committee }})</span></li>{% endfor %}</ul>{% endif %}
+    {% if resolutions %}<h3>{{ icon("resolution") }} Resolutions</h3><ul>{% for r in resolutions %}<li><a href="/mun/resolutions/{{ r.id }}">{{ r.title }}</a> <span class="muted small">({{ r.committee }})</span></li>{% endfor %}</ul>{% endif %}
   </section>
   <section class="card" aria-labelledby="h-tasks"><h2 id="h-tasks">My tasks</h2>
     {% for t in tasks %}<form method="post" action="/mun/tasks/{{ t.id }}" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="back" value="/me">

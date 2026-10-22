@@ -8,6 +8,8 @@ from fastapi.responses import HTMLResponse
 from jinja2 import ChoiceLoader, Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup, escape
 
+from app.web.icons import icon
+
 APP_DIR = Path(__file__).resolve().parent.parent
 TEMPLATE_DIRS = [APP_DIR / "templates"] + sorted(p for p in (APP_DIR / "modules").glob("*/templates"))
 
@@ -20,15 +22,15 @@ env = Environment(
 
 # Stance is never shown by colour alone (spec §9): text + symbol + colour class.
 STANCE = {
-    "yes": ("Yes", "▲", "st-yes"), "abstain": ("Abstain", "●", "st-abs"), "no": ("No", "▼", "st-no"),
-    "absent": ("Absent", "○", "st-unk"), "unknown": ("Unknown", "?", "st-unk"),
+    "yes": ("Yes", "yes", "st-yes"), "abstain": ("Abstain", "abstain", "st-abs"), "no": ("No", "no", "st-no"),
+    "absent": ("Absent", "unknown", "st-unk"), "unknown": ("Unknown", "unknown", "st-unk"),
 }
 POSITION = {2: "Strongly support", 1: "Support", 0: "Neutral / abstain", -1: "Oppose", -2: "Strongly oppose"}
 
 
 def stance_badge(vote: str) -> Markup:
-    label, sym, cls = STANCE.get(vote, STANCE["unknown"])
-    return Markup(f'<span class="badge {cls}"><span aria-hidden="true">{sym}</span> {escape(label)}</span>')
+    label, icon_name, cls = STANCE.get(vote, STANCE["unknown"])
+    return Markup(f'<span class="badge {cls}">{icon(icon_name)} {escape(label)}</span>')
 
 
 def position_label(pos) -> str:
@@ -66,6 +68,7 @@ def mmss(seconds) -> str:
     return f"{s // 60}:{s % 60:02d}"
 
 
+env.globals.update(icon=icon)
 env.filters.update(stance=stance_badge, position=position_label, pct=pct, num=num, when=short_time, mmss=mmss)
 
 

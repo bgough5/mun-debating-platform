@@ -3,7 +3,7 @@
 {% block content %}
 <h1>Intelligence</h1>
 <p class="lede">Voting-history priors from real UN votes, backtests against baselines, and AI features. Everything here is labelled as an estimate, and nothing is used until its licence or approval is recorded.</p>
-<h2>Voting data sources</h2>
+<h2>{{ icon("vote") }} Voting data sources</h2>
 {% for s in sources %}
 <section class="card" aria-labelledby="src{{ s.id }}">
   <h3 id="src{{ s.id }}">{{ s.name }}{% if s.synthetic %} <span class="label-computed">synthetic</span>{% endif %}</h3>
@@ -27,7 +27,7 @@
         <div class="field"><label for="f{{ s.id }}">CSV file</label><input id="f{{ s.id }}" type="file" name="file" accept=".csv" required></div>
         <div class="field"><label for="pr{{ s.id }}">Columns</label><select id="pr{{ s.id }}" name="preset"><option value="undl">UN Digital Library voting CSV</option><option value="generic">Platform format (resolution_id, date, title, subjects, iso3, vote)</option></select></div>
         <div class="field"><label for="tp{{ s.id }}">Topic (for tagging resolutions)</label><select id="tp{{ s.id }}" name="topic_id"><option value="">—</option>{% for t in topics %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}</select></div>
-        <button type="submit">Import</button></form>
+        <button type="submit">{{ icon("import") }} Import</button></form>
       {% endif %}
       {% if s.resolutions >= 10 %}<form method="post" action="/intel/backtest/{{ s.id }}" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Run a backtest</button></form>{% endif %}
     {% endif %}

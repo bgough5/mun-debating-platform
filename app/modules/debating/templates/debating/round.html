@@ -18,7 +18,7 @@
   {% if r.status == 'released' %}<form method="post" action="/debating/rounds/{{ r.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="close"><button type="submit" class="secondary">Close round</button></form>{% endif %}
   <form method="post" action="/debating/rounds/{{ r.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="unrelease"><button type="submit" class="secondary">Back to draft</button></form>
   {% endif %}
-  <a class="button secondary" href="/debating/projector/{{ e.projector_token }}" target="_blank" rel="noopener">Projector</a>
+  <a class="button secondary" href="/debating/projector/{{ e.projector_token }}" target="_blank" rel="noopener">{{ icon("projector") }} Projector</a>
 </div>
 <p id="live-status" class="small muted"></p>
 <div id="draw" data-live-channel="debate:{{ e.id }}" hx-get="/debating/rounds/{{ r.id }}/f" hx-trigger="live-update" hx-swap="innerHTML">

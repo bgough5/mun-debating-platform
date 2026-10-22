@@ -10,7 +10,7 @@
   <p>{{ v.diff }}</p>
   <p class="small">Tags: {{ v.tags or 'none' }}</p>
   {% if can_restore and v.id != p.current_version_id %}
-  <form method="post" action="/mun/paragraphs/{{ p.id }}/restore/{{ v.id }}">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Restore version {{ v.id }}</button></form>{% endif %}
+  <form method="post" action="/mun/paragraphs/{{ p.id }}/restore/{{ v.id }}">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">{{ icon("restore") }} Restore version {{ v.id }}</button></form>{% endif %}
 </section>
 {% endfor %}
 {% endblock %}

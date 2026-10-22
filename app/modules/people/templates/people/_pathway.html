@@ -1,5 +1,5 @@
 {% from "_macros.html" import hidden_csrf %}
-<section class="card" aria-labelledby="h-path"><h2 id="h-path">Pathway: {{ path.done }} of {{ path.total }} milestones</h2>
+<section class="card" aria-labelledby="h-path"><h2 id="h-path">{{ icon("pathway") }} Pathway: {{ path.done }} of {{ path.total }} milestones</h2>
 {% if path.next %}<p>Next step: <strong>{{ path.next.name }}</strong> — {{ path.next.description }}</p>{% endif %}
 <ol class="small">
 {% for m in path.milestones %}

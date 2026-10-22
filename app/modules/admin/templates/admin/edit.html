@@ -4,7 +4,7 @@
 {{ breadcrumb([("Admin", "/admin"), (t.label, "/admin/t/" ~ t.name), ("New" if is_new else "Edit", None)]) }}
 <h1>{{ title }}</h1>
 {% if row.deleted_at %}<div class="notice" role="status">This row was deleted on {{ row.deleted_at|when }}.
-  <form method="post" action="/admin/t/{{ t.name }}/{{ key }}/restore" class="inline">{{ hidden_csrf(csrf) }}<button type="submit">Restore it</button></form></div>{% endif %}
+  <form method="post" action="/admin/t/{{ t.name }}/{{ key }}/restore" class="inline">{{ hidden_csrf(csrf) }}<button type="submit">{{ icon("restore") }} Restore it</button></form></div>{% endif %}
 <form method="post" class="stack" action="{{ '/admin/t/' ~ t.name ~ ('/new' if is_new else '/' ~ key) }}">
   {{ hidden_csrf(csrf) }}
   {% for c in t.cols %}
@@ -36,7 +36,7 @@
   {{ confirm_delete('/admin/t/' ~ t.name ~ '/' ~ key ~ '/delete', '“' ~ (row.get('name') or row.get('label') or row.get('code') or key) ~ '”', csrf) }}
 {% endif %}
 {% if events %}
-  <h2>History</h2>
+  <h2>{{ icon("history") }} History</h2>
   {% include "admin/_events.html" %}
 {% endif %}
 {% endblock %}

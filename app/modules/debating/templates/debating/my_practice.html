@@ -6,7 +6,7 @@
 <form method="post" action="/me/practice" class="stack" style="max-width:none" id="practice-form">{{ hidden_csrf(csrf) }}
   <div class="field"><label for="tp">Topic</label><input id="tp" type="text" name="topic" value="{{ topic }}" list="tmotions"><datalist id="tmotions">{% for m in motions %}<option value="{{ m.motion }}">{% endfor %}</datalist></div>
   <div class="field"><label for="tg">Target length</label><select id="tg" name="target_seconds"><option value="60">1 minute</option><option value="120">2 minutes</option><option value="180" selected>3 minutes</option><option value="240">4 minutes</option><option value="300">5 minutes</option></select></div>
-  <div class="card" aria-labelledby="h-timer"><h2 id="h-timer">Timer</h2>
+  <div class="card" aria-labelledby="h-timer"><h2 id="h-timer">{{ icon("timer") }} Timer</h2>
     <p class="timer" role="timer" aria-live="off" id="pt-display">0:00</p>
     <div class="row"><button type="button" id="pt-start">Start</button><button type="button" id="pt-stop" class="secondary">Stop</button><button type="button" id="pt-reset" class="secondary">Reset</button></div>
     <input type="hidden" name="actual_seconds" id="pt-seconds">

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_macros.html" import hidden_csrf %}
 {% block content %}
-<h1>Practice speeches</h1>
+<h1>{{ icon("practice") }} Practice speeches</h1>
 <p class="lede">Students' own self-reviews. Add a comment to coach them; you never need to grade a practice speech.</p>
 {% for d in data %}
 <section class="card"><h2 class="small">{{ d.first_name }}{% if d.last_initial %} {{ d.last_initial }}.{% endif %} · {{ d.created_at|when }}</h2>

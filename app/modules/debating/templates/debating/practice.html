@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_macros.html" import hidden_csrf %}
 {% block content %}
-<h1>Practice debates</h1>
+<h1>{{ icon("practice") }} Practice debates</h1>
 <p class="lede">Tick who is here. The platform fits the format to the number: 1 student practises a solo speech; 2 debate one-on-one; 3 add a student adjudicator; larger groups get as many 3 v 3 rooms as fit, with smaller rooms and student adjudicators so no one sits out.</p>
 <form method="get" action="/debating/practice" class="inline">
   <div class="field"><label for="pc">Class</label><select id="pc" name="class_id">{% for c in classes %}<option value="{{ c.id }}" {% if c.id == class_id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>

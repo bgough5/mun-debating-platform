@@ -6,8 +6,8 @@
 <p class="lede">Generated from the session log. Edit, then save: every version is kept.</p>
 <div class="row no-print">
   <form method="post" action="/chair/{{ s.id }}/minutes">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="generate"><button type="submit" class="secondary">Regenerate from the log</button></form>
-  <a class="button secondary" href="/chair/{{ s.id }}/minutes.docx" hx-boost="false">Export to Word</a>
-  <a class="button secondary" href="/chair/{{ s.id }}/minutes/print">Print / PDF</a>
+  <a class="button secondary" href="/chair/{{ s.id }}/minutes.docx" hx-boost="false">{{ icon("export") }} Export to Word</a>
+  <a class="button secondary" href="/chair/{{ s.id }}/minutes/print">{{ icon("print") }} Print / PDF</a>
 </div>
 <form method="post" action="/chair/{{ s.id }}/minutes" class="stack" style="max-width:none">{{ hidden_csrf(csrf) }}
   <div class="field"><label for="mb">Minutes</label><textarea id="mb" name="body" rows="20" style="font-family:var(--mono)">{{ draft }}</textarea></div>

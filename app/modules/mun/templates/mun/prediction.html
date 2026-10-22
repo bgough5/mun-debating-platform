@@ -27,7 +27,7 @@
     <form method="post" action="/mun/predict/{{ kind }}/{{ tid }}/tasks" class="stack">{{ hidden_csrf(csrf) }}
       {% if access == 'manage' %}<div class="field"><label for="tdel">Tasks for delegation</label><select id="tdel" name="delegation_id">{% for d in dels %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}</select></div>{% endif %}
       <div class="field"><label for="tn">How many top swing targets</label><input id="tn" type="number" name="top_n" value="3" min="1" max="10"></div>
-      <button type="submit">Create lobbying tasks</button></form>
+      <button type="submit">{{ icon("task") }} Create lobbying tasks</button></form>
     <form method="post" action="/mun/predict/{{ kind }}/{{ tid }}/snapshot" style="margin-top:.75rem">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Save this prediction (for calibration)</button></form>
     {% if access == 'manage' %}<p><a href="/mun/votes/{{ kind }}/{{ tid }}">Record the actual vote</a></p>{% endif %}
     <p><a href="/mun/committees/{{ committee_id }}/evidence?target_kind={{ 'paragraph' if kind == 'paragraph' else kind }}&target_id={{ tid }}">Record new evidence</a></p>

@@ -2,7 +2,7 @@
 {% from "_macros.html" import hidden_csrf %}
 {% block content %}
 <p><a href="/mun/committees/{{ com.id }}">Back to {{ com.name }}</a></p>
-<h1>Evidence</h1>
+<h1>{{ icon("evidence") }} Evidence</h1>
 <p class="lede">Every position needs a source. What a delegate tells you in caucus is <strong>student intel</strong>: record who said it and when. Nothing is shown as fact without a source.</p>
 <section class="card no-print" aria-labelledby="h-new"><h2 id="h-new">Record evidence</h2>
 <form method="post" action="/mun/committees/{{ com.id }}/evidence" class="stack">{{ hidden_csrf(csrf) }}

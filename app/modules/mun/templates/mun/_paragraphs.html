@@ -8,7 +8,7 @@
   <p class="meta">
     {% for t in p.tags.split(',') if t %}<span class="tag">{{ t }}</span>{% endfor %}
     Owner: {{ p.owner_name or 'staff' }} · Version {{ p.versions }} by {{ p.author_label }}, {{ p.version_at|when }}
-    · <a href="/mun/paragraphs/{{ p.id }}/history">History<span class="visually-hidden"> of paragraph {{ p.position }}</span></a>
+    · <a href="/mun/paragraphs/{{ p.id }}/history">{{ icon("history") }} History<span class="visually-hidden"> of paragraph {{ p.position }}</span></a>
     {% if p.kind == 'operative' %} · <a href="/mun/predict/paragraph/{{ p.id }}">Predict<span class="visually-hidden"> paragraph {{ p.position }}</span></a>{% endif %}
     {% if by_para.get(p.id) %} · <a href="/mun/paragraphs/{{ p.id }}/compare">Compare amendments<span class="visually-hidden"> to paragraph {{ p.position }}</span></a>{% endif %}
   </p>
