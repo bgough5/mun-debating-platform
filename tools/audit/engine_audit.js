@@ -12,7 +12,7 @@ const Engine = vm.runInContext("Engine", ctx), PACK = vm.runInContext("PACK", ct
 const out = {};
 // Computed (non-override) stances and their distance to the bucket thresholds.
 const TH = [1.15, 0.4, -0.4, -1.15];
-let computed = 0, near = 0, nearStrict = 0, abstain = 0;
+let computed = 0, near = 0, nearStrict = 0, nearRaw = 0, abstain = 0;
 for (const cl of PACK.clauses) for (const c of PACK.countries) {
   const st = Engine.stanceOf(c, cl.tags, cl.id, PACK);
   if (st.s === 0) abstain++;
@@ -20,11 +20,13 @@ for (const cl of PACK.clauses) for (const c of PACK.countries) {
   computed++;
   if (TH.some(t => Math.abs(st.raw - t) <= 0.10 + 1e-12)) near++;
   if (TH.some(t => Math.abs(st.raw - t) < 0.10 - 1e-12)) nearStrict++;
+  if (TH.some(t => Math.abs(st.raw - t) <= 0.10)) nearRaw++;   // the original audit's test: no tolerance
 }
 out.cells = PACK.clauses.length * PACK.countries.length;
 out.computed_cells = computed;
 out.near_boundary_within_0_10_inclusive = near;
 out.near_boundary_within_0_10_strict = nearStrict;
+out.near_boundary_within_0_10_no_tolerance = nearRaw;
 out.abstain_cells = abstain;
 
 // Identical blends

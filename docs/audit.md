@@ -4,7 +4,7 @@ Phase 0, written 22 October 2026. Every number below was measured against the co
 
 ## 1. Summary
 
-Whip Count v2 is a working classroom game, not a planning tool. Its core idea is sound and worth keeping: countries are weighted blends of diplomatic archetypes, and a clause is a set of tags. Almost everything built around that idea falls short of the platform brief. The engine produces one hand-tuned verdict per vote with no evidence, uncertainty or follow-up check, and the app keeps nothing once the server stops.
+Whip Count v2 is a working classroom game, not a planning tool. Its core idea is sound and worth keeping: countries are weighted blends of diplomatic archetypes, and a clause is a set of tags. Almost everything built around that idea falls short of the platform brief. The engine produces one hand-tuned verdict per vote with no evidence, uncertainty or follow-up check (55 to 78 of 263 computed stances (21–30%), depending on whether stances exactly 0.10 from a boundary are counted, sit within ±0.10 of a boundary where a small weight change flips the verdict), and the app keeps nothing once the server stops.
 
 All four of Ben's guesses about why it fell short are confirmed (section 4). The audit found four more reasons (section 5). The most serious is that the model is used as the answer key: 40 of each student's 100 points depend on matching it, and it has never been checked against a real vote.
 
@@ -55,7 +55,7 @@ Total: 4,651 lines.
 | Guess | Verdict | Evidence |
 |---|---|---|
 | Computes from hand-entered guesses | **Confirmed** | Every input is a hand-typed integer (section 2). Nothing comes from voting records, statements or treaties. |
-| One number per vote, no evidence | **Confirmed, and worse than it looks** | `stanceOf` returns one of five buckets. The "reason" shown is a generic archetype sentence. 62 of 263 computed stances (24%) sit within ±0.10 of a bucket boundary, so a small change in a hand-typed weight flips the verdict, yet each is shown as certain. Germany and Spain have identical blends, so they get identical predictions on every clause. |
+| One number per vote, no evidence | **Confirmed, and worse than it looks** | `stanceOf` returns one of five buckets. The "reason" shown is a generic archetype sentence. 55 to 78 of 263 (21–30%), depending on whether stances exactly 0.10 from a boundary are counted, sit within ±0.10 of a bucket boundary (corrected 22 Oct 2026; see §7), so a small change in a hand-typed weight flips the verdict, yet each is shown as certain. Germany and Spain have identical blends, so they get identical predictions on every clause. |
 | Doesn't say what to do next | **Confirmed** | No swing-vote ranking, lobbying targets or amendment comparison. The lever barely exists in the model anyway: across 54 clause × amendment combinations in the 31-country Full Assembly, an amendment changes pass/fail only **2 times**. |
 | Never checks whether it was right | **Confirmed** | There are no file or database writes anywhere in the server, so nothing survives a restart. No actual votes are recorded and no calibration exists. Instead, the model is used **as ground truth**: Mandate Fidelity (40/100 points) grades students on agreeing with it. |
 
@@ -116,7 +116,9 @@ Two Node scripts (kept outside the repo, in the session scratchpad) load `shared
 - **Engine:** every country × clause stance, distance of each raw score from the bucket thresholds (1.15, 0.4, −0.4, −1.15), identical blends, 31-country divisions for each clause, unamended and under each of the 6 amendments, and override survival under amendment.
 - **Rubric:** scores the three probe statements above.
 
-Other checks used `grep` on the source (ARIA attributes, `innerHTML`, file writes, player-count constant) and `python -m unittest discover -s test`. The scripts will be added to the repo under `tools/audit/` in Phase 1 so the figures can be reproduced. They were not committed now, to keep Phase 0 to documents only.
+Other checks used `grep` on the source (ARIA attributes, `innerHTML`, file writes, player-count constant) and `python -m unittest discover -s test`. The scripts were added to the repo in Phase 1: `node tools/audit/engine_audit.js` reproduces every engine figure (output in `tools/audit/engine_audit_output.json`).
+
+**Correction (22 Oct 2026).** This audit first said "62 of 263 computed stances (24%)" were within ±0.10 of a bucket boundary. The correct statement is 55 to 78 of 263 (21–30%), depending on whether stances exactly 0.10 from a boundary are counted: 55 strictly inside 0.10, 78 including the 23 that sit exactly 0.10 away. The original 62 came from floating-point rounding of those exact ties. The original script used `<= 0.10` with no tolerance; re-run on 22 Oct and confirmed: the same test in `tools/audit/engine_audit.js` (`near_boundary_within_0_10_no_tolerance`) gives 62, because some exact ties compute as slightly under 0.10 and others slightly over. The conclusion is unchanged: a fifth to a third of stances sit on a knife-edge.
 
 ## 8. Not verified
 
