@@ -75,8 +75,8 @@ def prepare(app) -> dict:
         F.suggest(w, aid, members[2]["delegation_id"], members[2]["student_id"],
                   p2["text"].rstrip(".") + ", reporting progress every three years.", "Every two years is too often for small states")
         MS.support_amendment(w, aid, members[3]["delegation_id"], "signatory")
-        F.raise_point(w, sid, members[3]["delegation_id"], members[3]["student_id"], "inquiry", "Can we extend the caucus?")
         SIM.set_stage(w, sid, "floor")
+        F.raise_point(w, sid, members[3]["delegation_id"], members[3]["student_id"], "inquiry", "Can we extend the caucus?")
         F.send_message(w, sid, members[2]["delegation_id"], members[2]["student_id"], members[0]["delegation_id"],
                        "Would you sign our amendment on reporting? We can support your clause 3 in return.")
         SIM.set_stage(w, sid, "voting_procedure")

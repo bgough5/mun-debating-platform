@@ -33,7 +33,7 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
 - Engine changes must keep `tests/engine/test_parity.py` green (fixture from `node tools/parity/gen_fixture.js`).
 - New tables go in a new numbered file in `app/db/migrations/`; never edit an applied migration. Every data change goes through `app.db.Writer` so it is logged and undoable.
 - Every new route needs a `require_*` dependency from `app/web/auth.py`, or an entry in `PUBLIC` in `app/web/route_audit.py` with a reason; `tests/api/test_permissions_matrix.py` enforces it. Re-run `python tools/permissions_report.py` after adding routes.
-- Phase 2 load test: `python tools/loadtest.py --minutes 45` (30 clients; results in `test-results/load/`). Backup drill: `python tools/restore_drill.py`.
+- Load test: `python tools/loadtest.py --minutes 90` (30 clients; results in `test-results/load/`, memory per sample in `rss.jsonl`, `summary.json` has the soak verdict). Run it from a frozen copy (`git archive HEAD`) if you will edit code meanwhile: the server renders templates from disk and lazily imports modules. Kill-and-restart loop: `tools/chaos_loop.sh 100`. Backup drill: `python tools/restore_drill.py`.
 - AI: `app/ai/` provider interface; the offline `FakeProvider` is the default and the only one tested. Never enable a real provider without the school's approval recorded in Intelligence → AI settings.
 - UN voting data import stays locked until a licence is confirmed in the app (D-051). Tests use `tests/fixtures/synthetic_un_votes.csv` only.
 - Design: colours only as tokens in `app/web/design.py` and `:root` of `app.css`; `tests/test_design_contrast.py` checks AA and rejects raw colours. Icons only through `icon("concept")` (`app/web/icons.py`); add a concept there and rerun `tools/build_icons.py`.
@@ -56,6 +56,7 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
 - `<input>` without a `type` attribute misses the form CSS; always give one (axe flagged it as a target-size failure).
 - Request handlers that touch the database are plain `def` (run in the thread pool), with forms read by `form=Depends(form_data)`. An `async def` handler doing SQLite work blocks every client (it caused 10 s stalls in the load test, D-042).
 - Close pooled connections with `db.dispose()` before replacing or switching the database file, and validate a backup before disposing (D-057).
+- Live regions (`data-live-channel`) are re-fetched on every change: include `<span hidden data-view-seq="{{ view_seq }}">` in a fragment so a stale render refreshes itself, and don't rely on a refresh keeping state beyond open `<details>` and changed `<select>`s (D-073).
 
 - The browser-testing tool can't execute pages opened via `file://`. Serve over local HTTP to test.
 - Classic `<script>` top-level `const` and `let` share one scope across scripts: a second `const PACK` silently breaks pack loading.

@@ -123,14 +123,14 @@ Work package from PR #1 (22 Oct 2026), done in its priority order; decisions D-0
 
 **Not verified in Phase 6:** anything on Windows (smoke script, start-up, exports in Word/Excel); a screen-reader (NVDA) pass of the new screens; Ben's review of the design from the screenshots; the chair scripts' wording against the UNAA and Evatt handbooks (they follow common practice and are editable); the 2026 Security Council membership used by both SC demos.
 
-## Phase 7 — Reliability and honesty fixes (items 1 and 2 being measured)
+## Phase 7 — Reliability and honesty fixes (tag `phase-7-complete`)
 
 Work package: the Phase 7 comment on PR #1. All eight items done.
 
 | Item | Result | Evidence |
 |---|---|---|
-| 1. Memory growth and latency drift | Leak found and fixed; 90-minute soak running | D-064, `tests/engine/test_db_pool.py`. Soak numbers to follow. |
-| 2. Kill-and-restart failure | Pending (runs after the soak) | `tools/chaos_loop.sh`; results to follow. |
+| 1. Memory growth and latency drift | **Memory target met:** 4.0 MB growth over the 60 minutes after warm-up (target <10 MB); Phase 6 grew 37 MB in 10 minutes. **p95 target not met:** it rises about 0.16 s an hour; the cause is bounded (below). | D-064 (leak fixed, `tests/engine/test_db_pool.py`); 90-minute soak, 30 clients, below. |
+| 2. Kill-and-restart failure | **0 failures in 100 runs** (95% upper bound on the failure rate: about 3%). The Phase 6 failure did not reproduce. | `tools/chaos_loop.sh 100`; `test-results/chaos/`. |
 | 3. Evidence quality instead of "0% unknown" | Done | D-065; `tests/api/test_phase7_quality.py` (demo GA: over 99% estimate only, 0% unknown). |
 | 4. Honest label for the offline bot | Done | D-066; `tests/api/test_phase7_ai_label.py` covers both states, and an unknown provider is never labelled AI. |
 | 5. Phone header | Header **208–246 px → 69 px** at 390×844 (target ≤130). Nav behind a Menu button (`aria-expanded`); Escape closes it; without JavaScript the list shows. | D-067; `tests/ui/test_phase7_header.py` (height, keyboard path, axe open and closed, no-JavaScript fallback). |
@@ -140,13 +140,24 @@ Work package: the Phase 7 comment on PR #1. All eight items done.
 
 ### Item 1 in detail
 
-Pending: the clean 90-minute soak (30 clients) is running from a frozen copy of commit 97fe24d. An earlier run was invalid (code edited under the running server) and another was interrupted by a worker restart.
+90-minute soak, 30 clients (29 students and the chair), run from a frozen copy of commit `97fe24d` on the cloud build machine (4 cores), with nothing else running. 2,020 changes on the session channel, 58,206 live updates measured; **0 lost events, 0 errors, 0 reconnects.**
+
+| Minutes | 0 | 10 | 20 | 30 | 40 | 50 | 60 | 70 | 80 | 85 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Server memory at window end (MB) | 104.4 | 106.3 | 106.7 | 106.8 | 108.4 | 109.5 | 109.7 | 109.8 | 109.9 | 109.9 |
+| Live-update p95 (s, client side) | 0.70 | 0.74 | 0.66 | 0.79 | 0.82 | 0.78 | 0.78 | 0.89 | 0.84 | 0.90 |
+
+- **Memory:** +4.0 MB between minute 10 and minute 70 (slope 3.6 MB an hour), flat over the last 25 minutes. The fix was D-064: the thread pool retires idle threads, and the read-connection pool kept every dead thread's SQLite connection.
+- **Latency:** client p95 0.74 → about 0.90 s (slope +0.16 s an hour); server-side p95 0.51 → 0.58 s. Cause, measured: on the database as it stood at the end of the run, one live-fragment request costs about 1 ms (13%) more than on a fresh one, because the load test's speakers lists fill up (25 → 47 waiting entries: its chair adds speakers to the general list faster than it calls them during moderated caucuses). With 30 clients queuing for 8 worker threads, 13% more work per request becomes the drift. It is **bounded**: a delegation can wait only once per list, so the lists stop growing at the number of delegations (31 here). Rendering does not slow with history otherwise (10 ms at 0 and at 160 votes of history). The server's other counters (pooled connections, threads, caches, live subscriptions, Python objects) were flat for the whole run. **Mitigation:** none needed for a lesson; if a list grows long, the chair clears it.
+- **Not valid:** an earlier soak run that day (code was edited under the running server; requests failed after 30 minutes) and one cut short by a worker restart. `tools/loadtest.py` now writes each memory sample as it goes (`rss.jsonl`).
 
 ### Item 2 in detail
 
-Pending: 100 runs of the kill-and-restart test after the soak.
+`tools/chaos_loop.sh 100`: the server is killed with SIGKILL mid-burst (a chair adding speakers and 12 students voting), restarted on the same data, and checked: every acknowledged speaker and vote present, database integrity "ok", event numbers unique, the chair reconnects to the same state, and a client that reconnects is sent exactly the changes it missed. **100 passed, 0 failed**, 6.7 s a run. Each run killed the server after 2 speaker adds and 3–8 votes had been acknowledged. The single failure in 11 early Phase 6 runs (before the test waited for acknowledged actions) did not reproduce.
 
-Full suite at the phase-7-complete commit: pending.
+The full suite then found three live-update bugs in the browser (D-073): a page could stay stale after a page swap (a student missed the vote card in about one run in five), open panels closed on refresh, and an unsent drop-down choice was reset. All fixed; the guided-session test then passed 40 of 40 runs.
+
+Full suite at the phase-7-complete commit: **624 passed** (engine, API, Playwright and axe), 8 min 11 s.
 
 ## Phase 8 — Committee flow v4 (D-068 to D-072)
 
