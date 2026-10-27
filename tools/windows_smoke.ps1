@@ -18,7 +18,7 @@ $results = New-Object System.Collections.ArrayList
 
 function Add-Result([string]$step, [string]$result, [string]$detail) {
     [void]$results.Add([pscustomobject]@{ Step = $step; Result = $result; Detail = $detail })
-    $colour = @{ "PASS" = "Green"; "FAIL" = "Red"; "SKIP" = "Yellow" }[$result]
+    $colour = @{ "PASS" = "Green"; "FAIL" = "Red"; "SKIP" = "Yellow"; "WARN" = "Yellow" }[$result]
     Write-Host ("{0,-28} {1,-5} {2}" -f $step, $result, $detail) -ForegroundColor $colour
 }
 
@@ -49,16 +49,36 @@ foreach ($cand in @("py|-3.12", "python|", "python3|")) {
 if ($null -eq $pyExe) { Add-Result "Python 3.12" "FAIL" "Install Python 3.12 from python.org and tick 'Add python.exe to PATH'."; Show-Table }
 Add-Result "Python 3.12" "PASS" ("found: " + $pyExe + " " + ($pyArgs -join " ") + " (" + ("" + $ver).Trim() + ")")
 
-# 2. Virtual environment and requirements
+# 2. Long paths: Playwright's nested files push past Windows' 260-character limit when the folder is deep
+#    (pip then fails with [WinError 206]). Warn before installing rather than after.
+if ($onWindows -and $root.Length -gt 80) {
+    $long = $null
+    try { $long = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name LongPathsEnabled -ErrorAction Stop).LongPathsEnabled } catch { }
+    if ($long -ne 1) {
+        Add-Result "Folder path length" "WARN" ("the folder path is " + $root.Length + " characters and Windows long paths are off; pip may fail with WinError 206. Move the folder near C:\Users\<you>\Documents or enable long paths (see README).")
+    }
+}
+
+# 3. Virtual environment and requirements
 $venv = Join-Path $root ".venv-smoke"
 if ($onWindows) { $vpy = Join-Path $venv "Scripts\python.exe" } else { $vpy = Join-Path $venv "bin/python" }
 if (-not (Test-Path $vpy)) { & $pyExe @pyArgs -m venv $venv | Out-Null }
 if (-not (Test-Path $vpy)) { Add-Result "Virtual environment" "FAIL" "python -m venv failed"; Show-Table }
-& $vpy -m pip install --quiet --disable-pip-version-check -r requirements.txt -r requirements-dev.txt 2>&1 | Out-Null
-if ($LASTEXITCODE -ne 0) { Add-Result "Install requirements" "FAIL" "pip install failed (internet needed once)"; Show-Table }
+$pipOut = @(& $vpy -m pip install --quiet --disable-pip-version-check -r requirements.txt -r requirements-dev.txt 2>&1 | ForEach-Object { "$_".Trim() } | Where-Object { $_ })
+if ($LASTEXITCODE -ne 0) {
+    # Show pip's own last error line, not a guess at the cause.
+    $errLine = @($pipOut | Where-Object { $_ -match "error" }) | Select-Object -Last 1
+    if (-not $errLine) { $errLine = $pipOut | Select-Object -Last 1 }
+    if (-not $errLine) { $errLine = "pip exited with code $LASTEXITCODE and printed nothing" }
+    if ($errLine.Length -gt 160) { $errLine = $errLine.Substring(0, 157) + "..." }
+    $hint = ""
+    if ($errLine -match "WinError 206|too long") { $hint = " [path too long: see README, Windows smoke test]" }
+    elseif ($errLine -match "connect|resolve|network|proxy|SSL|timed out") { $hint = " [no internet? needed once]" }
+    Add-Result "Install requirements" "FAIL" ($errLine + $hint); Show-Table
+}
 Add-Result "Install requirements" "PASS" "requirements.txt + requirements-dev.txt"
 
-# 3. Tests without the browser
+# 4. Tests without the browser
 # (pytest.ini already passes -q; a second -q would hide the summary line)
 $out = & $vpy -m pytest -m "not ui" -p no:warnings 2>&1 | Out-String
 $code = $LASTEXITCODE
@@ -66,7 +86,7 @@ $summary = "" + ($out -split "`n" | Where-Object { $_ -match "\d+ (passed|failed
 if (-not $summary.Trim()) { $summary = "pytest exit code $code" }
 if ($code -eq 0) { Add-Result "Tests (engine, API)" "PASS" $summary.Trim() } else { Add-Result "Tests (engine, API)" "FAIL" ($summary.Trim() + " - see: .venv-smoke python -m pytest -m 'not ui'") }
 
-# 4. Browser and accessibility tests (optional: downloads Chromium once)
+# 5. Browser and accessibility tests (optional: downloads Chromium once)
 if ($Browser) {
     & $vpy -m playwright install chromium 2>&1 | Out-Null
     $out = & $vpy -m pytest -m ui -p no:warnings 2>&1 | Out-String
@@ -78,7 +98,7 @@ if ($Browser) {
     Add-Result "Browser + axe tests" "SKIP" "add -Browser to run them"
 }
 
-# 5. Start the platform on demo data in a temporary folder and check it answers
+# 6. Start the platform on demo data in a temporary folder and check it answers
 $data = Join-Path ([System.IO.Path]::GetTempPath()) ("soc-smoke-" + [guid]::NewGuid().ToString("N").Substring(0, 8))
 New-Item -ItemType Directory -Path $data | Out-Null
 $log = Join-Path $data "server.log"
@@ -100,7 +120,7 @@ while ($sw.Elapsed.TotalSeconds -lt 90) {
 if ($ok) { Add-Result "Platform starts" "PASS" ("health check answered in {0:N1} s" -f $sw.Elapsed.TotalSeconds) }
 else { Add-Result "Platform starts" "FAIL" "no answer on port $Port within 90 s; see $err" }
 
-# 6. Key pages load
+# 7. Key pages load
 if ($ok) {
     foreach ($page in @("/join", "/login", "/help/students", "/static/icons/sprite.svg")) {
         try {
@@ -110,7 +130,7 @@ if ($ok) {
     }
 }
 
-# 7. Stop the platform and tidy up
+# 8. Stop the platform and tidy up
 if ($proc -and -not $proc.HasExited) { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue }
 Start-Sleep -Milliseconds 500
 Remove-Item -Recurse -Force $data -ErrorAction SilentlyContinue

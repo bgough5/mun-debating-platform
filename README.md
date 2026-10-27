@@ -40,6 +40,13 @@ Guides: `docs/staff-guide.md` (for teachers), `docs/privacy-summary.md` (for sch
 browser and accessibility tests). It installs into its own `.venv-smoke`, runs the tests, starts the platform on demo
 data, checks it answers and prints a PASS/FAIL table.
 
+**Keep the folder near the top of your drive**, for example `C:\Users\<you>\Documents\mun-debating-platform`. In a
+deep folder, pip fails with `[WinError 206] The filename or extension is too long`, because some packages
+(Playwright) nest files past Windows' 260-character path limit. The smoke script warns before installing if the folder
+path is over 80 characters and long paths are off. Alternatively, enable long paths (needs an administrator):
+`New-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem -Name LongPathsEnabled -Value 1 -PropertyType DWORD -Force`,
+then sign out and in again.
+
 ## Run it (Windows)
 
 Double-click `start_platform.bat` (or run `.\start_platform.ps1`). The first run creates `.venv` and installs
