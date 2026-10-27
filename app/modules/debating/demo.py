@@ -9,7 +9,8 @@ import random
 from app.db import Writer, one, rows, scalar
 from app.modules.debating import service as S
 
-DEMO_HOUSES = [("BAN", "Banksia", "#2E7D32"), ("WAT", "Wattle", "#B8860B"), ("WAR", "Waratah", "#B71C1C"), ("KUR", "Kurrajong", "#1565C0")]
+# South Oakleigh College's four houses, with the College's house colours (the College design system).
+DEMO_HOUSES = [("ACA", "Acacia", "#D99E00"), ("GRE", "Grevillea", "#2563B5"), ("BAN", "Banksia", "#2E8B4A"), ("WAR", "Waratah", "#C8322B")]
 
 
 def ensure_houses(w: Writer) -> list[int]:

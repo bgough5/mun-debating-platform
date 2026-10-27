@@ -410,3 +410,8 @@ def test_present_and_voting_cannot_abstain(coord, app):
     assert "can't abstain" in st.post(f"/live/{s['id']}/vote", {"vote": "abstain"}).text
     st.post(f"/live/{s['id']}/vote", {"vote": "yes"})
     assert db_one(app, "SELECT vote FROM division_vote WHERE delegation_id = ? AND computed = 0", (m["delegation_id"],))["vote"] == "yes"
+
+
+def test_demo_houses_are_the_colleges_four(app):
+    names = [r["name"] for r in db_rows(app, "SELECT name FROM house ORDER BY id")]
+    assert names == ["Acacia", "Grevillea", "Banksia", "Waratah"]
