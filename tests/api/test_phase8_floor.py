@@ -371,3 +371,27 @@ def test_erasing_a_student_removes_their_floor_writing(coord, app):
     assert db_one(app, "SELECT note, student_id FROM floor_point") == {"note": "", "student_id": None}
     logs = " ".join(str(r["after_json"]) for r in db_rows(app, "SELECT after_json FROM event_log"))
     assert "A private note from me" not in logs and "My own opening words" not in logs
+
+
+def test_security_council_veto_warning_and_minutes_record_the_floor(coord, app):
+    com = sc(app)
+    assert com, "the demo has a Security Council"
+    s = _open(coord, app, com)
+    _stage(app, s["id"], "floor")
+    members = member_of(app, com["id"])
+    p5 = next((m for m in members if m["iso3"] in ("CHN", "FRA", "RUS", "GBR", "USA")), None)
+    assert p5, "a permanent member is held by a student in the demo"
+    st = join_as(app, p5["student_id"])
+    st.post(f"/live/{s['id']}/points", {"kind": "inquiry", "note": "Is a P5 abstention a veto?"})
+    pid = db_one(app, "SELECT id FROM floor_point WHERE session_id = ?", (s["id"],))["id"]
+    coord.post(f"/chair/{s['id']}/points/{pid}", {"status": "answered"})
+    res = db_one(app, "SELECT id FROM resolution WHERE committee_id = ?", (com["id"],))
+    assert res
+    coord.post(f"/chair/{s['id']}/divisions", {"target": f"resolution:{res['id']}"})
+    st.post(f"/live/{s['id']}/vote", {"vote": "no"})
+    country = db_one(app, "SELECT name FROM country WHERE iso3 = ?", (p5["iso3"],))["name"]
+    assert "Veto:" in coord.get(f"/chair/{s['id']}/f/division").text and country in coord.get(f"/chair/{s['id']}/f/division").text
+    tok = db_one(app, "SELECT projector_token FROM live_session WHERE id = ?", (s["id"],))["projector_token"]
+    assert "Veto:" in coord.get(f"/projector/{tok}").text
+    minutes = coord.get(f"/chair/{s['id']}/minutes").text
+    assert "Point of parliamentary inquiry from" in minutes and "answered" in minutes

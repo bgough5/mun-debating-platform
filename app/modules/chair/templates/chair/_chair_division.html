@@ -3,6 +3,7 @@
 <div class="card" data-announce="{{ 'Voting: ' ~ division.cast ~ ' of ' ~ division.voters|length ~ ' delegations have voted' }}" data-announce-key="division">
   <p><strong>{{ division.title }}</strong> · {{ division.rule_name }}{% if division.procedural %} (procedural: only delegations with students vote){% endif %}</p>
   <p>{{ division.cast }} of {{ division.voters|length }} have voted: {{ division.counts.yes }} yes, {{ division.counts.no }} no, {{ division.counts.abstain }} abstaining.</p>
+  {% if division.veto_by %}<p class="error-box" role="status">{{ icon("warning") }} <strong>Veto:</strong> {{ division.veto_by|join(', ') }} {{ 'has' if division.veto_by|length == 1 else 'have' }} voted no. A permanent member's no blocks this vote unless they change it.</p>{% endif %}
   <div class="table-wrap"><table><thead><tr><th scope="col">Delegation</th><th scope="col">Vote</th><th scope="col">Record for them</th></tr></thead><tbody>
   {% for v in division.voters %}<tr><td>{{ v.name }}{% if v.computed %} <span class="label-computed">computed</span>{% endif %}</td>
     <td>{% if v.vote %}{{ v.vote|stance }}{% else %}<span class="muted">not yet</span>{% endif %}</td>

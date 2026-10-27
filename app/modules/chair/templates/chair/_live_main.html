@@ -70,6 +70,7 @@
     </form>{% endif %}
   {% endif %}
   <p class="small">{{ division.cast }} of {{ division.voters|length }} have voted.</p>
+  {% if division.veto_by %}<p class="error-box" role="status">{{ icon("warning") }} <strong>Veto:</strong> {{ division.veto_by|join(', ') }} {{ 'has' if division.veto_by|length == 1 else 'have' }} voted no. A permanent member's no blocks this vote unless they change it.</p>{% endif %}
 </section>
 {% endif %}
 {% if recent %}<section aria-labelledby="h-res"><h2 id="h-res">{{ icon("ladder") }} Results</h2><ul>{% for d in recent %}<li data-announce="{{ d.title ~ ': ' ~ d.summary }}" data-announce-key="result-{{ loop.index }}">{{ d.title }}: {{ d.summary }}</li>{% endfor %}</ul></section>{% endif %}

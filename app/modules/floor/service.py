@@ -299,6 +299,7 @@ def accept_friendly(w: Writer, sid: int | None, aid: int) -> None:
         raise UserError("Submit the amendment first.")
     set_amendment_status(w, aid, "friendly")
     if sid:
+        w.log("amendment", aid, "friendly", None, {"amendment": aid}, ch(sid))
         s = one(w.conn, "SELECT floor_amendment_id FROM live_session WHERE id = ?", (sid,))
         if s and s["floor_amendment_id"] == aid:
             clear_floor(w, sid)

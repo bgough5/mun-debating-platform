@@ -63,6 +63,28 @@ def prepare(app) -> dict:
         SIM.set_stage(w, sid, "voting_procedure")
         r2 = SIM.start_whip(w, s, "resolution", q(app, "SELECT id FROM resolution WHERE committee_id = ?", (com["id"],))[0]["id"],
                             "Draft resolution as a whole", 4)
+    # The floor (D-068): an amendment with a suggested edit, a message, a point, the student's own drafts.
+    from app.modules.floor import service as F
+    from app.modules.mun import service as MS
+    p2 = q(app, "SELECT p.id, v.text FROM paragraph p JOIN resolution r ON r.id = p.resolution_id JOIN paragraph_version v "
+                "ON v.id = p.current_version_id WHERE r.committee_id = ? AND p.kind = 'operative' ORDER BY p.position LIMIT 1 OFFSET 1",
+           (com["id"],))[0]
+    with app.state.db.write(Actor("coordinator", None, "Coordinator")) as w:
+        aid = MS.table_amendment(w, p2["id"], "replace", p2["text"].rstrip(".") + ", reporting progress every two years.", [],
+                                 members[1]["delegation_id"], "Makes the commitment measurable")
+        F.suggest(w, aid, members[2]["delegation_id"], members[2]["student_id"],
+                  p2["text"].rstrip(".") + ", reporting progress every three years.", "Every two years is too often for small states")
+        MS.support_amendment(w, aid, members[3]["delegation_id"], "signatory")
+        F.raise_point(w, sid, members[3]["delegation_id"], members[3]["student_id"], "inquiry", "Can we extend the caucus?")
+        SIM.set_stage(w, sid, "floor")
+        F.send_message(w, sid, members[2]["delegation_id"], members[2]["student_id"], members[0]["delegation_id"],
+                       "Would you sign our amendment on reporting? We can support your clause 3 in return.")
+        SIM.set_stage(w, sid, "voting_procedure")
+        F.save_draft(w, members[0]["student_id"], com["id"], "opening", "Opening statement",
+                     "Honourable Chair, distinguished delegates. Our delegation comes to this committee because adaptation "
+                     "finance decides whether the most exposed communities can plan ahead. (Demo text written for the screenshots.)")
+        F.ff_save(w, members[0]["student_id"], para, com["id"], {members[1]["delegation_id"]: ("friend", "co-sponsor"),
+                                                                  members[2]["delegation_id"]: ("undecided", "wants a softer verb")})
     tok = q(app, "SELECT projector_token FROM live_session WHERE id = ?", (sid,))[0]["projector_token"]
     ev = q(app, "SELECT * FROM debate_event WHERE projector_token IS NOT NULL ORDER BY id LIMIT 1")[0]
     rnd = q(app, "SELECT id FROM debate_round WHERE event_id = ? ORDER BY number LIMIT 1", (ev["id"],))[0]["id"]
@@ -98,6 +120,8 @@ def main() -> None:
         ("evidence", f"/mun/committees/{st['com']}/evidence", "Evidence entry"),
         ("class", f"/people/classes/{st['cls']}", "Class page with join code"),
         ("join-cards", f"/people/classes/{st['cls']}/join-cards", "Printable join cards with QR codes"),
+        ("amendment-board", f"/mun/committees/{st['com']}/amendments", "Amendment board: tracked changes, signatories, suggestions"),
+        ("chair-messages", f"/chair/{st['sid']}/messages", "Chair: delegate messages"),
         ("debating", "/debating", "Debating home"),
         ("event", f"/debating/events/{st['ev']['id']}", "Debating event"),
         ("draw", f"/debating/rounds/{st['rnd']}", "Round draw"),
@@ -111,6 +135,11 @@ def main() -> None:
                         ("evatt-prediction", f"/mun/predict/paragraph/{st['evatt_para']}", "Security Council prediction with vetoes")]
     student_pages = [
         ("student-live", f"/live/{st['sid']}", "Student live page: stage and whip count"),
+        ("student-tab-motions", f"/live/{st['sid']}?tab=motions", "Student tab: motions and votes"),
+        ("student-tab-messages", f"/live/{st['sid']}?tab=messages", "Student tab: messages between delegations"),
+        ("student-tab-speech", f"/live/{st['sid']}?tab=speech", "Student tab: my speech (private drafts)"),
+        ("student-prepare", f"/me/committees/{st['com']}/prepare", "Prepare: country brief, resolution, opening statement"),
+        ("student-friends-foes", f"/me/committees/{st['com']}/friends-foes", "Friends and foes for an operative clause"),
         ("student-me", "/me", "Student home"),
         ("student-practice", "/me/sim", "Practice committee"),
     ]

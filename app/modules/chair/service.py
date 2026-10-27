@@ -6,6 +6,7 @@ the channel `session:<id>`, which drives live updates and the minutes.
 """
 from __future__ import annotations
 
+import json
 import math
 import secrets
 
@@ -456,6 +457,10 @@ def division_state(conn, division_id: int) -> dict:
     dv["voters"] = [{**d, "vote": votes.get(d["iso3"], {}).get("vote"), "computed": votes.get(d["iso3"], {}).get("computed", 0)} for d in vs]
     dv["cast"] = sum(1 for v in dv["voters"] if v["vote"])
     dv["counts"] = {k: sum(1 for v in dv["voters"] if v["vote"] == k) for k in ("yes", "abstain", "no")}
+    # Live veto warning (Security Council, D-068): a permanent member voting no blocks a substantive vote.
+    veto = (one(conn, "SELECT veto_iso3 FROM voting_rule WHERE id = ?", (dv["rule_id"],)) or {}).get("veto_iso3") or ""
+    holders = {x.strip().upper() for x in veto.split(",") if x.strip()}
+    dv["veto_by"] = [v["name"] for v in dv["voters"] if v["iso3"] in holders and v["vote"] == "no"] if not dv["procedural"] else []
     return dv
 
 
@@ -555,6 +560,22 @@ def generate_minutes(conn, sid: int) -> str:
                            "WHERE dv.session_id = ? AND dv.status = 'closed' ORDER BY dv.id", (sid,))
     for dv in divisions:
         items.append((dv["closed_at"], f"Division — {dv['title']}: {dv['summary']}."))
+    # The floor (D-068): points and their answers, amendments brought to the floor or adopted as friendly.
+    kinds = {"order": "Point of order", "privilege": "Point of personal privilege", "inquiry": "Point of parliamentary inquiry",
+             "reply": "Right of reply"}
+    outcome = {"answered": "answered", "granted": "granted", "declined": "declined", "withdrawn": "withdrawn", "raised": "not reached"}
+    for p in rows(conn, "SELECT fp.*, c.name AS country FROM floor_point fp JOIN delegation d ON d.id = fp.delegation_id "
+                        "JOIN country c ON c.iso3 = d.iso3 WHERE fp.session_id = ?", (sid,)):
+        items.append((p["created_at"], f"{kinds[p['kind']]} from {p['country']}{': ' + p['note'] if p['note'] else ''}; {outcome[p['status']]}."))
+    for ev in rows(conn, "SELECT * FROM event_log WHERE channel = ? AND action IN ('amendment_on_floor', 'friendly', 'floor_reopened') "
+                         "ORDER BY seq", (ch(sid),)):
+        after = json.loads(ev["after_json"] or "{}")
+        if ev["action"] == "amendment_on_floor" and after.get("floor_amendment_id"):
+            items.append((ev["at"], f"Amendment {after['floor_amendment_id']} was brought to the floor."))
+        elif ev["action"] == "friendly":
+            items.append((ev["at"], f"Amendment {ev['entity_id']} was accepted as friendly and added without a vote."))
+        elif ev["action"] == "floor_reopened":
+            items.append((ev["at"], "The floor was reopened with another draft resolution."))
     for ev in rows(conn, "SELECT * FROM event_log WHERE channel = ? AND action IN ('session_suspended','session_open','session_closed','opened') "
                          "ORDER BY seq", (ch(sid),)):
         label = {"opened": "Session opened", "session_suspended": "Session suspended", "session_open": "Session resumed",

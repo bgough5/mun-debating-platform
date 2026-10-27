@@ -100,7 +100,7 @@ def test_practice_committee_in_browser(browser, live):
 
 def test_phone_stage_label_shows_the_real_stage_number(browser, live):
     """Regression: on phones only the current stage is shown, and CSS counters skip hidden items,
-    so the label must come from the markup (it read "1 of 9" at stage 7)."""
+    so the label must come from the markup (it read "1 of 9" at stage 7; six stages since D-068)."""
     from app.db import SYSTEM
     from app.modules.chair.service import open_session as open_s
     from app.modules.sim import service as SIM
@@ -112,4 +112,4 @@ def test_phone_stage_label_shows_the_real_stage_number(browser, live):
     join(page, live, m["student_id"])
     page.goto(f"{live.url}/live/{sid}")
     label = page.evaluate("() => getComputedStyle(document.querySelector('.stages li[aria-current]'), '::before').content")
-    assert label == '"7 of 9:"'
+    assert label == '"5 of 6:"'

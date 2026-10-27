@@ -34,6 +34,16 @@ At most 25 students can be in one live session. Everything also works with fewer
 - **Projector:** the "Projector" link opens a view for the big screen with the speakers list, timer and results only.
 - **Minutes:** generated from what happened; edit, print or download as Word.
 
+**The committee flow (D-068).** A session has six stages: roll call, agenda, opening statements, **the floor**, voting procedure and debrief. The guide at the top of the chair console shows what to say at each one. The debate happens out loud; the platform records it and puts it on every screen.
+- **Before the lesson:** students open **Prepare** from their page: their country brief (with evidence badges), the proposed resolution, and a pad for their opening statement in their own words.
+- **On the floor:** ask "Are there any points or motions on the floor?" Take motions most disruptive first. An unmoderated caucus is at most 10 minutes a motion; students move to extend it when it ends. With no motion, the general speakers list continues.
+- **Points:** students raise their placard and can also log the point on their device. Waiting points appear at the top of the floor panel: **Answered**, **Decline**, or for a right of reply **Grant** (they go to the top of the list).
+- **Amendments:** students draft privately, then submit. Everyone sees submitted amendments on the **Amendment board** as tracked changes, can sign them and suggest edits; the sponsors accept or decline suggestions. When an amendment has its signatories (a fifth of the delegations with students, at least two), **Bring to the floor**: the speakers list switches to speakers for and against it. Then **Vote on the amendment**; if it passes, the clause changes on every screen. **Accept as friendly** adds it with no vote.
+- **Close debate** (two-thirds; nine in the Security Council) moves the committee into voting procedure. Vote on the resolution; if a delegation moves for a roll-call vote, the guide shows the order (drawn by lot). If the resolution fails and another draft is ready, **Reopen the floor with it**.
+- **Messages:** students can message other delegations from the Messages tab. They are not marked, and students are told that you can read them: **Delegate messages** (under Tools) shows every message, and **Hide** removes one from both students' screens. No messages in voting procedure.
+- **Friends and foes and speech drafts** belong to each student and are private. Erasing a student deletes them.
+- **Security Council:** the vote panel and the projector warn as soon as a permanent member votes no ("Veto").
+
 If the chair's laptop or browser crashes, open the chair console again: everything is as it was. Students' screens catch up by themselves.
 
 ## Debating

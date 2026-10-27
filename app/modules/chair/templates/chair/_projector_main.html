@@ -12,5 +12,6 @@
 </div>
 {% if division %}<div class="card"><h2>{{ icon("vote") }} Voting: {{ division.title }}</h2>
   <p class="bigstat">{{ division.cast }} of {{ division.voters|length }} voted</p>
-  <p style="font-size:1.6rem">{{ icon("yes") }} {{ division.counts.yes }} yes · {{ icon("no") }} {{ division.counts.no }} no · {{ icon("abstain") }} {{ division.counts.abstain }} abstain</p></div>{% endif %}
+  <p style="font-size:1.6rem">{{ icon("yes") }} {{ division.counts.yes }} yes · {{ icon("no") }} {{ division.counts.no }} no · {{ icon("abstain") }} {{ division.counts.abstain }} abstain</p>
+  {% if division.veto_by %}<p style="font-size:1.6rem">{{ icon("warning") }} <strong>Veto:</strong> {{ division.veto_by|join(', ') }}</p>{% endif %}</div>{% endif %}
 {% if recent %}<div class="card"><h2>Last result</h2><p style="font-size:1.6rem">{{ recent[0].title }}: {{ recent[0].summary }}</p></div>{% endif %}
