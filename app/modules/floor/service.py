@@ -15,6 +15,7 @@ shows the same state on every screen. This module holds what the floor adds to t
 from __future__ import annotations
 
 import difflib
+import functools
 import html
 import math
 import random
@@ -62,8 +63,10 @@ def committee_channel(cid: int) -> str:
 _TOKENS = re.compile(r"\s+|[^\s]+")
 
 
+@functools.lru_cache(maxsize=512)
 def diff_html(old: str, new: str) -> Markup:
-    """Word-level tracked changes: deletions in <del>, insertions in <ins>. Text is escaped."""
+    """Word-level tracked changes: deletions in <del>, insertions in <ins>. Text is escaped.
+    Cached: the shared session view rebuilds on every change, and the same pairs come back (Phase 7 soak)."""
     a, b = _TOKENS.findall(old or ""), _TOKENS.findall(new or "")
     out = []
     for op, i1, i2, j1, j2 in difflib.SequenceMatcher(None, a, b, autojunk=False).get_opcodes():
