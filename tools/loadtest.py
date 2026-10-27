@@ -297,6 +297,7 @@ async def main(minutes: float, seed: int) -> dict:
     port = free_port()
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "timing.log").unlink(missing_ok=True)
+    (OUT / "rss.jsonl").unlink(missing_ok=True)
     server_log = open(OUT / "server.log", "w")
     proc = subprocess.Popen([sys.executable, "-m", "app", "--data-dir", str(tmp), "--port", str(port), "--host", "127.0.0.1"],
                             cwd=str(ROOT), stdout=server_log, stderr=subprocess.STDOUT,
@@ -351,6 +352,8 @@ async def main(minutes: float, seed: int) -> dict:
     while time.time() < until:
         await asyncio.sleep(30)
         mem.append((time.time(), rss_mb(proc.pid)))
+        with open(OUT / "rss.jsonl", "a") as f:          # kept as it goes, so an interrupted run still has its samples
+            f.write(json.dumps({"t": round(mem[-1][0] - start, 1), "rss_mb": mem[-1][1]}) + "\n")
     await asyncio.sleep(5)            # let the last updates arrive
     for c in clients:
         c.stop = True
