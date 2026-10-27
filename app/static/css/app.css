@@ -294,3 +294,22 @@ ol.steps li { margin: .5rem 0; max-width: 48rem; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 main li { margin: .3rem 0; }
 main li > a, main li > form { min-height: 24px; }
+
+/* ---------- committee floor (D-068) ---------- */
+ul.plain { list-style: none; padding: 0; }
+ul.plain > li { padding: .4rem 0; border-bottom: 1px solid var(--line); }
+.diff-key { padding: 0 .2rem; border-radius: 3px; }
+ins.diff-key { background: var(--yes-bg); }
+del.diff-key { background: var(--no-bg); }
+.paragraph.diff ins, .paragraph.diff del { padding: 0 .1rem; border-radius: 2px; }
+ol.messages { list-style: none; padding: 0; margin: .5rem 0; display: flex; flex-direction: column; gap: .5rem; }
+ol.messages li { border: 1px solid var(--line); border-radius: var(--radius); padding: .4rem .75rem; background: var(--card); max-width: 46rem; }
+ol.messages li.out { border-left: 4px solid var(--maroon); }
+ol.messages li.in { border-left: 4px solid var(--green); }
+ol.messages li p { margin: .15rem 0; }
+fieldset.ff-choice { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .1rem .6rem; }
+table.ff td, table.ff th { vertical-align: middle; }
+ol.prep-steps { padding-left: 1.4rem; }
+ol.prep-steps > li { margin-bottom: 1.4rem; }
+ol.prep-steps > li::marker { font-family: var(--serif); font-weight: 700; color: var(--maroon); }
+[role="tablist"].tabs { list-style: none; }

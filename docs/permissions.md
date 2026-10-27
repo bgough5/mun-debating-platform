@@ -23,12 +23,12 @@ student may open a resolution only in their own class's committee, and a ballot 
 
 | Role required | Routes |
 |---|---|
-| Public | 21 |
-| Signed in (any role, checked per item) | 26 |
-| Students only | 22 |
-| Staff and coordinator | 76 |
-| Coordinator only | 34 |
-| **Total** | **179** |
+| Public | 24 |
+| Signed in (any role, checked per item) | 29 |
+| Students only | 32 |
+| Staff and coordinator | 84 |
+| Coordinator only | 38 |
+| **Total** | **207** |
 
 ## Coordinator only
 
@@ -68,6 +68,10 @@ student may open a resolution only in their own class's committee, and a ballot 
 | POST | `/people/classes` |
 | GET | `/people/staff` |
 | POST | `/people/staff` |
+| GET | `/welcome` |
+| POST | `/welcome/class` |
+| POST | `/welcome/committee` |
+| POST | `/welcome/roster` |
 
 ## Staff and coordinator
 
@@ -85,8 +89,12 @@ student may open a resolution only in their own class's committee, and a ballot 
 | POST | `/chair/{sid}/divisions/{did}` |
 | POST | `/chair/{sid}/end-caucus` |
 | POST | `/chair/{sid}/entries/{eid}` |
+| GET | `/chair/{sid}/f/messages` |
 | GET | `/chair/{sid}/f/{part}` |
+| POST | `/chair/{sid}/floor` |
 | GET | `/chair/{sid}/guide` |
+| GET | `/chair/{sid}/messages` |
+| POST | `/chair/{sid}/messages/{mid}` |
 | GET | `/chair/{sid}/minutes` |
 | POST | `/chair/{sid}/minutes` |
 | GET | `/chair/{sid}/minutes.docx` |
@@ -94,6 +102,7 @@ student may open a resolution only in their own class's committee, and a ballot 
 | POST | `/chair/{sid}/motions` |
 | POST | `/chair/{sid}/motions/{mid}` |
 | POST | `/chair/{sid}/next` |
+| POST | `/chair/{sid}/points/{pid}` |
 | POST | `/chair/{sid}/roll` |
 | POST | `/chair/{sid}/speakers` |
 | POST | `/chair/{sid}/speaking-time` |
@@ -125,6 +134,7 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/debating/rounds/{round_id}` |
 | POST | `/debating/rounds/{round_id}` |
 | GET | `/debating/rounds/{round_id}/f` |
+| GET | `/help/staff` |
 | GET | `/intel` |
 | POST | `/intel/ai/estimate` |
 | GET | `/intel/backtests/{bid}` |
@@ -145,6 +155,8 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/people/classes` |
 | GET | `/people/classes/{class_id}` |
 | POST | `/people/classes/{class_id}` |
+| GET | `/people/classes/{class_id}/join-cards` |
+| GET | `/people/classes/{class_id}/poster` |
 | POST | `/people/classes/{class_id}/students` |
 | GET | `/people/students/{student_id}` |
 | POST | `/people/students/{student_id}` |
@@ -157,10 +169,16 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/live/{sid}` |
 | GET | `/live/{sid}/debrief/{did}` |
 | GET | `/live/{sid}/f` |
+| GET | `/live/{sid}/f/messages` |
+| POST | `/live/{sid}/messages` |
 | POST | `/live/{sid}/motion` |
+| POST | `/live/{sid}/points` |
+| POST | `/live/{sid}/points/{pid}/withdraw` |
 | POST | `/live/{sid}/roll` |
 | POST | `/live/{sid}/second/{mid}` |
+| POST | `/live/{sid}/side` |
 | POST | `/live/{sid}/speak` |
+| POST | `/live/{sid}/unmod` |
 | POST | `/live/{sid}/vote` |
 | POST | `/live/{sid}/whip/{rid}` |
 | POST | `/live/{sid}/withdraw` |
@@ -169,6 +187,10 @@ student may open a resolution only in their own class's committee, and a ballot 
 | POST | `/me/ai-practice` |
 | GET | `/me/ai-practice/{aid}` |
 | POST | `/me/ai-practice/{aid}` |
+| GET | `/me/committees/{cid}/friends-foes` |
+| POST | `/me/committees/{cid}/friends-foes` |
+| GET | `/me/committees/{cid}/prepare` |
+| POST | `/me/committees/{cid}/speeches` |
 | GET | `/me/practice` |
 | POST | `/me/practice` |
 | GET | `/me/practice/{ps_id}/coach` |
@@ -183,8 +205,11 @@ student may open a resolution only in their own class's committee, and a ballot 
 |---|---|
 | GET | `/debating/pairings/{pairing_id}/ballot` |
 | POST | `/debating/pairings/{pairing_id}/ballot` |
+| POST | `/mun/amendments/{aid}/act` |
 | POST | `/mun/amendments/{amendment_id}/status` |
 | POST | `/mun/amendments/{amendment_id}/support` |
+| GET | `/mun/committees/{cid}/amendments` |
+| POST | `/mun/committees/{cid}/amendments` |
 | GET | `/mun/committees/{committee_id}` |
 | GET | `/mun/committees/{committee_id}/evidence` |
 | POST | `/mun/committees/{committee_id}/evidence` |
@@ -217,6 +242,9 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/debating/projector/{token}` | Projector view of a debating event; needs the event's unguessable token |
 | GET | `/debating/projector/{token}/f` | Projector fragment; needs the token |
 | GET | `/healthz` | Liveness check for the start script; returns 'ok' only |
+| GET | `/help` | Help index: general guidance only, no data |
+| GET | `/help/glossary` | MUN and debating glossary: static text |
+| GET | `/help/students` | Student quick-start: static text, needed before a student has joined |
 | GET | `/join` | Students: enter a class code (throttled) |
 | POST | `/join` | Students: enter a class code (throttled) |
 | GET | `/join/wait` | Students: waiting for a teacher to approve a second device |

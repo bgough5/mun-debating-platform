@@ -104,33 +104,49 @@ def seen(conn, sid: int, student_id: int) -> None:
 
 # ---------- speakers list ----------
 
-def add_speaker(w: Writer, sid: int, delegation_id: int, student_id: int | None = None, list_kind: str = "general") -> int:
+def add_speaker(w: Writer, sid: int, delegation_id: int, student_id: int | None = None, list_kind: str = "general",
+                amendment_id: int | None = None, side: str = "") -> int:
     s = get_session(w.conn, sid)
     _open_only(s)
+    if list_kind not in ("general", "moderated"):
+        raise UserError("Unknown speakers list.")
     d = one(w.conn, "SELECT * FROM delegation WHERE id = ? AND committee_id = ? AND deleted_at IS NULL", (delegation_id, s["committee_id"]))
     if not d:
         raise UserError("That delegation isn't in this committee.")
-    if one(w.conn, "SELECT 1 FROM speakers_list_entry WHERE session_id = ? AND delegation_id = ? AND status = 'waiting' AND list_kind = ?",
-           (sid, delegation_id, list_kind)):
+    if one(w.conn, "SELECT 1 FROM speakers_list_entry WHERE session_id = ? AND delegation_id = ? AND status = 'waiting' AND list_kind = ? "
+                   "AND amendment_id IS ?", (sid, delegation_id, list_kind, amendment_id)):
         raise UserError(f"{d['iso3']} is already waiting on the speakers list.")
     pos = (scalar(w.conn, "SELECT MAX(position) FROM speakers_list_entry WHERE session_id = ?", (sid,)) or 0) + 1
     return w.insert("speakers_list_entry", {"session_id": sid, "list_kind": list_kind, "delegation_id": delegation_id,
                                             "student_id": student_id, "position": pos, "added_by": w.actor.label,
-                                            "added_at": now_iso()}, ch(sid))
+                                            "added_at": now_iso(), "amendment_id": amendment_id, "side": side}, ch(sid))
 
 
-def waiting(conn, sid: int) -> list[dict]:
-    return rows(conn, "SELECT e.*, d.iso3, c.name AS country, st.first_name, st.last_initial FROM speakers_list_entry e "
-                      "JOIN delegation d ON d.id = e.delegation_id JOIN country c ON c.iso3 = d.iso3 "
-                      "LEFT JOIN student st ON st.id = e.student_id WHERE e.session_id = ? AND e.status = 'waiting' "
-                      "ORDER BY e.position", (sid,))
+def current_list(s: dict) -> tuple[str, int | None]:
+    """Which speakers list is live (D-068): for and against the amendment on the floor, the moderated caucus list,
+    or the general speakers list."""
+    if s.get("floor_amendment_id"):
+        return "general", s["floor_amendment_id"]
+    return ("moderated" if s.get("mode") == "moderated" else "general"), None
+
+
+def waiting(conn, sid: int, s: dict | None = None, every_list: bool = False) -> list[dict]:
+    """Delegations waiting to speak on the list that is live now (or on every list)."""
+    q = ("SELECT e.*, d.iso3, c.name AS country, st.first_name, st.last_initial FROM speakers_list_entry e "
+         "JOIN delegation d ON d.id = e.delegation_id JOIN country c ON c.iso3 = d.iso3 "
+         "LEFT JOIN student st ON st.id = e.student_id WHERE e.session_id = ? AND e.status = 'waiting' ")
+    if every_list:
+        return rows(conn, q + "ORDER BY e.position", (sid,))
+    kind, amendment = current_list(s or get_session(conn, sid))
+    return rows(conn, q + "AND e.list_kind = ? AND e.amendment_id IS ? ORDER BY e.position", (sid, kind, amendment))
 
 
 def move_speaker(w: Writer, entry_id: int, direction: str) -> None:
     e = one(w.conn, "SELECT * FROM speakers_list_entry WHERE id = ?", (entry_id,))
     if not e or e["status"] != "waiting":
         raise UserError("That speaker isn't waiting any more.")
-    queue = waiting(w.conn, e["session_id"])
+    queue = waiting(w.conn, e["session_id"], every_list=True)
+    queue = [q for q in queue if q["list_kind"] == e["list_kind"] and q["amendment_id"] == e["amendment_id"]]
     idx = next(i for i, q in enumerate(queue) if q["id"] == entry_id)
     j = idx - 1 if direction == "up" else idx + 1
     if not 0 <= j < len(queue):
@@ -157,7 +173,7 @@ def next_speaker(w: Writer, sid: int) -> int | None:
     s = get_session(w.conn, sid)
     _open_only(s)
     _finish_current(w, s)
-    queue = waiting(w.conn, sid)
+    queue = waiting(w.conn, sid, s)
     if not queue:
         w.update("live_session", sid, {"current_entry_id": None}, ch(sid), action="list_empty")
         return None
@@ -167,6 +183,8 @@ def next_speaker(w: Writer, sid: int) -> int | None:
     extra = _extra_percent(w.conn, nxt["student_id"])
     dur = s["speaking_time_s"] * (1 + extra / 100)
     label = nxt["country"] + (f" ({display_name(nxt['first_name'], nxt['last_initial'])})" if nxt["first_name"] else "")
+    if nxt.get("side"):
+        label += f" · {nxt['side']} the amendment"
     if extra:
         label += f" · +{extra}% time"
     make_timer(w, sid, "speaker", label, dur, entry_id=nxt["id"])
@@ -269,6 +287,11 @@ def propose_motion(w: Writer, sid: int, procedure_motion_id: int, proposer_deleg
         raise UserError(f"Give a duration for “{pm['name']}”.")
     if pm["has_speaking_time"] and not speaking_time_s:
         raise UserError(f"Give a speaking time for “{pm['name']}”.")
+    from app.modules.floor.service import UNMOD_MAX_S
+    if pm["code"] == "unmod" and duration_s and duration_s > UNMOD_MAX_S:
+        raise UserError(f"An unmoderated caucus is at most {UNMOD_MAX_S // 60} minutes. Move to extend it when it ends.")
+    if pm["code"] in ("mod", "unmod", "suspend") and duration_s and duration_s > 3600:
+        raise UserError("Keep it under an hour.")
     return w.insert("motion", {"session_id": sid, "procedure_motion_id": procedure_motion_id,
                                "proposer_delegation_id": proposer_delegation_id, "duration_s": duration_s,
                                "speaking_time_s": speaking_time_s, "topic": (topic or "")[:200], "created_at": now_iso()}, ch(sid))
@@ -331,7 +354,18 @@ def apply_motion(w: Writer, motion_id: int) -> None:
     elif code == "speaking_time" and m["speaking_time_s"]:
         w.update("live_session", sid, {"speaking_time_s": m["speaking_time_s"]}, c, action="speaking_time")
     elif code == "close_debate":
+        # Debate is closed: into voting procedure (D-068). Any amendment still on the floor is voted first.
         set_mode(w, sid, "voting")
+        w.update("live_session", sid, {"stage": "voting_procedure"}, c, action="stage")
+    elif code == "introduce_amendment":
+        import re
+        found = re.search(r"(?i)amendment\s*#?(\d+)", m["topic"] or "")
+        if found:
+            from app.modules.floor.service import bring_to_floor
+            try:
+                bring_to_floor(w, sid, int(found.group(1)))
+            except UserError:
+                pass                 # the chair brings it to the floor from the amendment board instead
     elif code == "suspend":
         set_state(w, sid, "suspended")
         if m["duration_s"]:
@@ -468,8 +502,12 @@ def close_division(w: Writer, division_id: int) -> dict:
             a = one(w.conn, "SELECT status FROM amendment WHERE id = ?", (dv["target_id"],))
             if a and a["status"] == "tabled":
                 set_amendment_status(w, dv["target_id"], "passed" if out.passed else "failed")
+            if one(w.conn, "SELECT 1 FROM live_session WHERE id = ? AND floor_amendment_id = ?", (dv["session_id"], dv["target_id"])):
+                from app.modules.floor.service import clear_floor
+                clear_floor(w, dv["session_id"])
         if dv["target_kind"] == "resolution":
             w.update("resolution", dv["target_id"], {"status": "passed" if out.passed else "failed"}, c)
+            w.update("live_session", dv["session_id"], {"resolution_id": dv["target_id"]}, c, action="draft_voted")
     return {"passed": out.passed, "summary": summary}
 
 

@@ -31,6 +31,57 @@
     var b = document.querySelector(".menu-toggle[aria-expanded='true']");
     if (b && b.parentNode.contains(document.activeElement)) { b.setAttribute("aria-expanded", "false"); b.focus(); }
   });
+  // Tabs (D-068): each tab is a link that works without JavaScript; with it, switching is instant, arrow keys move
+  // between tabs, the choice survives live refreshes, and the address keeps ?tab= so a reload returns to it.
+  function currentTab(list) {
+    var sel = list.querySelector('[role="tab"][aria-selected="true"]');
+    return sel ? sel.getAttribute("data-tab") : null;
+  }
+  function selectTab(list, name, focus) {
+    list.querySelectorAll('[role="tab"]').forEach(function (t) {
+      var on = t.getAttribute("data-tab") === name;
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      t.setAttribute("tabindex", on ? "0" : "-1");
+      if (on && focus) t.focus();
+    });
+    applyPanels(name);
+    document.querySelectorAll("[data-tab-aware]").forEach(function (el) {
+      var u = el.getAttribute("hx-get");
+      if (u) el.setAttribute("hx-get", u.replace(/([?&])tab=[^&]*/, "$1tab=" + name));
+    });
+    try {
+      var url = new URL(location.href);
+      url.searchParams.set("tab", name);
+      history.replaceState(history.state, "", url.toString());
+    } catch (err) { /* old browsers: the tab still works */ }
+  }
+  function applyPanels(name) {
+    document.querySelectorAll("[data-panel]").forEach(function (p) { p.hidden = p.getAttribute("data-panel") !== name; });
+  }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest && e.target.closest('[data-tabs] [role="tab"]');
+    if (!t) return;
+    e.preventDefault();
+    selectTab(t.closest("[data-tabs]"), t.getAttribute("data-tab"), false);
+  });
+  document.addEventListener("keydown", function (e) {
+    var t = e.target.closest && e.target.closest('[data-tabs] [role="tab"]');
+    if (!t) return;
+    var tabs = Array.prototype.slice.call(t.closest("[data-tabs]").querySelectorAll('[role="tab"]'));
+    var i = tabs.indexOf(t), j = null;
+    if (e.key === "ArrowRight") j = (i + 1) % tabs.length;
+    else if (e.key === "ArrowLeft") j = (i - 1 + tabs.length) % tabs.length;
+    else if (e.key === "Home") j = 0;
+    else if (e.key === "End") j = tabs.length - 1;
+    else if (e.key === " " || e.key === "Enter") { e.preventDefault(); selectTab(t.closest("[data-tabs]"), t.getAttribute("data-tab"), true); return; }
+    if (j === null) return;
+    e.preventDefault();
+    selectTab(t.closest("[data-tabs]"), tabs[j].getAttribute("data-tab"), true);
+  });
+  document.addEventListener("htmx:afterSwap", function () {
+    var list = document.querySelector("[data-tabs]");
+    if (list && currentTab(list)) applyPanels(currentTab(list));
+  });
   document.addEventListener("htmx:afterSettle", function (e) {
     if (e.detail && e.detail.boosted) {
       var main = document.getElementById("main");

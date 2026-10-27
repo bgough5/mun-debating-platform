@@ -24,20 +24,28 @@ CONTEXT = [
         "Data: switch between real and demo data, back up, download a backup or restore one.",
     ]),
     ("/chair", "Chairing a session", [
-        "The guide at the top shows the stage, what to say and what happens next. Next moves on; Jump to a stage goes anywhere.",
-        "Roll call: students answer on their devices; delegations with no student are answered by the engine and labelled computed.",
-        "Before a vote, start a whip count so students predict how named delegations will vote; it locks when you open the vote.",
+        "Six stages: roll call, agenda, opening statements, the floor, voting procedure, debrief. The guide shows what to say and what happens next.",
+        "On the floor, ask for points or motions. Take motions most disruptive first: an unmoderated caucus is up to 10 minutes a time.",
+        "Amendments reach the floor once they have their signatories (a fifth of the delegations with students, at least two). Take speakers for and against, then vote; an adopted amendment changes the text on every screen.",
+        "Points raised from devices appear at the top of the floor panel. Delegate messages are under Tools; you can hide one.",
+        "Close debate (two-thirds; nine in the Security Council) moves to voting procedure. If the resolution fails and another draft is ready, reopen the floor with it.",
         "If your browser closes, open the chair console again: everything is as it was.",
     ]),
     ("/live", "Your live session", [
-        "The stage tracker shows where the committee is; \"What you can do now\" says what you can do.",
-        "Add yourself to the speakers list, answer the roll, predict votes in a whip count, and vote for your delegation.",
+        "Speak and negotiate out loud: the tabs help, they don't replace the room.",
+        "Floor: the stage, who is speaking, the speakers list and votes. Motions and votes: propose a caucus (up to 10 minutes) and second motions. Points: log a point so the chair sees it.",
+        "Messages: notes to other delegations. They aren't marked, but the chair can read them. My speech: your own drafts, only for you.",
+        "Amendments: see every submitted amendment as tracked changes, sign them, suggest edits. Friends and foes: your reading of who supports each operative clause.",
         "Your screen updates by itself. If it says it's reconnecting, wait a moment.",
     ]),
     ("/me/sim", "Practice committee", [
         "You run one delegation; the others are computed, each with a hidden position.",
         "Talk to up to five delegations, record what you think each will do, amend the paragraph if it would win votes, then call the vote.",
         "The debrief shows how well you read the room. Nothing here changes your class's work.",
+    ]),
+    ("/me/committees", "Preparing for a committee", [
+        "Read your country's brief and the proposed resolution, then write your opening statement in your own words.",
+        "Friends and foes: for each operative clause, record who you think is with you. The engine's estimate is beside it, labelled as an estimate.",
     ]),
     ("/me", "Your page", [
         "Your delegation, tasks, live sessions, debates, practice speeches and pathway milestones.",
@@ -72,6 +80,7 @@ CONTEXT = [
 ]
 
 GLOSSARY = [
+    ("Friends and foes", "Your own record of which delegations support or oppose each operative clause. Only you see it; the engine's estimate beside it is labelled as an estimate."),
     ("Abstain", "Vote neither for nor against. In most General Assembly rules, abstentions don't count toward the majority."),
     ("Adjudicator", "The judge of a debate. A panel decides by majority; the chair adjudicator breaks a 1–1 tie."),
     ("Agenda", "The topic the committee will debate, set at the start by a motion or by consent."),
@@ -79,7 +88,7 @@ GLOSSARY = [
     ("Ballot", "The adjudicator's score sheet for one debate: each speaker's marks and who won."),
     ("Bloc", "A group of countries that often vote together, such as a regional group or a negotiating bloc."),
     ("Bye", "A round in which a team has no opponent because there is an odd number of teams."),
-    ("Caucus", "Moderated: a debate on a sub-topic with its own speakers list and short speeches. Unmoderated: free time to lobby and draft."),
+    ("Caucus", "Moderated: a debate on a sub-topic with its own speakers list and short speeches. Unmoderated: free time to lobby and draft, up to 10 minutes a motion here."),
     ("Computed delegation", "A country with no student in this platform, whose roll-call answer and vote come from the prediction engine. Always labelled."),
     ("Delegation", "The student or students representing one country in a committee."),
     ("Division", "A formal vote. The platform applies the committee's voting rule, including the Security Council veto."),
@@ -93,18 +102,26 @@ GLOSSARY = [
     ("Motion (debating)", "The statement a debate is about, such as \"That schools should ban homework\"."),
     ("Motion (MUN)", "A procedural proposal, such as a moderated caucus or closing debate. Most need a seconder and a vote."),
     ("Operative paragraph", "A numbered paragraph of a resolution that says what will be done. These are what get amended and voted on."),
+    ("Point of order", "Raised when the rules of procedure aren't being followed. The chair rules on it at once."),
+    ("Point of personal privilege", "Raised when something stops you taking part, such as not being able to hear. The only point that may interrupt a speaker."),
+    ("Point of parliamentary inquiry", "A question to the chair about the rules of procedure."),
     ("Pivotal vote", "A vote that, if changed, would have flipped the result."),
     ("Power pairing", "Matching teams on the same number of wins after the first round."),
     ("Present and voting", "A roll-call answer meaning the delegation will vote yes or no on substantive matters, not abstain."),
     ("Prediction", "The platform's estimate of how a vote will go, as probabilities with the evidence shown. An estimate, not a fact."),
+    ("Right of reply", "A request to answer when a speech has insulted your country. The chair decides; if granted, you speak next."),
     ("Roll call", "The chair calls each delegation at the start of a session to record who is present."),
+    ("Signatory", "A delegation that signs an amendment or draft so it can be debated. Signing doesn't commit your vote."),
     ("Speakers list", "The queue of delegations waiting to speak."),
     ("Sponsor", "A delegation that wrote or backs a draft resolution or amendment."),
     ("Swing country", "A country whose vote is uncertain and would change the result most if it moved: the best people to lobby."),
+    ("Tracked changes", "How the platform shows an amendment: added words highlighted and underlined, removed words struck through, against today's text."),
     ("Veto", "In the Security Council, a no vote from a permanent member (China, France, Russia, the UK, the US) blocks a substantive resolution. An abstention isn't a veto."),
     ("Whip count", "Predicting, before a vote, how each delegation will vote. In this platform students are scored against the votes actually cast."),
     ("Yield", "Giving the rest of your speaking time to the chair, to questions, or to another delegate."),
 ]
+
+GLOSSARY.sort(key=lambda t: t[0].lower())
 
 
 def page_help(path: str) -> tuple[str, list[str]]:

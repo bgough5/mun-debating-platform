@@ -210,7 +210,8 @@ def next_seq(conn) -> int:
 
 
 def table_amendment(w: Writer, paragraph_id: int, kind: str, proposed_text: str, tags, sponsor_delegation_id: int | None,
-                    rationale: str = "") -> int:
+                    rationale: str = "", draft: bool = False) -> int:
+    """A draft (D-068) is visible only to its sponsors until they submit it; everything submitted is public."""
     p = paragraph(w.conn, paragraph_id)
     if kind not in ("add", "delete", "replace"):
         raise UserError("An amendment adds, deletes or replaces a paragraph.")
@@ -222,7 +223,8 @@ def table_amendment(w: Writer, paragraph_id: int, kind: str, proposed_text: str,
     ch = resolution_channel(p["resolution_id"])
     aid = w.insert("amendment", {"paragraph_id": paragraph_id, "base_version_id": p["current_version_id"], "kind": kind,
                                  "proposed_text": proposed_text, "tags": tags, "sponsor_delegation_id": sponsor_delegation_id,
-                                 "rationale": rationale or "", "created_at": now_iso()}, ch)
+                                 "rationale": rationale or "", "created_at": now_iso(),
+                                 "submitted_at": None if draft else now_iso()}, ch)
     if sponsor_delegation_id:
         support_amendment(w, aid, sponsor_delegation_id, "sponsor")
     return aid
@@ -235,6 +237,8 @@ def support_amendment(w: Writer, amendment_id: int, delegation_id: int, kind: st
         raise UserError("That amendment doesn't exist.", 404)
     if kind not in ("sponsor", "second", "signatory"):
         raise UserError("Support is sponsor, second or signatory.")
+    if a["submitted_at"] is None and kind != "sponsor":
+        raise UserError("That amendment is still a draft: its sponsors haven't submitted it yet.")
     if kind == "second" and one(w.conn, "SELECT 1 FROM amendment_support WHERE amendment_id = ? AND delegation_id = ? "
                                         "AND kind = 'sponsor' AND deleted_at IS NULL", (amendment_id, delegation_id)):
         raise UserError("A sponsor can't second its own amendment.")
@@ -261,6 +265,7 @@ def amendment_on_floor(conn, paragraph_id: int) -> int | None:
     events = []
     for s in rows(conn, "SELECT s.* FROM amendment_support s JOIN amendment a ON a.id = s.amendment_id "
                         "WHERE a.paragraph_id = ? AND a.status = 'tabled' AND a.deleted_at IS NULL AND s.deleted_at IS NULL "
+                        "AND a.submitted_at IS NOT NULL "
                         "AND s.kind IN ('sponsor','second') ORDER BY s.seq", (paragraph_id,)):
         if s["kind"] == "sponsor":
             events.append({"seq": s["seq"], "player": f"d{s['delegation_id']}:{s['amendment_id']}", "kind": "sponsor",

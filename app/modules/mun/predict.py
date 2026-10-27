@@ -263,7 +263,7 @@ def compare(conn, paragraph_id: int, amendment_ids: list[int] | None = None, run
     base = run_prediction(conn, "paragraph", paragraph_id, runs=runs, with_swing=False)
     if amendment_ids is None:
         amendment_ids = [a["id"] for a in rows(conn, "SELECT id FROM amendment WHERE paragraph_id = ? AND deleted_at IS NULL "
-                                                     "AND status IN ('tabled','friendly') ORDER BY id", (paragraph_id,))]
+                                                     "AND status IN ('tabled','friendly') AND submitted_at IS NOT NULL ORDER BY id", (paragraph_id,))]
     out = []
     bd = {d.iso3: d for d in base["dists"]}
     for aid in amendment_ids:

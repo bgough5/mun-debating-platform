@@ -49,7 +49,7 @@ def _shared_view(conn, sid: int) -> dict:
                             "JOIN delegation d ON d.id = e.delegation_id JOIN country c ON c.iso3 = d.iso3 "
                             "LEFT JOIN student st ON st.id = e.student_id WHERE e.id = ?", (s["current_entry_id"],))
     data = {
-        "s": s, "current": current, "queue": C.waiting(conn, sid),
+        "s": s, "current": current, "queue": C.waiting(conn, sid, s),
         "timer_rows": rows(conn, "SELECT * FROM timer WHERE session_id = ? AND state != 'done' ORDER BY kind = 'speaker' DESC, id DESC", (sid,)),
         "motions": C.motions(conn, sid),
         "division": C.division_state(conn, s["current_division_id"]) if s["current_division_id"] else None,
@@ -67,7 +67,7 @@ def _shared_view(conn, sid: int) -> dict:
         "amendments": rows(conn, "SELECT a.id, a.kind, p.position, c.name AS sponsor FROM amendment a JOIN paragraph p ON p.id = a.paragraph_id "
                                  "JOIN resolution r ON r.id = p.resolution_id LEFT JOIN delegation d ON d.id = a.sponsor_delegation_id "
                                  "LEFT JOIN country c ON c.iso3 = d.iso3 WHERE r.committee_id = ? AND a.status = 'tabled' "
-                                 "AND a.deleted_at IS NULL ORDER BY a.id", (s["committee_id"],)),
+                                 "AND a.deleted_at IS NULL AND a.submitted_at IS NOT NULL ORDER BY a.id", (s["committee_id"],)),
         "cap": 25,
     }
     # Guided simulation (D-060): stage, roll call, whip count, the last result to debrief.
@@ -82,6 +82,17 @@ def _shared_view(conn, sid: int) -> dict:
     data["whip_round"] = wr
     data["last_vote"] = one(conn, "SELECT * FROM division WHERE session_id = ? AND status = 'closed' AND procedural = 0 "
                                   "ORDER BY id DESC LIMIT 1", (sid,))
+    # The floor (D-068): the draft being debated, the amendment on the floor, points waiting, the amendment board.
+    from app.modules.floor import service as F
+    data["draft"] = F.session_resolution(conn, s)
+    data["floor_amendment"] = F.amendment_view(conn, s["floor_amendment_id"], s["floor_amendment_id"]) if s["floor_amendment_id"] else None
+    data["open_points"] = F.points(conn, sid)
+    data["board"] = [a for a in F.board(conn, s["committee_id"], staff=True, floor_id=s["floor_amendment_id"]) if a["state"] != "draft"]
+    data["board_counts"] = {k: sum(1 for a in data["board"] if a["state"] == k) for k in ("submitted", "ready", "floor", "adopted", "rejected")}
+    data["roll_order"] = F.roll_call_order(conn, sid, s["committee_id"]) if s["stage"] == "voting_procedure" else []
+    data["other_drafts"] = rows(conn, "SELECT id, title, status FROM resolution WHERE committee_id = ? AND deleted_at IS NULL AND id IS NOT ? "
+                                      "AND status NOT IN ('passed', 'failed', 'withdrawn')", (s["committee_id"], (data["draft"] or {}).get("id")))
+    data["unmod_max_min"] = F.UNMOD_MAX_S // 60
     with _VIEW_LOCK:
         if len(_VIEW_CACHE) > 64:
             _VIEW_CACHE.clear()
@@ -105,7 +116,11 @@ def session_view(conn, sid: int, actor=None) -> dict:
     my_roll = next((r for r in view["roll"] if mine and r["id"] == mine["id"]), None)
     my_whip = SIM.my_whip(conn, view["whip_round"]["id"], actor.id) if (view["whip_round"] and actor is not None
                                                                         and actor.kind == "student") else []
-    view.update(mine=mine, my_place=my_place, my_vote=my_vote, my_roll=my_roll, my_whip=my_whip)
+    my_points = [p for p in view["open_points"] if mine and p["delegation_id"] == mine["id"]]
+    my_side = None
+    if mine and view["floor_amendment"]:
+        my_side = next((q["side"] for q in view["queue"] if q["delegation_id"] == mine["id"]), None)
+    view.update(mine=mine, my_place=my_place, my_vote=my_vote, my_roll=my_roll, my_whip=my_whip, my_points=my_points, my_side=my_side)
     return view
 
 
@@ -402,16 +417,24 @@ def live_page(request: Request, sid: int, sess=Depends(require_student)):
         if s["state"] == "closed":
             raise UserError("This session has finished.", 409)
         C.admit(w, sid, request.state.actor.id, cap)
+    from app.modules.floor import service as F
+    from app.modules.floor.routes import student_tabs_context
     with request.app.state.db.read() as conn:
-        ctx = session_view(conn, sid, request.state.actor)
+        ctx = student_tabs_context(conn, request, sid)
+        mine = ctx["mine"]
+        ctx["msgs"] = F.inbox(conn, sid, mine["id"]) if mine else []
+        ctx["dels"] = rows(conn, "SELECT d.id, c.name FROM delegation d JOIN country c ON c.iso3 = d.iso3 WHERE d.committee_id = ? "
+                                 "AND d.deleted_at IS NULL ORDER BY c.name", (ctx["s"]["committee_id"],))
+        ctx["max_len"] = F.MESSAGE_MAX
     return render(request, "chair/live.html", {"title": f"Live: {ctx['s']['committee']}", **ctx})
 
 
 @router.get("/live/{sid}/f")
 def live_fragment(request: Request, sid: int, sess=Depends(require_student)):
+    from app.modules.floor.routes import student_tabs_context
     with request.app.state.db.read() as conn:
         _student_session(conn, request, sid)
-        ctx = session_view(conn, sid, request.state.actor)
+        ctx = student_tabs_context(conn, request, sid)
     return render(request, "chair/_live_main.html", ctx)
 
 
@@ -437,7 +460,7 @@ def live_speak(request: Request, sid: int, sess=Depends(require_student), form=D
 @router.post("/live/{sid}/withdraw")
 def live_withdraw(request: Request, sid: int, sess=Depends(require_student), form=Depends(form_data)):
     def act(w, f, mine, s):
-        for e in C.waiting(w.conn, sid):
+        for e in C.waiting(w.conn, sid, every_list=True):
             if e["delegation_id"] == mine["id"]:
                 C.withdraw_speaker(w, e["id"])
     return _student_action(request, sid, form, act, "Taken off the speakers list.")

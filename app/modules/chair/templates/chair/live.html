@@ -1,8 +1,49 @@
 {% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
 {% block content %}
 <h1>{{ s.committee }}</h1>
 <p id="live-status" class="small muted">Connecting…</p>
-<div id="live-main" data-live-channel="session:{{ s.id }}" hx-get="/live/{{ s.id }}/f" hx-trigger="live-update" hx-swap="innerHTML">
+{# Tabs (D-068). Each tab is also a link, so without JavaScript it simply loads that tab. #}
+<div class="tabs" role="tablist" aria-label="Committee tools" data-tabs>
+{% for key, label, ic in [('floor','Floor','speakers'),('motions','Motions and votes','motion'),('points','Points','point'),
+                          ('messages','Messages','message'),('speech','My speech','speech'),('amendments','Amendments','amendment'),
+                          ('friends','Friends and foes','friends')] %}
+  <a role="tab" id="tab-{{ key }}" href="/live/{{ s.id }}?tab={{ key }}" hx-boost="false" data-tab="{{ key }}" aria-controls="p-{{ key }}"
+     aria-selected="{{ 'true' if tab == key else 'false' }}" tabindex="{{ '0' if tab == key else '-1' }}">{{ icon(ic) }} {{ label }}</a>
+{% endfor %}
+</div>
+<div id="live-main" data-live-channel="session:{{ s.id }}" hx-get="/live/{{ s.id }}/f?tab={{ tab }}" hx-trigger="live-update" hx-swap="innerHTML" data-tab-aware>
 {% include "chair/_live_main.html" %}
 </div>
+<section id="p-messages" role="tabpanel" aria-labelledby="tab-messages" data-panel="messages" {% if tab != 'messages' %}hidden{% endif %}>
+  <h2>{{ icon("message") }} Messages</h2>
+  <p class="small">Notes to other delegations, like passing a note across the room. They aren't marked, but <strong>the chair can read every message</strong>. Be diplomatic.</p>
+  {% if mine %}
+  <div id="live-messages" data-live-channel="inbox:{{ mine.id }}" hx-get="/live/{{ s.id }}/f/messages" hx-trigger="live-update" hx-swap="innerHTML">
+    {% include "floor/_messages.html" %}
+  </div>
+  {% else %}<p class="muted">Join a delegation to send messages.</p>{% endif %}
+</section>
+<section id="p-speech" role="tabpanel" aria-labelledby="tab-speech" data-panel="speech" {% if tab != 'speech' %}hidden{% endif %}>
+  <h2>{{ icon("speech") }} My speech</h2>
+  <p class="small">Your own words, for you only: the program never writes them and nobody else sees them. About 130 words is a minute out loud.</p>
+  {% if mine %}
+  {% for d in my_drafts %}
+  <details {% if loop.first %}open{% endif %}><summary>{{ d.title }} <span class="small muted">({{ speech_kinds[d.kind] }}, {{ d.body.split()|length }} words)</span></summary>
+    <form method="post" action="/me/committees/{{ s.committee_id }}/speeches" class="stack">{{ hidden_csrf(csrf) }}
+      <input type="hidden" name="next" value="/live/{{ s.id }}?tab=speech"><input type="hidden" name="draft_id" value="{{ d.id }}"><input type="hidden" name="kind" value="{{ d.kind }}">
+      <div class="field"><label for="dt{{ d.id }}">Title</label><input id="dt{{ d.id }}" type="text" name="title" value="{{ d.title }}" maxlength="80"></div>
+      <div class="field"><label for="db{{ d.id }}">Draft</label><textarea id="db{{ d.id }}" name="body" rows="9" maxlength="6000">{{ d.body }}</textarea></div>
+      <div class="row"><button type="submit">Save</button><button type="submit" name="delete" value="1" class="secondary">Delete</button></div>
+    </form></details>
+  {% endfor %}
+  <details {% if not my_drafts %}open{% endif %}><summary>{{ icon("add") }} New draft</summary>
+    <form method="post" action="/me/committees/{{ s.committee_id }}/speeches" class="stack">{{ hidden_csrf(csrf) }}
+      <input type="hidden" name="next" value="/live/{{ s.id }}?tab=speech">
+      <div class="field"><label for="nk">Kind</label><select id="nk" name="kind">{% for k, v in speech_kinds.items() %}<option value="{{ k }}" {% if k == 'speech' %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="nt">Title</label><input id="nt" type="text" name="title" maxlength="80" placeholder="e.g. Moderated caucus on finance"></div>
+      <div class="field"><label for="nb">Draft</label><textarea id="nb" name="body" rows="7" maxlength="6000"></textarea></div>
+      <button type="submit">Save draft</button></form></details>
+  {% else %}<p class="muted">Join a delegation to keep speech drafts.</p>{% endif %}
+</section>
 {% endblock %}

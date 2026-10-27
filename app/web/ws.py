@@ -83,6 +83,20 @@ def channel_allowed(conn, actor, channel: str, projector_token: str | None, cap:
         return False, "projector links only show their own session"
     if actor is None:
         return False, "sign in"
+    if kind == "inbox":
+        # Messages to and from a delegation (D-068): its own members, and staff who run the committee.
+        d = one(conn, "SELECT committee_id FROM delegation WHERE id = ?", (ident,))
+        if not d:
+            return False, "no such delegation"
+        if actor.kind == "student":
+            from app.web.auth import student_delegation_ids
+            return ident in student_delegation_ids(conn, actor.id), "not your delegation"
+        return committee_access(conn, actor, d["committee_id"]) == "manage", "staff only"
+    if kind == "chat":
+        s = one(conn, "SELECT committee_id FROM live_session WHERE id = ?", (ident,))
+        if not s:
+            return False, "no such session"
+        return actor.kind != "student" and committee_access(conn, actor, s["committee_id"]) == "manage", "staff only"
     if kind in ("resolution", "committee"):
         cid = ident
         if kind == "resolution":

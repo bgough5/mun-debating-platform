@@ -103,7 +103,8 @@ def chair_whip_act(request: Request, sid: int, rid: int, sess=Depends(require_st
             return "Whip count cancelled."
         did = C.open_division(w, sid, r["title"], r["target_kind"], r["target_id"], pred=pred)
         SIM.lock_round(w, rid, did)
-        SIM.set_stage(w, sid, "division")
+        if r["target_kind"] == "resolution":
+            SIM.set_stage(w, sid, "voting_procedure")
         return "Predictions locked. Voting is open."
     return _act(request, sid, act)
 

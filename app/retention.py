@@ -74,7 +74,9 @@ def erase_student(w, student_id: int) -> dict:
     """Erase a student on request or at exit (spec §8.6), keeping other students' results intact.
 
     The name goes; the student's own writing (practice reflections, AI practice
-    chats, milestone notes, speaker comments about them) is deleted; their
+    chats, milestone notes, speaker comments about them, speech drafts, friends
+    and foes sheets) is deleted, and the text of their messages to other
+    delegations is replaced with "[erased]"; their
     devices are signed out; and the change history is scrubbed of their name and
     of copies of the deleted rows. What stays, under the name "Erased": team
     membership, speaker scores and votes, because removing them would change
@@ -99,10 +101,18 @@ def erase_student(w, student_id: int) -> dict:
         conn.execute(f"DELETE FROM ai_practice_message WHERE practice_id IN ({marks})", tuple(practice))
         conn.execute(f"DELETE FROM ai_practice WHERE id IN ({marks})", tuple(practice))
     counts = {"ai_practice": len(practice)}
-    for table in ("practice_speech", "student_milestone", "claim_request"):
+    for table in ("practice_speech", "student_milestone", "claim_request", "speech_draft", "ff_entry"):
         ids = take(table, "student_id = ?", (student_id,))
         conn.execute(f"DELETE FROM {table} WHERE student_id = ?", (student_id,))
         counts[table] = len(ids)
+    # Committee writing other delegations received or acted on stays as a record, with the student's words removed.
+    ids = take("delegate_message", "from_student_id = ?", (student_id,))
+    conn.execute("UPDATE delegate_message SET body = '[erased]', from_student_id = NULL WHERE from_student_id = ?", (student_id,))
+    counts["delegate_message"] = len(ids)
+    take("floor_point", "student_id = ?", (student_id,))
+    conn.execute("UPDATE floor_point SET note = '', student_id = NULL WHERE student_id = ?", (student_id,))
+    take("amendment_suggestion", "student_id = ?", (student_id,))
+    conn.execute("UPDATE amendment_suggestion SET note = '', student_id = NULL WHERE student_id = ?", (student_id,))
     take("ballot_score", "speaker_student_id = ?", (student_id,))
     conn.execute("UPDATE ballot_score SET comment = '' WHERE speaker_student_id = ?", (student_id,))
     take("adjudicator", "student_id = ?", (student_id,))

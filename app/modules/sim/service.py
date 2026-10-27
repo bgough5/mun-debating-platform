@@ -1,6 +1,7 @@
 """Guided MUN simulation v3 (D-060), the whip-count exercise (D-061) and practice v3.
 
-A live session moves through nine stages that follow real committee procedure.
+A live session moves through six stages that follow real committee procedure; in the
+middle, the floor is open and motions decide what happens next (D-068).
 The chair's script for each stage is data (procedure_stage), so it can be edited
 under Admin. Students always see the stage and what they can do now.
 
@@ -30,8 +31,7 @@ from app.engine.rules import VotingRule, tally
 from app.errors import UserError
 from app.util import display_name, now_iso
 
-STAGES = ["roll_call", "agenda", "opening_speeches", "caucus", "draft_resolution", "amendments", "voting_procedure",
-          "division", "debrief"]
+STAGES = ["roll_call", "agenda", "opening_speeches", "floor", "voting_procedure", "debrief"]      # D-068
 ROLL = {"present": "Present", "present_and_voting": "Present and voting", "absent": "Absent"}
 VOTES = ("yes", "abstain", "no")
 LOBBY_LIMIT = 5            # conversations per student per practice run (an unmoderated caucus is short)

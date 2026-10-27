@@ -267,10 +267,13 @@ def workspace_context(conn, request, resolution_id: int) -> dict:
                        "FROM paragraph p JOIN paragraph_version v ON v.id = p.current_version_id "
                        "LEFT JOIN delegation d ON d.id = p.owner_delegation_id LEFT JOIN country c ON c.iso3 = d.iso3 "
                        "WHERE p.resolution_id = ? AND p.deleted_at IS NULL ORDER BY p.kind = 'operative', p.position", (resolution_id,))
+    mine = _my_delegation(conn, request.state.actor, committee_id)
+    # Drafts (D-068) are shown only to their sponsors and to staff running the class.
     amends = rows(conn, "SELECT a.*, c.name AS sponsor_name, d.iso3 AS sponsor_iso3 FROM amendment a "
                         "LEFT JOIN delegation d ON d.id = a.sponsor_delegation_id LEFT JOIN country c ON c.iso3 = d.iso3 "
-                        "JOIN paragraph p ON p.id = a.paragraph_id WHERE p.resolution_id = ? AND a.deleted_at IS NULL ORDER BY a.id",
-                  (resolution_id,))
+                        "JOIN paragraph p ON p.id = a.paragraph_id WHERE p.resolution_id = ? AND a.deleted_at IS NULL "
+                        "AND (a.submitted_at IS NOT NULL OR ? OR a.sponsor_delegation_id = ?) ORDER BY a.id",
+                  (resolution_id, int(access == "manage"), mine["id"] if mine else -1))
     support = rows(conn, "SELECT s.*, d.iso3 FROM amendment_support s JOIN delegation d ON d.id = s.delegation_id "
                          "JOIN amendment a ON a.id = s.amendment_id JOIN paragraph p ON p.id = a.paragraph_id "
                          "WHERE p.resolution_id = ? AND s.deleted_at IS NULL ORDER BY s.seq", (resolution_id,))
@@ -285,7 +288,6 @@ def workspace_context(conn, request, resolution_id: int) -> dict:
                       "WHERE d.committee_id = ? AND d.deleted_at IS NULL ORDER BY c.name", (committee_id,))
     tags = rows(conn, "SELECT code, label FROM tag WHERE topic_id = ? AND deleted_at IS NULL ORDER BY code", (com["topic_id"],)) \
         if com["topic_id"] else []
-    mine = _my_delegation(conn, request.state.actor, committee_id)
     locks = {}
     if one(conn, "SELECT 1 FROM sqlite_master WHERE name = 'paragraph_lock'"):
         from app.modules.mun.locks import active_locks
@@ -558,7 +560,8 @@ def evidence_page(request: Request, committee_id: int, iso3: str = "", target_ki
                            "JOIN paragraph_version v ON v.id = p.current_version_id WHERE r.committee_id = ? AND p.deleted_at IS NULL "
                            "AND p.kind = 'operative' ORDER BY r.id, p.position", (committee_id,))
         amends = rows(conn, "SELECT a.id, a.kind, p.position FROM amendment a JOIN paragraph p ON p.id = a.paragraph_id JOIN resolution r "
-                            "ON r.id = p.resolution_id WHERE r.committee_id = ? AND a.deleted_at IS NULL ORDER BY a.id", (committee_id,))
+                            "ON r.id = p.resolution_id WHERE r.committee_id = ? AND a.deleted_at IS NULL AND a.submitted_at IS NOT NULL "
+                            "ORDER BY a.id", (committee_id,))
         resolutions = rows(conn, "SELECT id, title FROM resolution WHERE committee_id = ? AND deleted_at IS NULL", (committee_id,))
         tags = rows(conn, "SELECT code, label FROM tag WHERE topic_id = ? AND deleted_at IS NULL ORDER BY code", (com["topic_id"],))
         isos = [d["iso3"] for d in dels]
@@ -707,7 +710,8 @@ def compare_page(request: Request, paragraph_id: int, s=Depends(require_any)):
         _access(conn, request, cid)
         cmp = P.compare(conn, paragraph_id)
         amends = {a["id"]: a for a in rows(conn, "SELECT a.*, c.name AS sponsor FROM amendment a LEFT JOIN delegation d ON d.id = a.sponsor_delegation_id "
-                                                 "LEFT JOIN country c ON c.iso3 = d.iso3 WHERE a.paragraph_id = ?", (paragraph_id,))}
+                                                 "LEFT JOIN country c ON c.iso3 = d.iso3 WHERE a.paragraph_id = ? "
+                                                 "AND a.submitted_at IS NOT NULL", (paragraph_id,))}
         p = S.paragraph(conn, paragraph_id)
     return render(request, "mun/compare.html", {"title": f"Amendments to paragraph {p['position']}", "cmp": cmp, "amends": amends,
                                                 "p": p})

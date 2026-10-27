@@ -47,7 +47,8 @@
           <button type="submit" class="secondary">Save</button></form>
       </details>{% endif %}
       <p><a href="/projector/{{ s.projector_token }}" target="_blank" rel="noopener">Open the projector view</a> <span class="small muted">(no sign-in; share the link only on the projector)</span></p>
-      <p><a href="/chair/{{ s.id }}/minutes">Minutes</a> · <a href="/mun/committees/{{ s.committee_id }}">Committee and resolutions</a></p>
+      <p><a href="/chair/{{ s.id }}/minutes">Minutes</a> · <a href="/mun/committees/{{ s.committee_id }}">Committee and resolutions</a>
+        · <a href="/mun/committees/{{ s.committee_id }}/amendments">Amendment board</a> · <a href="/chair/{{ s.id }}/messages">Delegate messages</a></p>
       <div class="row">
         {% if s.state == 'open' %}<form method="post" action="/chair/{{ s.id }}/state">{{ hidden_csrf(csrf) }}<input type="hidden" name="state" value="suspended"><button type="submit" class="secondary">Suspend</button></form>
         {% elif s.state == 'suspended' %}<form method="post" action="/chair/{{ s.id }}/state">{{ hidden_csrf(csrf) }}<input type="hidden" name="state" value="open"><button type="submit">Resume</button></form>{% endif %}

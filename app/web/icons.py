@@ -33,6 +33,8 @@ CONCEPTS = {
     "search": "search", "lock": "lock", "unlock": "lock-open", "play": "play", "pause": "pause",
     "refresh": "refresh-cw", "view": "eye", "qr": "qr-code", "sign-out": "log-out", "next": "chevron-right", "menu": "menu",
     "x": "x", "check": "check",
+    # Committee floor (D-068)
+    "message": "message-circle", "speech": "notebook-pen", "point": "circle-alert", "friends": "handshake", "tracked": "file-diff",
     # Status and information
     "demo": "flask-conical", "help": "circle-help", "info": "info", "warning": "triangle-alert",
     "error": "circle-x", "ok": "circle-check", "inbox": "inbox", "ai": "bot", "data": "database",

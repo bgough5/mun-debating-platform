@@ -1,0 +1,20 @@
+{% from "_macros.html" import hidden_csrf, empty_state %}
+{% if mine %}
+<form method="post" action="/live/{{ s.id }}/messages" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="mto">To</label><select id="mto" name="to_delegation_id" required>
+    {% for d in dels if d.id != mine.id %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="mbody">Message</label><textarea id="mbody" name="body" rows="3" maxlength="{{ max_len }}" required></textarea>
+    <p class="hint">Up to {{ max_len }} characters. The chair can read it.</p></div>
+  <button type="submit">{{ icon("message") }} Send</button>
+</form>
+<h3>Your delegation's messages</h3>
+<ol class="messages" reversed>
+{% for m in msgs %}
+  <li class="{{ 'out' if m.from_delegation_id == mine.id else 'in' }}">
+    <p class="small"><strong>{% if m.from_delegation_id == mine.id %}You{% if m.who %} ({{ m.who }}){% endif %} → {{ m.to_country }}{% else %}{{ m.from_country }}{% if m.who %} ({{ m.who }}){% endif %} → you{% endif %}</strong>
+      · <time datetime="{{ m.created_at }}">{{ m.created_at|when }}</time></p>
+    {% if m.hidden_by %}<p class="muted">Hidden by the chair.</p>{% else %}<p>{{ m.body }}</p>{% endif %}
+  </li>
+{% else %}<li class="muted">{{ empty_state("No messages yet.", "Send a note to another delegation to start negotiating.", icon_name="message") }}</li>{% endfor %}
+</ol>
+{% endif %}

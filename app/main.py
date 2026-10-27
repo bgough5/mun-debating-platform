@@ -155,8 +155,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     if settings.module_on("chair"):
         from app.modules.chair.routes import router as chair_router
         from app.modules.sim.routes import router as sim_router
+        from app.modules.floor.routes import router as floor_router
         app.include_router(chair_router)
         app.include_router(sim_router)
+        app.include_router(floor_router)
     if settings.module_on("debating"):
         from app.modules.debating.routes import router as debating_router
         app.include_router(debating_router)

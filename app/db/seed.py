@@ -152,6 +152,14 @@ def seed_content_updates(conn: sqlite3.Connection) -> None:
     """New reference content added after a database was created (Phase 6): templates, motions and source types that
     are missing are added by their key. Nothing existing is changed or removed, so an edited template or motion
     is never overwritten."""
+    if _table_exists(conn, "procedure_stage"):
+        # Stages added after a database was created (the floor, D-068) are added for each rule set that lacks them.
+        for r in _csv("procedure_stages.csv"):
+            rs = _id(conn, "procedure_rule_set", r["rule_set"])
+            if rs and not conn.execute("SELECT 1 FROM procedure_stage WHERE rule_set_id = ? AND code = ?", (rs, r["code"])).fetchone():
+                conn.execute("INSERT INTO procedure_stage (rule_set_id, code, position, name, chair_script, chair_next, student_prompt) "
+                             "VALUES (?,?,?,?,?,?,?)", (rs, r["code"], int(r["position"]), r["name"], r["chair_script"],
+                                                         r["chair_next"], r["student_prompt"]))
     if _table_exists(conn, "template"):
         for r in _csv("templates.csv"):
             if not conn.execute("SELECT 1 FROM template WHERE code = ?", (r["code"],)).fetchone():
