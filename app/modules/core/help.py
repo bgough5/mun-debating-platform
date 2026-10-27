@@ -86,8 +86,8 @@ CONTEXT = [
     ]),
     ("/people", "People", [
         "Classes, their codes and rosters (first names only), staff, and each student's pathway.",
-        "Print join cards with a QR code from the class page. Change the class code each term.",
-        "If a student's name is taken on another device, approve or deny the request on the class page.",
+        "Print sign-in cards from the class page: each card has one student's own code. A student who's away simply doesn't sign in.",
+        "Lost card or shared code? Open the student under Manage and give them a new code; the old one stops working.",
     ]),
     ("/intel", "Intelligence", [
         "UN voting data can't be imported until its licence is confirmed here. Synthetic test data is for the demo only.",
@@ -95,7 +95,7 @@ CONTEXT = [
     ]),
     ("/", "This platform", [
         "Model UN: prediction, resolution workspace and live chair tools. Debating: draws, ballots, ladders and house points.",
-        "Students join at /join with the class code and their first name.",
+        "Students sign in at /join with the personal code on their sign-in card.",
         "Every change is saved as it happens; Undo and History are available on most pages.",
     ]),
 ]

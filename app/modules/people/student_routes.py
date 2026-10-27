@@ -1,9 +1,10 @@
-"""Student join (D-003): type the class code, tap your name. No password.
+"""Student sign-in (D-079, replacing D-003's class code and name list): each student has a personal code with their
+name built in. Opening their link (`/s/<code>`) or typing the code on `/join` signs them in on any laptop. No list of
+names is shown, so an absent student's name can't be taken, and nothing waits for a teacher's approval.
 
-Mitigations for the accepted impersonation risk (spec §8.4): a claimed name is
-locked to the device that claimed it; another device asking for it needs a
-teacher's approval; everything students do is attributed in the event log;
-class codes can be rotated at any time.
+Signing in on a laptop signs that student out everywhere else (one laptop at a time), so a shared school laptop
+never stays signed in as the last student who used it once they sign in somewhere new. Attempts are throttled;
+the teacher can give a student a new code at any time.
 """
 from __future__ import annotations
 
@@ -12,13 +13,13 @@ from fastapi.responses import RedirectResponse
 
 from app.db import one, rows, scalar
 from app.errors import UserError
-from app.util import display_name, new_token, now_iso, token_hash
-from app.web.auth import SESSION_COOKIE, create_session, join_throttle, require_student
+from app.modules.people import codes
+from app.util import display_name, new_token, now_iso
+from app.web.auth import SESSION_COOKIE, create_session, join_throttle, require_student, revoke_devices
 from app.web.http import redirect, form_data
 from app.web.templating import render
 
 router = APIRouter()
-CLAIM_COOKIE = "soc_claim"
 
 
 def _set_session(resp, token: str):
@@ -26,9 +27,28 @@ def _set_session(resp, token: str):
     return resp
 
 
-def _class_by_code(conn, code: str) -> dict | None:
-    code = (code or "").strip().upper().replace(" ", "").replace("-", "")
-    return one(conn, "SELECT * FROM class WHERE code = ? AND active = 1 AND archived_at IS NULL AND deleted_at IS NULL", (code,))
+def _sign_in(request: Request, raw: str):
+    key = "join:" + (request.client.host if request.client else "anon")
+    wait = join_throttle.check(key)
+    if wait:
+        raise UserError(f"Too many tries. Wait {wait} seconds, then type the code from your card again.", 429)
+    with request.app.state.db.read() as conn:
+        st = codes.student_by_code(conn, raw)
+        if not st:
+            join_throttle.fail(key)
+            is_class = one(conn, "SELECT 1 FROM class WHERE code = ?", (codes.normalise(raw),))
+            raise UserError("That's the class code. Type your own code: it's on your sign-in card, under your name." if is_class else
+                            "That code didn't match. Check your sign-in card (six letters and numbers; there is no O, 0, I or 1).")
+        join_throttle.ok(key)
+        # One laptop at a time: signing in here signs this student out of any other laptop.
+        revoke_devices(conn, "student_id = ?", (st["id"],))
+        token = create_session(conn, "student", student_id=st["id"], class_id=st["class_id"])
+        conn.execute("INSERT INTO event_log (at, actor_kind, actor_id, actor_label, entity, entity_id, action, channel, action_group) "
+                     "VALUES (?,?,?,?,?,?,?,?,?)", (now_iso(), "student", st["id"], display_name(st["first_name"], st["last_initial"]),
+                                                    "student", str(st["id"]), "signed_in", f"class:{st['class_id']}", new_token()[:12]))
+        conn.commit()
+    request.app.state.hub.publish({f"class:{st['class_id']}"}, 0)
+    return _set_session(redirect("/me", f"Welcome, {st['first_name']}."), token)
 
 
 @router.get("/join")
@@ -36,89 +56,18 @@ def join_form(request: Request):
     s = request.state.session
     if s and s.kind == "student":
         return RedirectResponse("/me", status_code=303)
-    code = "".join(ch for ch in (request.query_params.get("code") or "").upper() if ch.isalnum())[:12]
-    return render(request, "people/join.html", {"title": "Join your class", "code": code})
+    return render(request, "people/join.html", {"title": "Sign in"})
 
 
 @router.post("/join")
 def join_code(request: Request, form=Depends(form_data)):
-    key = "join:" + (request.cookies.get("soc_csrf") or "anon")
-    wait = join_throttle.check(key)
-    if wait:
-        raise UserError(f"Too many tries. Wait {wait} seconds and check the code on the board.", 429)
-    with request.app.state.db.read() as conn:
-        c = _class_by_code(conn, form.get("code"))
-    if not c:
-        join_throttle.fail(key)
-        raise UserError("That class code didn't match a class. Check the code on the board (letters and numbers; there is no O or I).")
-    join_throttle.ok(key)
-    return redirect(f"/join/{c['code']}")
+    return _sign_in(request, form.get("code") or "")
 
 
-@router.get("/join/wait")
-def join_wait(request: Request):
-    claim = request.cookies.get(CLAIM_COOKIE)
-    if not claim:
-        return RedirectResponse("/join", status_code=303)
-    with request.app.state.db.read() as conn:
-        req = one(conn, "SELECT cr.*, st.first_name, st.last_initial FROM claim_request cr JOIN student st ON st.id = cr.student_id "
-                        "WHERE cr.token_hash = ?", (token_hash(claim),))
-        if not req:
-            return RedirectResponse("/join", status_code=303)
-        if req["status"] == "approved":
-            conn.execute("UPDATE claim_request SET status = 'used' WHERE id = ?", (req["id"],))
-            token = create_session(conn, "student", student_id=req["student_id"], class_id=req["class_id"])
-            conn.commit()
-            resp = _set_session(redirect("/me", "Your teacher approved this device."), token)
-            resp.delete_cookie(CLAIM_COOKIE)
-            return resp
-    return render(request, "people/join_wait.html", {"title": "Waiting for your teacher", "req": req},
-                  headers={"Refresh": "4"} if req["status"] == "pending" else None)
-
-
-@router.get("/join/{code}")
-def join_pick(request: Request, code: str):
-    with request.app.state.db.read() as conn:
-        c = _class_by_code(conn, code)
-        if not c:
-            raise UserError("That class code isn't valid any more. Ask your teacher for the new one.", 404)
-        students = rows(conn, "SELECT st.id, st.first_name, st.last_initial, (SELECT COUNT(*) FROM device_session d WHERE d.student_id = st.id "
-                              "AND d.revoked_at IS NULL) AS locked FROM student st WHERE st.class_id = ? AND st.active = 1 "
-                              "AND st.deleted_at IS NULL ORDER BY st.first_name, st.last_initial", (c["id"],))
-    return render(request, "people/join_pick.html", {"title": f"Join {c['name']}", "c": c, "students": students})
-
-
-@router.post("/join/{code}/{student_id}")
-def join_claim(request: Request, code: str, student_id: int):
-    with request.app.state.db.read() as conn:
-        c = _class_by_code(conn, code)
-        if not c:
-            raise UserError("That class code isn't valid any more. Ask your teacher for the new one.", 404)
-        st = one(conn, "SELECT * FROM student WHERE id = ? AND class_id = ? AND active = 1 AND deleted_at IS NULL", (student_id, c["id"]))
-        if not st:
-            raise UserError("That name isn't in this class.", 404)
-        locked = scalar(conn, "SELECT COUNT(*) FROM device_session WHERE student_id = ? AND revoked_at IS NULL", (student_id,))
-        name = display_name(st["first_name"], st["last_initial"])
-        if not locked:
-            token = create_session(conn, "student", student_id=student_id, class_id=c["id"])
-            conn.execute("INSERT INTO event_log (at, actor_kind, actor_id, actor_label, entity, entity_id, action, channel, action_group) "
-                         "VALUES (?,?,?,?,?,?,?,?,?)", (now_iso(), "student", student_id, name, "student", str(student_id),
-                                                        "joined_on_device", f"class:{c['id']}", new_token()[:12]))
-            conn.commit()
-            request.app.state.hub.publish({f"class:{c['id']}"}, 0)
-            return _set_session(redirect("/me", f"Welcome, {st['first_name']}. This device is now yours for this class."), token)
-        # Name already locked to another device: ask the teacher.
-        claim = new_token()
-        conn.execute("INSERT INTO claim_request (class_id, student_id, token_hash, created_at) VALUES (?,?,?,?)",
-                     (c["id"], student_id, token_hash(claim), now_iso()))
-        conn.execute("INSERT INTO event_log (at, actor_kind, actor_id, actor_label, entity, entity_id, action, channel, action_group) "
-                     "VALUES (?,?,?,?,?,?,?,?,?)", (now_iso(), "anonymous", None, "Unknown device", "student", str(student_id),
-                                                    "second_device_request", f"class:{c['id']}", new_token()[:12]))
-        conn.commit()
-    request.app.state.hub.publish({f"class:{c['id']}"}, 0)
-    resp = redirect("/join/wait")
-    resp.set_cookie(CLAIM_COOKIE, claim, httponly=True, samesite="lax", max_age=3600)
-    return resp
+@router.get("/s/{code}")
+def join_link(request: Request, code: str):
+    """A student's own link, printed on their card: opening it signs them in."""
+    return _sign_in(request, code)
 
 
 @router.get("/me")

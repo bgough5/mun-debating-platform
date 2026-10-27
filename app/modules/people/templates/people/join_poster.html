@@ -4,10 +4,9 @@
 {{ breadcrumb([("People", "/people"), (c.name, "/people/classes/" ~ c.id), ("Poster", None)]) }}
 <div class="join-poster">
   <div class="jc-head"><img src="/static/soc_logo.png" alt=""><span>South Oakleigh College · Debating &amp; Model UN</span></div>
-  <h1>Join {{ c.name }}</h1>
-  <div class="jp-qr" role="img" aria-label="QR code that opens {{ url }}">{{ qr|safe }}</div>
-  <p class="jc-label">Or go to</p><p class="jp-url">{{ base }}/join</p>
-  <p class="jc-label">and type the class code</p><p class="jp-code">{{ c.code }}</p>
-  <p>Then tap <strong>your own</strong> first name. Your device stays signed in as you.</p>
+  <h1>Sign in: {{ c.name }}</h1>
+  <p class="jc-label">On your laptop, go to</p><p class="jp-url">{{ addr }}</p>
+  <p class="jc-label">and type the code on your sign-in card</p>
+  <p>Your code already knows your name. Signing in on a new laptop signs you out of the old one.</p>
 </div>
 {% endblock %}

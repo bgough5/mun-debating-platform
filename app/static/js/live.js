@@ -63,8 +63,13 @@
   // A live region is not refreshed while it holds a form with unsaved typing, or an
   // open paragraph editor, so nobody loses what they are writing.
   function editing(el) {
-    return !!el.querySelector("form[data-dirty], details[open] form[data-lock-paragraph]");
+    if (el.querySelector("form[data-dirty], details[open] form[data-lock-paragraph]")) return true;
+    // Someone is in a box in this region (even before their first keystroke): don't pull it from under them (D-078).
+    var a = document.activeElement;
+    return !!(a && el.contains(a) && a.matches && a.matches("textarea, input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=submit]):not([type=button]), select, [contenteditable]"));
   }
+  // Leaving a box lets the updates it held back through straight away.
+  document.addEventListener("focusout", function () { setTimeout(flushPending, 50); });
   document.addEventListener("input", function (e) {
     var f = e.target && e.target.form;
     if (f && /^(TEXTAREA|INPUT)$/.test(e.target.tagName) && e.target.type !== "hidden") f.setAttribute("data-dirty", "1");
@@ -99,10 +104,14 @@
     }, Math.max(0, wait));
   }
 
+  var liveScrollY = null;
   // Keep disclosure panels the person opened (“Jump to a stage”, “Propose another motion”) open across a refresh.
   document.addEventListener("htmx:beforeSwap", function (e) {
     var t = e.detail && e.detail.target;
     if (!t || !t.hasAttribute || !t.hasAttribute("data-live-channel")) return;
+    // A live refresh never moves the page (D-078): remember where the reader is. Kept outside the element, because
+    // an outerHTML swap (the student's home page) hands afterSwap the new element.
+    liveScrollY = window.scrollY;
     t._openPanels = Array.prototype.map.call(t.querySelectorAll("details[open] > summary"), function (s) { return s.textContent.trim(); });
     // Choices made in a drop-down but not yet sent (pick a stage, then Go) survive the refresh too.
     t._choices = {};
@@ -113,6 +122,11 @@
   });
   document.addEventListener("htmx:afterSwap", function (e) {
     var t = e.detail && e.detail.target;
+    if (liveScrollY !== null) {
+      var y = liveScrollY; liveScrollY = null;
+      if (Math.abs(window.scrollY - y) > 1) window.scrollTo(0, y);
+      requestAnimationFrame(function () { if (Math.abs(window.scrollY - y) > 1) window.scrollTo(0, y); });
+    }
     if (t && t._choices) {
       Object.keys(t._choices).forEach(function (id) {
         var sel = t.querySelector("select#" + CSS.escape(id));

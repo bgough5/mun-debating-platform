@@ -6,7 +6,7 @@
 <ol class="stages">{% for code, label, done in steps %}<li data-step="{{ loop.index }}" data-total="{{ steps|length }}"{% if code == current %} aria-current="step"{% elif done %} class="done"{% endif %}>{{ label }}{% if done %}<span class="visually-hidden"> (done)</span>{% elif code == current %}<span class="visually-hidden"> (next)</span>{% endif %}</li>{% endfor %}</ol>
 
 <section class="card{% if current == 'class' %} accent{% endif %}" aria-labelledby="w1"><h2 id="w1">{{ icon("class") }} 1. Create a class</h2>
-{% if c %}<p>{{ icon("ok") }} <strong>{{ c.name }}</strong>, class code <strong>{{ c.code }}</strong>.{% if classes|length > 1 %} Working on a different class?{% endif %}</p>
+{% if c %}<p>{{ icon("ok") }} <strong>{{ c.name }}</strong>.{% if classes|length > 1 %} Working on a different class?{% endif %}</p>
 {% if classes|length > 1 %}<form method="get" action="/welcome" class="inline"><div class="field"><label for="wc">Class</label><select id="wc" name="class_id">{% for x in classes %}<option value="{{ x.id }}" {% if x.id == c.id %}selected{% endif %}>{{ x.name }}</option>{% endfor %}</select></div><button type="submit" class="secondary">Switch</button></form>{% endif %}
 <details><summary>Create another class</summary>{% endif %}
 <form method="post" action="/welcome/class" class="stack">{{ hidden_csrf(csrf) }}
@@ -43,9 +43,9 @@
 {% if committee %}</details>{% endif %}
 </section>
 
-<section class="card{% if current == 'cards' %} accent{% endif %}" aria-labelledby="w4"><h2 id="w4">{{ icon("qr") }} 4. Print join cards</h2>
-<p>Students scan the QR code or type the address, enter the class code and tap their own name.</p>
-<p><a class="button" href="/people/classes/{{ c.id }}/join-cards">{{ icon("print") }} Join cards for {{ c.name }}</a> <a class="button secondary" href="/people/classes/{{ c.id }}/poster">{{ icon("print") }} Poster</a></p>
+<section class="card{% if current == 'cards' %} accent{% endif %}" aria-labelledby="w4"><h2 id="w4">{{ icon("print") }} 4. Print sign-in cards</h2>
+<p>One card per student with their own code: they type it on a laptop (or open the address on the card) and they're in, as themselves.</p>
+<p><a class="button" href="/people/classes/{{ c.id }}/join-cards">{{ icon("print") }} Sign-in cards for {{ c.name }}</a> <a class="button secondary" href="/people/classes/{{ c.id }}/poster">{{ icon("print") }} Poster</a></p>
 <p class="small">Then open a live session from <a href="/chair">Chair</a>, and read the <a href="/help/staff">staff guide</a>.</p>
 </section>
 {% endif %}

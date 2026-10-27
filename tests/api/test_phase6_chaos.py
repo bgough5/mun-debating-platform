@@ -103,8 +103,9 @@ def test_kill_mid_session_loses_no_acknowledged_change(server):
     com, code = conn.execute("SELECT cm.id, c.code FROM committee cm JOIN class c ON c.id = cm.class_id "
                              "WHERE cm.name LIKE 'United Nations General Assembly%'").fetchone()
     dels = [r[0] for r in conn.execute("SELECT id FROM delegation WHERE committee_id = ? ORDER BY id", (com,))]
-    members = conn.execute("SELECT dm.student_id, dm.delegation_id FROM delegation_member dm JOIN delegation d ON d.id = dm.delegation_id "
-                           "WHERE d.committee_id = ? AND dm.deleted_at IS NULL ORDER BY dm.student_id", (com,)).fetchall()
+    members = conn.execute("SELECT dm.student_id, dm.delegation_id, st.login_code FROM delegation_member dm JOIN delegation d ON d.id = dm.delegation_id "
+                           "JOIN student st ON st.id = dm.student_id WHERE d.committee_id = ? AND dm.deleted_at IS NULL ORDER BY dm.student_id",
+                           (com,)).fetchall()
     conn.close()
     r = _post(chair, f"/chair/committee/{com}/open")
     sid = int(r.headers["location"].rsplit("/", 1)[1])
@@ -114,10 +115,9 @@ def test_kill_mid_session_loses_no_acknowledged_change(server):
     did = _db(server).execute("SELECT id FROM division WHERE session_id = ? AND status = 'open'", (sid,)).fetchone()[0]
 
     students = []
-    for st_id, del_id in members[:12]:
+    for st_id, del_id, login_code in members[:12]:
         c = _client(server.base)
-        _post(c, "/join", {"code": code})
-        _post(c, f"/join/{code}/{st_id}")
+        assert _post(c, "/join", {"code": login_code}).status_code == 303
         students.append((c, del_id))
 
     acked_speakers: list[int] = []

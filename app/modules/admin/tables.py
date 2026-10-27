@@ -183,6 +183,6 @@ EXPORT_ONLY = [
     "class_run", "class_run_speaker", "prep_case", "prep_point", "prep_speech",
 ]
 # Columns never exported or shown.
-SECRET_COLUMNS = {"pass_hash", "token_hash", "csrf"}
+SECRET_COLUMNS = {"pass_hash", "token_hash", "csrf", "login_code"}
 
 BY_NAME = {t.name: t for t in REFERENCE}

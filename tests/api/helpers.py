@@ -2,14 +2,12 @@ from tests.conftest import db_one, db_rows, new_client
 
 
 def join_as(app, student_id: int):
-    """A new browser that joins as the given student (code + tap name)."""
-    st = db_one(app, "SELECT st.*, c.code FROM student st JOIN class c ON c.id = st.class_id WHERE st.id = ?", (student_id,))
+    """A new laptop that signs in as the given student with their personal code (D-079)."""
+    st = db_one(app, "SELECT login_code FROM student WHERE id = ?", (student_id,))
     c = new_client(app)
     c.__enter__()
-    r = c.post("/join", {"code": st["code"].lower()})
+    r = c.post("/join", {"code": st["login_code"].lower()})
     assert r.status_code == 200, r.text[:300]
-    r = c.post(f"/join/{st['code']}/{student_id}")
-    assert r.status_code == 200
     return c
 
 

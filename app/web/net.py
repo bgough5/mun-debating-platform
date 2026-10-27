@@ -18,7 +18,7 @@ def local_ip() -> str:
 
 
 def student_base_url(request) -> str:
-    """Base URL for join cards and QR codes. A coordinator can fix it in config.json ("join_base_url") if the
+    """Base URL for sign-in cards. A coordinator can fix it in config.json ("join_base_url") if the
     laptop has several networks; otherwise the host the page was opened on, or this machine's IP when that is localhost."""
     fixed = (request.app.state.settings.get("join_base_url") or "").rstrip("/")
     if fixed:

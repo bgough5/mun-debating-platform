@@ -93,19 +93,22 @@ def test_motion_by_consent_starts_moderated_caucus(coord, app):
 def test_division_with_computed_delegations_records_calibration(coord, app):
     com = ga(app)        # 31 delegations, 25 students -> 6 computed
     s = _open(coord, app, com)
+    humans = member_of(app, com["id"])
+    laptops = {}
+    for m in humans:                     # everyone is in the room before the vote opens (D-079: away = computed)
+        laptops[m["student_id"]] = join_as(app, m["student_id"])
+        laptops[m["student_id"]].get(f"/live/{s['id']}")
     para = db_one(app, "SELECT p.id FROM paragraph p JOIN resolution r ON r.id = p.resolution_id WHERE r.committee_id = ? AND p.kind='operative' AND p.position=3", (com["id"],))["id"]
     coord.post(f"/chair/{s['id']}/divisions", {"target": f"paragraph:{para}"})
     dv = db_one(app, "SELECT * FROM division WHERE session_id = ?", (s["id"],))
     computed = db_rows(app, "SELECT * FROM division_vote WHERE division_id = ? AND computed = 1", (dv["id"],))
     assert len(computed) == 6 and dv["prediction_id"]
-    humans = member_of(app, com["id"])
     seen = set()
     for i, m in enumerate(humans):
         if m["delegation_id"] in seen:
             continue
         seen.add(m["delegation_id"])
-        c = join_as(app, m["student_id"])
-        c.get(f"/live/{s['id']}")
+        c = laptops[m["student_id"]]
         assert c.post(f"/live/{s['id']}/vote", {"vote": "yes" if i % 4 else "no"}).status_code == 200
     # a computed delegation can't be voted for by the chair
     r = coord.post(f"/chair/{s['id']}/divisions/{dv['id']}", {"action": "vote", "delegation_id": computed[0]["delegation_id"], "vote": "no"})
@@ -122,6 +125,10 @@ def test_security_council_veto_live(coord, app):
     """3 students in a 15-member Security Council: 12 computed; a P5 'no' vetoes."""
     com = sc(app)
     s = _open(coord, app, com)
+    laptops = {}
+    for m in member_of(app, com["id"]):
+        laptops[m["student_id"]] = join_as(app, m["student_id"])
+        laptops[m["student_id"]].get(f"/live/{s['id']}")
     para = db_one(app, "SELECT p.id FROM paragraph p JOIN resolution r ON r.id = p.resolution_id WHERE r.committee_id = ? AND p.kind='operative' LIMIT 1", (com["id"],))["id"]
     coord.post(f"/chair/{s['id']}/divisions", {"target": f"paragraph:{para}"})
     dv = db_one(app, "SELECT * FROM division WHERE session_id = ?", (s["id"],))
@@ -132,9 +139,7 @@ def test_security_council_veto_live(coord, app):
         conn.execute("UPDATE division_vote SET vote = 'no' WHERE division_id = ? AND iso3 = 'RUS'", (dv["id"],))
         conn.commit()
     for m in member_of(app, com["id"]):
-        c = join_as(app, m["student_id"])
-        c.get(f"/live/{s['id']}")
-        c.post(f"/live/{s['id']}/vote", {"vote": "yes"})
+        laptops[m["student_id"]].post(f"/live/{s['id']}/vote", {"vote": "yes"})
     r = coord.post(f"/chair/{s['id']}/divisions/{dv['id']}", {"action": "close"})
     assert "vetoed by RUS" in r.text and "failed" in r.text
 

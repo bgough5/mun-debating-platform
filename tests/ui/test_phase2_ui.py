@@ -16,12 +16,9 @@ def q(live, sql, params=()):
 
 
 def join(page, live, student_id):
-    st = q(live, "SELECT st.*, c.code FROM student st JOIN class c ON c.id = st.class_id WHERE st.id = ?", (student_id,))[0]
-    page.goto(live.url + "/join")
-    page.fill("#code", st["code"])
-    page.click("button:has-text('Next')")
-    page.wait_for_url(re.compile(r"/join/"))
-    page.locator(f"form[action='/join/{st['code']}/{student_id}'] button").click()
+    """Sign in as the student with their own link, as on their sign-in card (D-079)."""
+    code = q(live, "SELECT login_code FROM student WHERE id = ?", (student_id,))[0]["login_code"]
+    page.goto(live.url + f"/s/{code}")
     page.wait_for_url(re.compile(r"/me$"))
 
 

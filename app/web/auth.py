@@ -3,8 +3,8 @@
 - Coordinator: one passphrase set at first run, stored hashed (scrypt) in the
   gitignored local config (D-017, spec §8.5).
 - Staff: own passphrase, hashed in the staff table.
-- Students: class code + pick your name (D-003). The name is locked to the
-  device that claimed it; a second device needs staff approval (spec §8.4).
+- Students: a personal sign-in code with their name built in (D-079). Signing
+  in on a laptop signs the student out of any other.
 
 A browser holds one random token in an HttpOnly cookie; the server stores
 only its SHA-256. Role checks happen on the server for every route.

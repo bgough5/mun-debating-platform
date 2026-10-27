@@ -5,16 +5,17 @@ For teachers helping with debating and Model UN. You don't need to know anything
 ## Before class (the coordinator does this once)
 
 1. On the coordinator's laptop, double-click `start_platform.bat`. A black window opens and prints two web addresses. Leave it open the whole session; closing it stops the platform.
-2. Students use the address that ends in `/join`, for example `http://10.1.2.3:8080/join`. Write it on the board.
+2. Students use the address that ends in `/join`, for example `http://10.1.2.3:8080/join`, or the personal address on their sign-in card.
 3. Staff open the same address without `/join`, then **Sign in**, choose their name and type their passphrase. The coordinator sets staff passphrases under **People → Staff**.
 
-The laptop and every student device must be on the same school Wi-Fi. If students can't reach the address, see "If something goes wrong".
+The laptop and every student laptop must be on the same school Wi-Fi. If students can't reach the address, see "If something goes wrong".
 
-## Students joining
+## Students signing in
 
-1. A student opens the `/join` address, types the class code (shown on the class page under **People**) and taps their name.
-2. Their name is now locked to that device. If a student changes device, or someone took their name by mistake, go to **People → your class → Manage** next to their name, and choose **Release name**. If a second device tries the name, a request appears on the class page for you to approve or deny.
-3. If the code gets shared outside the class, choose **New class code** on the class page. Students already signed in stay signed in.
+1. Print **sign-in cards** from the class page (**People → your class**): one card per student, with their own address and a six-character code. The code already knows the student's name; there is no list of names to pick from.
+2. A student opens the address on their card, or goes to `/join` and types their code. They're in, as themselves, on any school laptop. Signing in on another laptop signs them out of the first one.
+3. A student who's away simply doesn't sign in. Nothing waits for them: in a vote, the engine casts their country's vote, labelled computed, and if they arrive in time their own vote replaces it.
+4. Lost card, or a code seen by someone else? On the class page, **Show** reveals a student's code; **Manage → New code** gives them a new one and stops the old one.
 
 At most 25 students can be in one live session. Everything also works with fewer, down to one.
 

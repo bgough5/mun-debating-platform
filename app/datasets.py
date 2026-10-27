@@ -22,6 +22,9 @@ def prepare(path, dataset: str) -> None:
         if dataset == "demo" and not scalar(conn, "SELECT COUNT(*) FROM class"):
             from app.fakedata import populate_demo
             populate_demo(conn)
+        from app.modules.people.codes import assign_missing
+        if assign_missing(conn):
+            conn.commit()
     finally:
         conn.close()
 

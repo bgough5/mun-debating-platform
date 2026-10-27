@@ -4,51 +4,44 @@
 {{ breadcrumb([("People", "/people"), (c.name, None)]) }}
 <h1>{{ c.name }}</h1>
 <div class="grid">
-  <section class="card" aria-labelledby="h-code"><h2 id="h-code">Class code</h2>
-    <p class="bigstat" aria-label="Class code {{ c.code|list|join(' ') }}">{{ c.code }}</p>
-    <p class="small">Set {{ c.code_set_at|when }} UTC. Rotate it each term (spec §8.4). Students join at <strong>/join</strong>.</p>
-    <p><a class="button secondary" href="/people/classes/{{ c.id }}/join-cards">{{ icon("qr") }} Print join cards</a> <a class="button secondary" href="/people/classes/{{ c.id }}/poster">{{ icon("print") }} Print a poster</a></p>
-    <form method="post" action="/people/classes/{{ c.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="rotate_code"><button type="submit" class="secondary">New class code</button></form>
+  <section class="card" aria-labelledby="h-code"><h2 id="h-code">{{ icon("join") }} Signing in</h2>
+    <p>Each student has their own code, with their name built in. They go to <strong>/join</strong> on a laptop and type it, or open the address on their card.</p>
+    <p><a class="button" href="/people/classes/{{ c.id }}/join-cards">{{ icon("print") }} Print sign-in cards</a> <a class="button secondary" href="/people/classes/{{ c.id }}/poster">{{ icon("print") }} Print a poster</a></p>
+    <p class="small muted">A student who's away simply doesn't sign in: nothing waits for them, and in a vote the engine casts their country's vote, labelled computed.</p>
   </section>
   <section class="card" aria-labelledby="h-conn"><h2 id="h-conn">Connected</h2>
-    <p><span class="bigstat">{{ connected }}</span> of {{ students|selectattr('active')|list|length }} students have joined on a device.</p>
+    <p><span class="bigstat">{{ connected }}</span> of {{ students|selectattr('active')|list|length }} students are signed in on a laptop.</p>
     <p class="small">A live session admits at most {{ cap }} students at once.</p>
     {% if staff %}<p class="small">Staff: {{ staff|map(attribute='name')|join(', ') }}</p>{% endif %}
   </section>
 </div>
-<div id="requests" data-live-channel="class:{{ c.id }}" hx-get="/people/classes/{{ c.id }}" hx-select="#requests" hx-swap="outerHTML" hx-trigger="live-update">
-{% if requests %}
-<section class="card" aria-labelledby="h-req" data-announce="{{ requests|length }} second-device request(s) waiting" data-announce-key="requests"><h2 id="h-req">Second-device requests</h2>
-  <p>These names are already locked to a device. Approve only if you can see the student is the one asking.</p>
-  <ul>{% for r in requests %}<li>{{ r.first_name }}{% if r.last_initial %} {{ r.last_initial }}.{% endif %} (asked {{ r.created_at|when }})
-    <form method="post" action="/people/classes/{{ c.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="decide_claim"><input type="hidden" name="request_id" value="{{ r.id }}">
-      <button name="decision" value="approve" type="submit">Approve<span class="visually-hidden"> {{ r.first_name }}</span></button>
-      <button name="decision" value="deny" type="submit" class="secondary">Deny<span class="visually-hidden"> {{ r.first_name }}</span></button></form></li>{% endfor %}</ul>
-</section>
-{% endif %}
-</div>
+<div id="roster" data-live-channel="class:{{ c.id }}" hx-get="/people/classes/{{ c.id }}" hx-select="#roster" hx-swap="outerHTML" hx-trigger="live-update">
 <h2>Roster</h2>
 <div class="table-wrap"><table>
-<thead><tr><th scope="col">Name</th><th scope="col">Device</th><th scope="col">Pathway</th><th scope="col">Actions</th></tr></thead>
+<thead><tr><th scope="col">Name</th><th scope="col">Code</th><th scope="col">Signed in</th><th scope="col">Pathway</th><th scope="col">Actions</th></tr></thead>
 <tbody>{% for st in students %}
 <tr {% if not st.active %}class="muted"{% endif %}>
   <td><a href="/people/students/{{ st.id }}">{{ st.first_name }}{% if st.last_initial %} {{ st.last_initial }}.{% endif %}</a>{% if not st.active %} (left){% endif %}</td>
-  <td>{% if st.devices %}Joined{% if st.last_seen %}, seen {{ st.last_seen|when }}{% endif %}{% else %}<span class="muted">Not joined</span>{% endif %}</td>
+  <td><details class="code-reveal"><summary>Show<span class="visually-hidden"> {{ st.first_name }}'s code</span></summary><code class="code-chip">{{ st.code }}</code></details></td>
+  <td>{% if st.devices %}Yes{% if st.last_seen %}, seen {{ st.last_seen|when }}{% endif %}{% else %}<span class="muted">Not yet</span>{% endif %}</td>
   <td>{{ achieved.get(st.id, 0) }} / {{ milestone_count }}</td>
   <td>
     <details><summary>Manage<span class="visually-hidden"> {{ st.first_name }}</span></summary>
       <form method="post" action="/people/students/{{ st.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="rename">
-        <div class="field"><label for="fn{{ st.id }}">First name</label><input id="fn{{ st.id }}" name="first_name" value="{{ st.first_name }}" required maxlength="40"></div>
-        <div class="field"><label for="li{{ st.id }}">Last initial</label><input id="li{{ st.id }}" name="last_initial" value="{{ st.last_initial }}" maxlength="1" size="2"></div>
+        <div class="field"><label for="fn{{ st.id }}">First name</label><input id="fn{{ st.id }}" type="text" name="first_name" value="{{ st.first_name }}" required maxlength="40"></div>
+        <div class="field"><label for="li{{ st.id }}">Last initial</label><input id="li{{ st.id }}" type="text" name="last_initial" value="{{ st.last_initial }}" maxlength="1" size="2"></div>
         <button type="submit" class="secondary">Save name</button></form>
-      {% if st.devices %}<form method="post" action="/people/students/{{ st.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="release"><button type="submit" class="secondary">Release name (sign device out)</button></form>{% endif %}
+      {% if st.devices %}<form method="post" action="/people/students/{{ st.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="release"><button type="submit" class="secondary">Sign out of their laptop</button></form>{% endif %}
+      <form method="post" action="/people/students/{{ st.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="new_code"><button type="submit" class="secondary">New code<span class="visually-hidden"> for {{ st.first_name }}</span></button></form>
       <form method="post" action="/people/students/{{ st.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="{{ 'deactivate' if st.active else 'activate' }}"><button type="submit" class="secondary">{{ 'Mark as left' if st.active else 'Mark as active' }}</button></form>
       <form method="post" action="/people/students/{{ st.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="delete">
         <label class="checks"><input type="checkbox" name="confirm" value="yes" required> Yes, delete {{ st.first_name }}</label><button type="submit" class="danger">Delete</button></form>
     </details>
   </td></tr>
-{% else %}<tr><td colspan="4">No students yet.</td></tr>{% endfor %}</tbody>
+{% else %}<tr><td colspan="5">No students yet.</td></tr>{% endfor %}</tbody>
 </table></div>
+</div>
+
 <section class="card" style="margin-top:1rem" aria-labelledby="h-add"><h2 id="h-add">Add students</h2>
   <form method="post" action="/people/classes/{{ c.id }}/students" class="stack">{{ hidden_csrf(csrf) }}
     <div class="field"><label for="names">First names, one per line <span class="hint">Add a last initial only if two share a name, e.g. “Sam L”. Never full surnames.</span></label>

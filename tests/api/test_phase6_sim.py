@@ -111,9 +111,8 @@ def test_whip_count_scored_against_actual_votes(coord, app):
     r = cb.post(f"/live/{s['id']}/whip/{rnd['id']}", {"delegation_id": [p for p in preds if p["student_id"] == b["student_id"]][0]["delegation_id"], "vote": "yes"})
     assert r.status_code == 409
     for m in members:
-        c = join_as(app, m["student_id"])
+        c = {a["student_id"]: ca, b["student_id"]: cb}.get(m["student_id"]) or join_as(app, m["student_id"])
         c.post(f"/live/{s['id']}/vote", {"vote": "yes" if m["student_id"] % 2 else "no"})
-        c.__exit__(None, None, None)
     coord.post(f"/chair/{s['id']}/divisions/{rnd['division_id']}", {"action": "close"})
     with app.state.db.read() as conn:
         scores = SIM.whip_scores(conn, rnd["id"])

@@ -4,7 +4,7 @@
 
 Starts the real app in a separate process (demo data in a temporary folder),
 then runs 30 clients on the same machine:
-  - 25 students: join with class code + name, open the live page, hold a
+  - 25 students: sign in with their personal codes, open the live page, hold a
     WebSocket, re-fetch their live fragment on every change, add themselves to
     the speakers list now and then, and vote whenever a division opens;
   - 1 chair: performs an action every ~2 s (speakers, timers, motions, divisions);
@@ -313,7 +313,7 @@ async def main(minutes: float, seed: int) -> dict:
     conn = sqlite3.connect(str(db_path))
     com, cls, code = conn.execute("SELECT cm.id, c.id, c.code FROM committee cm JOIN class c ON c.id = cm.class_id "
                                   "WHERE cm.name LIKE 'United Nations General Assembly%'").fetchone()
-    students = [r[0] for r in conn.execute("SELECT id FROM student WHERE class_id = ? ORDER BY id", (cls,))]
+    students = [(r[0], r[1]) for r in conn.execute("SELECT id, login_code FROM student WHERE class_id = ? ORDER BY id", (cls,))]
     conn.close()
 
     chair = Client("chair", base, "")
@@ -330,10 +330,9 @@ async def main(minutes: float, seed: int) -> dict:
         clients.append(st)
     clients.append(Client("projector", base, f"/projector/{token}/f", f"?projector={token}"))
     studs = []
-    for i, stid in enumerate(students):
+    for i, (stid, login_code) in enumerate(students):
         c = Client(f"student{i}", base, f"/live/{sid}/f")
-        await c.post("/join", {"code": code})
-        await c.post(f"/join/{code}/{stid}")
+        await c.post("/join", {"code": login_code})
         r = await c.http.get(f"/live/{sid}")
         if r.status_code != 200:
             errors.append(f"student{i} could not open live page: {r.status_code}")

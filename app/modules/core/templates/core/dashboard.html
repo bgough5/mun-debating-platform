@@ -3,7 +3,7 @@
 {% block content %}
 <h1>{{ icon("home") }} Dashboard</h1>
 {% if actor.is_coordinator and (not classes or not committees) %}<section class="card accent" aria-labelledby="h-start"><h2 id="h-start">{{ icon("help") }} Getting started</h2>
-<p>Create a class, add the students, set up a committee and print join cards, step by step.</p><p><a class="button" href="/welcome">{{ icon("next") }} Open the getting-started guide</a></p></section>{% endif %}
+<p>Create a class, add the students, set up a committee and print sign-in cards, step by step.</p><p><a class="button" href="/welcome">{{ icon("next") }} Open the getting-started guide</a></p></section>{% endif %}
 <div class="grid">
   <section class="card" aria-labelledby="h-c"><h2 id="h-c">{{ icon("class") }} Classes</h2>
     {% if classes %}<ul>{% for c in classes %}<li><a href="/people/classes/{{ c.id }}">{{ c.name }}</a> <span class="muted">· code <strong>{{ c.code }}</strong></span></li>{% endfor %}</ul>

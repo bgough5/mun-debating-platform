@@ -410,10 +410,17 @@ def open_division(w: Writer, sid: int, title: str, target_kind: str, target_id: 
                                 "rule_id": rule_id, "procedural": int(procedural), "prediction_id": pred_id,
                                 "opened_at": now_iso()}, ch(sid))
     if not procedural:
+        # Delegations whose students are all away (none seen in this session in the last two minutes) are voted by the
+        # engine too, labelled computed, so an absent student never holds up a vote (D-079). A student who arrives in
+        # time takes the vote back.
+        here = {r["delegation_id"] for r in rows(
+            w.conn, "SELECT DISTINCT dm.delegation_id FROM session_participant sp JOIN delegation_member dm ON dm.student_id = sp.student_id "
+                    "AND dm.deleted_at IS NULL WHERE sp.session_id = ? AND sp.last_seen > ?", (sid, now() - PARTICIPANT_TTL_S))}
         for d in _delegations(w.conn, s["committee_id"]):
-            if d["students"] == 0:
+            if d["students"] == 0 or d["id"] not in here:
                 w.conn.execute("INSERT INTO division_vote (division_id, iso3, delegation_id, vote, computed, cast_by, cast_at) "
-                               "VALUES (?,?,?,?,1,'engine',?)", (did, d["iso3"], d["id"], computed_votes.get(d["iso3"], "abstain"), now_iso()))
+                               "VALUES (?,?,?,?,1,?,?)", (did, d["iso3"], d["id"], computed_votes.get(d["iso3"], "abstain"),
+                                                          "engine" if d["students"] == 0 else "engine: away", now_iso()))
     w.update("live_session", sid, {"current_division_id": did, "mode": "voting"}, ch(sid), action="division_opened")
     return did
 
@@ -441,9 +448,13 @@ def cast_vote(w: Writer, division_id: int, delegation_id: int, vote: str) -> Non
             (dv["session_id"], delegation_id)):
         raise UserError(f"{d['iso3']} answered “present and voting” at roll call, so it can't abstain on a substantive vote.")
     existing = one(w.conn, "SELECT * FROM division_vote WHERE division_id = ? AND iso3 = ?", (division_id, d["iso3"]))
-    if existing and existing["computed"]:
+    if existing and existing["computed"] and existing["cast_by"] != "engine: away":
         raise UserError("That delegation is voted by the engine (no student holds it).")
-    if existing:
+    if existing and existing["computed"]:
+        # The student arrived after the vote opened: their own vote replaces the engine's.
+        w.update("division_vote", existing["id"], {"vote": vote, "computed": 0, "cast_by": w.actor.label, "cast_at": now_iso()},
+                 ch(dv["session_id"]), action="vote_cast")
+    elif existing:
         w.update("division_vote", existing["id"], {"vote": vote, "cast_by": w.actor.label, "cast_at": now_iso()},
                  ch(dv["session_id"]), action="vote_changed")
     else:

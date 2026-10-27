@@ -1,4 +1,4 @@
-"""First-run wizard for the coordinator (Phase 6 item 4): a class, its roster, a conference and committee, join cards.
+"""First-run wizard for the coordinator (Phase 6 item 4): a class, its roster, a conference and committee, sign-in cards.
 
 Each step is ordinary data entry through the same functions as the full pages, so nothing here is special-cased;
 the wizard only shows what is done and what comes next. The roster import keeps first names and an initial only;
@@ -27,7 +27,7 @@ def _state(conn, class_id: int | None) -> dict:
                           "WHERE cm.class_id = ? AND cm.deleted_at IS NULL ORDER BY cm.id DESC LIMIT 1", (c["id"],)) if c else None
     return {"classes": classes, "c": c, "students": students, "committee": committee,
             "steps": [("class", "Create a class", bool(c)), ("roster", "Add the students", students > 0),
-                      ("committee", "Set up a conference and committee", bool(committee)), ("cards", "Print join cards", False)]}
+                      ("committee", "Set up a conference and committee", bool(committee)), ("cards", "Print sign-in cards", False)]}
 
 
 @router.get("")
@@ -45,7 +45,7 @@ def wizard_class(request: Request, sess=Depends(require_coordinator), form=Depen
     from app.modules.people.routes import create_class
     with request.app.state.db.write(request.state.actor) as w:
         cid, code = create_class(w, form.get("name"), form_int(form.get("year")))
-    return redirect(f"/welcome?class_id={cid}", f"Class created. Its class code is {code}.")
+    return redirect(f"/welcome?class_id={cid}", "Class created. Add the students next: each gets their own sign-in code.")
 
 
 @router.post("/roster")

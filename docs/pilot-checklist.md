@@ -16,7 +16,7 @@ For Ben to complete and sign before the first pilot with a class (spec §10, Pha
 | # | Item | Who | Done |
 |---|---|---|---|
 | B1 | Python 3.12 installed; `start_platform.bat` starts the platform and prints the `/join` address | Ben | ☐ |
-| B2 | A phone or second device on school Wi-Fi can open the `/join` address (Windows firewall allows Python; the network allows device-to-device traffic) | Ben + ICT | ☐ |
+| B2 | A second school laptop on school Wi-Fi can open the `/join` address (Windows firewall allows Python; the network allows device-to-device traffic) | Ben + ICT | ☐ |
 | B3 | Laptop disk is encrypted and has a screen lock | Ben | ☐ |
 | B4 | Laptop plugged in; sleep turned off for the lesson | Ben | ☐ |
 | B5 | Coordinator passphrase set and written down somewhere safe (it can't be recovered; deleting `data/config.json` lets you set a new one but also resets the dataset choice and AI settings; the data itself is kept) | Ben | ☐ |

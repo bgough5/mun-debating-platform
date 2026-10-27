@@ -1,11 +1,15 @@
 {% extends "base.html" %}
 {% from "_macros.html" import hidden_csrf %}
 {% block content %}
-<h1>{{ icon("join") }} Join your class</h1>
-{% if code %}<p class="ok-box">{{ icon("ok") }} Your class code is filled in from the QR code. Press Next.</p>{% endif %}
+<div class="signin">
+<h1>{{ icon("join") }} Sign in</h1>
+<p class="lede">Type the code from your sign-in card. It already knows your name.</p>
 <form method="post" action="/join" class="stack">{{ hidden_csrf(csrf) }}
-  <div class="field"><label for="code">Class code <span class="hint">On the board. Letters and numbers.</span></label>
-    <input id="code" type="text" name="code" autocomplete="off" autocapitalize="characters" spellcheck="false" required maxlength="12" value="{{ code or '' }}" style="font-size:1.6rem;letter-spacing:.2em;max-width:12rem"></div>
-  <button type="submit" class="big">Next</button>
+  <div class="field"><label for="code">Your code <span class="hint">Six letters and numbers, under your name on the card</span></label>
+    <input id="code" type="text" name="code" autocomplete="off" autocapitalize="characters" spellcheck="false" required maxlength="40"
+           class="code-input" placeholder="K7Q-M2X" autofocus></div>
+  <button type="submit" class="big">Sign in</button>
 </form>
+<p class="small muted">Lost your card? Your teacher can show you your code. Staff: <a href="/login">sign in here</a>.</p>
+</div>
 {% endblock %}

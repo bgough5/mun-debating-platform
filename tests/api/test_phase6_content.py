@@ -19,6 +19,8 @@ def test_content_updates_add_missing_without_overwriting(app):
     try:
         conn.execute("UPDATE template SET body = 'MY EDIT' WHERE code = 'mc_script_house_carnival'")
         conn.execute("DELETE FROM template WHERE code = 'run_sheet_interschool'")
+        # Its likely arguments (D-076) go first: they point at the motion.
+        conn.execute("DELETE FROM motion_argument WHERE motion_id = (SELECT id FROM motion_bank WHERE motion = 'That every school should have a vegetable garden')")
         conn.execute("DELETE FROM motion_bank WHERE motion = 'That every school should have a vegetable garden'")
         conn.commit()
         seed_content_updates(conn)
@@ -26,6 +28,8 @@ def test_content_updates_add_missing_without_overwriting(app):
         assert conn.execute("SELECT body FROM template WHERE code = 'mc_script_house_carnival'").fetchone()[0] == "MY EDIT"
         assert conn.execute("SELECT 1 FROM template WHERE code = 'run_sheet_interschool'").fetchone()
         assert conn.execute("SELECT 1 FROM motion_bank WHERE motion = 'That every school should have a vegetable garden'").fetchone()
+        assert conn.execute("SELECT COUNT(*) FROM motion_argument a JOIN motion_bank m ON m.id = a.motion_id "
+                            "WHERE m.motion = 'That every school should have a vegetable garden'").fetchone()[0] == 6
         assert conn.execute("SELECT 1 FROM source_type WHERE code = 'demo_unverified'").fetchone()
     finally:
         conn.close()

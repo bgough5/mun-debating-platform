@@ -85,6 +85,8 @@ def add_students(w, class_id: int, lines: list[str]) -> str:
         first, initial = clean_name(parts[0], parts[1] if len(parts) > 1 else "")
         sid = w.insert("student", {"class_id": class_id, "first_name": first, "last_initial": initial}, channel=f"class:{class_id}")
         added.append((sid, first, initial))
+    from app.modules.people.codes import assign_missing
+    assign_missing(w.conn)
     # If two students now share a first name and either lacks an initial, say so.
     clashes = [f for _, f, i in added if needs_initial(w.conn, class_id, f) and not i]
     msg = f"Added {len(added)} student(s)."
@@ -115,7 +117,7 @@ def roster_lines_from_csv(data: bytes) -> list[str]:
 def class_create(request: Request, s=Depends(require_coordinator), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         cid, code = create_class(w, form.get("name"), form_int(form.get("year")))
-    return redirect(f"/people/classes/{cid}", f"Class created. Class code: {code}")
+    return redirect(f"/people/classes/{cid}", "Class created. Add the students: each gets their own sign-in code.")
 
 
 @router.get("/classes/{class_id}")
@@ -126,8 +128,6 @@ def class_view(request: Request, class_id: int, s=Depends(require_staff)):
                               "(SELECT MAX(last_seen_at) FROM device_session d WHERE d.student_id = st.id AND d.revoked_at IS NULL) AS last_seen "
                               "FROM student st WHERE st.class_id = ? AND st.deleted_at IS NULL ORDER BY st.active DESC, st.first_name, st.last_initial",
                         (class_id,))
-        requests_ = rows(conn, "SELECT cr.*, st.first_name, st.last_initial FROM claim_request cr JOIN student st ON st.id = cr.student_id "
-                               "WHERE cr.class_id = ? AND cr.status = 'pending' ORDER BY cr.id", (class_id,))
         staff = rows(conn, "SELECT sf.name FROM staff_class sc JOIN staff sf ON sf.id = sc.staff_id WHERE sc.class_id = ? "
                            "AND sc.deleted_at IS NULL AND sf.deleted_at IS NULL", (class_id,))
         milestones = rows(conn, "SELECT * FROM pathway_milestone WHERE deleted_at IS NULL ORDER BY position")
@@ -136,7 +136,10 @@ def class_view(request: Request, class_id: int, s=Depends(require_staff)):
                             "WHERE st.class_id = ? AND sm.deleted_at IS NULL GROUP BY sm.student_id", (class_id,)):
             achieved[r["student_id"]] = r["n"]
     connected = sum(1 for st in students if st["devices"])
-    return render(request, "people/class.html", {"title": c["name"], "c": c, "students": students, "requests": requests_,
+    from app.modules.people.codes import shown
+    for st in students:
+        st["code"] = shown(st["login_code"])
+    return render(request, "people/class.html", {"title": c["name"], "c": c, "students": students,
                                                  "staff": staff, "connected": connected, "achieved": achieved,
                                                  "milestone_count": len(milestones),
                                                  "cap": request.app.state.settings.get("max_live_students", 25)})
@@ -187,8 +190,15 @@ def student_edit(request: Request, student_id: int, s=Depends(require_staff), fo
             msg = "Student erased: their name, own writing and devices are gone; their scores stay as \"Erased\"."
         elif action == "release":
             n = revoke_devices(w.conn, "student_id = ?", (student_id,))
-            w.log("student", student_id, "release_name", None, {"devices_signed_out": n}, ch)
-            msg = f"Name released: {n} device(s) signed out. The student can now join from any device."
+            w.log("student", student_id, "sign_out", None, {"devices_signed_out": n}, ch)
+            msg = f"Signed out of {n} laptop(s)."
+        elif action == "new_code":
+            from app.modules.people.codes import shown, unique
+            code = unique(w.conn)
+            w.conn.execute("UPDATE student SET login_code = ? WHERE id = ?", (code, student_id))
+            n = revoke_devices(w.conn, "student_id = ?", (student_id,))
+            w.log("student", student_id, "new_code", None, {"devices_signed_out": n}, ch)
+            msg = f"New code for {st['first_name']}: {shown(code)}. The old code no longer works. Print a new card from the class page."
         else:
             raise UserError("Unknown action.")
     return redirect(f"/people/classes/{st['class_id']}", msg)
@@ -222,36 +232,32 @@ def class_edit(request: Request, class_id: int, s=Depends(require_staff), form=D
                 raise UserError("Only the coordinator can do that.", 403)
             w.update("class", class_id, {"archived_at": None, "active": 1})
             msg = "Class is active again."
-        elif action == "decide_claim":
-            req = one(w.conn, "SELECT * FROM claim_request WHERE id = ? AND class_id = ?", (form_int(form.get("request_id")), class_id))
-            if not req or req["status"] != "pending":
-                raise UserError("That request has already been dealt with.")
-            decision = "approved" if form.get("decision") == "approve" else "denied"
-            w.update("claim_request", req["id"], {"status": decision, "decided_at": now_iso(), "decided_by": w.actor.label},
-                     f"class:{class_id}")
-            msg = f"Request {decision}."
         else:
             raise UserError("Unknown action.")
     return redirect(f"/people/classes/{class_id}", msg)
 
 
-# ---------- join cards and poster (printable, with a QR code made on this laptop) ----------
+# ---------- sign-in cards and poster (printable; each card carries one student's own code, D-079) ----------
 
-def _qr_svg(url: str, scale: int = 4) -> str:
-    import segno      # BSD-3-Clause; pure Python, runs offline (D-062)
-    return segno.make(url, error="m").svg_inline(scale=scale, dark="#2A2320", light="#FFFFFF", omitsize=True)
+def _bare(base: str) -> str:
+    """The address as students type it: without http://."""
+    return base.split("://", 1)[-1]
 
 
 @router.get("/classes/{class_id}/join-cards")
 def join_cards(request: Request, class_id: int, s=Depends(require_staff)):
+    from app.modules.people.codes import shown
     from app.web.net import student_base_url
     with request.app.state.db.read() as conn:
         c = _check_class(conn, request, class_id)
-        n = scalar(conn, "SELECT COUNT(*) FROM student WHERE class_id = ? AND active = 1 AND deleted_at IS NULL", (class_id,))
+        students = rows(conn, "SELECT id, first_name, last_initial, login_code FROM student WHERE class_id = ? AND active = 1 "
+                              "AND deleted_at IS NULL ORDER BY first_name, last_initial", (class_id,))
+    for st in students:
+        st["code"] = shown(st["login_code"])
+        st["name"] = display_name(st["first_name"], st["last_initial"])
     base = student_base_url(request)
-    url = f"{base}/join?code={c['code']}"
-    return render(request, "people/join_cards.html", {"title": f"Join cards: {c['name']}", "c": c, "base": base, "url": url,
-                                                      "qr": _qr_svg(url), "count": max(8, min(32, ((n + 7) // 8) * 8))})
+    return render(request, "people/join_cards.html", {"title": f"Sign-in cards: {c['name']}", "c": c, "base": base,
+                                                      "addr": _bare(base), "students": students})
 
 
 @router.get("/classes/{class_id}/poster")
@@ -260,9 +266,7 @@ def join_poster(request: Request, class_id: int, s=Depends(require_staff)):
     with request.app.state.db.read() as conn:
         c = _check_class(conn, request, class_id)
     base = student_base_url(request)
-    url = f"{base}/join?code={c['code']}"
-    return render(request, "people/join_poster.html", {"title": f"Join {c['name']}", "c": c, "base": base, "url": url,
-                                                       "qr": _qr_svg(url, scale=10)})
+    return render(request, "people/join_poster.html", {"title": f"Sign in: {c['name']}", "c": c, "addr": _bare(base)})
 
 
 # ---------- pathway ----------

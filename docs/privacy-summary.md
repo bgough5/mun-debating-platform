@@ -15,7 +15,7 @@
 
 | Data | Why | Notes |
 |---|---|---|
-| First name; last initial only when two students in a class share a first name | So students can find their name when joining and teachers know who is who | Full names typed in are cut to first name + initial automatically. No surnames, emails, dates of birth, photos, phone numbers, IP addresses or device details are stored. |
+| First name; last initial only when two students in a class share a first name | So teachers know who is who, and to print each student's sign-in card | Full names typed in are cut to first name + initial automatically. No surnames, emails, dates of birth, photos, phone numbers, IP addresses or device details are stored. |
 | Class; house (for debating) | Grouping and house points | |
 | Delegation, team and role | Running MUN and debates | |
 | Votes in class divisions; speakers-list entries; motions proposed | The record of a live session (minutes) | |
@@ -23,7 +23,7 @@
 | Practice speeches: timings, self-scores, a short reflection, teacher comments | Speaking practice and feedback | |
 | Pathway milestones (e.g. "first speech", "chaired a committee") with an optional teacher note | The student's progress through the program | |
 | AI practice chats (practice negotiation with an AI "delegation") | Practice | Only if used. With AI off (the default), the "AI" is an offline script on the laptop. |
-| Device sign-in: a random token's hash, the date it was created and last used | Keeps a name locked to one device (spec §8.4) | No IP address, browser details or fingerprint. |
+| A personal sign-in code per student; for each signed-in laptop, a random token's hash, the date it was created and last used | Signs the student in as themselves, on one laptop at a time (D-079) | No IP address, browser details or fingerprint. |
 | Change history (who changed what, when) | Undo, version history, minutes, accountability for scores and house points | Names of students who acted appear here; see retention. |
 
 Staff: a display name and a hashed passphrase (scrypt). The coordinator's passphrase hash and any API keys are in `data/config.json` on the laptop, not in the database or the code repository.
@@ -37,9 +37,9 @@ Staff: a display name and a hashed passphrase (scrypt). The coordinator's passph
 
 These rules are checked by an automated test that tries every page and action as every role (see `docs/permissions.md`).
 
-## 4. Joining and impersonation (accepted risk, contained)
+## 4. Signing in and impersonation (D-079)
 
-Students join with a class code and tap their name; there are no student passwords (D-003). Someone with the code could pick another student's name. This is contained (spec §8.4): a name, once claimed, is locked to that device until a teacher releases it; a second device needs teacher approval; everything that affects scores or house points is recorded with who did it and can be reversed; codes can be changed instantly and should change each term.
+Each student has a personal sign-in code (six letters and numbers) printed on their own card; there is no list of names to pick from, so nobody can choose an absent classmate's name. Signing in on a laptop signs the student out of any other laptop. A code works like a password: anyone who sees a card could sign in as that student, so cards stay with the class set. Wrong codes are throttled. A teacher can give a student a new code at any time, which stops the old one and signs the student out. Everything that affects scores or house points is recorded with who did it and can be reversed. Codes are never exported in CSV files.
 
 ## 5. Retention and deletion (D-019, D-054, D-055)
 

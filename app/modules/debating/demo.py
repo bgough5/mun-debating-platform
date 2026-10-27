@@ -104,4 +104,6 @@ def make_carnival(w: Writer, n_students: int = 325, n_rounds: int = 4, seed: int
         S.set_round_status(w, rid, "closed")
     S.award_house_points(w, eid, final=True)
     w.update("debate_event", eid, {"status": "finished"})
+    from app.modules.people.codes import assign_missing
+    assign_missing(w.conn)
     return {"event_id": eid, "students": len(students), "teams": teams, "rooms": n_rooms}

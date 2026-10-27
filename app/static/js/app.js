@@ -82,10 +82,27 @@
     var list = document.querySelector("[data-tabs]");
     if (list && currentTab(list)) applyPanels(currentTab(list));
   });
+  // Page changes (D-078): a new page starts at the top; saving a form that comes back to the same page keeps the
+  // reader exactly where they were, and the confirmation appears as a toast instead of out of sight at the top.
+  var boostFrom = null;
+  document.addEventListener("htmx:beforeRequest", function (e) {
+    if (e.detail && e.detail.boosted) boostFrom = { path: location.pathname, y: window.scrollY };
+  });
   document.addEventListener("htmx:afterSettle", function (e) {
     if (e.detail && e.detail.boosted) {
       var main = document.getElementById("main");
-      if (main) main.focus({ preventScroll: false });
+      var same = boostFrom && boostFrom.path === location.pathname;
+      if (main) main.focus({ preventScroll: true });
+      if (same) {
+        window.scrollTo(0, boostFrom.y);
+        var flash = document.querySelector("#main > .flash");
+        if (flash && window.socToast) window.socToast(flash.textContent.trim());
+      } else if (location.hash && document.getElementById(location.hash.slice(1))) {
+        document.getElementById(location.hash.slice(1)).scrollIntoView();
+      } else {
+        window.scrollTo(0, 0);
+      }
+      boostFrom = null;
     }
     applyEasyRead();
   });
