@@ -395,3 +395,18 @@ def test_security_council_veto_warning_and_minutes_record_the_floor(coord, app):
     assert "Veto:" in coord.get(f"/projector/{tok}").text
     minutes = coord.get(f"/chair/{s['id']}/minutes").text
     assert "Point of parliamentary inquiry from" in minutes and "answered" in minutes
+
+
+def test_present_and_voting_cannot_abstain(coord, app):
+    com = ga(app)
+    s = _open(coord, app, com)
+    m = member_of(app, com["id"])[0]
+    st = join_as(app, m["student_id"])
+    st.post(f"/live/{s['id']}/roll", {"status": "present_and_voting"})
+    para = _operative(app, com)[0]
+    coord.post(f"/chair/{s['id']}/divisions", {"target": f"paragraph:{para['id']}"})
+    page = st.get(f"/live/{s['id']}").text
+    assert "so you can't abstain" in page and 'value="abstain"' not in page.split('id="h-vote"')[1].split("</section>")[0]
+    assert "can't abstain" in st.post(f"/live/{s['id']}/vote", {"vote": "abstain"}).text
+    st.post(f"/live/{s['id']}/vote", {"vote": "yes"})
+    assert db_one(app, "SELECT vote FROM division_vote WHERE delegation_id = ? AND computed = 0", (m["delegation_id"],))["vote"] == "yes"

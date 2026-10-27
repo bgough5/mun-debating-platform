@@ -4,9 +4,9 @@ One browser-based platform for South Oakleigh College's Model UN and debating wo
 the resolution workspace and chair tools, debating draws and ballots, and student pathways. It runs on the
 coordinator's laptop over school Wi-Fi (D-002). Students join with a class code and tap their name; no installs.
 
-**Status:** Phases 1–6 built (except the student pilot, which needs Ben, staff and the school). Phase 7 (reliability and honesty fixes) is in progress: see `docs/phase-reports.md`. Phase 6 added the
-South Oakleigh design system, icons, the guided committee simulation with the whip-count exercise, onboarding and
-help, new content, and robustness tests. See
+**Status:** Phases 1–6 built (except the student pilot, which needs Ben, staff and the school). Phase 7 (reliability
+and honesty fixes) and Phase 8 (the committee flow Ben approved on 27 Oct 2026, D-068) are built: see
+`docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun-committee-flow.html`. See
 `docs/phase-reports.md` for what is built and the measured exit criteria of each phase, and
 `docs/pilot-checklist.md` for what must happen before any class uses it.
 
@@ -26,9 +26,15 @@ help, new content, and robustness tests. See
 - **Intelligence:** licence-gated UN voting-history import (locked: licences not confirmed, D-051), voting-history
   priors, backtests against baselines, and AI features behind a provider interface that is offline by default (D-053).
 - **Hardening:** permissions audit, backups and restore, retention purge and student erasure, accessibility checks.
-- **Guided simulation (Phase 6):** nine stages of real committee procedure with the chair's script (editable data),
-  roll call and agenda, a whip-count exercise scored against the votes actually cast, a debrief with pivotal votes,
-  the engine's calibration on the vote and delegate profiles; practice for 1–3 students against a computed chamber.
+- **Committee flow (Phases 6 and 8):** six stages of real committee procedure with the chair's script (editable data):
+  roll call, agenda, opening statements, the open floor, voting procedure, debrief. On the floor, motions move the
+  committee between the speakers list, moderated and unmoderated caucus (up to 10 minutes a motion) and amendment
+  debate. Amendments go from private draft to public tracked changes, signatures, suggested edits, the floor (speakers
+  for and against), a vote and adoption on every screen. Students have tabs for the floor, motions and votes, points,
+  messages to other delegations (visible to the chair), private speech drafts, the amendment board, and a friends and
+  foes sheet for each operative clause; a prepare page holds the country brief and the opening statement. Security
+  Council votes warn on a veto as it happens. Whip counts are scored against the votes actually cast; the debrief
+  shows pivotal votes and delegate profiles; practice for 1–3 students against a computed chamber.
 - **Onboarding and help:** a getting-started wizard, printable join cards and posters with QR codes made on the
   laptop, a Help dialog on every page, a glossary, a student quick-start and the staff guide inside the app.
 

@@ -436,6 +436,10 @@ def cast_vote(w: Writer, division_id: int, delegation_id: int, vote: str) -> Non
     d = one(w.conn, "SELECT * FROM delegation WHERE id = ? AND committee_id = ?", (delegation_id, dv["committee_id"]))
     if not d:
         raise UserError("That delegation isn't in this committee.")
+    if vote == "abstain" and not dv["procedural"] and one(
+            w.conn, "SELECT 1 FROM roll_call WHERE session_id = ? AND delegation_id = ? AND status = 'present_and_voting'",
+            (dv["session_id"], delegation_id)):
+        raise UserError(f"{d['iso3']} answered “present and voting” at roll call, so it can't abstain on a substantive vote.")
     existing = one(w.conn, "SELECT * FROM division_vote WHERE division_id = ? AND iso3 = ?", (division_id, d["iso3"]))
     if existing and existing["computed"]:
         raise UserError("That delegation is voted by the engine (no student holds it).")

@@ -62,10 +62,10 @@
   {% if mine %}
     {% if my_vote and my_vote.computed %}<p>Your delegation is voted by the engine.</p>
     {% else %}
-    <p>{% if my_vote and my_vote.vote %}Your delegation voted <strong>{{ my_vote.vote }}</strong>. You can change it until voting closes.{% else %}Your delegation hasn't voted.{% endif %}</p>
+    <p>{% if my_vote and my_vote.vote %}Your delegation voted <strong>{{ my_vote.vote }}</strong>. You can change it until voting closes.{% else %}Your delegation hasn't voted.{% endif %}{% if not division.procedural and my_roll and my_roll.status == 'present_and_voting' %} You answered “present and voting”, so you can't abstain.{% endif %}</p>
     <form method="post" action="/live/{{ s.id }}/vote" class="row">{{ hidden_csrf(csrf) }}
       <button type="submit" name="vote" value="yes" class="big">{{ icon("yes") }} Yes</button>
-      {% if not division.procedural %}<button type="submit" name="vote" value="abstain" class="big secondary">{{ icon("abstain") }} Abstain</button>{% endif %}
+      {% if not division.procedural and not (my_roll and my_roll.status == 'present_and_voting') %}<button type="submit" name="vote" value="abstain" class="big secondary">{{ icon("abstain") }} Abstain</button>{% endif %}
       <button type="submit" name="vote" value="no" class="big secondary">{{ icon("no") }} No</button>
     </form>{% endif %}
   {% endif %}
