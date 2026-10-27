@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_macros.html" import hidden_csrf, breadcrumb, empty_state %}
 {% block content %}
-{{ breadcrumb([("Model UN", "/mun"), (com.name, "/mun/committees/" ~ com.id), ("Amendments", None)]) }}
+{{ breadcrumb([("Model UN", "/mun") if staff else ("My page", "/me"), (com.name, "/mun/committees/" ~ com.id), ("Amendments", None)]) }}
 <h1>{{ icon("tracked") }} Amendments: {{ com.name }}</h1>
 <p class="lede">Every submitted amendment, shown as tracked changes against the current text: <ins class="diff-key">added words</ins> and <del class="diff-key">removed words</del>. An amendment needs its sponsors and {{ needed }} signatories before the chair can bring it to the floor. Signing lets it be debated; it doesn't commit your vote.</p>
 {% if live %}<p><a href="{{ '/chair/' ~ live if staff else '/live/' ~ live ~ '?tab=amendments' }}">{{ icon("committee") }} Back to the live session</a></p>{% endif %}

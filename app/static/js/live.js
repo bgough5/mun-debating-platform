@@ -45,7 +45,7 @@
         var d = msg.denied[0];
         status("Not live: " + (d.reason || "no access"), false);
       }
-      if (msg.subscribed && typeof msg.seq === "number" && !lastSeq) lastSeq = msg.seq;
+      if (msg.subscribed && typeof msg.seq === "number" && !lastSeq) { lastSeq = msg.seq; refreshStale(); }
       if (msg.resync) { refreshAll(); return; }
       if (msg.channels) {
         if (msg.seq > lastSeq) lastSeq = msg.seq;
@@ -92,11 +92,51 @@
     if (st.timer) return;
     st.timer = setTimeout(function () {
       st.timer = null; st.last = Date.now();
-      if (window.htmx) htmx.trigger(el, "live-update");
+      // The region may have been replaced while we waited (a boosted page swap): refresh the one on the page now,
+      // or the update lands in a detached copy and the page stays stale.
+      var target = (el.id && document.getElementById(el.id)) || el;
+      if (window.htmx && document.body.contains(target)) htmx.trigger(target, "live-update");
     }, Math.max(0, wait));
   }
 
+  // Keep disclosure panels the person opened (“Jump to a stage”, “Propose another motion”) open across a refresh.
+  document.addEventListener("htmx:beforeSwap", function (e) {
+    var t = e.detail && e.detail.target;
+    if (!t || !t.hasAttribute || !t.hasAttribute("data-live-channel")) return;
+    t._openPanels = Array.prototype.map.call(t.querySelectorAll("details[open] > summary"), function (s) { return s.textContent.trim(); });
+    // Choices made in a drop-down but not yet sent (pick a stage, then Go) survive the refresh too.
+    t._choices = {};
+    t.querySelectorAll("select[id]").forEach(function (sel) {
+      var dflt = Array.prototype.find.call(sel.options, function (o) { return o.defaultSelected; });
+      if (sel.value !== (dflt ? dflt.value : sel.options.length ? sel.options[0].value : "")) t._choices[sel.id] = sel.value;
+    });
+  });
+  document.addEventListener("htmx:afterSwap", function (e) {
+    var t = e.detail && e.detail.target;
+    if (t && t._choices) {
+      Object.keys(t._choices).forEach(function (id) {
+        var sel = t.querySelector("select#" + CSS.escape(id));
+        if (sel && Array.prototype.some.call(sel.options, function (o) { return o.value === t._choices[id]; })) sel.value = t._choices[id];
+      });
+      t._choices = null;
+    }
+    if (!t || !t._openPanels || !t._openPanels.length) return;
+    t.querySelectorAll("details > summary").forEach(function (s) {
+      if (t._openPanels.indexOf(s.textContent.trim()) >= 0) s.parentNode.open = true;
+    });
+    t._openPanels = null;
+  });
+
   function refreshAll() { document.querySelectorAll("[data-live-channel]").forEach(refreshEl); }
+
+  // A page or fragment rendered before a change we have already been told about is stale: this happens when a
+  // live message arrives while a full-page request (a boosted form or link) is in flight. Refresh it once more.
+  function refreshStale(root) {
+    document.querySelectorAll("[data-live-channel]").forEach(function (el) {
+      var mark = el.querySelector("[data-view-seq]");
+      if (mark && lastSeq && parseInt(mark.getAttribute("data-view-seq"), 10) < lastSeq) refreshEl(el);
+    });
+  }
 
   function flushPending() {
     pending.forEach(function (el) {
@@ -210,5 +250,6 @@
     initTimers(e.target);
     checkAnnouncements(e.target);
     if (scan().join(" ") !== wanted) start();
+    refreshStale();
   });
 })();

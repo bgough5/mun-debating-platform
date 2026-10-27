@@ -93,6 +93,7 @@ def _shared_view(conn, sid: int) -> dict:
     data["other_drafts"] = rows(conn, "SELECT id, title, status FROM resolution WHERE committee_id = ? AND deleted_at IS NULL AND id IS NOT ? "
                                       "AND status NOT IN ('passed', 'failed', 'withdrawn')", (s["committee_id"], (data["draft"] or {}).get("id")))
     data["unmod_max_min"] = F.UNMOD_MAX_S // 60
+    data["view_seq"] = seq
     with _VIEW_LOCK:
         if len(_VIEW_CACHE) > 64:
             _VIEW_CACHE.clear()

@@ -2,6 +2,8 @@
 {% from "chair/_timer.html" import timer %}
 {% from "sim/_stages.html" import tracker %}
 {% set modes = {'formal':'Formal debate','moderated':'Moderated caucus','unmoderated':'Unmoderated caucus','voting':'Voting procedure'} %}
+{# The event the view was built from: live.js refreshes again if it has already heard of a newer one. #}
+<span hidden data-view-seq="{{ view_seq }}"></span>
 {# ---------- Floor ---------- #}
 <section id="p-floor" role="tabpanel" aria-labelledby="tab-floor" data-panel="floor" {% if tab != 'floor' %}hidden{% endif %}>
 {% if s.state != 'open' %}<div class="notice" role="status">The session is {{ s.state }}.</div>{% endif %}

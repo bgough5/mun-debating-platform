@@ -18,7 +18,7 @@
   </div>
 </div>
 {% for t in timers %}{{ timer(t, true, s.id, csrf) }}{% endfor %}
-<h3>{{ icon("speakers") }} {% if floor_amendment %}Speakers on amendment {{ floor_amendment.id }}{% elif s.mode == 'moderated' %}Moderated caucus list{% else %}General speakers list{% endif %} ({{ queue|length }})</h3>
+<h3>{{ icon("speakers") }} {% if floor_amendment %}Speakers on amendment {{ floor_amendment.id }}{% elif s.mode == 'moderated' %}Moderated caucus list{% else %}Speakers list{% endif %} ({{ queue|length }})</h3>
 <ol class="speakers">
 {% for e in queue %}<li>{{ e.country }}{% if e.first_name %} ({{ e.first_name }}){% endif %}{% if e.side %} <span class="badge {{ 'st-yes' if e.side == 'for' else 'st-no' }}">{{ e.side }}</span>{% endif %}
   {% for a, lbl in [('up','Move up'),('down','Move down'),('remove','Remove')] %}
