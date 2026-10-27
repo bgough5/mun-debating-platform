@@ -193,7 +193,7 @@ Not verified: on Ben's Windows laptop; the bell's volume through a classroom pro
 
 ## Phase 10 — Smooth, no phones, the College design (D-078 to D-080)
 
-Ben, 28 Oct 2026: fix scroll and typing glitches; no phones, students connect with a code that has their name built in, and absent students mustn't be a problem; restyle to the SOC design system; rebuild the deck with both the facilitator's and students' views.
+Ben, 27 Oct 2026: fix scroll and typing glitches; no phones, students connect with a code that has their name built in, and absent students mustn't be a problem; restyle to the SOC design system; rebuild the deck with both the facilitator's and students' views.
 
 - **Smoothness (D-078):** measured in the browser before and after (`tests/ui/test_phase10_smooth.py`, 4 tests). Before: a live update replaced the box a student had clicked into (shown failing against the old `live.js`); a new page opened 410 px down. After: a region with the focused box waits until the student leaves it; live refreshes keep the scroll position; saving keeps your place and shows the confirmation as a toast; new pages start at the top. A probe that types into every box in the live regions while the committee changes every 0.7 s found no jump, lost focus or lost text.
 - **Sign-in (D-079):** personal six-character codes (no 0, O, 1 or I), on printable per-student cards with the student's own address; no list of names; one laptop at a time; throttled; teachers can show or renew a code; codes never exported. QR codes, the device lock and second-device approval are gone. Delegations whose students are away are voted by the engine and labelled computed; a student who arrives in time takes the vote back. Tests: `tests/api/test_phase2_join.py` (rewritten, 8).

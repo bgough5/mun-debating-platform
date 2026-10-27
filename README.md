@@ -2,11 +2,13 @@
 
 One browser-based platform for South Oakleigh College's Model UN and debating work: evidence-based vote prediction,
 the resolution workspace and chair tools, debating draws and ballots, and student pathways. It runs on the
-coordinator's laptop over school Wi-Fi (D-002). Students join with a class code and tap their name; no installs.
+coordinator's laptop over school Wi-Fi (D-002). Each student signs in on a school laptop with their own six-character
+code, which already knows their name (D-079); no installs, no phones.
 
 **Status:** Phases 1–6 built (except the student pilot, which needs Ben, staff and the school). Phase 7 (reliability
-and honesty fixes) and Phase 8 (the committee flow Ben approved on 27 Oct 2026, D-068) are built: see
-`docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun-committee-flow.html`. See
+and honesty fixes), Phase 8 (the committee flow Ben approved on 27 Oct 2026, D-068), Phase 9 (debating and public
+speaking for the classroom) and Phase 10 (personal sign-in codes, smooth pages, the South Oakleigh restyle) are built:
+see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun-committee-flow.html`. See
 `docs/phase-reports.md` for what is built and the measured exit criteria of each phase, and
 `docs/pilot-checklist.md` for what must happen before any class uses it.
 
@@ -15,7 +17,7 @@ and honesty fixes) and Phase 8 (the committee flow Ben approved on 27 Oct 2026, 
 - **Model UN:** conferences, committees, delegations; a resolution workspace (one editor per paragraph, amendments,
   version history, undo); evidence-based vote prediction (Monte Carlo pass probability, swing countries, amendment
   comparison, lobbying tasks); calibration against real votes.
-- **Class mode:** class code + name join; live sessions with speakers list, timers, motions, divisions (GA and
+- **Class mode:** sign-in by personal code (one laptop at a time; absent students never hold up a vote); live sessions with speakers list, timers, motions, divisions (GA and
   Security Council rules, vetoes), minutes and a projector view; live updates over one WebSocket; 1–25 students,
   with countries that have no student voted by the engine and labelled "computed".
 - **Debating and public speaking (Phase 9):** a classroom runner for class debates and speaking rounds (type the
@@ -40,12 +42,12 @@ and honesty fixes) and Phase 8 (the committee flow Ben approved on 27 Oct 2026, 
   foes sheet for each operative clause; a prepare page holds the country brief and the opening statement. Security
   Council votes warn on a veto as it happens. Whip counts are scored against the votes actually cast; the debrief
   shows pivotal votes and delegate profiles; practice for 1–3 students against a computed chamber.
-- **Onboarding and help:** a getting-started wizard, printable join cards and posters with QR codes made on the
-  laptop, a Help dialog on every page, a glossary, a student quick-start and the staff guide inside the app.
+- **Onboarding and help:** a getting-started wizard, printable sign-in cards (each student's code and the address)
+  and a classroom poster, a Help dialog on every page, a glossary, a student quick-start and the staff guide inside the app.
 
 Guides: `docs/staff-guide.md` (for teachers), `docs/privacy-summary.md` (for school sign-off),
 `docs/permissions.md`, `docs/backup-restore.md`, `docs/pilot-checklist.md`. Design review: `docs/screens/index.md`
-(screenshots of every key page on a laptop and a phone).
+(screenshots of every key page on a laptop and a large screen).
 
 **On Ben's laptop, first:** `powershell -ExecutionPolicy Bypass -File tools\windows_smoke.ps1` (add `-Browser` for the
 browser and accessibility tests). It installs into its own `.venv-smoke`, runs the tests, starts the platform on demo
@@ -64,7 +66,8 @@ Double-click `start_platform.bat` (or run `.\start_platform.ps1`). The first run
 `requirements.txt` (needs internet once). Then:
 
 - Staff, on the laptop: `http://localhost:8080/` — the first visit asks you to set the coordinator passphrase.
-- Students, on school Wi-Fi: the `/join` address printed in the window.
+- Students, on school laptops on the Wi-Fi: the address printed in the window, then their code (or the `/s/<code>`
+  link on their card).
 - Demo mode (fake data only, for training staff): `start_platform.bat --demo`, or Admin → Data.
 
 Any OS: `python -m pip install -r requirements.txt` then `python -m app [--demo] [--port 8080]`.

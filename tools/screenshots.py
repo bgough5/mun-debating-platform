@@ -4,7 +4,7 @@
 
 Starts the platform on demo data (fake people only) in a temporary folder, sets up a realistic state (a live
 session part-way through, a whip count, a closed vote with a debrief, a practice run), then captures each key
-page at 1366×768 (laptop) and 390×844 (phone), and the projector views as they appear on a classroom screen.
+page at 1366×768 (laptop) and 1920×1080 (large screen), and the projector views as they appear on a classroom screen.
 Writes PNGs and docs/screens/index.md. Viewport-only captures, so each image shows what fits on one screen.
 """
 from __future__ import annotations
@@ -103,14 +103,14 @@ def prepare(app) -> dict:
     with app.state.db.write(Actor("student", student9, "student")) as w:
         mid = q(app, "SELECT id FROM motion_bank WHERE motion = 'That zoos do more harm than good'")[0]["id"]
         case = PREP.create_case(w, student9, mid, "", "neg")
-        c = q(app, "SELECT * FROM prep_case WHERE id = ?", (case,))[0]
+        c = w.conn.execute("SELECT * FROM prep_case WHERE id = ?", (case,)).fetchone()  # not committed yet
         PREP.save_header(w, c, {"team_line": "Good zoos protect species and inspire people to care (demo text for the screenshots).", "definition": ""})
         PREP.save_point(w, c, {"kind": "argument", "part_claim": "Zoos save species from extinction.",
                                "part_reason": "Breeding programmes keep healthy populations when wild numbers collapse, then return animals to the wild.",
                                "part_evidence": "(Demo text: a real example and its source would go here.)", "part_impact": "", "speaker": "1",
                                "self_clarity": "4", "self_reasoning": "3"})
         speech = PREP.create_speech(w, student9, "persuasive", "Why every school needs a garden")
-        sp = q(app, "SELECT * FROM prep_speech WHERE id = ?", (speech,))[0]
+        sp = w.conn.execute("SELECT * FROM prep_speech WHERE id = ?", (speech,)).fetchone()
         PREP.save_speech(w, sp, {"target_seconds": "180", "sec_hook": "(Demo text for the screenshots.) When did you last eat something you grew?"})
     run_tok = q(app, "SELECT projector_token FROM class_run WHERE id = ?", (run,))[0]["projector_token"]
     rnd_tok = q(app, "SELECT projector_token FROM class_run WHERE id = ?", (rnd9,))[0]["projector_token"]
