@@ -6,7 +6,8 @@
 <title>{% block title %}{{ title|default("South Oakleigh Debating & MUN") }}{% endblock %} — SOC Debating & MUN</title>
 <meta name="csrf-token" content="{{ csrf }}">
 <link rel="stylesheet" href="/static/css/app.css">
-<link rel="icon" href="/static/soc_logo.png">
+<link rel="icon" href="/static/soc_crest.png">
+<link rel="preload" href="/static/fonts/OpenSans-400.woff2" as="font" type="font/woff2" crossorigin>
 <script src="/static/vendor/htmx-2.0.4.min.js" defer></script>
 <script src="/static/js/app.js" defer></script>
 <script src="/static/js/live.js" defer></script>
@@ -21,7 +22,7 @@
 {% block header %}
 <header class="site">
   <div class="bar">
-    <a class="brand" href="/"><img src="/static/soc_logo.png" alt="" width="46" height="46"><span><span class="school">South Oakleigh College</span><span class="product">Debating &amp; Model UN</span></span></a>
+    <a class="brand" href="/"><img src="/static/soc_crest.png" alt="" width="47" height="44"><span><span class="school">South Oakleigh College</span><span class="product">Debating &amp; Model UN</span></span></a>
     {# Phones: app.js unhides the button; without JavaScript it stays hidden and the menu simply shows (Phase 7, D-067). #}
     <button type="button" class="menu-toggle" aria-expanded="false" aria-controls="site-menu" hidden>{{ icon("menu") }} Menu</button>
     <div class="menu-panel" id="site-menu">
@@ -50,7 +51,7 @@
         <div class="account"><span class="signed-in"><span class="visually-hidden">Signed in: </span>{{ actor.label }}</span>
         <form method="post" action="/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="linkish" type="submit">{{ icon("sign-out") }} Sign out</button></form></div>
       {% else %}
-        <a href="/join">Students: join</a> · <a href="/login">Staff sign in</a>
+        <a href="/join">Students: sign in</a> · <a href="/login">Staff sign in</a>
       {% endif %}
     </div>
     </div>

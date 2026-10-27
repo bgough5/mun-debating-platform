@@ -5,38 +5,39 @@ tests/test_design_contrast.py checks that, and checks every pair below
 against WCAG 2.2 AA: 4.5:1 for normal text, 3:1 for large text (24 px, or
 18.66 px bold) and for interface parts such as borders and focus rings.
 
-Brand colours come from HANDOVER.md §10. Where a brand colour fails on a
-background it is used on, a darker shade is added beside it, never silently
-swapped (each is listed in docs/decisions.md D-058).
+Colours are the South Oakleigh College design system's (D-080, replacing
+D-058's darker palette): white ground, College Maroon #621723, Green #135728
+and Gold #A98B00. Gold is never text (3.3:1 on white).
 """
 from __future__ import annotations
 
 TOKENS = {
-    # Brand (HANDOVER §10)
-    "maroon": "#8C332A",        # primary: buttons, links, active states
-    "maroon-dk": "#2A1512",     # header, navigation, projector background
-    "green": "#0A6B39",         # success, "for", "yes"
-    "green-dk": "#0A4527",
-    "gold": "#B8960C",          # accent: decoration, or on dark backgrounds only
-    "gold-lt": "#D4B441",       # accent on dark backgrounds
-    "cream": "#F4F0E6",         # page
-    "card": "#FBFAF6",          # cards, tables, inputs
-    "ink": "#2A2320",           # body text
-    # Added for AA (D-058): darker shades of brand colours for text on light surfaces
-    "gold-text": "#7A6206",     # gold on cream is 2.5:1; this is 5.2:1
-    "muted": "#655C55",         # secondary text
-    "line": "#D9D0C1",          # decorative dividers (not relied on to find a control)
-    "control": "#8A7F76",       # input and control borders: 3:1 on cream and card
+    # South Oakleigh College design system (D-080): white ground, College Maroon leading, green and gold in support.
+    "maroon": "#621723",        # College Maroon: buttons, links, current page, table header rows
+    "maroon-dk": "#4A101B",     # hover and pressed states of maroon
+    "green": "#135728",         # College Green: success, "for", "yes"
+    "green-dk": "#0E4220",
+    "gold": "#A98B00",          # College Gold: heading bars, rules and the footer hairline; never text (3.3:1)
+    "gold-lt": "#D8B638",       # gold on maroon (eyebrows on dark panels)
+    "cream": "#FFFFFF",         # the page (kept as a name for older rules: it is white now)
+    "card": "#FFFFFF",          # cards, tables, inputs
+    "panel": "#F7F7F7",         # quiet panels, alternate table rows
+    "grey": "#EDEDED",          # neutral blocks
+    "ink": "#262626",           # all primary text
+    "gold-text": "#7A6206",     # the rare gold-coloured word on white (5.9:1)
+    "muted": "#4A4A4A",         # secondary text
+    "line": "#DDDDDD",          # hairline dividers (decorative; never the only sign of a control)
+    "control": "#858585",       # input and control borders: 3:1 on white and panel
     "white": "#FFFFFF",
-    # Tinted surfaces for messages and stances
-    "ok-bg": "#E3F1E7", "err-bg": "#F8E6E3", "warn-bg": "#FBF1D3", "info-bg": "#EFE7DA",
-    "yes-bg": "#DDEFE3", "no-bg": "#F6E1DD", "abs-bg": "#ECE7E1", "unk-bg": "#F1EEE9",
-    # Projector (dark) theme
-    "proj-bg": "#2A1512", "proj-card": "#3D211C", "proj-text": "#F4F0E6", "proj-accent": "#D4B441",
-    "proj-low": "#FFC2B8", "proj-line": "#6B4A42",
-    # Speech timer bells as colour (D-075): speaking, after the warning bell, past time. The text on each always
-    # says which, so colour is never the only signal.
-    "time-go": "#0A6B39", "time-warn": "#F2C14E", "time-over": "#B3261E",
+    # Tints carry boxes, not pages
+    "ok-bg": "#E8EFE9", "err-bg": "#F4EBEC", "warn-bg": "#F6F1DC", "info-bg": "#F7F7F7",
+    "yes-bg": "#E8EFE9", "no-bg": "#F4EBEC", "abs-bg": "#EDEDED", "unk-bg": "#F7F7F7",
+    # Projector: the same clean white ground, read from the back of the room
+    "proj-bg": "#FFFFFF", "proj-card": "#F7F7F7", "proj-text": "#262626", "proj-accent": "#621723",
+    "proj-low": "#B3261E", "proj-line": "#DDDDDD",
+    # Speech timer bells as colour (D-075; the design system's on-screen timer colours). Ink text on each, and the
+    # words always say which phase it is, so colour is never the only signal.
+    "time-go": "#3FB36A", "time-warn": "#F2B705", "time-over": "#EF5A4F",
 }
 
 TEXT, LARGE, UI = 4.5, 3.0, 3.0
@@ -44,12 +45,11 @@ TEXT, LARGE, UI = 4.5, 3.0, 3.0
 # (foreground, background, minimum ratio, where it is used)
 PAIRS = [
     ("ink", "cream", TEXT, "body text"), ("ink", "card", TEXT, "text on cards and tables"),
-    ("ink", "white", TEXT, "text in inputs"),
-    ("muted", "cream", TEXT, "secondary text"), ("muted", "card", TEXT, "secondary text on cards"),
-    ("maroon", "cream", TEXT, "links"), ("maroon", "card", TEXT, "links on cards, secondary buttons"),
-    ("white", "maroon", TEXT, "primary button"), ("white", "maroon-dk", TEXT, "header text"),
-    ("gold-lt", "maroon-dk", TEXT, "header accent, current-page marker"),
-    ("cream", "maroon-dk", TEXT, "header links"),
+    ("ink", "white", TEXT, "text in inputs"), ("ink", "panel", TEXT, "text on quiet panels and alternate rows"),
+    ("muted", "cream", TEXT, "secondary text"), ("muted", "card", TEXT, "secondary text on cards"), ("muted", "panel", TEXT, "secondary text on panels"),
+    ("maroon", "cream", TEXT, "links"), ("maroon", "card", TEXT, "links on cards, secondary buttons"), ("maroon", "panel", TEXT, "links on panels"),
+    ("white", "maroon", TEXT, "primary button, table header row"), ("white", "maroon-dk", TEXT, "primary button hover"),
+    ("gold-lt", "maroon", TEXT, "gold eyebrow on maroon"),
     ("white", "green", TEXT, "success button"),
     ("green", "cream", TEXT, "'for' text"), ("green-dk", "ok-bg", TEXT, "success message"),
     ("gold-text", "cream", TEXT, "gold text on the page"), ("gold-text", "card", TEXT, "gold text on cards"),
@@ -59,14 +59,15 @@ PAIRS = [
     ("green-dk", "yes-bg", TEXT, "Yes / Support badge"), ("maroon", "no-bg", TEXT, "No / Oppose badge"),
     ("ink", "abs-bg", TEXT, "Abstain badge"), ("muted", "unk-bg", TEXT, "Unknown badge"),
     ("control", "cream", UI, "input borders on the page"), ("control", "card", UI, "input borders on cards"),
-    ("maroon-dk", "cream", UI, "focus ring (inner)"), ("gold-lt", "maroon-dk", UI, "focus ring on the dark header"),
+    ("control", "panel", UI, "input borders on panels"),
+    ("maroon", "cream", UI, "focus ring"), ("gold", "cream", UI, "focus ring outer halo and heading bars (non-text)"),
     ("maroon", "card", UI, "secondary button border"),
     ("proj-text", "proj-bg", TEXT, "projector text"), ("proj-text", "proj-card", TEXT, "projector cards"),
-    ("proj-accent", "proj-bg", TEXT, "projector headings and timer"), ("proj-accent", "proj-card", TEXT, "projector accent on cards"),
+    ("proj-accent", "proj-bg", TEXT, "projector headings"), ("proj-accent", "proj-card", TEXT, "projector accent on cards"),
     ("proj-low", "proj-bg", TEXT, "projector timer, last 10 seconds"), ("proj-low", "proj-card", TEXT, "low timer on a card"),
     ("proj-line", "proj-bg", 1.0, "projector dividers (decorative)"),
-    ("white", "time-go", TEXT, "speech timer: speaking"), ("ink", "time-warn", TEXT, "speech timer: warning bell"),
-    ("white", "time-over", TEXT, "speech timer: past time"),
+    ("ink", "time-go", TEXT, "speech timer: speaking"), ("ink", "time-warn", TEXT, "speech timer: warning bell"),
+    ("ink", "time-over", TEXT, "speech timer: past time"),
 ]
 
 

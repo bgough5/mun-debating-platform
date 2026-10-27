@@ -6,7 +6,7 @@
 <p>Create a class, add the students, set up a committee and print sign-in cards, step by step.</p><p><a class="button" href="/welcome">{{ icon("next") }} Open the getting-started guide</a></p></section>{% endif %}
 <div class="grid">
   <section class="card" aria-labelledby="h-c"><h2 id="h-c">{{ icon("class") }} Classes</h2>
-    {% if classes %}<ul>{% for c in classes %}<li><a href="/people/classes/{{ c.id }}">{{ c.name }}</a> <span class="muted">· code <strong>{{ c.code }}</strong></span></li>{% endfor %}</ul>
+    {% if classes %}<ul>{% for c in classes %}<li><a href="/people/classes/{{ c.id }}">{{ c.name }}</a></li>{% endfor %}</ul>
     {% else %}{{ empty_state("No classes yet.", "Start with the getting-started guide." if actor.is_coordinator else "Ask the coordinator to add you to a class.", "/welcome" if actor.is_coordinator else None, "Getting started" if actor.is_coordinator else None, "class") }}{% endif %}</section>
   <section class="card" aria-labelledby="h-m"><h2 id="h-m">{{ icon("committee") }} Model UN committees</h2>
     {% if committees %}<ul>{% for c in committees %}<li><a href="/mun/committees/{{ c.id }}">{{ c.name }}</a> <span class="muted">· {{ c.conference }}</span></li>{% endfor %}</ul>

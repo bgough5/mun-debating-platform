@@ -52,12 +52,11 @@ def test_teacher_runs_a_class_debate_from_the_keyboard_and_the_projector_follows
     # The bells: the page's own clock moves the phase to the warning and then past time.
     pg.keyboard.press("Space")
     pg.wait_for_selector(".run-timer[data-state='running']", timeout=5000)
-    # Wind the page's clock (the region may be re-rendered meanwhile, so set it until the phase shows).
+    # Wind the page's clock (the region may be re-rendered meanwhile, so set it until the phase and its words show).
     wind = """s => { const el = document.querySelector('.run-timer'); el._init = true; el._base = s; el._at = Date.now() / 1000;
-                     return el.closest('.run-stage').dataset.phase; }"""
-    pg.wait_for_function(f"({wind})(30) === 'warn'", timeout=3000)      # 30 s left: past the 1-minute warning
-    assert "Warning bell" in pg.inner_text(".run-phase-text")
-    pg.wait_for_function(f"({wind})(-3) === 'over'", timeout=3000)
+                     const st = el.closest('.run-stage'); return st.dataset.phase + '|' + st.querySelector('.run-phase-text').textContent; }"""
+    pg.wait_for_function(f"({wind})(30).startsWith('warn|Warning bell')", timeout=5000)      # 30 s left: past the 1-minute warning
+    pg.wait_for_function(f"({wind})(-3).startsWith('over|Time')", timeout=5000)
     assert pg.inner_text(".run-timer").startswith("+0:0")
     pg.goto(live.url + f"/debating/runs/{run['id']}/results")
     assert not axe(pg, "p9_run_results")

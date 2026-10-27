@@ -4,7 +4,7 @@
 {% block header %}{% endblock %}
 {% block footer %}{% endblock %}
 {% block content %}
-<div class="proj-brand"><img src="/static/soc_logo.png" alt="">South Oakleigh College · Debating &amp; Model UN</div>
+<div class="proj-brand"><img src="/static/soc_crest.png" alt="">South Oakleigh College · Debating &amp; Model UN</div>
 <div id="projector-main" data-live-channel="debate:{{ e.id }}" hx-get="/debating/projector/{{ token }}/f" hx-trigger="live-update" hx-swap="innerHTML">
 {% include "debating/_projector_main.html" %}
 </div>

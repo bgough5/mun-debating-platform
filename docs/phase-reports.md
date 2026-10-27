@@ -190,3 +190,14 @@ Found and fixed while building it: a control button's `form.action` returned the
 Tests: `tests/api/test_phase9_debating.py` (17: content coverage, run order and recorded times, the bell phases, name rules, impromptu reveal, projector token and live channel, staff scope, scores reaching only the student, editing, case privacy, the structure check, the speech estimate, practice modes, erasure, the yearly name purge), `tests/ui/test_phase9_ui.py` (3: keyboard-driven run with the projector following, the bell phases in the browser, the student practice flow saved end to end, axe on every new page).
 
 Not verified: on Ben's Windows laptop; the bell's volume through a classroom projector's speakers; the likely arguments against the school's own debating coaching (they are generic and editable).
+
+## Phase 10 — Smooth, no phones, the College design (D-078 to D-080)
+
+Ben, 28 Oct 2026: fix scroll and typing glitches; no phones, students connect with a code that has their name built in, and absent students mustn't be a problem; restyle to the SOC design system; rebuild the deck with both the facilitator's and students' views.
+
+- **Smoothness (D-078):** measured in the browser before and after (`tests/ui/test_phase10_smooth.py`, 4 tests). Before: a live update replaced the box a student had clicked into (shown failing against the old `live.js`); a new page opened 410 px down. After: a region with the focused box waits until the student leaves it; live refreshes keep the scroll position; saving keeps your place and shows the confirmation as a toast; new pages start at the top. A probe that types into every box in the live regions while the committee changes every 0.7 s found no jump, lost focus or lost text.
+- **Sign-in (D-079):** personal six-character codes (no 0, O, 1 or I), on printable per-student cards with the student's own address; no list of names; one laptop at a time; throttled; teachers can show or renew a code; codes never exported. QR codes, the device lock and second-device approval are gone. Delegations whose students are away are voted by the engine and labelled computed; a student who arrives in time takes the vote back. Tests: `tests/api/test_phase2_join.py` (rewritten, 8).
+- **Design (D-080):** the SOC design system's tokens, Cinzel and Open Sans served locally, a white header with the crest, maroon table headers, pill buttons, the gold heading bar, the letterhead footer; the projector on white with the design system's timer colours.
+- **Deck:** rebuilt with paired views (teacher's laptop, student's laptop, the projector) at laptop and classroom-screen sizes.
+
+Not verified: the fonts on Ben's Windows laptop (they are served by the app, so they should not depend on what's installed); the look on the classroom projector itself.

@@ -139,7 +139,7 @@ def test_a11y_every_staff_page(page, live, session_id):
 
 
 def test_a11y_every_student_page(page, live, session_id):
-    st = _q(live, "SELECT st.id, c.code FROM student st JOIN class c ON c.id = st.class_id WHERE c.code = 'DEMO9M' "
+    st = _q(live, "SELECT st.id, st.login_code FROM student st JOIN class c ON c.id = st.class_id WHERE c.code = 'DEMO9M' "
                   "ORDER BY st.id DESC LIMIT 1")[0]
     page.goto(live.url + "/join")
     failures = {}
@@ -147,13 +147,8 @@ def test_a11y_every_student_page(page, live, session_id):
         probs = _check_page(page, "p5_student_join")
         if probs:
             failures[step] = probs
-    page.fill("#code", st["code"])
-    page.click("button:has-text('Next')")
-    page.wait_for_load_state("networkidle")
-    probs = _check_page(page, "p5_student_join_pick")
-    if probs:
-        failures["/join/{code}"] = probs
-    page.locator(f"form[action='/join/{st['code']}/{st['id']}'] button").click()
+    page.fill("#code", st["login_code"])                   # a personal sign-in code (D-079)
+    page.click("button:has-text('Sign in')")
     page.wait_for_load_state("networkidle")
     more, visited = _crawl(page, live, "student", ["/me", f"/live/{session_id}", "/me/practice", "/me/ai-practice", "/me/sim"])
     failures.update(more)
