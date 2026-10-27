@@ -15,6 +15,7 @@ def test_label_rule():
     assert not ai_live(_settings({"provider": "anthropic", "school_approved": False}))
     assert not ai_live(_settings({"provider": "off", "school_approved": True}))
     assert ai_live(_settings({"provider": "anthropic", "school_approved": True}))
+    assert not ai_live(_settings({"provider": "unknown", "school_approved": True}))   # get_provider would refuse it
     assert negotiation_label(_settings({})) == "Practice negotiation (rule-based)"
 
 

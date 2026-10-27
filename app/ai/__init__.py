@@ -17,10 +17,13 @@ class AIDisabled(Exception):
     pass
 
 
+REAL_PROVIDERS = ("anthropic",)      # the providers get_provider can build; anything else is not live AI
+
+
 def ai_live(settings) -> bool:
     """True only when a real AI provider is selected AND the school's approval is recorded (D-053, D-066)."""
     cfg = settings.get("ai", {}) or {}
-    return cfg.get("provider", "fake") not in ("fake", "off") and bool(cfg.get("school_approved"))
+    return cfg.get("provider", "fake") in REAL_PROVIDERS and bool(cfg.get("school_approved"))
 
 
 def negotiation_label(settings) -> str:
