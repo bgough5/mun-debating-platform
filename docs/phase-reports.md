@@ -123,19 +123,43 @@ Work package from PR #1 (22 Oct 2026), done in its priority order; decisions D-0
 
 **Not verified in Phase 6:** anything on Windows (smoke script, start-up, exports in Word/Excel); a screen-reader (NVDA) pass of the new screens; Ben's review of the design from the screenshots; the chair scripts' wording against the UNAA and Evatt handbooks (they follow common practice and are editable); the 2026 Security Council membership used by both SC demos.
 
-## Phase 7 — Reliability and honesty fixes (in progress)
+## Phase 7 — Reliability and honesty fixes (items 1 and 2 being measured)
 
-Work package: the Phase 7 comment on PR #1. Done in the cloud session; the rest continues on `platform-build` in the local session.
+Work package: the Phase 7 comment on PR #1. All eight items done.
 
-| Item | State | Evidence |
+| Item | Result | Evidence |
 |---|---|---|
-| 1. Memory growth and latency drift | **Part done** | Found and fixed a leak: pooled SQLite read connections of retired thread-pool threads were never closed (D-064; 200 threads left 200 connections before, at most 1 after, `tests/engine/test_db_pool.py`). Added per-minute server diagnostics (`SOC_TIMING_LOG` STATS lines; `SOC_TRACEMALLOC=1` adds top growth sites). **Not yet measured:** the 90-minute, 30-client soak with memory and p95 per 5-minute window, and whether the target (<10 MB over 60 min after a 10-min warm-up; flat p95) is met. A 15-minute diagnostic run was stopped at 5 minutes for budget; its first lines showed pooled connections steady at 16 and the session cache at 29. `tools/loadtest.py` still records RSS only as first/last/max; per-window memory needs adding. |
-| 2. Kill-and-restart failure rate | Not started | |
-| 3. Evidence quality instead of "0% unknown" | **Done** | D-065; `tests/api/test_phase7_quality.py` (demo GA: >99% estimate only, 0% unknown). |
-| 4. Honest label for the offline bot | **Done** | D-066; `tests/api/test_phase7_ai_label.py` covers both states. |
-| 5. Phone header Menu button | Not started | |
-| 6. One-row laptop header at 1366 px | Not started | |
-| 7. Windows smoke script pip errors and path length | Not started | |
-| 8. Whip-count wording breakdown | Not started | |
+| 1. Memory growth and latency drift | Leak found and fixed; 90-minute soak running | D-064, `tests/engine/test_db_pool.py`. Soak numbers to follow. |
+| 2. Kill-and-restart failure | Pending (runs after the soak) | `tools/chaos_loop.sh`; results to follow. |
+| 3. Evidence quality instead of "0% unknown" | Done | D-065; `tests/api/test_phase7_quality.py` (demo GA: over 99% estimate only, 0% unknown). |
+| 4. Honest label for the offline bot | Done | D-066; `tests/api/test_phase7_ai_label.py` covers both states, and an unknown provider is never labelled AI. |
+| 5. Phone header | Header **208–246 px → 69 px** at 390×844 (target ≤130). Nav behind a Menu button (`aria-expanded`); Escape closes it; without JavaScript the list shows. | D-067; `tests/ui/test_phase7_header.py` (height, keyboard path, axe open and closed, no-JavaScript fallback). |
+| 6. Laptop header on one row | **122 px (two rows) → 69 px (one row)** at 1366×768, staff and students. | Same test; compact account area. |
+| 7. Windows smoke script | The Detail column shows pip's own last error line, with a hint for `WinError 206` or network errors; a folder path over 80 characters with long paths off is a WARN before installing; README says where to keep the folder or how to enable long paths. | Parse check and a failing `pip install` exercised under PowerShell 7 on Linux. **Not yet run on Windows.** |
+| 8. Whip-count wording | "0 of 100 predictions made (25 students × 4 delegations each)", with singular forms. | `tests/api/test_phase6_sim.py`. |
 
-Full suite after item 4: 600 passed (engine, API, Playwright and axe), 350 s.
+### Item 1 in detail
+
+Pending: the clean 90-minute soak (30 clients) is running from a frozen copy of commit 97fe24d. An earlier run was invalid (code edited under the running server) and another was interrupted by a worker restart.
+
+### Item 2 in detail
+
+Pending: 100 runs of the kill-and-restart test after the soak.
+
+Full suite at the phase-7-complete commit: pending.
+
+## Phase 8 — Committee flow v4 (D-068 to D-072)
+
+Ben approved the flow in `docs/design/mun-committee-flow.html` on 27 Oct 2026 and asked for student tabs and friends and foes sheets. Built:
+
+- **Six stages** (roll call, agenda, opening statements, the floor, voting procedure, debrief). Migration 0007 maps running sessions and keeps edited scripts; an upgrade test builds an old database and checks it.
+- **The floor:** motions in order of precedence; unmoderated caucus at most 10 minutes per motion; close debate moves to voting procedure; roll-call order drawn by lot; the floor reopens with another draft after a failed vote.
+- **Amendments:** private draft → submitted (tracked changes, public) → signatories (a fifth of the delegations with students, minimum two: D-072) → suggested edits accepted or declined by the sponsors → the floor (speakers for and against on their own list) → vote → adopted on every screen, or friendly with no vote.
+- **Student tabs:** floor, motions and votes (one-tap 3, 5 or 10 minute caucus), points (order, privilege, inquiry, right of reply), messages (per-delegation channels; the Chair reads and can hide them: D-070), my speech (private drafts), amendments, friends and foes (per operative clause, beside the engine's labelled estimate: D-071).
+- **Prepare page:** country brief with evidence quality, the proposed resolution, the opening-statement pad.
+- **Security Council:** live veto warning on the Chair's vote panel, the student's vote card and the projector.
+- **Minutes** record points, amendments brought to the floor and friendly adoptions.
+
+Found and fixed while building it, each with a test: the "one fifth of the committee" threshold was unreachable in a class (computed seats can't sign); after a failed vote the session forgot which draft had failed; "present and voting" was promised at roll call but abstaining was still accepted; a granted right of reply went to the general list while an amendment's list was live.
+
+Tests: `tests/api/test_phase8_floor.py` (17), `tests/ui/test_phase8_floor_ui.py` (3, with axe on every new screen). Not built: sponsors and signatories for whole draft resolutions (drafts are still added by the teacher).
