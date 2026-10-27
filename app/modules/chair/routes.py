@@ -77,7 +77,8 @@ def _shared_view(conn, sid: int) -> dict:
     wr = SIM.open_round(conn, sid)
     if wr:
         wr = {**wr, "made": scalar(conn, "SELECT COUNT(*) FROM whip_prediction WHERE round_id = ? AND vote IS NOT NULL", (wr["id"],)),
-              "asked": scalar(conn, "SELECT COUNT(*) FROM whip_prediction WHERE round_id = ?", (wr["id"],))}
+              "asked": scalar(conn, "SELECT COUNT(*) FROM whip_prediction WHERE round_id = ?", (wr["id"],)),
+              "students": scalar(conn, "SELECT COUNT(DISTINCT student_id) FROM whip_prediction WHERE round_id = ?", (wr["id"],))}
     data["whip_round"] = wr
     data["last_vote"] = one(conn, "SELECT * FROM division WHERE session_id = ? AND status = 'closed' AND procedural = 0 "
                                   "ORDER BY id DESC LIMIT 1", (sid,))

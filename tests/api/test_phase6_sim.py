@@ -92,6 +92,9 @@ def test_whip_count_scored_against_actual_votes(coord, app):
     for p in preds:
         cover[p["delegation_id"]] = cover.get(p["delegation_id"], 0) + 1
     assert max(cover.values()) - min(cover.values()) <= 1           # named delegations spread evenly
+    # The chair sees where the total comes from (Phase 7 item 8).
+    n = len(students)
+    assert f"0 of {3 * n} predictions made ({n} student{'' if n == 1 else 's'} × 3 delegations each)" in coord.get(f"/chair/{s['id']}/guide").text
     # Two students predict; one tries a delegation that isn't theirs.
     a, b = members[0], members[1]
     ca, cb = join_as(app, a["student_id"]), join_as(app, b["student_id"])

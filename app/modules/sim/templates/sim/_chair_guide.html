@@ -37,7 +37,7 @@
 {% elif sim.stage.code in ('voting_procedure', 'amendments', 'division') %}
   <h3>{{ icon("whip") }} Whip count</h3>
   {% if whip_round %}
-    <p><strong>{{ whip_round.title }}</strong>: {{ whip_round.made }} of {{ whip_round.asked }} predictions made.</p>
+    <p><strong>{{ whip_round.title }}</strong>: {{ whip_round.made }} of {{ whip_round.asked }} predictions made ({{ whip_round.students }} student{{ "" if whip_round.students == 1 else "s" }} × {{ whip_round.per_student }} delegation{{ "" if whip_round.per_student == 1 else "s" }} each).</p>
     <div class="row">
       <form method="post" action="/chair/{{ s.id }}/whip/{{ whip_round.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="open"><button type="submit">{{ icon("vote") }} Lock predictions and open the vote</button></form>
       <form method="post" action="/chair/{{ s.id }}/whip/{{ whip_round.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="cancel"><button type="submit" class="secondary">Cancel the whip count</button></form>
