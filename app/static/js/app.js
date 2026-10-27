@@ -16,6 +16,21 @@
   });
 
   // After a boosted page change, move focus to the main region and announce the new title.
+  // Phone menu (Phase 7 item 5): the button is hidden in the markup so that without JavaScript the list shows.
+  function initMenu() {
+    document.querySelectorAll(".menu-toggle[hidden]").forEach(function (b) { b.hidden = false; });
+  }
+  document.addEventListener("DOMContentLoaded", initMenu);
+  document.addEventListener("htmx:afterSettle", initMenu);
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest(".menu-toggle");
+    if (b) b.setAttribute("aria-expanded", b.getAttribute("aria-expanded") === "true" ? "false" : "true");
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    var b = document.querySelector(".menu-toggle[aria-expanded='true']");
+    if (b && b.parentNode.contains(document.activeElement)) { b.setAttribute("aria-expanded", "false"); b.focus(); }
+  });
   document.addEventListener("htmx:afterSettle", function (e) {
     if (e.detail && e.detail.boosted) {
       var main = document.getElementById("main");

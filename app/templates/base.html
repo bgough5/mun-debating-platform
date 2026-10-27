@@ -21,6 +21,9 @@
 <header class="site">
   <div class="bar">
     <a class="brand" href="/"><img src="/static/soc_logo.png" alt="" width="46" height="46"><span><span class="school">South Oakleigh College</span><span class="product">Debating &amp; Model UN</span></span></a>
+    {# Phones: app.js unhides the button; without JavaScript it stays hidden and the menu simply shows (Phase 7, D-067). #}
+    <button type="button" class="menu-toggle" aria-expanded="false" aria-controls="site-menu" hidden>{{ icon("menu") }} Menu</button>
+    <div class="menu-panel" id="site-menu">
     <nav class="main" aria-label="Main">
       <ul>
       {% if actor and actor.is_staff %}
@@ -43,11 +46,12 @@
     <div class="who">
       <a class="help-link" href="/help#here" data-dialog-open="help-dialog">{{ icon("help") }} Help</a>
       {% if actor %}
-        <span>Signed in: <strong>{{ actor.label }}</strong></span>
-        <form method="post" action="/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="secondary" type="submit">{{ icon("sign-out") }} Sign out</button></form>
+        <div class="account"><span class="signed-in"><span class="visually-hidden">Signed in: </span>{{ actor.label }}</span>
+        <form method="post" action="/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="linkish" type="submit">{{ icon("sign-out") }} Sign out</button></form></div>
       {% else %}
         <a href="/join">Students: join</a> · <a href="/login">Staff sign in</a>
       {% endif %}
+    </div>
     </div>
   </div>
 </header>

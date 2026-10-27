@@ -31,7 +31,7 @@ CONCEPTS = {
     "export": "download", "import": "upload", "print": "printer", "undo": "undo-2", "history": "history",
     "settings": "settings", "add": "plus", "edit": "square-pen", "delete": "trash-2", "restore": "rotate-ccw",
     "search": "search", "lock": "lock", "unlock": "lock-open", "play": "play", "pause": "pause",
-    "refresh": "refresh-cw", "view": "eye", "qr": "qr-code", "sign-out": "log-out", "next": "chevron-right",
+    "refresh": "refresh-cw", "view": "eye", "qr": "qr-code", "sign-out": "log-out", "next": "chevron-right", "menu": "menu",
     "x": "x", "check": "check",
     # Status and information
     "demo": "flask-conical", "help": "circle-help", "info": "info", "warning": "triangle-alert",
