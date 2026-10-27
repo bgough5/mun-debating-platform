@@ -333,9 +333,10 @@ def decide_point(w: Writer, point_id: int, status: str) -> None:
     w.update("floor_point", point_id, {"status": status, "decided_at": now_iso()}, ch(p["session_id"]), action=f"point_{status}")
     if status == "granted":
         # A right of reply goes to the top of the current list.
-        from app.modules.chair.service import add_speaker
+        from app.modules.chair.service import add_speaker, current_list, get_session
+        kind, amendment = current_list(get_session(w.conn, p["session_id"]))
         try:
-            eid = add_speaker(w, p["session_id"], p["delegation_id"], p["student_id"], "general")
+            eid = add_speaker(w, p["session_id"], p["delegation_id"], p["student_id"], kind, amendment_id=amendment)
             top = scalar(w.conn, "SELECT MIN(position) FROM speakers_list_entry WHERE session_id = ? AND status = 'waiting'",
                          (p["session_id"],)) or 1
             w.update("speakers_list_entry", eid, {"position": top - 1}, ch(p["session_id"]), action="reorder")

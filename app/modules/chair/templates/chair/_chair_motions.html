@@ -15,6 +15,7 @@
   </div>{% endif %}
 </div>
 {% else %}<p class="muted">No motions on the floor. Delegates raise motions from their devices, or enter one below.</p>{% endfor %}
+<p class="small">Take them most disruptive first. An unmoderated caucus is at most {{ unmod_max_min }} minutes a motion; to extend it, take a new motion.</p>
 <details><summary>Entertain a motion</summary>
 <form method="post" action="/chair/{{ s.id }}/motions" class="stack">{{ hidden_csrf(csrf) }}
   <div class="field"><label for="pm">Motion</label><select id="pm" name="procedure_motion_id">{% for p in proc_motions %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></div>
