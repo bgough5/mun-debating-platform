@@ -263,6 +263,29 @@ def rss_mb(pid: int) -> float | None:
     return None
 
 
+def slope_per_hour(pts):
+    """Least-squares slope of (seconds, value) points, per hour."""
+    if len(pts) < 2:
+        return None
+    n = len(pts)
+    mx, my = sum(t for t, _ in pts) / n, sum(v for _, v in pts) / n
+    den = sum((t - mx) ** 2 for t, _ in pts)
+    return round(sum((t - mx) * (v - my) for t, v in pts) / den * 3600, 2) if den else None
+
+
+def soak_verdict(start, mem, windows, warmup_min=10, span_min=60):
+    """Phase 7 target: after a 10-minute warm-up, RSS grows < 10 MB over the next 60 minutes and p95 doesn't trend up."""
+    after = [(t, m) for t, m in mem if m and t >= start + warmup_min * 60]
+    inside = [(t, m) for t, m in after if t <= start + (warmup_min + span_min) * 60]
+    growth = round(inside[-1][1] - inside[0][1], 1) if len(inside) >= 2 else None
+    p95s = [(w["from_min"] * 60, w["p95"]) for w in windows if w["from_min"] >= warmup_min and w["p95"] is not None]
+    covered = bool(inside) and inside[-1][0] - inside[0][0] >= (span_min - 1) * 60
+    return {"warmup_min": warmup_min, "span_min": span_min, "span_covered": covered,
+            "rss_growth_mb": growth, "rss_slope_mb_per_hour": slope_per_hour(after),
+            "p95_slope_s_per_hour": slope_per_hour(p95s),
+            "rss_target_met": (growth is not None and growth < 10) if covered else None}
+
+
 async def main(minutes: float, seed: int) -> dict:
     rng = random.Random(seed)
     tmp = Path(tempfile.mkdtemp(prefix="soc-load-"))
@@ -327,7 +350,7 @@ async def main(minutes: float, seed: int) -> dict:
     mem = []
     while time.time() < until:
         await asyncio.sleep(30)
-        mem.append(rss_mb(proc.pid))
+        mem.append((time.time(), rss_mb(proc.pid)))
     await asyncio.sleep(5)            # let the last updates arrive
     for c in clients:
         c.stop = True
@@ -361,7 +384,9 @@ async def main(minutes: float, seed: int) -> dict:
         lo, hi = start + k * 300, start + (k + 1) * 300
         xs = [x for c in clients for x, at in zip(c.latencies, c.lat_at) if lo <= at < hi]
         if xs:
-            windows.append({"from_min": k * 5, "n": len(xs), "p50": pct(xs, 50), "p95": pct(xs, 95), "max": max(xs)})
+            ms = [m for at, m in mem if lo <= at < hi and m]
+            windows.append({"from_min": k * 5, "n": len(xs), "p50": pct(xs, 50), "p95": pct(xs, 95), "max": max(xs),
+                            "rss_mb_end": ms[-1] if ms else None})
     all_notify = [x for c in clients for x in c.notify]
     proc.terminate()
     try:
@@ -380,7 +405,9 @@ async def main(minutes: float, seed: int) -> dict:
         "update_latency_by_5_min": windows,
         "reconnects": sum(c.reconnects for c in clients), "errors": errors[:50], "error_count": len(errors),
         "client_transport_retries": len(transport_retries), "transport_retry_examples": transport_retries[:5],
-        "server_rss_mb": {"first": mem[0] if mem else None, "last": mem[-1] if mem else None, "max": max([m for m in mem if m] or [0])},
+        "server_rss_mb": {"first": mem[0][1] if mem else None, "last": mem[-1][1] if mem else None,
+                          "max": max([m for _, m in mem if m] or [0])},
+        "soak": soak_verdict(start, mem, windows),
         "machine": "cloud build container (not Ben's laptop)",
         "http_s": {"n": len(slow), "p50": pct([x[0] for x in slow], 50), "p95": pct([x[0] for x in slow], 95),
                    "slowest": sorted(slow, reverse=True)[:8]},
