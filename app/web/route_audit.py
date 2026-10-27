@@ -35,6 +35,8 @@ PUBLIC = {
     "/projector/{token}/f": "Projector view fragment; needs the token",
     "/debating/projector/{token}": "Projector view of a debating event; needs the event's unguessable token",
     "/debating/projector/{token}/f": "Projector fragment; needs the token",
+    "/debating/present/{token}": "Projector view of a class debate or speaking round; needs the run's unguessable token",
+    "/debating/present/{token}/f": "Class run projector fragment; needs the token",
     "/help": "Help index: general guidance only, no data",
     "/help/glossary": "MUN and debating glossary: static text",
     "/help/students": "Student quick-start: static text, needed before a student has joined",

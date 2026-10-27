@@ -1,0 +1,18 @@
+<span hidden data-view-seq="{{ view_seq }}"></span>
+{% if run.kind == 'debate' and run.motion %}<p class="run-motion">{{ run.motion }}</p>{% endif %}
+{% if cur %}
+<div class="run-present">
+  {% include "debating/_run_stage.html" %}
+  {% if run.kind == 'debate' %}
+  <div class="run-teams">
+    {% for side in ('aff', 'neg') %}{% set t = teams[side] %}
+    <div class="card"><h2>{{ t.name }}</h2><ol>{% for s in t.speakers %}<li {% if cur.speaker and cur.speaker.id == s.id %}aria-current="step" class="now"{% endif %}>{{ s.name or '—' }}</li>{% endfor %}</ol></div>
+    {% endfor %}
+  </div>
+  {% elif upcoming %}
+  <div class="card run-upnext"><h2>Coming up</h2><ol>{% for u in upcoming %}<li>{{ u.who }}</li>{% endfor %}</ol></div>
+  {% endif %}
+</div>
+{% else %}
+<h2 class="run-done">{% if run.kind == 'debate' and run.winner %}{{ run[run.winner ~ '_name'] }} wins. Well done, everyone.{% else %}Thank you, everyone.{% endif %}</h2>
+{% endif %}

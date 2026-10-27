@@ -18,10 +18,15 @@ and honesty fixes) and Phase 8 (the committee flow Ben approved on 27 Oct 2026, 
 - **Class mode:** class code + name join; live sessions with speakers list, timers, motions, divisions (GA and
   Security Council rules, vetoes), minutes and a projector view; live updates over one WebSocket; 1–25 students,
   with countries that have no student voted by the engine and labelled "computed".
-- **Debating:** events, houses, teams, rooms, adjudicators; seeded draws (random, then power-paired); rubric
-  ballots and panels; ladders and speaker tabs; house points with reversals; run sheets and MC scripts; projector
-  view; class practice for any number of students (solo speech practice up to full rooms); a 325-student carnival
-  generator for rehearsal.
+- **Debating and public speaking (Phase 9):** a classroom runner for class debates and speaking rounds (type the
+  names, set the times, project a timer that shows the bells as colour; Space and the arrow keys run it; times and
+  quick rubric scores recorded per speaker); a prep studio for students (debate cases in four-part arguments,
+  rebuttals against the other side's three likely arguments for each of the 122 motions, speech drafts from four
+  templates with word count, rehearsal and cue cards); speaking practice (impromptu topics with structure cards,
+  prepared rehearsal, rebuttal drills) with timers and bells; teacher scoring and comments on all of it.
+- **Tournaments and carnivals:** events, houses, teams, rooms, adjudicators; seeded draws (random, then power-paired);
+  rubric ballots and panels; ladders and speaker tabs; house points with reversals; run sheets and MC scripts;
+  projector view; class practice for any number of students; a 325-student carnival generator for rehearsal.
 - **People:** classes, staff, student pathways and milestones.
 - **Intelligence:** licence-gated UN voting-history import (locked: licences not confirmed, D-051), voting-history
   priors, backtests against baselines, and AI features behind a provider interface that is offline by default (D-053).

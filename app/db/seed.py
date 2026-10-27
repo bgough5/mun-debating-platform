@@ -38,6 +38,18 @@ def _id(conn, table, code):
     return r[0] if r else None
 
 
+def _insert_rubric(conn, rub: dict) -> None:
+    cur = conn.execute("INSERT INTO rubric (code, name, kind, levels, notes) VALUES (?,?,?,?,?)",
+                       (rub["code"], rub["name"], rub["kind"], rub["levels"], rub["notes"]))
+    for pos, c in enumerate(rub["criteria"], 1):
+        cc = conn.execute("INSERT INTO rubric_criterion (rubric_id, position, code, name, min_score, max_score, "
+                          "weight, hint) VALUES (?,?,?,?,?,?,?,?)",
+                          (cur.lastrowid, pos, c["code"], c["name"], c["min"], c["max"], c["weight"], c["hint"]))
+        for lvl, text in enumerate(c["levels"], 1):
+            conn.execute("INSERT INTO rubric_descriptor (criterion_id, level, descriptor) VALUES (?,?,?)",
+                         (cc.lastrowid, lvl, text))
+
+
 def load_pack() -> dict:
     return json.loads(PACK_FILE.read_text(encoding="utf-8"))
 
@@ -81,15 +93,7 @@ def seed_reference(conn: sqlite3.Connection) -> None:
         conn.execute("INSERT INTO pathway_milestone (code, name, track, position, description) VALUES (?,?,?,?,?)",
                      (r["code"], r["name"], r["track"], int(r["position"]), r["description"]))
     for rub in json.loads((SEED_DIR / "rubrics.json").read_text(encoding="utf-8")):
-        cur = conn.execute("INSERT INTO rubric (code, name, kind, levels, notes) VALUES (?,?,?,?,?)",
-                           (rub["code"], rub["name"], rub["kind"], rub["levels"], rub["notes"]))
-        for pos, c in enumerate(rub["criteria"], 1):
-            cc = conn.execute("INSERT INTO rubric_criterion (rubric_id, position, code, name, min_score, max_score, "
-                              "weight, hint) VALUES (?,?,?,?,?,?,?,?)",
-                              (cur.lastrowid, pos, c["code"], c["name"], c["min"], c["max"], c["weight"], c["hint"]))
-            for lvl, text in enumerate(c["levels"], 1):
-                conn.execute("INSERT INTO rubric_descriptor (criterion_id, level, descriptor) VALUES (?,?,?)",
-                             (cc.lastrowid, lvl, text))
+        _insert_rubric(conn, rub)
     for r in _csv("templates.csv"):
         body = (SEED_DIR / "templates" / r["file"]).read_text(encoding="utf-8")
         conn.execute("INSERT INTO template (code, kind, name, body) VALUES (?,?,?,?)", (r["code"], r["kind"], r["name"], body))
@@ -171,6 +175,30 @@ def seed_content_updates(conn: sqlite3.Connection) -> None:
             if r["motion"] not in have:
                 conn.execute("INSERT INTO motion_bank (motion, topic, level, source) VALUES (?,?,?,?)",
                              (r["motion"], r["topic"], r["level"], "Original practice motion, written for the platform"))
+    if _table_exists(conn, "rubric"):
+        # Rubrics added later (the prep studio's written argument and rebuttal, D-076), by code.
+        for rub in json.loads((SEED_DIR / "rubrics.json").read_text(encoding="utf-8")):
+            if not conn.execute("SELECT 1 FROM rubric WHERE code = ?", (rub["code"],)).fetchone():
+                _insert_rubric(conn, rub)
+    if _table_exists(conn, "speech_template"):
+        for t in json.loads((SEED_DIR / "speech_templates.json").read_text(encoding="utf-8")):
+            if not conn.execute("SELECT 1 FROM speech_template WHERE code = ?", (t["code"],)).fetchone():
+                conn.execute("INSERT INTO speech_template (code, name, kind, blurb, sections, position) VALUES (?,?,?,?,?,?)",
+                             (t["code"], t["name"], t["kind"], t["blurb"], json.dumps(t["sections"]), t["position"]))
+    if _table_exists(conn, "impromptu_topic"):
+        have = {t for (t,) in conn.execute("SELECT topic FROM impromptu_topic")}
+        for r in _csv("impromptu_topics.csv"):
+            if r["topic"] not in have:
+                conn.execute("INSERT INTO impromptu_topic (topic, kind, level) VALUES (?,?,?)", (r["topic"], r["kind"], r["level"]))
+    if _table_exists(conn, "motion_argument"):
+        # Likely arguments go to motions that have none yet (D-076), so arguments a teacher edited or removed stay as they are.
+        ids = {m: i for i, m in conn.execute("SELECT id, motion FROM motion_bank WHERE deleted_at IS NULL")}
+        done = {i for (i,) in conn.execute("SELECT DISTINCT motion_id FROM motion_argument")}
+        for r in _csv("motion_arguments.csv"):
+            mid = ids.get(r["motion"])
+            if mid and mid not in done:
+                conn.execute("INSERT INTO motion_argument (motion_id, side, position, argument) VALUES (?,?,?,?)",
+                             (mid, r["side"], int(r["position"]), r["argument"]))
     if _table_exists(conn, "source_type"):
         for r in _csv("source_types.csv"):
             if not conn.execute("SELECT 1 FROM source_type WHERE code = ?", (r["code"],)).fetchone():

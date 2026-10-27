@@ -59,8 +59,10 @@ def debating_home(request: Request, sess=Depends(require_staff)):
         if ids is not None:
             classes = [c for c in classes if c["id"] in ids]
         totals = S.house_totals(conn)
-    return render(request, "debating/home.html", {"title": "Debating", "events": events, "formats": formats, "rubrics": rubrics,
-                                                  "classes": classes, "totals": totals})
+        from app.modules.debating.classroom import runs_for
+        runs = runs_for(conn, sess.actor)
+    return render(request, "debating/home.html", {"title": "Debating and public speaking", "events": events, "formats": formats,
+                                                  "rubrics": rubrics, "classes": classes, "totals": totals, "runs": runs})
 
 
 @router.post("/debating/events")
@@ -482,35 +484,48 @@ def practice_create(request: Request, sess=Depends(require_staff), form=Depends(
 
 
 @router.get("/me/practice")
-def my_practice(request: Request, sess=Depends(require_student)):
+def my_practice(request: Request, mode: str = "impromptu", speech: int | None = None, sess=Depends(require_student)):
+    from app.modules.debating import prep as P
+    mode = mode if mode in ("impromptu", "prepared", "rebuttal") else "impromptu"
     with request.app.state.db.read() as conn:
-        rub = one(conn, "SELECT * FROM rubric WHERE kind = 'speech' AND deleted_at IS NULL ORDER BY id LIMIT 1")
+        rub = one(conn, "SELECT * FROM rubric WHERE code = 'speech_practice' AND deleted_at IS NULL") or \
+            one(conn, "SELECT * FROM rubric WHERE kind = 'speech' AND deleted_at IS NULL ORDER BY id LIMIT 1")
         crit = S.criteria(conn, rub["id"]) if rub else []
         descriptors = {}
         for d in rows(conn, "SELECT * FROM rubric_descriptor WHERE criterion_id IN (SELECT id FROM rubric_criterion WHERE rubric_id = ?) "
                             "AND deleted_at IS NULL ORDER BY level", (rub["id"] if rub else 0,)):
             descriptors.setdefault(d["criterion_id"], []).append(d)
-        motions = rows(conn, "SELECT motion, level FROM motion_bank WHERE deleted_at IS NULL ORDER BY id")
         past = rows(conn, "SELECT * FROM practice_speech WHERE student_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT 20",
                     (sess.actor.id,))
+        material = P.practice_material(conn, sess.actor.id)
+        structures = P.templates(conn, "impromptu")
+        level = one(conn, "SELECT year FROM class WHERE id = ?", (sess.actor.class_id,)) if sess.actor.class_id else None
     for p in past:
         p["scores"] = json.loads(p["self_scores"] or "{}")
         p["staff"] = json.loads(p["staff_scores"] or "{}")
-    topic = random.choice(motions)["motion"] if motions else ""
-    return render(request, "debating/my_practice.html", {"title": "Practise a speech", "rub": rub, "crit": crit,
-                                                         "descriptors": descriptors, "topic": topic, "past": past, "motions": motions})
+    chosen = next((m for m in material["prepared"] if m["id"] == speech), None)
+    year = (level or {}).get("year") or 9
+    return render(request, "debating/my_practice.html", {"title": "Practise a speech", "rub": rub, "crit": crit, "descriptors": descriptors,
+                                                         "past": past, "mode": mode, "material": material, "structures": structures,
+                                                         "chosen": chosen, "level": "junior" if year <= 8 else ("middle" if year <= 10 else "senior")})
 
 
 @router.post("/me/practice")
 def my_practice_save(request: Request, sess=Depends(require_student), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
-        rub = one(w.conn, "SELECT * FROM rubric WHERE kind = 'speech' AND deleted_at IS NULL ORDER BY id LIMIT 1")
+        rub = one(w.conn, "SELECT * FROM rubric WHERE code = 'speech_practice' AND deleted_at IS NULL") or \
+            one(w.conn, "SELECT * FROM rubric WHERE kind = 'speech' AND deleted_at IS NULL ORDER BY id LIMIT 1")
         if not rub:
             raise UserError("No speech rubric is set up. Ask your teacher.")
         scores = {k[2:]: form.get(k) for k in form.keys() if k.startswith("c_")}
-        S.save_practice_speech(w, sess.actor.id, rub["id"], form.get("topic") or "", form_int(form.get("target_seconds"), 180) or 180,
+        topic = (form.get("topic") or "").strip()
+        prefix = {"impromptu": "Impromptu: ", "rebuttal": "Rebuttal drill: "}.get(form.get("mode") or "", "")
+        if prefix and topic and not topic.startswith(prefix):
+            topic = prefix + topic
+        S.save_practice_speech(w, sess.actor.id, rub["id"], topic[:300], form_int(form.get("target_seconds"), 180) or 180,
                                form_int(form.get("actual_seconds")), scores, form.get("reflection") or "")
-    return redirect("/me/practice", "Practice saved. Look back at your scores over time to see your progress.")
+    mode = form.get("mode") if form.get("mode") in ("impromptu", "prepared", "rebuttal") else "impromptu"
+    return redirect(f"/me/practice?mode={mode}", "Practice saved. Look back at your scores over time to see your progress.")
 
 
 @router.get("/debating/practice-speeches")

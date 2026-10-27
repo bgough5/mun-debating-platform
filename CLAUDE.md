@@ -4,7 +4,7 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
 
 ## Current state
 
-- **Phases 1–6 are built (22 Oct 2026); Phase 7 (reliability and honesty) and Phase 8 (committee flow v4, D-068 to D-072, 27 Oct 2026)** on branch `platform-build`, draft PR #1 into `main` (Ben merges). Status tables in `docs/phase-reports.md`. The committee flow and its flow charts: `docs/design/mun-committee-flow.html`. Phase 6 (design system, icons, guided simulation, onboarding, content, robustness) is D-058 to D-063. Class size is 1–25 live students (D-022). Not done: the student pilot and everything in `docs/pilot-checklist.md` that needs Ben, staff or the school.
+- **Phases 1–6 are built (22 Oct 2026); Phase 7 (reliability and honesty), Phase 8 (committee flow v4, D-068 to D-072) and Phase 9 (debating and public speaking for the classroom, D-074 to D-077), 27 Oct 2026,** on branch `platform-build`, draft PR #1 into `main` (Ben merges). Status tables in `docs/phase-reports.md`. The committee flow and its flow charts: `docs/design/mun-committee-flow.html`. Phase 6 (design system, icons, guided simulation, onboarding, content, robustness) is D-058 to D-063. Class size is 1–25 live students (D-022). Not done: the student pilot and everything in `docs/pilot-checklist.md` that needs Ben, staff or the school.
 - Build progress and measured exit criteria: `docs/phase-reports.md`. Phase tags: `phase-N-complete` (created locally in the build; the cloud session couldn't push tags, so the PR lists the commits for Ben to tag).
 - Guides: `docs/staff-guide.md`, `docs/privacy-summary.md` (for school sign-off), `docs/permissions.md` (generated), `docs/backup-restore.md`, `docs/pilot-checklist.md`.
 - Read first: `docs/spec.md` (what we're building), `docs/decisions.md` (what's decided and why; D-025 onward are build-session decisions), `docs/audit.md` (state of the old code).
@@ -41,6 +41,7 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
 - The guided simulation's chair scripts are data (`procedure_stage`, Admin → Procedure stages). Whip counts are scored against actual votes, never the model (D-061).
 - Committee flow v4 (D-068): six stages; the floor lives in `app/modules/floor/` (amendments, points, messages, speech drafts, friends and foes). The person running a committee is "the Chair". Messages travel on `inbox:<delegation>` and `chat:<session>` channels, not the session channel (keeps the floor from refreshing for every note). Drafts are private to sponsors until submitted (`amendment.submitted_at`): any new amendment query must filter on it. Student writing (speech drafts, friends and foes, messages) must be added to `erase_student` in `app/retention.py`.
 - Demo content that invents positions uses source type `demo_unverified` and must say it isn't a real position (D-063).
+- Debating (D-074): the classroom runner is `app/modules/debating/classroom.py` (run order computed by `steps()`, never stored; timer state on `class_run`; live channel `run:<id>`); the prep studio is `prep.py`. Typed names go through `clean_name`. Prep rubrics are found by code (`argument_written`, `rebuttal_written`), not kind. Likely arguments, impromptu topics and speech templates are seed data added by `seed_content_updates`; arguments are added only to motions that have none, so a teacher's edits stay. Timers, bells, keys and the practice flow are `app/static/js/speaking.js`.
 - `tools/screenshots.py` regenerates `docs/screens/` for design review; `tools/windows_smoke.ps1` is for Ben's laptop.
 
 ## Running the frozen v2 game and its tests
@@ -61,3 +62,5 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
 - The browser-testing tool can't execute pages opened via `file://`. Serve over local HTTP to test.
 - Classic `<script>` top-level `const` and `let` share one scope across scripts: a second `const PACK` silently breaks pack loading.
 - Never use `JSON.stringify` inside a double-quoted HTML attribute; it produced the July negotiation-channel bug.
+- A form with an `<input name="action">` shadows `form.action`; read the URL with `form.getAttribute("action")` (the runner's buttons 405'd until this was fixed).
+- `hidden` doesn't beat a class that sets `display` (`.field`, `.card`); add a `[...][hidden] { display: none; }` rule for script-toggled elements.

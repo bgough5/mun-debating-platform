@@ -61,5 +61,41 @@
    {"code": "helpful", "name": "Helpful feedback", "min": 1, "max": 5, "weight": 1, "hint": "Could the team act on it?",
     "levels": ["None.", "General comments.", "One useful point.", "Several actionable points.", "Specific, actionable feedback for each speaker."]}
   ]
+ },
+ {
+  "code": "argument_written", "name": "Written argument", "kind": "speech", "levels": 5,
+  "notes": "Prep studio (D-076): quality of one written argument. The structure check (which parts are written) is counted separately.",
+  "criteria": [
+   {"code": "clarity", "name": "Clarity", "min": 1, "max": 5, "weight": 1,
+    "hint": "Is the claim one clear sentence a listener could repeat?",
+    "levels": ["No clear claim.", "A claim, but vague or too broad.", "A clear claim.", "A clear, specific claim that fits the team line.", "A sharp claim that is easy to remember and repeat."]},
+   {"code": "reasoning", "name": "Reasoning", "min": 1, "max": 5, "weight": 1,
+    "hint": "Does each step of the logic follow from the last?",
+    "levels": ["An assertion with no reasons.", "Reasons, but with big gaps.", "Reasons that mostly link up.", "Logical steps that explain why it's true.", "Tight logic that answers the obvious objections."]},
+   {"code": "evidence", "name": "Example or evidence", "min": 1, "max": 5, "weight": 1,
+    "hint": "Is there a real, relevant example?",
+    "levels": ["No example.", "A made-up or vague example.", "A real example that fits.", "A strong, specific example, explained.", "Well-chosen examples that prove the point."]},
+   {"code": "relevance", "name": "Impact and relevance", "min": 1, "max": 5, "weight": 1,
+    "hint": "Does it show why the point matters and how it proves the motion?",
+    "levels": ["Not linked to the motion.", "Linked loosely.", "Clearly linked to the motion.", "Shows why it matters and to whom.", "Shows why this point wins the debate."]}
+  ]
+ },
+ {
+  "code": "rebuttal_written", "name": "Written rebuttal", "kind": "speech", "levels": 5,
+  "notes": "Prep studio (D-076): quality of one written rebuttal (they say, but, because, so).",
+  "criteria": [
+   {"code": "fair", "name": "Fair summary", "min": 1, "max": 5, "weight": 1,
+    "hint": "Is their argument summarised fairly, at its strongest?",
+    "levels": ["Their argument is missing or misstated.", "A weak version of their argument.", "A fair summary.", "A fair summary of their best version.", "Their best version, put better than they might."]},
+   {"code": "clash", "name": "Clash", "min": 1, "max": 5, "weight": 1,
+    "hint": "Does it show exactly what's wrong: a flaw, a missing step or a false assumption?",
+    "levels": ["Just disagrees.", "Says it's wrong but not why.", "Names the flaw.", "Explains the flaw clearly.", "Takes the argument apart at its weakest point."]},
+   {"code": "support", "name": "Support", "min": 1, "max": 5, "weight": 1,
+    "hint": "Is the answer backed by a reason or an example?",
+    "levels": ["No support.", "A vague reason.", "A reason or an example.", "A reason and a good example.", "Support that the other side will find hard to answer."]},
+   {"code": "weighing", "name": "Weighing", "min": 1, "max": 5, "weight": 1,
+    "hint": "Does it say why winning this point matters for the debate?",
+    "levels": ["No link back to the debate.", "A loose link.", "Says why it matters.", "Weighs it against their case.", "Shows why this clash decides the debate."]}
+  ]
  }
 ]

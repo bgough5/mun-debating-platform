@@ -34,6 +34,9 @@ TOKENS = {
     # Projector (dark) theme
     "proj-bg": "#2A1512", "proj-card": "#3D211C", "proj-text": "#F4F0E6", "proj-accent": "#D4B441",
     "proj-low": "#FFC2B8", "proj-line": "#6B4A42",
+    # Speech timer bells as colour (D-075): speaking, after the warning bell, past time. The text on each always
+    # says which, so colour is never the only signal.
+    "time-go": "#0A6B39", "time-warn": "#F2C14E", "time-over": "#B3261E",
 }
 
 TEXT, LARGE, UI = 4.5, 3.0, 3.0
@@ -62,6 +65,8 @@ PAIRS = [
     ("proj-accent", "proj-bg", TEXT, "projector headings and timer"), ("proj-accent", "proj-card", TEXT, "projector accent on cards"),
     ("proj-low", "proj-bg", TEXT, "projector timer, last 10 seconds"), ("proj-low", "proj-card", TEXT, "low timer on a card"),
     ("proj-line", "proj-bg", 1.0, "projector dividers (decorative)"),
+    ("white", "time-go", TEXT, "speech timer: speaking"), ("ink", "time-warn", TEXT, "speech timer: warning bell"),
+    ("white", "time-over", TEXT, "speech timer: past time"),
 ]
 
 

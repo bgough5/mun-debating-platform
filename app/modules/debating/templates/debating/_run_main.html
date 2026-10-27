@@ -1,0 +1,35 @@
+{% from "_macros.html" import hidden_csrf %}
+{% macro act(action, label, cls="secondary", arg=None, icon_name=None, key=None, sr="") %}<form method="post" action="/debating/runs/{{ run.id }}/act" class="inline" hx-boost="false" data-run-act>{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="{{ action }}">{% if arg is not none %}<input type="hidden" name="arg" value="{{ arg }}">{% endif %}<button type="submit" class="{{ cls }}" {% if key %}aria-keyshortcuts="{{ key }}"{% endif %}>{% if icon_name %}{{ icon(icon_name) }} {% endif %}{{ label }}{% if sr %}<span class="visually-hidden"> {{ sr }}</span>{% endif %}</button></form>{% endmacro %}
+<span hidden data-view-seq="{{ view_seq }}"></span>
+<div class="run-layout">
+<section class="run-main-col" aria-labelledby="h-now">
+{% if cur %}
+  <h2 id="h-now" class="visually-hidden">Now</h2>
+  {% include "debating/_run_stage.html" %}
+  <div class="run-controls no-print">
+    {% if run.timer_state == 'running' %}{{ act("pause", "Pause", "", icon_name="pause", key="Space") }}{% else %}{{ act("start", "Start" if run.timer_state == 'idle' else "Resume", "", icon_name="play", key="Space") }}{% endif %}
+    {{ act("prev", "Back", icon_name="undo", key="ArrowLeft") }}
+    {{ act("next", "Next speaker" if next else "Finish", icon_name="next", key="ArrowRight") }}
+    {{ act("add30", "+30 s", icon_name="clock") }}
+    {{ act("reset", "Reset timer", icon_name="refresh") }}
+  </div>
+  <p class="small muted no-print">Keys: <kbd>Space</kbd> start or pause, <kbd>→</kbd> next, <kbd>←</kbd> back (a presentation clicker works too). <button type="button" class="link" data-bell-toggle aria-pressed="true">Bell sound on</button></p>
+  {% if cur.kind == 'think' and cur.speaker and cur.speaker.topic %}
+  <div class="no-print">{{ act("redraw", "Draw a different topic for " ~ cur.speaker.name, arg=cur.speaker.id, icon_name="refresh") }}</div>{% endif %}
+{% else %}
+  <h2 id="h-now">{{ icon("check") }} Finished</h2>
+  <p>Every speaker has spoken. Add scores and a result, or go back to a speaker below.</p>
+  <div class="row no-print"><a class="button" href="/debating/runs/{{ run.id }}/results">{{ icon("ballot") }} Scores and results</a> {{ act("reopen", "Back to the last speaker", icon_name="undo") }}</div>
+{% endif %}
+</section>
+<section class="run-side card" aria-labelledby="h-order">
+  <h2 id="h-order" class="h3">{{ icon("speakers") }} Running order</h2>
+  <ol class="run-order">
+  {% for s in steps %}<li {% if cur and s.index == cur.index %}aria-current="step"{% endif %} class="{{ 'done' if (not cur) or s.index < cur.index }}">
+    <span>{{ s.label }}{% if s.who and run.kind == 'debate' and s.kind == 'speech' %}: <strong>{{ s.who }}</strong>{% endif %}</span>
+    <span class="small muted">{% if times.get(s.key) %}{{ times[s.key]|mmss }}{% else %}{{ s.seconds|mmss }}{% endif %}</span>
+    {% if not cur or s.index != cur.index %}{{ act("goto", "Go", "link", arg=s.index, sr="to " ~ s.label) }}{% endif %}</li>{% endfor %}
+  </ol>
+  <p class="small muted">Times shown are recorded once a speaker finishes; before that, the time allowed.</p>
+</section>
+</div>

@@ -10,6 +10,7 @@
 <script src="/static/vendor/htmx-2.0.4.min.js" defer></script>
 <script src="/static/js/app.js" defer></script>
 <script src="/static/js/live.js" defer></script>
+<script src="/static/js/speaking.js" defer></script>
 {% block head %}{% endblock %}
 </head>
 <body hx-boost="true" hx-headers='{"X-CSRF-Token": "{{ csrf }}"}' class="{% block bodyclass %}{% endblock %}" {% block bodyattrs %}{% endblock %}>
@@ -37,7 +38,7 @@
       {% elif actor and actor.kind == 'student' %}
         <li><a href="/me" {% if req_path == '/me' %}aria-current="page"{% endif %}>{{ icon("student") }} My page</a></li>
         {% if modules.chair %}<li><a href="/me/sim" {% if req_path.startswith('/me/sim') %}aria-current="page"{% endif %}>{{ icon("committee") }} Practice committee</a></li>{% endif %}
-        {% if modules.debating %}<li><a href="/me/practice" {% if req_path.startswith('/me/practice') %}aria-current="page"{% endif %}>{{ icon("practice") }} Practise</a></li>{% endif %}
+        {% if modules.debating %}<li><a href="/me/prep" {% if req_path.startswith('/me/prep') or req_path.startswith('/me/practice') %}aria-current="page"{% endif %}>{{ icon("practice") }} Prep &amp; practise</a></li>{% endif %}
         {% if modules.intelligence %}<li><a href="/me/ai-practice" {% if req_path.startswith('/me/ai-practice') %}aria-current="page"{% endif %}>{{ icon("ai") }} {{ negotiation_label }}</a></li>{% endif %}
         <li><a href="/practice-game">{{ icon("practice") }} Classic practice game</a></li>
       {% endif %}

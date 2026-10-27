@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb %}
+{% from "debating/_prep_macros.html" import check_badge, score_text %}
+{% macro staff_scores(p, rub) %}
+{% if rub %}<div class="part-grid">{% for c in rub.criteria %}
+  <div class="field"><label for="st-{{ p.id }}-{{ c.code }}">{{ c.name }} <span class="hint">{{ c.hint }}</span></label>
+    <select id="st-{{ p.id }}-{{ c.code }}" name="st_{{ p.id }}_{{ c.code }}"><option value="">Not scored</option>{% for lv in c.levels %}<option value="{{ lv.level }}" {% if p.staff_d.get(c.code)|int == lv.level %}selected{% endif %}>{{ lv.level }}: {{ lv.descriptor }}</option>{% endfor %}</select></div>
+{% endfor %}</div>{% endif %}
+{% endmacro %}
+{% macro parts(p, spec) %}
+<dl class="part-grid">{% for key, label, prompt, need in spec %}<div><dt>{{ label }}</dt><dd>{{ p.parts_d.get(key) or '—' }}</dd></div>{% endfor %}</dl>
+<p>{{ check_badge(p.check) }} {{ score_text(p.self_mean, "Student's own score") }}{% if p.speaker %} · {{ {1:'1st',2:'2nd',3:'3rd',4:'4th'}[p.speaker] }} speaker{% endif %}</p>
+{% endmacro %}
+{% block content %}
+{{ breadcrumb([("Debating", "/debating"), ("Student preparation", "/debating/prep?class_id=" ~ student.class_id), (student.name, None)]) }}
+<h1>{{ icon("debate") }} {{ title }}</h1>
+<p class="lede">{{ case.motion }}</p>
+<p>Team line: <strong>{{ case.team_line or '—' }}</strong></p>
+{% if case.definition %}<p class="small">Definition: {{ case.definition }}</p>{% endif %}
+<p class="small muted">Score each point on its rubric; the student sees your scores beside their own, and your comment at the top of their case.</p>
+<form method="post" action="/debating/prep/cases/{{ case.id }}" class="stack" style="max-width:none">{{ hidden_csrf(csrf) }}
+<h2>Arguments ({{ arguments|length }})</h2>
+{% for p in arguments %}<section class="card" aria-labelledby="sa{{ p.id }}"><h3 id="sa{{ p.id }}" class="h4">Argument {{ loop.index }}</h3>{{ parts(p, arg_parts) }}{{ staff_scores(p, rubrics.argument) }}</section>
+{% else %}<p>No arguments yet.</p>{% endfor %}
+<h2>Rebuttals</h2>
+{% set rebs = (opposition|selectattr('rebuttal')|map(attribute='rebuttal')|list) + custom %}
+{% for p in rebs %}<section class="card" aria-labelledby="sr{{ p.id }}"><h3 id="sr{{ p.id }}" class="h4">Rebuttal {{ loop.index }}</h3>{{ parts(p, reb_parts) }}{{ staff_scores(p, rubrics.rebuttal) }}</section>
+{% else %}<p>No rebuttals yet.</p>{% endfor %}
+{% if opposition %}<p class="small muted">{{ summary.rebuttals_done }} of the {{ opposition|length }} listed likely arguments answered.</p>{% endif %}
+<div class="field"><label for="sc">Comment for {{ student.first_name }}</label><textarea id="sc" name="staff_comment" rows="3" maxlength="2000">{{ case.staff_comment }}</textarea></div>
+<button type="submit">Save scores and comment</button>
+</form>
+{% endblock %}

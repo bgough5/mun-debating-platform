@@ -139,6 +139,22 @@ REFERENCE = [
     Table("motion_bank", "Motion bank", (C("motion", "Motion", required=True), C("topic", "Topic"),
                                          C("level", "Level", "choice", choices=("junior", "middle", "senior")), C("source", "Source")),
           order_by="level, id", group="Debating"),
+    Table("motion_argument", "Likely arguments for each motion", (
+        C("motion_id", "Motion", "ref", ref="motion_bank:id:motion", required=True),
+        C("side", "Side", "choice", choices=("aff", "neg"), required=True), C("position", "Order", "int"),
+        C("argument", "Argument", "textarea", required=True, hint="One line: a starting point students rebut. Not evidence.")),
+          order_by="motion_id, side, position", group="Debating",
+          note="Shown to students preparing a case, as the other side's likely arguments to rebut (D-076)."),
+    Table("impromptu_topic", "Impromptu topics", (
+        C("topic", "Topic", required=True), C("kind", "Kind", "choice", choices=("question", "object", "scenario", "word", "opinion")),
+        C("level", "Year level", "choice", choices=("any", "junior", "middle", "senior"))), order_by="level, id", group="Debating",
+          note="Drawn at random for impromptu practice and speaking rounds (D-077)."),
+    Table("speech_template", "Speech templates", (
+        C("code", "Code", required=True), C("name", "Name", required=True),
+        C("kind", "Kind", "choice", choices=("prepared", "impromptu"), required=True), C("blurb", "What it's for", "textarea"),
+        C("sections", "Sections", "json", hint='A list of {"key": "hook", "label": "Hook", "prompt": "…"}'),
+        C("position", "Order", "int")), natural_key=("code",), order_by="kind, position", group="Debating",
+          note="Structures for the speech writer and impromptu structure cards (D-077)."),
     Table("feedback_prompt", "Adjudicator feedback prompts", (
         C("criterion", "Criterion", "choice", choices=("matter", "manner", "method", "reply", "overall"), required=True),
         C("position", "Order", "int"), C("prompt", "Prompt", "textarea", required=True)),
@@ -164,6 +180,7 @@ EXPORT_ONLY = [
     "floor_point", "delegate_message", "amendment_suggestion",
     "debate_event", "team", "team_member", "adjudicator", "room", "debate_round", "pairing", "pairing_adjudicator",
     "ballot", "ballot_score", "house_points_entry", "event_document", "practice_speech",
+    "class_run", "class_run_speaker", "prep_case", "prep_point", "prep_speech",
 ]
 # Columns never exported or shown.
 SECRET_COLUMNS = {"pass_hash", "token_hash", "csrf"}

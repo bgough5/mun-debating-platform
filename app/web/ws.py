@@ -80,6 +80,10 @@ def channel_allowed(conn, actor, channel: str, projector_token: str | None, cap:
             r = one(conn, "SELECT projector_token FROM debate_event WHERE id = ?", (ident,)) if \
                 one(conn, "SELECT 1 FROM sqlite_master WHERE name = 'debate_event'") else None
             return bool(r and r["projector_token"] == projector_token), "bad projector link"
+        if kind == "run":
+            r = one(conn, "SELECT projector_token FROM class_run WHERE id = ? AND deleted_at IS NULL", (ident,)) if \
+                one(conn, "SELECT 1 FROM sqlite_master WHERE name = 'class_run'") else None
+            return bool(r and r["projector_token"] == projector_token), "bad projector link"
         return False, "projector links only show their own session"
     if actor is None:
         return False, "sign in"
@@ -115,6 +119,14 @@ def channel_allowed(conn, actor, channel: str, projector_token: str | None, cap:
         except ImportError:
             return False, "debating module not installed"
         return debate_access(conn, actor, ident) != "none", "no access"
+    if kind == "run":
+        # A class debate or speaking round (D-075): the staff who run it. Students follow it on the projector.
+        try:
+            from app.modules.debating.classroom import run_access
+        except ImportError:
+            return False, "debating module not installed"
+        r = one(conn, "SELECT * FROM class_run WHERE id = ? AND deleted_at IS NULL", (ident,))
+        return bool(r) and run_access(conn, actor, r), "staff only"
     return False, "unknown channel"
 
 

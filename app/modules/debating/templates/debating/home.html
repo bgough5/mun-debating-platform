@@ -1,9 +1,37 @@
 {% extends "base.html" %}
-{% from "_macros.html" import hidden_csrf %}
+{% from "_macros.html" import hidden_csrf, empty_state %}
 {% block content %}
-<h1>Debating</h1>
-<div class="row no-print"><a class="button" href="/debating/practice">Practice debates for a class</a>
-  {% if actor.is_coordinator %}<a class="button secondary" href="/admin/t/motion_bank">Motion bank</a> <a class="button secondary" href="/admin/t/house">Houses</a>{% endif %}</div>
+<h1>{{ icon("debate") }} Debating and public speaking</h1>
+<p class="lede">Run a class debate or a round of speeches on the projector, and follow your students' preparation.</p>
+
+<div class="grid">
+  <section class="card" aria-labelledby="h-cd"><h2 id="h-cd">{{ icon("debate") }} Class debate</h2>
+    <p>Type each team's speakers, set the speech times, and project a timer that shows the bells.</p>
+    <a class="button" href="/debating/runs/new?kind=debate">New class debate</a></section>
+  <section class="card" aria-labelledby="h-sr"><h2 id="h-sr">{{ icon("speech") }} Speaking round</h2>
+    <p>A list of speakers giving prepared speeches, or impromptu speeches on a surprise topic each.</p>
+    <a class="button" href="/debating/runs/new?kind=speeches">New speaking round</a></section>
+  <section class="card" aria-labelledby="h-prep"><h2 id="h-prep">{{ icon("task") }} Student preparation</h2>
+    <p>Cases, rebuttals, speech drafts and practice speeches your students have written, to score and comment on.</p>
+    {% if classes %}<form method="get" action="/debating/prep" class="inline"><div class="field"><label for="pc">Class</label>
+      <select id="pc" name="class_id">{% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div>
+      <button type="submit" class="secondary">Open</button></form>
+    {% else %}<p class="small muted">No classes assigned to you yet.</p>{% endif %}</section>
+</div>
+
+<section aria-labelledby="h-runs"><h2 id="h-runs">{{ icon("history") }} Recent class debates and speaking rounds</h2>
+{% if runs %}<div class="table-wrap"><table>
+<thead><tr><th scope="col">Title</th><th scope="col">Type</th><th scope="col">Class</th><th scope="col" class="num">Speakers</th><th scope="col">Status</th><th scope="col">Set up</th></tr></thead>
+<tbody>{% for r in runs %}<tr><td><a href="/debating/runs/{{ r.id }}">{{ r.title }}</a></td><td>{{ 'Class debate' if r.kind == 'debate' else 'Speaking round' }}</td>
+<td>{{ r.class_name or '—' }}</td><td class="num">{{ r.n_speakers }}</td><td>{{ {'ready': 'Ready', 'running': 'Under way', 'finished': 'Finished'}[r.status] }}</td><td>{{ r.created_at|when }}</td></tr>{% endfor %}</tbody></table></div>
+{% else %}{{ empty_state("No class debates or speaking rounds yet.", "Start one above: it takes a minute to type the names.", icon_name="debate") }}{% endif %}
+</section>
+
+<p><a href="/debating/practice">{{ icon("practice") }} Several practice debates at once</a>: tick who is here and the platform splits the class into rooms.</p>
+
+<section aria-labelledby="h-tourn"><h2 id="h-tourn">{{ icon("award") }} Tournaments and carnivals</h2>
+<details {% if events %}open{% endif %}><summary>Draws, ballots, ladders and house points for competitions and the house carnival</summary>
+<div class="row no-print">{% if actor.is_coordinator %}<a class="button secondary" href="/admin/t/motion_bank">Motion bank</a> <a class="button secondary" href="/admin/t/house">Houses</a>{% endif %}</div>
 <div class="table-wrap"><table>
 <caption>Events</caption>
 <thead><tr><th scope="col">Event</th><th scope="col">Type</th><th scope="col">Format</th><th scope="col" class="num">Teams</th><th scope="col">Status</th></tr></thead>
@@ -11,7 +39,7 @@
 <td>{{ e.kind }}</td><td>{{ e.format_name }}</td><td class="num">{{ e.teams }}</td><td>{{ e.status }}</td></tr>
 {% else %}<tr><td colspan="5">No events yet.</td></tr>{% endfor %}</tbody></table></div>
 <div class="grid" style="margin-top:1rem">
-<section class="card" aria-labelledby="h-new"><h2 id="h-new">New event</h2>
+<section class="card" aria-labelledby="h-new"><h3 id="h-new">New event</h3>
 <form method="post" action="/debating/events" class="stack">{{ hidden_csrf(csrf) }}
   <div class="field"><label for="en">Name</label><input id="en" type="text" name="name" required></div>
   <div class="field"><label for="ek">Type</label><select id="ek" name="kind"><option value="carnival">House carnival</option><option value="competition">Competition or interschool</option><option value="class">Class debates</option></select></div>
@@ -22,15 +50,17 @@
   <div class="field"><label for="et">Start time</label><input id="et" type="text" name="start_time" value="09:00" size="6"></div></div>
   <button type="submit">Create event</button></form></section>
 {% if demo and actor.is_coordinator %}
-<section class="card" aria-labelledby="h-demo"><h2 id="h-demo">Try a whole carnival (demo only)</h2>
+<section class="card" aria-labelledby="h-demo"><h3 id="h-demo">Try a whole carnival (demo only)</h3>
 <p>Generates fake students in four houses, teams, rooms, adjudicators and four rounds with fake ballots, so you can explore draws, ladders, house points, the run sheet and the MC script.</p>
 <form method="post" action="/debating/demo-carnival" class="inline">{{ hidden_csrf(csrf) }}
   <div class="field"><label for="dn">Students</label><input id="dn" type="number" name="students" value="325" min="8" max="400" style="width:6rem"></div>
   <div class="field"><label for="dr">Rounds</label><input id="dr" type="number" name="rounds" value="4" min="1" max="8" style="width:5rem"></div>
   <button type="submit" class="secondary">Generate</button></form></section>
 {% endif %}
-<section class="card" aria-labelledby="h-hp"><h2 id="h-hp">{{ icon("house") }} House points (all events)</h2>
+<section class="card" aria-labelledby="h-hp"><h3 id="h-hp">{{ icon("house") }} House points (all events)</h3>
 {% if totals %}<ol>{% for h in totals %}<li><strong>{{ h.name }}</strong>: {{ h.points|num(0) }}</li>{% endfor %}</ol>{% else %}<p>No houses yet.{% if actor.is_coordinator %} <a href="/admin/t/house">Add houses</a>.{% endif %}</p>{% endif %}
 </section>
 </div>
+</details>
+</section>
 {% endblock %}

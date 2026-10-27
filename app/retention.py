@@ -60,6 +60,10 @@ def purge(db, soft_days: int = SOFT_DELETE_DAYS, log_days: int = EVENT_LOG_DAYS)
         conn.execute(f"UPDATE event_log SET undo_of = NULL WHERE undo_of IN ({old})", (log_cut,))
         conn.execute(f"UPDATE event_log SET undone_by = NULL WHERE undone_by IN ({old})", (log_cut,))
         report["event_log_deleted"] = conn.execute("DELETE FROM event_log WHERE at < ?", (log_cut,)).rowcount
+        # Names typed into a class run that never matched the roster stay one school year, like the history (D-075).
+        report["run_names_cleared"] = conn.execute(
+            "UPDATE class_run_speaker SET name = 'Speaker ' || position, comment = '' WHERE student_id IS NULL "
+            "AND name NOT LIKE 'Speaker %' AND run_id IN (SELECT id FROM class_run WHERE created_at < ?)", (log_cut,)).rowcount
         if report["purged"] or report["event_log_deleted"]:
             # A record that a purge happened, with counts only (no data).
             w.log("retention", "purge", "purge", None,
@@ -77,7 +81,9 @@ def erase_student(w, student_id: int) -> dict:
     chats, milestone notes, speaker comments about them, speech drafts, friends
     and foes sheets) is deleted, and the text of their messages to other
     delegations is replaced with "[erased]"; their
-    devices are signed out; and the change history is scrubbed of their name and
+    devices are signed out; their debate cases, rebuttals and speech drafts are
+    deleted, and their name and comments are removed from class debates and
+    speaking rounds; and the change history is scrubbed of their name and
     of copies of the deleted rows. What stays, under the name "Erased": team
     membership, speaker scores and votes, because removing them would change
     other students' ladders and house points. Paragraphs written together with a
@@ -118,6 +124,19 @@ def erase_student(w, student_id: int) -> dict:
     take("adjudicator", "student_id = ?", (student_id,))
     conn.execute("UPDATE adjudicator SET name = ? WHERE student_id = ?", (ERASED, student_id))
     take("task", "assignee_student_id = ?", (student_id,))
+    # Prep studio (D-076, D-077): the student's own cases, rebuttals and speech drafts go.
+    cases = take("prep_case", "student_id = ?", (student_id,))
+    if cases:
+        marks = ",".join("?" * len(cases))
+        counts["prep_point"] = len(take("prep_point", f"case_id IN ({marks})", tuple(cases)))
+        conn.execute(f"DELETE FROM prep_point WHERE case_id IN ({marks})", tuple(cases))
+    conn.execute("DELETE FROM prep_case WHERE student_id = ?", (student_id,))
+    counts["prep_case"] = len(cases)
+    counts["prep_speech"] = len(take("prep_speech", "student_id = ?", (student_id,)))
+    conn.execute("DELETE FROM prep_speech WHERE student_id = ?", (student_id,))
+    # Class debates and speaking rounds (D-075): the place in the running order stays, without the name or comment.
+    take("class_run_speaker", "student_id = ?", (student_id,))
+    conn.execute("UPDATE class_run_speaker SET name = ?, comment = '', topic = '' WHERE student_id = ?", (ERASED, student_id))
     conn.execute("DELETE FROM device_session WHERE student_id = ?", (student_id,))
     from app.web.auth import forget_sessions
     forget_sessions()

@@ -46,7 +46,29 @@ At most 25 students can be in one live session. Everything also works with fewer
 
 If the chair's laptop or browser crashes, open the chair console again: everything is as it was. Students' screens catch up by themselves.
 
-## Debating
+## Debating and public speaking
+
+The Debating page leads with two classroom tools and the students' preparation. Tournaments and carnivals are lower down.
+
+**Class debate:** Debating → **New class debate**. Choose the class (optional: it suggests names and lets each student see their own scores), pick or type a motion, and type each team's speakers (first names only; **Fill empty places from the class list at random** does it for you). Set the speakers per team, the speech length, the warning bell, preparation time and reply speeches. **Set it up.**
+
+**Speaking round:** Debating → **New speaking round**. One first name per line (**The whole class in random order** fills it). Choose **Prepared** (students bring a speech; add a topic after a dash if you like) or **Impromptu** (each speaker gets a surprise topic when their turn starts, with thinking time first).
+
+**Running it:** open **the projector view** on the screen the class sees, and keep your own page in front of you. **Space** starts or pauses the timer, **→** moves to the next speaker, **←** goes back; a presentation clicker works too. The timer shows the bells: green while speaking, amber after the warning bell (one ring), red at time (two rings), and it keeps counting past time. The bell sounds on your laptop; switch it off under the controls. Each speaker's time is recorded when you move on. If the laptop restarts, open the page again: the run is where you left it.
+
+**Scores and results:** score each speaker (matter, manner, method for debates; the speech rubric for speeches), add a comment, pick the winner. Students whose typed name matched the class list see their own time, scores and comment under **Prep and practise**; nobody sees anyone else's. Names that didn't match the class list stay on that run only and are replaced with "Speaker 1", "Speaker 2" after a year.
+
+**Student preparation:** Debating → **Student preparation** → choose a class. Each student's debate cases (arguments and rebuttals), speech drafts and practice speeches. Open a case to score each argument and rebuttal on its rubric and leave a comment. The "structure check" the students see only counts which parts they've written; quality is your score.
+
+**What students can do on their own** (their **Prep and practise** page):
+- **Debate case:** pick a motion and a side; write a team line, a definition, and arguments in four parts (claim, reasoning, example, impact).
+- **Rebuttal:** for every motion in the bank, the other side's three likely arguments are listed; students rebut each in four steps (they say, but, because, so), and add arguments they expect. The listed arguments are starting points written for the platform, labelled as not evidence; edit them under Admin → Likely arguments for each motion.
+- **Speeches:** four prepared-speech structures (persuasive, informative, personal story, tribute) with a prompt for each part, a live word count and speaking-time estimate, a rehearsal view and printable cue cards.
+- **Practise a speech:** impromptu (a topic from the bank, thinking time on a structure card, then the speech), prepared (rehearse their own speech) or a rebuttal drill (answer one likely argument in a minute). Bells ring as in class. They score themselves and save it; you can comment under **Practice speeches**.
+
+Topics, templates and likely arguments are all editable under Admin (Debating group).
+
+## Tournaments and carnivals
 
 **Events:** Debating → **New event** (class debates, a house carnival or a competition). In **Setup**, add teams (or **Make teams** from a class), rooms and adjudicators.
 
@@ -64,7 +86,7 @@ If the chair's laptop or browser crashes, open the chair console again: everythi
 
 ## Students' own pages
 
-Students see **Me**: their delegation, tasks, live session, debates, practice speeches (with a timer and rubric self-review) and their pathway milestones. Teachers record milestones under **People → student**.
+Students see **Me**: their delegation, tasks, live session, debates and their pathway milestones; **Prep and practise** holds their debate cases, speeches, practice and their scores from class debates and speaking rounds. Teachers record milestones under **People → student**.
 
 ## Fixing mistakes
 

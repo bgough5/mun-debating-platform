@@ -23,12 +23,12 @@ student may open a resolution only in their own class's committee, and a ballot 
 
 | Role required | Routes |
 |---|---|
-| Public | 24 |
+| Public | 26 |
 | Signed in (any role, checked per item) | 29 |
-| Students only | 32 |
-| Staff and coordinator | 84 |
+| Students only | 45 |
+| Staff and coordinator | 99 |
 | Coordinator only | 38 |
-| **Total** | **207** |
+| **Total** | **237** |
 
 ## Coordinator only
 
@@ -131,9 +131,24 @@ student may open a resolution only in their own class's committee, and a ballot 
 | POST | `/debating/practice` |
 | GET | `/debating/practice-speeches` |
 | POST | `/debating/practice-speeches/{ps_id}` |
+| GET | `/debating/prep` |
+| GET | `/debating/prep/cases/{case_id}` |
+| POST | `/debating/prep/cases/{case_id}` |
+| GET | `/debating/prep/speeches/{speech_id}` |
+| POST | `/debating/prep/speeches/{speech_id}` |
 | GET | `/debating/rounds/{round_id}` |
 | POST | `/debating/rounds/{round_id}` |
 | GET | `/debating/rounds/{round_id}/f` |
+| POST | `/debating/runs` |
+| GET | `/debating/runs/new` |
+| GET | `/debating/runs/{run_id}` |
+| POST | `/debating/runs/{run_id}/act` |
+| POST | `/debating/runs/{run_id}/delete` |
+| GET | `/debating/runs/{run_id}/edit` |
+| POST | `/debating/runs/{run_id}/edit` |
+| GET | `/debating/runs/{run_id}/f` |
+| GET | `/debating/runs/{run_id}/results` |
+| POST | `/debating/runs/{run_id}/results` |
 | GET | `/help/staff` |
 | GET | `/intel` |
 | POST | `/intel/ai/estimate` |
@@ -194,6 +209,19 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/me/practice` |
 | POST | `/me/practice` |
 | GET | `/me/practice/{ps_id}/coach` |
+| GET | `/me/prep` |
+| POST | `/me/prep/cases` |
+| GET | `/me/prep/cases/{case_id}` |
+| POST | `/me/prep/cases/{case_id}` |
+| POST | `/me/prep/cases/{case_id}/delete` |
+| POST | `/me/prep/cases/{case_id}/points` |
+| POST | `/me/prep/cases/{case_id}/points/{point_id}/delete` |
+| POST | `/me/prep/speeches` |
+| GET | `/me/prep/speeches/{speech_id}` |
+| POST | `/me/prep/speeches/{speech_id}` |
+| GET | `/me/prep/speeches/{speech_id}/cards` |
+| POST | `/me/prep/speeches/{speech_id}/delete` |
+| GET | `/me/prep/speeches/{speech_id}/rehearse` |
 | GET | `/me/sim` |
 | POST | `/me/sim` |
 | GET | `/me/sim/{pid}` |
@@ -239,6 +267,8 @@ student may open a resolution only in their own class's committee, and a ballot 
 |---|---|---|
 | GET | `/` | Home: signed-out visitors see the sign-in links only |
 | GET | `/accessibility` | Accessibility statement |
+| GET | `/debating/present/{token}` | Projector view of a class debate or speaking round; needs the run's unguessable token |
+| GET | `/debating/present/{token}/f` | Class run projector fragment; needs the token |
 | GET | `/debating/projector/{token}` | Projector view of a debating event; needs the event's unguessable token |
 | GET | `/debating/projector/{token}/f` | Projector fragment; needs the token |
 | GET | `/healthz` | Liveness check for the start script; returns 'ok' only |

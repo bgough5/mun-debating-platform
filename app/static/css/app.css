@@ -8,6 +8,7 @@
   --ok-bg: #E3F1E7; --err-bg: #F8E6E3; --warn-bg: #FBF1D3; --info-bg: #EFE7DA;
   --yes-bg: #DDEFE3; --no-bg: #F6E1DD; --abs-bg: #ECE7E1; --unk-bg: #F1EEE9;
   --proj-bg: #2A1512; --proj-card: #3D211C; --proj-text: #F4F0E6; --proj-accent: #D4B441; --proj-low: #FFC2B8; --proj-line: #6B4A42;
+  --time-go: #0A6B39; --time-warn: #F2C14E; --time-over: #B3261E;
   --serif: Cambria, Georgia, "Times New Roman", serif;
   --sans: Calibri, Carlito, "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   --mono: Consolas, "Cascadia Mono", "Courier New", monospace;
@@ -313,3 +314,54 @@ ol.prep-steps { padding-left: 1.4rem; }
 ol.prep-steps > li { margin-bottom: 1.4rem; }
 ol.prep-steps > li::marker { font-family: var(--serif); font-weight: 700; color: var(--maroon); }
 [role="tablist"].tabs { list-style: none; }
+
+/* ---------- speech timers: classroom runner, projector and practice (D-075, D-077) ---------- */
+.run-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr); gap: 1rem; align-items: start; }
+@media (max-width: 900px) { .run-layout { grid-template-columns: 1fr; } }
+.run-stage { background: var(--card); border: 2px solid var(--line); border-radius: var(--radius); padding: 1rem 1.25rem; text-align: center; }
+.run-stage[data-phase="go"] { background: var(--time-go); border-color: var(--time-go); color: var(--white); }
+.run-stage[data-phase="warn"] { background: var(--time-warn); border-color: var(--time-warn); color: var(--ink); }
+.run-stage[data-phase="over"] { background: var(--time-over); border-color: var(--time-over); color: var(--white); }
+.run-stage p { margin: .15rem 0; color: inherit; }
+.run-step-label { font-size: 1.05rem; letter-spacing: .02em; }
+.run-who { font-family: var(--serif); font-size: 2.2rem; font-weight: 700; line-height: 1.15; }
+.run-topic { font-size: 1.35rem; font-style: italic; }
+.run-timer { font-family: var(--serif); font-size: 6.5rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.run-phase-text { font-size: 1.25rem; font-weight: 700; }
+.run-next { font-size: 1rem; }
+.run-controls { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; margin: .75rem 0 .25rem; }
+.run-order { list-style: none; margin: 0; padding: 0; }
+.run-order li { display: grid; grid-template-columns: 1fr auto auto; gap: .5rem; align-items: center; padding: .3rem 0; border-bottom: 1px solid var(--line); }
+.run-order li[aria-current] { font-weight: 700; color: var(--maroon-dk); }
+.run-order li.done span:first-child { color: var(--muted); }
+.run-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+.run-teams li.now { font-weight: 700; }
+.run-motion { font-family: var(--serif); font-size: 1.6rem; text-align: center; margin: 0 0 .75rem; }
+.projector .run-stage { background: var(--proj-card); border-color: var(--proj-line); color: var(--proj-text); }
+.projector .run-stage[data-phase="go"] { background: var(--time-go); border-color: var(--time-go); color: var(--white); }
+.projector .run-stage[data-phase="warn"] { background: var(--time-warn); border-color: var(--time-warn); color: var(--ink); }
+.projector .run-stage[data-phase="over"] { background: var(--time-over); border-color: var(--time-over); color: var(--white); }
+.projector .run-stage p { color: inherit; }
+.projector .run-timer { font-size: 14rem; }
+.projector .run-who { font-size: 4rem; }
+.projector .run-topic { font-size: 2.2rem; }
+.projector .run-motion { font-size: 2.4rem; color: var(--proj-accent); }
+.projector .run-teams li, .projector .run-upnext li { font-size: 1.8rem; }
+.run-done { text-align: center; font-size: 3rem; margin-top: 3rem; }
+@media (max-width: 600px) { .run-timer, .projector .run-timer { font-size: 4.5rem; } .projector .run-who { font-size: 2.2rem; } .run-teams { grid-template-columns: 1fr; } }
+.score-input { width: 5.5rem; }
+kbd { font-family: var(--mono); font-size: .85em; border: 1px solid var(--control); border-radius: 4px; padding: 0 .3em; background: var(--card); }
+/* Students' practice: one stage visible at a time. */
+[data-practice] [data-show-in][hidden] { display: none; }
+.structure-card { border-left: 6px solid var(--gold); }
+.structure-card ol { margin: .25rem 0 0; padding-left: 1.2rem; }
+.big-topic { font-family: var(--serif); font-size: 1.8rem; font-weight: 700; line-height: 1.2; margin: .25rem 0; }
+.cue-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1rem; }
+.cue-card { border: 2px solid var(--control); border-radius: var(--radius); padding: .75rem 1rem; background: var(--card); break-inside: avoid; }
+.cue-card h2 { font-size: 1.1rem; margin: 0 0 .35rem; }
+.rehearse-card { font-size: 1.6rem; line-height: 1.5; }
+.part-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .75rem; }
+.structure-meter { font-weight: 700; }
+@media print { .cue-cards { grid-template-columns: 1fr 1fr; } .cue-card { min-height: 9cm; } }
+.projector button.link { color: var(--proj-accent); }
+[data-slot][hidden], [data-structure][hidden], [data-card][hidden], [data-show-in][hidden] { display: none; }

@@ -38,6 +38,17 @@ CONTEXT = [
         "Amendments: see every submitted amendment as tracked changes, sign them, suggest edits. Friends and foes: your reading of who supports each operative clause.",
         "Your screen updates by itself. If it says it's reconnecting, wait a moment.",
     ]),
+    ("/me/prep", "Prep and practise", [
+        "Debate case: pick a motion and a side, write a team line and your arguments in four parts (claim, reasoning, example, impact).",
+        "Rebuttal: the other side's likely arguments are listed. Answer each in four steps: they say, but, because, so.",
+        "Speeches: choose a structure, write each part in your own words, then rehearse with the timer or print cue cards.",
+        "Your teacher can score your work and comment. The structure check only counts which parts you've written.",
+    ]),
+    ("/me/practice", "Practising a speech", [
+        "Impromptu: draw a topic, think with a structure card, then speak. Prepared: rehearse one of your speeches. Rebuttal drill: answer an argument in a minute.",
+        "One bell rings for the warning and two at time. The timer never stops you: it shows how far over you went.",
+        "Score yourself honestly afterwards. Your teacher can comment on what you save.",
+    ]),
     ("/me/sim", "Practice committee", [
         "You run one delegation; the others are computed, each with a hidden position.",
         "Talk to up to five delegations, record what you think each will do, amend the paragraph if it would win votes, then call the vote.",
@@ -58,10 +69,20 @@ CONTEXT = [
         "Each country is marked Sourced, Estimate only or Unknown. \"Estimate only\" means the prediction rests on the model's archetype guess or an unsourced note: treat it as a starting point, not evidence. The prediction page shows how much of the outcome rests on such estimates.",
         "Workspace: one editor per paragraph; everyone else proposes amendments. History restores any version.",
     ]),
-    ("/debating", "Debating", [
-        "Event → setup (teams, rooms, adjudicators) → rounds. Round 1 is random; later rounds are power-paired.",
-        "Adjudicators enter ballots; the ladder, speaker tab and house points update as they arrive.",
-        "Practice: tick who is here and the platform fits the format to the group, from solo speeches to full rooms.",
+    ("/debating/runs", "Running a class debate or speaking round", [
+        "Open the projector view on the screen the class sees; run it from your own page.",
+        "Space starts or pauses the timer; the right arrow moves to the next speaker, the left arrow goes back. A presentation clicker works too.",
+        "The timer shows the bells as colour and words: green while speaking, amber after the warning bell, red at time. It keeps counting past time so you can see by how much.",
+        "Each speaker's time is recorded when you move on. Add scores, a result and comments under Scores and results; students whose names match the class list see their own.",
+    ]),
+    ("/debating/prep", "Student preparation", [
+        "Each student's debate cases, rebuttals and speech drafts. Score each point on its rubric and leave a comment: the student sees both.",
+        "The structure check counts which parts a student has written. It doesn't judge quality; your rubric score does.",
+    ]),
+    ("/debating", "Debating and public speaking", [
+        "Class debate: type each team's speakers, set the times, and project the timer. Speaking round: a list of speakers, prepared or impromptu.",
+        "Student preparation: open a class to see and score the cases, rebuttals and speeches students have written.",
+        "Tournaments and carnivals: draws, ballots, ladders and house points, as before.",
     ]),
     ("/people", "People", [
         "Classes, their codes and rosters (first names only), staff, and each student's pathway.",
@@ -80,6 +101,11 @@ CONTEXT = [
 ]
 
 GLOSSARY = [
+    ("Impromptu speech", "A speech on a topic you see only moments before speaking, with a short time to think. A structure such as point, reason, example, point helps."),
+    ("Rebuttal", "Answering the other side's argument: say it fairly, show what's wrong with it, back that up, and say why it matters."),
+    ("Team line", "A team's whole case in one sentence, repeated by every speaker so the adjudicator can follow it."),
+    ("Warning bell", "A single bell before a speaker's time is up (often a minute before); a double bell means time. Speakers finish their sentence and sit down."),
+    ("Reply speech", "A short closing speech by each team, usually given by the first or second speaker; the Negative replies first."),
     ("Friends and foes", "Your own record of which delegations support or oppose each operative clause. Only you see it; the engine's estimate beside it is labelled as an estimate."),
     ("Abstain", "Vote neither for nor against. In most General Assembly rules, abstentions don't count toward the majority."),
     ("Adjudicator", "The judge of a debate. A panel decides by majority; the chair adjudicator breaks a 1–1 tie."),

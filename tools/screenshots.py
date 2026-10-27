@@ -85,6 +85,35 @@ def prepare(app) -> dict:
                      "finance decides whether the most exposed communities can plan ahead. (Demo text written for the screenshots.)")
         F.ff_save(w, members[0]["student_id"], para, com["id"], {members[1]["delegation_id"]: ("friend", "co-sponsor"),
                                                                   members[2]["delegation_id"]: ("undecided", "wants a softer verb")})
+    # Phase 9: a class debate under way, an impromptu speaking round, and one student's case and speech (demo text).
+    from app.modules.debating import classroom as RUN
+    from app.modules.debating import prep as PREP
+    cls9 = q(app, "SELECT id FROM class WHERE code = 'DEMO9M'")[0]["id"]
+    names = [r["first_name"] for r in q(app, "SELECT first_name FROM student WHERE class_id = ? GROUP BY first_name HAVING COUNT(*) = 1 "
+                                             "ORDER BY MIN(id) LIMIT 10", (cls9,))]
+    with app.state.db.write(Actor("coordinator", None, "Coordinator")) as w:
+        run = RUN.create_run(w, "debate", cls9, {"motion": "That zoos do more harm than good", "speakers_per_side": "3", "speech_seconds": "240",
+                                                 "warning_seconds": "60", "reply": "1", "reply_seconds": "120",
+                                                 **{f"aff_{i}": names[i - 1] for i in (1, 2, 3)}, **{f"neg_{i}": names[i + 2] for i in (1, 2, 3)}})
+        RUN.act(w, RUN.get_run(w.conn, w.actor, run), "start")
+        rnd9 = RUN.create_run(w, "speeches", cls9, {"names": "\n".join(names[6:10]), "topic_mode": "impromptu", "think_seconds": "60",
+                                                     "speech_seconds": "120", "warning_seconds": "30", "level": "middle"})
+        RUN.act(w, RUN.get_run(w.conn, w.actor, rnd9), "start")
+    student9 = members[0]["student_id"]
+    with app.state.db.write(Actor("student", student9, "student")) as w:
+        mid = q(app, "SELECT id FROM motion_bank WHERE motion = 'That zoos do more harm than good'")[0]["id"]
+        case = PREP.create_case(w, student9, mid, "", "neg")
+        c = q(app, "SELECT * FROM prep_case WHERE id = ?", (case,))[0]
+        PREP.save_header(w, c, {"team_line": "Good zoos protect species and inspire people to care (demo text for the screenshots).", "definition": ""})
+        PREP.save_point(w, c, {"kind": "argument", "part_claim": "Zoos save species from extinction.",
+                               "part_reason": "Breeding programmes keep healthy populations when wild numbers collapse, then return animals to the wild.",
+                               "part_evidence": "(Demo text: a real example and its source would go here.)", "part_impact": "", "speaker": "1",
+                               "self_clarity": "4", "self_reasoning": "3"})
+        speech = PREP.create_speech(w, student9, "persuasive", "Why every school needs a garden")
+        sp = q(app, "SELECT * FROM prep_speech WHERE id = ?", (speech,))[0]
+        PREP.save_speech(w, sp, {"target_seconds": "180", "sec_hook": "(Demo text for the screenshots.) When did you last eat something you grew?"})
+    run_tok = q(app, "SELECT projector_token FROM class_run WHERE id = ?", (run,))[0]["projector_token"]
+    rnd_tok = q(app, "SELECT projector_token FROM class_run WHERE id = ?", (rnd9,))[0]["projector_token"]
     tok = q(app, "SELECT projector_token FROM live_session WHERE id = ?", (sid,))[0]["projector_token"]
     ev = q(app, "SELECT * FROM debate_event WHERE projector_token IS NOT NULL ORDER BY id LIMIT 1")[0]
     rnd = q(app, "SELECT id FROM debate_round WHERE event_id = ? ORDER BY number LIMIT 1", (ev["id"],))[0]["id"]
@@ -95,6 +124,7 @@ def prepare(app) -> dict:
     evatt_para = q(app, "SELECT p.id FROM paragraph p JOIN resolution r ON r.id = p.resolution_id JOIN paragraph_version v ON v.id = p.current_version_id "
                         "WHERE r.committee_id = ? AND v.tags = 'sanctions'", (evatt[0]["id"],)) if evatt else []
     return {"evatt": evatt[0]["id"] if evatt else None, "evatt_para": evatt_para[0]["id"] if evatt_para else None,
+            "run": run, "run_tok": run_tok, "rnd_tok": rnd_tok, "case": case, "speech": speech, "cls9": cls9,
             "sid": sid, "did": did, "tok": tok, "ev": ev, "rnd": rnd, "pairing": pairing, "cls": cls, "com": com["id"],
             "res": res, "para": para, "student": members[0]["student_id"]}
 
@@ -122,7 +152,12 @@ def main() -> None:
         ("join-cards", f"/people/classes/{st['cls']}/join-cards", "Printable join cards with QR codes"),
         ("amendment-board", f"/mun/committees/{st['com']}/amendments", "Amendment board: tracked changes, signatories, suggestions"),
         ("chair-messages", f"/chair/{st['sid']}/messages", "Chair: delegate messages"),
-        ("debating", "/debating", "Debating home"),
+        ("debating", "/debating", "Debating and public speaking home"),
+        ("run-setup", f"/debating/runs/new?kind=debate&class_id={st['cls9']}", "New class debate: names and times"),
+        ("run-control", f"/debating/runs/{st['run']}", "Running a class debate: the teacher's page"),
+        ("run-results", f"/debating/runs/{st['run']}/results", "Class debate: scores and result"),
+        ("class-prep", f"/debating/prep?class_id={st['cls9']}", "Student preparation for a class"),
+        ("class-prep-case", f"/debating/prep/cases/{st['case']}", "Scoring a student's case"),
         ("event", f"/debating/events/{st['ev']['id']}", "Debating event"),
         ("draw", f"/debating/rounds/{st['rnd']}", "Round draw"),
         ("ballot", f"/debating/pairings/{st['pairing']}/ballot", "Ballot (rubric scoring)"),
@@ -142,10 +177,16 @@ def main() -> None:
         ("student-friends-foes", f"/me/committees/{st['com']}/friends-foes", "Friends and foes for an operative clause"),
         ("student-me", "/me", "Student home"),
         ("student-practice", "/me/sim", "Practice committee"),
+        ("student-prep", "/me/prep", "Prep and practise"),
+        ("student-case", f"/me/prep/cases/{st['case']}", "A debate case: arguments and rebuttals"),
+        ("student-speech", f"/me/prep/speeches/{st['speech']}", "Speech writer"),
+        ("student-speaking", "/me/practice", "Impromptu speaking practice"),
     ]
     projector_pages = [
         ("projector-session", f"/projector/{st['tok']}", "Projector: live session"),
         ("projector-debating", f"/debating/projector/{st['ev']['projector_token']}", "Projector: debating event"),
+        ("projector-class-debate", f"/debating/present/{st['run_tok']}", "Projector: class debate timer"),
+        ("projector-speaking-round", f"/debating/present/{st['rnd_tok']}", "Projector: impromptu speaking round"),
     ]
     OUT.mkdir(parents=True, exist_ok=True)
     for old in OUT.glob("*.png"):

@@ -161,7 +161,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.include_router(floor_router)
     if settings.module_on("debating"):
         from app.modules.debating.routes import router as debating_router
+        from app.modules.debating.classroom_routes import router as classroom_router
         app.include_router(debating_router)
+        app.include_router(classroom_router)
+        from app.modules.debating.prep_routes import router as prep_router
+        app.include_router(prep_router)
     if settings.module_on("intelligence"):
         try:
             from app.modules.intelligence.routes import router as intel_router
