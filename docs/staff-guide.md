@@ -105,7 +105,7 @@ The coordinator can switch to the **demo** dataset (Admin → Data). It holds fa
 - **Students can't reach the address:** check the laptop and the device are on the same Wi-Fi, and that Windows allowed the app through the firewall when first asked (if not, the coordinator allows "Python" in Windows Defender Firewall). Some school networks block devices from reaching each other; ask ICT.
 - **A page says "reload":** the coordinator switched or restored the data. Reload the page.
 - **The black window closed:** double-click `start_platform.bat` again. Nothing is lost: every change is saved as it is made.
-- **A student is stuck on "waiting for a teacher":** approve their request on the class page, or release their name.
+- **A student's code doesn't work:** check it on the class page (**Show**). If it was seen by someone else or the card is lost, **Manage → New code** issues a new one and stops the old one. Too many wrong tries locks that laptop out for 30 seconds.
 - **Something looks wrong in a vote or score:** don't delete anything. Tell the coordinator, who can see exactly who changed what (Admin → Change log) and undo it.
 
 ## Privacy, in short

@@ -23,12 +23,12 @@ student may open a resolution only in their own class's committee, and a ballot 
 
 | Role required | Routes |
 |---|---|
-| Public | 26 |
+| Public | 24 |
 | Signed in (any role, checked per item) | 29 |
 | Students only | 45 |
 | Staff and coordinator | 99 |
 | Coordinator only | 38 |
-| **Total** | **237** |
+| **Total** | **235** |
 
 ## Coordinator only
 
@@ -275,11 +275,8 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/help` | Help index: general guidance only, no data |
 | GET | `/help/glossary` | MUN and debating glossary: static text |
 | GET | `/help/students` | Student quick-start: static text, needed before a student has joined |
-| GET | `/join` | Students: enter a class code (throttled) |
-| POST | `/join` | Students: enter a class code (throttled) |
-| GET | `/join/wait` | Students: waiting for a teacher to approve a second device |
-| GET | `/join/{code}` | Students: pick your name; needs a valid class code |
-| POST | `/join/{code}/{student_id}` | Students: claim a name; needs a valid code; a name locked to another device needs a teacher |
+| GET | `/join` | Students: type your personal sign-in code (throttled) |
+| POST | `/join` | Students: type your personal sign-in code (throttled) |
 | GET | `/login` | Sign-in form (throttled) |
 | POST | `/login` | Sign-in form (throttled) |
 | POST | `/logout` | Sign-out |
@@ -288,6 +285,7 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/privacy` | Privacy notice |
 | GET | `/projector/{token}` | Projector view of a live session; needs the session's unguessable token |
 | GET | `/projector/{token}/f` | Projector view fragment; needs the token |
+| GET | `/s/{code}` | Students: your own sign-in link from your card; needs a valid personal code (throttled) |
 | GET | `/setup` | First-run passphrase setup; refuses once a passphrase exists |
 | POST | `/setup` | First-run passphrase setup; refuses once a passphrase exists |
 | WS | `/ws` | WebSocket: every channel subscription is checked per role (app/web/ws.py channel_allowed) |
