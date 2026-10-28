@@ -1,5 +1,7 @@
 """Student sign-in with a personal code (D-079, replacing D-003's class code and name list): the code has the name
 built in, works on any laptop, signs the student out of the previous laptop, and is throttled."""
+import re
+
 from tests.api.helpers import join_as
 from tests.conftest import db_one, db_rows, new_client
 
@@ -64,7 +66,8 @@ def test_cards_carry_each_students_own_code_and_no_qr(app, coord):
     page = coord.get(f"/people/classes/{c['id']}/join-cards").text
     for st in db_rows(app, "SELECT first_name, login_code FROM student WHERE class_id = ? AND active = 1", (c["id"],)):
         assert f"/s/{st['login_code']}" in page and f"{st['login_code'][:3]}-{st['login_code'][3:]}" in page
-    assert "jc-qr" not in page and "QR" not in page
+    # A whole-word check: codes use Q and R, so a bare "QR" substring failed about 12% of runs by chance.
+    assert "jc-qr" not in page and not re.search(r"\bQR\b", page)
     app.state.settings.values["join_base_url"] = "http://10.1.2.3:8080/"
     assert "10.1.2.3:8080/s/" in coord.get(f"/people/classes/{c['id']}/join-cards").text
     assert "10.1.2.3:8080" in coord.get(f"/people/classes/{c['id']}/poster").text
