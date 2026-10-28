@@ -13,6 +13,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, RGBColor
 
 from app.web.design import TOKENS
+from app.web.safety import csv_safe, csv_unguard
 
 from app.modules.admin.tables import SECRET_COLUMNS
 
@@ -26,13 +27,14 @@ def csv_bytes(rows: list[dict], columns: list[str] | None = None) -> bytes:
     w = csv.writer(buf, lineterminator="\r\n")
     w.writerow(columns)
     for r in rows:
-        w.writerow(["" if r.get(c) is None else r.get(c) for c in columns])
+        # csv_safe: student-typed text must not open in Excel as a formula (S-1, D-083).
+        w.writerow(["" if r.get(c) is None else csv_safe(r.get(c)) for c in columns])
     return ("﻿" + buf.getvalue()).encode("utf-8")
 
 
 def read_csv(data: bytes) -> list[dict]:
     text = data.decode("utf-8-sig")
-    return list(csv.DictReader(io.StringIO(text)))
+    return [{k: csv_unguard(v) for k, v in row.items()} for row in csv.DictReader(io.StringIO(text))]
 
 
 LOGO = Path(__file__).resolve().parent / "static" / "soc_logo.png"

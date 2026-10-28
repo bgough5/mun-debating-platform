@@ -13,6 +13,7 @@ from app.exports import csv_bytes, read_csv
 from app.modules.admin.tables import BY_NAME, EXPORT_ONLY, REFERENCE, SECRET_COLUMNS, Col, Table
 from app.web.auth import require_coordinator, revoke_devices
 from app.web.http import redirect, form_data
+from app.web.safety import safe_back, svg_is_safe
 from app.web.templating import render
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(require_coordinator)])
@@ -69,6 +70,10 @@ def parse_value(col: Col, raw, conn=None):
         if len(raw) != 3 or not raw.isalpha():
             raise UserError("ISO-3 code must be three letters.")
         return raw.upper()
+    if col.name == "flag_svg" and not svg_is_safe(raw):
+        # Shown on every page without escaping, so only plain SVG shapes are accepted (S-5, D-083).
+        raise UserError("Flag markup can only use plain SVG shapes (svg, g, path, rect, circle, polygon…) with colours and "
+                        "sizes: no scripts, links, styles or event attributes.")
     return raw
 
 
@@ -199,7 +204,7 @@ def undo(request: Request):
         res = undo_last(w)
     if not res:
         return redirect("/admin", "Nothing of yours to undo.")
-    return redirect(request.headers.get("referer") or "/admin",
+    return redirect(safe_back(request, "/admin"),
                     f"Undid your last change ({len(res['events'])} step(s) on {res['entity']}).")
 
 

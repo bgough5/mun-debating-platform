@@ -23,6 +23,7 @@ from app.modules.mun import service as S
 from app.util import display_name
 from app.web.auth import committee_access, require_any, require_coordinator, require_staff, staff_class_ids
 from app.web.http import form_int, redirect, form_data
+from app.web.safety import safe_back, safe_path
 from app.web.templating import render
 
 router = APIRouter(prefix="/mun")
@@ -506,8 +507,7 @@ def mun_undo(request: Request, s=Depends(require_any)):
             # Re-publish the channels touched so open pages refresh.
             for ev in res["events"]:
                 w.touch(ev["channel"])
-    back = request.headers.get("referer") or "/"
-    return redirect(back, "Undid your last change." if res else "Nothing of yours to undo here.")
+    return redirect(safe_back(request), "Undid your last change." if res else "Nothing of yours to undo here.")
 
 
 # ---------- exports ----------
@@ -593,24 +593,37 @@ def evidence_add(request: Request, committee_id: int, s=Depends(require_any), fo
                        conditional=bool(form.get("conditional")), condition_text=form.get("condition_text") or "",
                        source=form.get("source") or "", source_type=st, stated_on=form.get("stated_on") or "",
                        summary=form.get("summary") or "", channel=S.committee_channel(committee_id))
-    back = form.get("back") or f"/mun/committees/{committee_id}/evidence"
-    if not back.startswith("/"):
-        back = "/"
+    back = safe_path(form.get("back"), f"/mun/committees/{committee_id}/evidence")
     return redirect(back, "Evidence recorded. Predictions now include it.")
 
 
 @router.post("/evidence/{evidence_id}/delete")
 def evidence_delete(request: Request, evidence_id: int, s=Depends(require_any), form=Depends(form_data)):
-    with request.app.state.db.write(request.state.actor) as w:
-        e = one(w.conn, "SELECT * FROM evidence WHERE id = ?", (evidence_id,))
+    actor = request.state.actor
+    with request.app.state.db.write(actor) as w:
+        e = one(w.conn, "SELECT * FROM evidence WHERE id = ? AND deleted_at IS NULL", (evidence_id,))
         if not e:
             raise UserError("Not found.", 404)
-        cid = form_int(form.get("committee_id"))
-        access = _access(w.conn, request, cid)
-        if access != "manage" and e["recorded_by"] != request.state.actor.label:
-            raise UserError("You can only remove evidence you recorded.", 403)
-        w.soft_delete("evidence", evidence_id, S.committee_channel(cid))
-    return redirect(f"/mun/committees/{cid}/evidence", "Evidence removed (undo is available).")
+        # S-4 (D-083): who may remove it is decided by the evidence itself, never by the form.
+        # - the committee is the one its paragraph, amendment or resolution belongs to (tag- or topic-level
+        #   evidence has none);
+        # - "recorded it" means the change log shows this account created it, not a matching display name.
+        cid = None
+        if e["target_kind"] in ("paragraph", "amendment", "resolution") and e["target_id"]:
+            try:
+                cid = _committee_of_target(w.conn, e["target_kind"], e["target_id"])
+            except UserError:
+                cid = None
+        created_it = one(w.conn, "SELECT 1 FROM event_log WHERE entity = 'evidence' AND entity_id = ? AND action = 'create' "
+                                 "AND actor_kind = ? AND actor_id IS ?", (str(evidence_id), actor.kind, actor.id))
+        teaches_it = cid is not None and committee_access(w.conn, actor, cid) == "manage"
+        if not (actor.is_coordinator or created_it or teaches_it):
+            raise UserError("You can only remove evidence you recorded (staff: evidence in committees you teach).", 403)
+        back_cid = cid if cid is not None else form_int(form.get("committee_id"))
+        if back_cid is not None and committee_access(w.conn, actor, back_cid) == "none":
+            back_cid = None
+        w.soft_delete("evidence", evidence_id, S.committee_channel(back_cid) if back_cid else "")
+    return redirect(f"/mun/committees/{back_cid}/evidence" if back_cid else "/", "Evidence removed (undo is available).")
 
 
 # ---------- predictions ----------
@@ -734,8 +747,7 @@ def task_update(request: Request, task_id: int, s=Depends(require_any), form=Dep
         if form.get("assignee_student_id") is not None:
             changes["assignee_student_id"] = form_int(form.get("assignee_student_id"))
         S.update_task(w, task_id, **changes)
-    back = form.get("back") or f"/mun/committees/{t['committee_id']}#tasks"
-    return redirect(back if back.startswith("/") else "/", "Task updated.")
+    return redirect(safe_path(form.get("back"), f"/mun/committees/{t['committee_id']}#tasks"), "Task updated.")
 
 
 # ---------- actual votes and calibration ----------

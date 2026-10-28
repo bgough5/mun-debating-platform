@@ -9,6 +9,7 @@ from jinja2 import ChoiceLoader, Environment, FileSystemLoader, select_autoescap
 from markupsafe import Markup, escape
 
 from app.web.icons import icon
+from app.web.safety import safe_svg
 
 APP_DIR = Path(__file__).resolve().parent.parent
 TEMPLATE_DIRS = [APP_DIR / "templates"] + sorted(p for p in (APP_DIR / "modules").glob("*/templates"))
@@ -79,7 +80,8 @@ def mmss(seconds) -> str:
 
 
 env.globals.update(icon=icon)
-env.filters.update(quality=quality_badge, stance=stance_badge, position=position_label, pct=pct, num=num, when=short_time, mmss=mmss)
+env.filters.update(quality=quality_badge, stance=stance_badge, position=position_label, pct=pct, num=num, when=short_time, mmss=mmss,
+                   safe_svg=safe_svg)    # stored flag markup: allowlisted SVG only (S-5, D-083)
 
 
 def today_long() -> str:

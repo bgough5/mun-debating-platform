@@ -12,6 +12,7 @@ from app.errors import UserError
 from app.util import check_passphrase, hash_passphrase
 from app.web.auth import SESSION_COOKIE, create_session, login_throttle, revoke_devices
 from app.web.http import redirect, form_data
+from app.web.safety import safe_path
 from app.web.templating import render
 
 router = APIRouter()
@@ -84,10 +85,10 @@ def login_form(request: Request, next: str = "/"):
 def login(request: Request, form=Depends(form_data)):
     who = form.get("who") or "coordinator"
     passphrase = form.get("passphrase") or ""
-    nxt = form.get("next") or "/"
-    if not nxt.startswith("/") or nxt.startswith("//"):
-        nxt = "/"
-    key = f"login:{who}"
+    nxt = safe_path(form.get("next"))
+    # Per laptop as well as per account (S-2, D-083): wrong guesses on one laptop must not lock the
+    # coordinator out everywhere. Each laptop is still limited to 5 tries a minute.
+    key = f"login:{who}:{request.client.host if request.client else 'anon'}"
     wait = login_throttle.check(key)
     if wait:
         raise UserError(f"Too many wrong attempts. Wait {wait} seconds, then try again.", 429)

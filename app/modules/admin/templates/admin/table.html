@@ -22,7 +22,7 @@
     {% for c in t.cols[:6] %}<td>
       {% if c.type == 'bool' %}{{ 'Yes' if r[c.name] else 'No' }}
       {% elif c.type == 'ref' %}{{ refs[c.name].get(r[c.name], r[c.name]) }}
-      {% elif c.name == 'flag_svg' %}{{ r[c.name]|safe if r[c.name] else '' }}
+      {% elif c.name == 'flag_svg' %}{{ r[c.name]|safe_svg if r[c.name] else '' }}
       {% else %}{{ (r[c.name]|string)[:120] if r[c.name] is not none else '' }}{% endif %}
     </td>{% endfor %}
     <td><a href="/admin/t/{{ t.name }}/{{ r[pk] }}">Edit<span class="visually-hidden"> {{ r[t.cols[0].name] }} {{ r[t.cols[1].name] if t.cols|length > 1 else '' }}</span></a></td>

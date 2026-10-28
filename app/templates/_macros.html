@@ -14,7 +14,7 @@
 </details>
 {% endmacro %}
 
-{% macro flag(svg, name="") %}{% if svg %}<span role="img" aria-label="Flag of {{ name }}">{{ svg|safe }}</span>{% endif %}{% endmacro %}
+{% macro flag(svg, name="") %}{% set clean = svg|safe_svg %}{% if clean %}<span role="img" aria-label="Flag of {{ name }}">{{ clean }}</span>{% endif %}{% endmacro %}
 
 {% macro meter(py, pa, pn) %}
 <div class="meter" role="img" aria-label="Yes {{ (py*100)|round|int }}%, abstain {{ (pa*100)|round|int }}%, no {{ (pn*100)|round|int }}%"
