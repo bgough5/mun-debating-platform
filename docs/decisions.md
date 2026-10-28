@@ -313,3 +313,12 @@ Ben: the look was murky, earthy and dirty; it should feel clean, intuitive and e
 - **Machine label:** the summary now names the actual machine (OS and Python version) instead of always saying "cloud build container".
 - **Checked on Ben's laptop, Windows 10:** a 3-minute, 30-client run recorded memory every 30 s from the server's own lines (77.5 to 69.1 MB), with 0 lost events and p95 0.47 s.
 - **Still to do:** the 90-minute soak on the laptop.
+
+### D-082 Feature freeze; PR #1 merged into main — Decided (29 Oct 2026, Ben)
+Ten phases are built and tested, but no real teacher or student has used the platform yet, so that is now the biggest risk. From this point:
+- **Allowed:** fixes, security hardening, simplification, and changes that real use (Ben's walkthrough, staff practice runs, the trial) shows are needed.
+- **Not allowed:** new features.
+
+PR #1 (`platform-build`) is merged into `main` with a merge commit, so the phase tags and history stay intact. The merge is tagged `feature-freeze`.
+
+From here, work happens on short branches from `main`, one per piece of work, pushed and merged after tests pass. `platform-build` stays on GitHub as history and is not used for new work.
