@@ -25,6 +25,7 @@ import asyncio
 import bisect
 import json
 import os
+import platform
 import random
 import re
 import socket
@@ -263,6 +264,20 @@ def rss_mb(pid: int) -> float | None:
     return None
 
 
+def server_rss_mb(timing_log: Path) -> float | None:
+    """The server's own latest memory reading from its STATS lines (D-081). Used where /proc can't be read
+    (Windows, where the venv's python.exe is also a launcher whose PID isn't the server's)."""
+    try:
+        lines = timing_log.read_text().splitlines()
+    except OSError:
+        return None
+    for line in reversed(lines):
+        m = re.search(r" STATS rss_mb=([\d.]+)", line)
+        if m:
+            return float(m.group(1))
+    return None
+
+
 def slope_per_hour(pts):
     """Least-squares slope of (seconds, value) points, per hour."""
     if len(pts) < 2:
@@ -348,9 +363,14 @@ async def main(minutes: float, seed: int) -> dict:
     loops = [asyncio.create_task(chair_loop(chair, sid, db_path, rng, until))]
     loops += [asyncio.create_task(student_loop(c, sid, random.Random(seed + i))) for i, c in enumerate(studs)]
     mem = []
+    rss_source = "/proc"
     while time.time() < until:
         await asyncio.sleep(30)
-        mem.append((time.time(), rss_mb(proc.pid)))
+        reading = rss_mb(proc.pid)
+        if reading is None:
+            reading = server_rss_mb(OUT / "timing.log")
+            rss_source = "server STATS lines (D-081)"
+        mem.append((time.time(), reading))
         with open(OUT / "rss.jsonl", "a") as f:          # kept as it goes, so an interrupted run still has its samples
             f.write(json.dumps({"t": round(mem[-1][0] - start, 1), "rss_mb": mem[-1][1]}) + "\n")
     await asyncio.sleep(5)            # let the last updates arrive
@@ -408,9 +428,9 @@ async def main(minutes: float, seed: int) -> dict:
         "reconnects": sum(c.reconnects for c in clients), "errors": errors[:50], "error_count": len(errors),
         "client_transport_retries": len(transport_retries), "transport_retry_examples": transport_retries[:5],
         "server_rss_mb": {"first": mem[0][1] if mem else None, "last": mem[-1][1] if mem else None,
-                          "max": max([m for _, m in mem if m] or [0])},
+                          "max": max([m for _, m in mem if m] or [0]), "source": rss_source},
         "soak": soak_verdict(start, mem, windows),
-        "machine": "cloud build container (not Ben's laptop)",
+        "machine": f"{platform.system()} {platform.release()}, Python {platform.python_version()}",
         "http_s": {"n": len(slow), "p50": pct([x[0] for x in slow], 50), "p95": pct([x[0] for x in slow], 95),
                    "slowest": sorted(slow, reverse=True)[:8]},
     }

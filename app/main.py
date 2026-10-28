@@ -16,6 +16,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.config import Settings
 from app.datasets import open_dataset
 from app.errors import UserError
+from app.util import process_rss_mb
 from app.web.auth import CSRF_COOKIE, SESSION_COOKIE, NeedsLogin, session_for
 from app.web.http import FLASH_COOKIE, csrf_protect, ensure_csrf, read_flash
 from app.web.live import Hub
@@ -43,7 +44,9 @@ async def _stats_loop(app, path: str, every_s: float = 60.0):
         try:
             hub = app.state.hub
             subs = sum(len(v) for v in hub.subs.values())
-            line = (f"{time.time():.3f} STATS pooled={app.state.db.pooled_count()} threads={threading.active_count()} "
+            rss = process_rss_mb()
+            line = (f"{time.time():.3f} STATS rss_mb={rss if rss is None else round(rss, 1)} "
+                    f"pooled={app.state.db.pooled_count()} threads={threading.active_count()} "
                     f"session_cache={len(auth._SESSION_CACHE)} view_cache={len(chair_routes._VIEW_CACHE)} "
                     f"hub_channels={len(hub.subs)} hub_subs={subs} gc_objects={len(gc.get_objects())} "
                     f"throttle={len(auth.login_throttle.fails) + len(auth.join_throttle.fails)}")
