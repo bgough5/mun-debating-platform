@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb, empty_state %}
+{% block content %}
+{{ breadcrumb([("Model UN", "/mun") if staff else ("My page", "/me"), (com.name, "/mun/committees/" ~ com.id), ("Amendments", None)]) }}
+<h1>{{ icon("tracked") }} Amendments: {{ com.name }}</h1>
+<p class="lede">Every submitted amendment, shown as tracked changes against the current text: <ins class="diff-key">added words</ins> and <del class="diff-key">removed words</del>. An amendment needs its sponsors and {{ needed }} signatories before the chair can bring it to the floor. Signing lets it be debated; it doesn't commit your vote.</p>
+{% if live %}<p><a href="{{ '/chair/' ~ live if staff else '/live/' ~ live ~ '?tab=amendments' }}">{{ icon("committee") }} Back to the live session</a></p>{% endif %}
+<nav aria-label="Filter amendments"><ul class="tabs">
+{% for key, label in [('all','All'),('ready','Ready'),('submitted','Collecting signatures'),('floor','On the floor'),('adopted','Adopted'),('rejected','Rejected')] + ([('draft','Drafts')] if (mine or staff) else []) %}
+<li><a href="?show={{ key }}" {% if show == key %}aria-current="page"{% endif %}>{{ label }}</a></li>{% endfor %}</ul></nav>
+
+{% for a in items %}
+<article class="card" id="a{{ a.id }}" aria-labelledby="ah{{ a.id }}">
+  <h2 id="ah{{ a.id }}" class="h3">{{ a.id }}. {{ a.kind_label }} <span class="small muted">({{ a.resolution }})</span></h2>
+  <p><span class="badge {{ {'adopted':'st-yes','rejected':'st-no','floor':'st-unk'}.get(a.state, 'st-abs') }}">{{ a.state_label }}</span>
+    {% if a.sponsor_name %} Sponsor: {{ a.sponsor_name }}{% endif %}{% if a.supports|selectattr('kind','equalto','signatory')|list %} · Signed by {{ a.supports|selectattr('kind','equalto','signatory')|map(attribute='iso3')|join(', ') }}{% endif %}</p>
+  {% if a.stale %}<p class="small">{{ icon("warning") }} The clause has changed since this was written. The changes below compare with today's text.</p>{% endif %}
+  <p class="paragraph diff">{{ a.diff }}</p>
+  {% if a.rationale %}<p class="small"><strong>Why:</strong> {{ a.rationale }}</p>{% endif %}
+  {% set is_sponsor = mine and mine.id in a.sponsor_ids %}
+  {% if a.state == 'draft' and (is_sponsor or staff) %}
+  <details><summary>Edit the draft</summary>
+    <form method="post" action="/mun/amendments/{{ a.id }}/act" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="edit">
+      {% if a.kind != 'delete' %}<div class="field"><label for="et{{ a.id }}">Proposed text</label><textarea id="et{{ a.id }}" name="proposed_text" rows="4" maxlength="4000">{{ a.proposed_text }}</textarea></div>{% endif %}
+      <div class="field"><label for="er{{ a.id }}">Why (optional)</label><input id="er{{ a.id }}" type="text" name="rationale" value="{{ a.rationale }}" maxlength="1000"></div>
+      <button type="submit" class="secondary">Save the draft</button></form></details>
+  <form method="post" action="/mun/amendments/{{ a.id }}/act" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="submit"><button type="submit">Submit it: everyone will see it</button></form>
+  {% endif %}
+  {% if a.state in ('submitted', 'ready') and mine and not is_sponsor %}
+    {% if a.supports|selectattr('delegation_id','equalto',mine.id)|selectattr('kind','equalto','signatory')|list %}
+    <form method="post" action="/mun/amendments/{{ a.id }}/act" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="unsign"><button type="submit" class="secondary">Remove my signature</button></form>
+    {% else %}
+    <form method="post" action="/mun/amendments/{{ a.id }}/act" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="sign"><button type="submit" class="secondary">{{ icon("check") }} Sign it</button></form>
+    {% endif %}
+    {% if a.kind != 'delete' %}
+    <details><summary>Suggest an edit</summary>
+      <form method="post" action="/mun/amendments/{{ a.id }}/act" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="suggest">
+        <div class="field"><label for="sg{{ a.id }}">Your version of the text</label><textarea id="sg{{ a.id }}" name="proposed_text" rows="4" maxlength="4000">{{ a.proposed_text }}</textarea></div>
+        <div class="field"><label for="sn{{ a.id }}">Note to the sponsors (optional)</label><input id="sn{{ a.id }}" type="text" name="note" maxlength="300"></div>
+        <button type="submit" class="secondary">Send the suggestion</button></form></details>
+    {% endif %}
+  {% endif %}
+  {% if a.suggestions %}
+  <h3 class="h4">Suggested edits</h3>
+  <ul class="plain">{% for g in a.suggestions %}<li>
+    <p class="small"><strong>{{ g.country }}</strong> · {{ g.status }}{% if g.note %} · “{{ g.note }}”{% endif %}</p>
+    <p class="paragraph diff">{{ g.diff }}</p>
+    {% if g.status == 'pending' and (is_sponsor or staff) and a.state in ('submitted', 'ready') %}
+    <form method="post" action="/mun/amendments/{{ a.id }}/act" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="suggestion_id" value="{{ g.id }}"><input type="hidden" name="action" value="accept"><button type="submit">Accept<span class="visually-hidden"> the suggestion from {{ g.country }}</span></button></form>
+    <form method="post" action="/mun/amendments/{{ a.id }}/act" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="suggestion_id" value="{{ g.id }}"><input type="hidden" name="action" value="decline"><button type="submit" class="secondary">Decline<span class="visually-hidden"> the suggestion from {{ g.country }}</span></button></form>
+    {% elif g.status == 'pending' and mine and g.delegation_id == mine.id %}
+    <form method="post" action="/mun/amendments/{{ a.id }}/act" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="suggestion_id" value="{{ g.id }}"><input type="hidden" name="action" value="withdraw_suggestion"><button type="submit" class="secondary">Withdraw my suggestion</button></form>
+    {% endif %}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if a.state in ('draft', 'submitted', 'ready') and (is_sponsor or staff) %}
+  <form method="post" action="/mun/amendments/{{ a.id }}/act" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="withdraw"><button type="submit" class="link">Withdraw this amendment</button></form>
+  {% endif %}
+</article>
+{% else %}
+{{ empty_state("No amendments here yet.", "Propose one below: choose the clause, then write your change.", icon_name="amendment") }}
+{% endfor %}
+
+{% if mine or staff %}
+<section class="card" aria-labelledby="h-new"><h2 id="h-new">{{ icon("add") }} Propose an amendment</h2>
+{% if paras %}
+<form method="post" action="/mun/committees/{{ com.id }}/amendments" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="np">Clause</label><select id="np" name="paragraph_id">{% for p in paras %}<option value="{{ p.id }}">{{ p.title }}: {{ 'operative' if p.kind == 'operative' else 'preambular' }} clause {{ p.position }}: {{ p.text[:70] }}{% if p.text|length > 70 %}…{% endif %}</option>{% endfor %}</select></div>
+  <fieldset><legend>Change</legend>
+    <label class="checks"><input type="radio" name="kind" value="replace" checked> Change its wording</label>
+    <label class="checks"><input type="radio" name="kind" value="add"> Add a new clause after it</label>
+    <label class="checks"><input type="radio" name="kind" value="delete"> Delete it</label></fieldset>
+  <div class="field"><label for="ntx">Proposed text</label><textarea id="ntx" name="proposed_text" rows="4" maxlength="4000"></textarea>
+    <p class="hint">For a change, paste the clause and edit it; the board shows what you changed. Leave it empty to delete a clause.</p></div>
+  <div class="field"><label for="nrt">Why (optional)</label><input id="nrt" type="text" name="rationale" maxlength="1000"></div>
+  <div class="row"><button type="submit" class="secondary">Save as a draft</button>
+    <button type="submit" name="submit_now" value="1">Submit now</button></div>
+</form>
+{% else %}{{ empty_state("There's no draft resolution to amend yet.", "Your teacher adds one on the committee page.", icon_name="resolution") }}{% endif %}
+</section>
+{% endif %}
+{% endblock %}

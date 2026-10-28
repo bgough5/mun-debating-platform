@@ -1,0 +1,856 @@
+{
+ "meta": {
+  "title": "Combating Climate Change: Committing to Global Action",
+  "committee": "United Nations General Assembly",
+  "conference": "UNAA Victoria Model UN 2026",
+  "year": 2026
+ },
+ "tags": {
+  "cost_wealthy": "Imposes cost on wealthy states",
+  "curb_fossil": "Constrains fossil fuel production",
+  "binding": "Creates binding obligation",
+  "human_right": "Asserts a human right",
+  "agriculture": "Targets the agriculture sector",
+  "adapt_finance": "Provides adaptation / resilience finance",
+  "indigenous": "Concerns Indigenous rights",
+  "lifestyle": "Requires behavioural or lifestyle change",
+  "ecosystems": "Protects ecosystems",
+  "tech_transfer": "Demands technology transfer"
+ },
+ "archetypes": {
+  "FRONTLINE": {
+   "name": "Existential Frontline State",
+   "blurb": "Bears severe harm, contributed almost nothing to the cause. Argues from survival and, increasingly, from law.",
+   "affinity": {
+    "cost_wealthy": 2,
+    "curb_fossil": 2,
+    "binding": 2,
+    "human_right": 2,
+    "agriculture": 0,
+    "adapt_finance": 2,
+    "indigenous": 1,
+    "lifestyle": 0,
+    "ecosystems": 1,
+    "tech_transfer": 2
+   }
+  },
+  "EXTRACTIVE": {
+   "name": "Extractive Incumbent",
+   "blurb": "National economy tied to the activity being regulated. Wants soft verbs, long timelines, 'transition' not 'phase-out'.",
+   "affinity": {
+    "cost_wealthy": -1,
+    "curb_fossil": -2,
+    "binding": -2,
+    "human_right": -1,
+    "agriculture": 0,
+    "adapt_finance": -1,
+    "indigenous": 0,
+    "lifestyle": -1,
+    "ecosystems": 0,
+    "tech_transfer": -1
+   }
+  },
+  "DONOR": {
+   "name": "Industrialised Donor",
+   "blurb": "Wealthy and expected to pay. Backs ambition in principle, resists open-ended financial obligation.",
+   "affinity": {
+    "cost_wealthy": -1,
+    "curb_fossil": 1,
+    "binding": 0,
+    "human_right": 2,
+    "agriculture": 1,
+    "adapt_finance": 1,
+    "indigenous": 1,
+    "lifestyle": 1,
+    "ecosystems": 2,
+    "tech_transfer": 0
+   }
+  },
+  "EMERGING": {
+   "name": "Emerging Industrialiser",
+   "blurb": "Large and growing. High total output, low per-capita. Invokes differentiated responsibility and the right to develop.",
+   "affinity": {
+    "cost_wealthy": 2,
+    "curb_fossil": -1,
+    "binding": -1,
+    "human_right": 0,
+    "agriculture": -1,
+    "adapt_finance": 2,
+    "indigenous": 0,
+    "lifestyle": -1,
+    "ecosystems": 0,
+    "tech_transfer": 2
+   }
+  },
+  "REFORMER": {
+   "name": "Credible Reformer",
+   "blurb": "Mid-sized, punches above its weight through demonstrated results. Bridge-builder who offers its own model as a template.",
+   "affinity": {
+    "cost_wealthy": 1,
+    "curb_fossil": 2,
+    "binding": 1,
+    "human_right": 2,
+    "agriculture": 0,
+    "adapt_finance": 1,
+    "indigenous": 1,
+    "lifestyle": 1,
+    "ecosystems": 2,
+    "tech_transfer": 1
+   }
+  },
+  "DEVPRIORITY": {
+   "name": "Development-Priority State",
+   "blurb": "Capacity-constrained. Will back ambition only where it is financed. Sensitive about external accountability.",
+   "affinity": {
+    "cost_wealthy": 2,
+    "curb_fossil": 0,
+    "binding": -1,
+    "human_right": 1,
+    "agriculture": -1,
+    "adapt_finance": 2,
+    "indigenous": 0,
+    "lifestyle": -1,
+    "ecosystems": 1,
+    "tech_transfer": 2
+   }
+  },
+  "SOVEREIGNTY": {
+   "name": "Sovereignty Guardian",
+   "blurb": "Resists binding international obligation on principle, largely regardless of topic. Suspicious of rights framings and outside review.",
+   "affinity": {
+    "cost_wealthy": -2,
+    "curb_fossil": -1,
+    "binding": -2,
+    "human_right": -2,
+    "agriculture": -1,
+    "adapt_finance": -2,
+    "indigenous": -1,
+    "lifestyle": -1,
+    "ecosystems": -1,
+    "tech_transfer": -1
+   }
+  },
+  "BROKER": {
+   "name": "Regional Broker",
+   "blurb": "Has hosting or convening ambitions and needs the deal to land. Will trade substance for consensus.",
+   "affinity": {
+    "cost_wealthy": 0,
+    "curb_fossil": 0,
+    "binding": 0,
+    "human_right": 1,
+    "agriculture": 0,
+    "adapt_finance": 1,
+    "indigenous": 0,
+    "lifestyle": 0,
+    "ecosystems": 1,
+    "tech_transfer": 1
+   }
+  }
+ },
+ "clauses": [
+  {
+   "id": "2.1",
+   "verb": "Urges",
+   "text": "Urges all nations to commit to the goals and deadlines set by the Paris Climate Agreement and increase emission reduction targets to limit the rise in global temperatures to well below two degrees above pre-industrial levels.",
+   "tags": [
+    "binding",
+    "curb_fossil"
+   ]
+  },
+  {
+   "id": "2.2",
+   "verb": "Requests",
+   "text": "Requests that all wealthy industrialised nations invest heavily in research and technologies, including transfer of these technologies to developing countries, that boost renewable energy sources, and phase out their reliance on non-renewable energy sources.",
+   "tags": [
+    "cost_wealthy",
+    "curb_fossil",
+    "tech_transfer"
+   ]
+  },
+  {
+   "id": "2.3",
+   "verb": "Calls upon",
+   "text": "Calls upon all nations to protect their existing forest and invest heavily in reforestation, to improve the state of the world's forests and help absorb harmful carbon dioxide levels.",
+   "tags": [
+    "ecosystems"
+   ]
+  },
+  {
+   "id": "2.4",
+   "verb": "Invites",
+   "text": "Invites States to consider implementing sustainable agricultural practices, mitigating the agriculture sector's negative impact on biodiversity, water resources and climate, and holding the sector accountable.",
+   "tags": [
+    "agriculture",
+    "ecosystems"
+   ]
+  },
+  {
+   "id": "2.5",
+   "verb": "Encourages",
+   "text": "Encourages all States, together with civil society and the private sector, to commit to gradually moving towards a greater reliance on plant-based diets for their citizens.",
+   "tags": [
+    "lifestyle",
+    "agriculture"
+   ]
+  },
+  {
+   "id": "2.6",
+   "verb": "Suggests",
+   "text": "Suggests all wealthy developed States tackle the causes of climate change and increase their financial support to the Green Climate Fund to promote adaptation, resilience and carbon-neutral development in developing countries.",
+   "tags": [
+    "cost_wealthy",
+    "adapt_finance"
+   ]
+  },
+  {
+   "id": "2.7",
+   "verb": "Further reminds",
+   "text": "Further reminds States to provide decent employment and green jobs when transitioning away from fossil fuel economies, including eliminating inefficient fossil fuel subsidies.",
+   "tags": [
+    "curb_fossil",
+    "cost_wealthy"
+   ]
+  },
+  {
+   "id": "2.8",
+   "verb": "Appeals to",
+   "text": "Appeals to all States to consider ways of increasing the representation of Indigenous peoples when negotiating and implementing climate action agreements.",
+   "tags": [
+    "indigenous"
+   ]
+  },
+  {
+   "id": "2.9",
+   "verb": "Recommends",
+   "text": "Recommends Member States recognise the right to a clean, healthy and sustainable environment as a human right under the principles of international law.",
+   "tags": [
+    "human_right",
+    "binding"
+   ]
+  }
+ ],
+ "amendments": [
+  {
+   "id": "strengthen",
+   "label": "Strengthen the verb",
+   "detail": "Replace the soft verb with “Demands”, creating a clear obligation.",
+   "add": [
+    "binding"
+   ],
+   "remove": [],
+   "textOp": {
+    "type": "replaceVerb",
+    "with": "Demands"
+   }
+  },
+  {
+   "id": "soften",
+   "label": "Soften the verb",
+   "detail": "Downgrade to “Invites States to consider”, removing any sense of obligation.",
+   "add": [],
+   "remove": [
+    "binding"
+   ],
+   "textOp": {
+    "type": "replaceVerb",
+    "with": "Invites States to consider"
+   }
+  },
+  {
+   "id": "finance",
+   "label": "Attach finance to it",
+   "detail": "Require wealthy States to fund implementation in developing countries.",
+   "add": [
+    "adapt_finance",
+    "cost_wealthy"
+   ],
+   "remove": [],
+   "textOp": {
+    "type": "append",
+    "text": " Wealthy industrialised States shall bear the costs of implementation in developing countries."
+   }
+  },
+  {
+   "id": "exempt",
+   "label": "Exempt developing States",
+   "detail": "Limit the obligation to developed States only.",
+   "add": [],
+   "remove": [
+    "cost_wealthy"
+   ],
+   "textOp": {
+    "type": "append",
+    "text": " This obligation applies to developed States only."
+   }
+  },
+  {
+   "id": "rights",
+   "label": "Add a rights framing",
+   "detail": "Ground the clause in the right to a clean, healthy and sustainable environment.",
+   "add": [
+    "human_right"
+   ],
+   "remove": [],
+   "textOp": {
+    "type": "append",
+    "text": " This is grounded in the right to a clean, healthy and sustainable environment."
+   }
+  },
+  {
+   "id": "review",
+   "label": "Add a review mechanism",
+   "detail": "Require States to report progress for international scrutiny every two years.",
+   "add": [
+    "binding"
+   ],
+   "remove": [],
+   "textOp": {
+    "type": "append",
+    "text": " States shall report on progress under this clause to the Assembly every two years."
+   }
+  }
+ ],
+ "countries": [
+  {
+   "n": "Australia",
+   "g": "Asia-Pacific",
+   "w": {
+    "DONOR": 45,
+    "EXTRACTIVE": 40,
+    "BROKER": 15
+   },
+   "fact": "Holds the COP31 presidency of negotiations in 2026, while remaining one of the world's largest coal and gas exporters."
+  },
+  {
+   "n": "Barbados",
+   "g": "Americas",
+   "w": {
+    "FRONTLINE": 70,
+    "DEVPRIORITY": 30
+   },
+   "fact": "Author of the Bridgetown Initiative on reforming climate finance."
+  },
+  {
+   "n": "Brazil",
+   "g": "Americas",
+   "w": {
+    "EMERGING": 60,
+    "EXTRACTIVE": 20,
+    "BROKER": 20
+   },
+   "fact": "Hosted COP30 in Belém in 2025; holds most of the Amazon basin."
+  },
+  {
+   "n": "Canada",
+   "g": "Americas",
+   "w": {
+    "DONOR": 55,
+    "EXTRACTIVE": 45
+   },
+   "fact": "Combines strong climate rhetoric with major oil sands production."
+  },
+  {
+   "n": "Central African Republic",
+   "g": "Africa",
+   "w": {
+    "DEVPRIORITY": 100
+   },
+   "fact": "Among the lowest emitters on earth, with minimal capacity to adapt."
+  },
+  {
+   "n": "Chile",
+   "g": "Americas",
+   "w": {
+    "REFORMER": 60,
+    "EMERGING": 25,
+    "DEVPRIORITY": 15
+   },
+   "fact": "Rapid solar build-out in the Atacama; a major supplier of transition minerals."
+  },
+  {
+   "n": "China",
+   "g": "Asia-Pacific",
+   "w": {
+    "EMERGING": 55,
+    "SOVEREIGNTY": 30,
+    "EXTRACTIVE": 15
+   },
+   "fact": "The largest total emitter and simultaneously the largest installer of renewable capacity."
+  },
+  {
+   "n": "Costa Rica",
+   "g": "Americas",
+   "w": {
+    "REFORMER": 75,
+    "DEVPRIORITY": 25
+   },
+   "fact": "Co-authored the 2022 UNGA resolution recognising the right to a healthy environment; ~99% renewable electricity."
+  },
+  {
+   "n": "Denmark",
+   "g": "Europe",
+   "w": {
+    "DONOR": 55,
+    "REFORMER": 45
+   },
+   "fact": "Co-founded the Beyond Oil and Gas Alliance while phasing out North Sea extraction."
+  },
+  {
+   "n": "Egypt",
+   "g": "Africa",
+   "w": {
+    "BROKER": 40,
+    "DEVPRIORITY": 35,
+    "EXTRACTIVE": 25
+   },
+   "fact": "Hosted COP27, where the Loss and Damage Fund was agreed."
+  },
+  {
+   "n": "Fiji",
+   "g": "Asia-Pacific",
+   "w": {
+    "FRONTLINE": 75,
+    "DEVPRIORITY": 25
+   },
+   "fact": "First Pacific state to preside over a COP; already relocating coastal villages."
+  },
+  {
+   "n": "France",
+   "g": "Europe",
+   "w": {
+    "DONOR": 75,
+    "REFORMER": 15,
+    "SOVEREIGNTY": 10
+   },
+   "fact": "Draws roughly 70% of its electricity from nuclear power — which clause 2.2 would phase out."
+  },
+  {
+   "n": "Gambia",
+   "g": "Africa",
+   "w": {
+    "DEVPRIORITY": 85,
+    "FRONTLINE": 15
+   },
+   "fact": "One of very few states whose climate plan has been rated Paris-compatible."
+  },
+  {
+   "n": "Germany",
+   "g": "Europe",
+   "w": {
+    "DONOR": 70,
+    "REFORMER": 30
+   },
+   "fact": "A leading contributor to the Green Climate Fund; exited coal power on an accelerated timetable."
+  },
+  {
+   "n": "Greece",
+   "g": "Europe",
+   "w": {
+    "DONOR": 70,
+    "BROKER": 30
+   },
+   "fact": "Devastated by the 2023 wildfires; now a Mediterranean climate-adaptation advocate."
+  },
+  {
+   "n": "India",
+   "g": "Asia-Pacific",
+   "w": {
+    "EMERGING": 65,
+    "DEVPRIORITY": 20,
+    "SOVEREIGNTY": 15
+   },
+   "fact": "Secured the change from 'phase out' to 'phase down' coal at COP26."
+  },
+  {
+   "n": "Japan",
+   "g": "Asia-Pacific",
+   "w": {
+    "DONOR": 75,
+    "EXTRACTIVE": 25
+   },
+   "fact": "Heavily import-dependent for energy; a major financier of overseas gas projects."
+  },
+  {
+   "n": "Kenya",
+   "g": "Africa",
+   "w": {
+    "DEVPRIORITY": 65,
+    "REFORMER": 35
+   },
+   "fact": "Over 80% renewable electricity, largely geothermal; hosted the Africa Climate Summit."
+  },
+  {
+   "n": "Madagascar",
+   "g": "Africa",
+   "w": {
+    "DEVPRIORITY": 80,
+    "FRONTLINE": 20
+   },
+   "fact": "Suffered what was described as the world's first climate-driven famine conditions in the south."
+  },
+  {
+   "n": "Mexico",
+   "g": "Americas",
+   "w": {
+    "EMERGING": 50,
+    "DONOR": 25,
+    "BROKER": 25
+   },
+   "fact": "A major oil producer that has expanded state refining capacity."
+  },
+  {
+   "n": "Mongolia",
+   "g": "Asia-Pacific",
+   "w": {
+    "DEVPRIORITY": 55,
+    "EXTRACTIVE": 45
+   },
+   "fact": "Coal-dependent economy; severe dzud winters are destroying herding livelihoods."
+  },
+  {
+   "n": "Morocco",
+   "g": "Africa",
+   "w": {
+    "REFORMER": 45,
+    "DEVPRIORITY": 30,
+    "BROKER": 25
+   },
+   "fact": "Home to the Noor Ouarzazate complex, among the largest concentrated solar plants in the world."
+  },
+  {
+   "n": "Philippines",
+   "g": "Asia-Pacific",
+   "w": {
+    "FRONTLINE": 50,
+    "DEVPRIORITY": 30,
+    "EMERGING": 20
+   },
+   "fact": "Struck by some of the most intense typhoons ever recorded; chaired the Climate Vulnerable Forum."
+  },
+  {
+   "n": "Saudi Arabia",
+   "g": "Africa/M.East",
+   "w": {
+    "EXTRACTIVE": 70,
+    "SOVEREIGNTY": 30
+   },
+   "fact": "Has consistently resisted explicit fossil fuel phase-out language in COP texts."
+  },
+  {
+   "n": "South Africa",
+   "g": "Africa",
+   "w": {
+    "EMERGING": 55,
+    "EXTRACTIVE": 25,
+    "DEVPRIORITY": 20
+   },
+   "fact": "Around 80% coal-powered; pilot recipient of a Just Energy Transition Partnership."
+  },
+  {
+   "n": "Spain",
+   "g": "Europe",
+   "w": {
+    "DONOR": 70,
+    "REFORMER": 30
+   },
+   "fact": "Facing severe drought and desertification across its southern regions."
+  },
+  {
+   "n": "Türkiye",
+   "g": "Europe",
+   "w": {
+    "BROKER": 50,
+    "EMERGING": 30,
+    "SOVEREIGNTY": 20
+   },
+   "fact": "Hosts COP31 in November 2026 — and needs the conference to be seen to succeed."
+  },
+  {
+   "n": "Tuvalu",
+   "g": "Asia-Pacific",
+   "w": {
+    "FRONTLINE": 90,
+    "DEVPRIORITY": 10
+   },
+   "fact": "Building a digital replica of itself to preserve statehood if the territory becomes uninhabitable."
+  },
+  {
+   "n": "United Kingdom",
+   "g": "Europe",
+   "w": {
+    "DONOR": 75,
+    "REFORMER": 25
+   },
+   "fact": "Closed its last coal-fired power station in 2024."
+  },
+  {
+   "n": "United States of America",
+   "g": "Americas",
+   "w": {
+    "SOVEREIGNTY": 65,
+    "EXTRACTIVE": 25,
+    "DONOR": 10
+   },
+   "fact": "Withdrew from the Paris Agreement for a second time in January 2026, and from the UNFCCC in February 2026."
+  },
+  {
+   "n": "Vanuatu",
+   "g": "Asia-Pacific",
+   "w": {
+    "FRONTLINE": 85,
+    "DEVPRIORITY": 15
+   },
+   "fact": "Led the campaign that produced the ICJ's July 2025 advisory opinion on states' climate obligations."
+  }
+ ],
+ "overrides": {
+  "United States of America|2.1": {
+   "s": -2,
+   "line": "The United States has withdrawn from the Paris Agreement and cannot be bound by its deadlines."
+  },
+  "United States of America|2.9": {
+   "s": -2,
+   "line": "The United States does not accept the creation of new human rights through General Assembly resolutions."
+  },
+  "United States of America|2.6": {
+   "s": -2,
+   "line": "The United States will not accept open-ended financial obligations to the Green Climate Fund."
+  },
+  "Costa Rica|2.9": {
+   "s": 2,
+   "line": "Costa Rica co-authored this very language in 2022. We do not merely support this clause — we wrote it."
+  },
+  "Costa Rica|2.3": {
+   "s": 2,
+   "line": "Our Payments for Environmental Services scheme took forest cover from a quarter of our territory to over half. This works."
+  },
+  "Costa Rica|2.4": {
+   "s": 0,
+   "line": "Costa Rica supports accountability, but our pineapple and banana growers require transition finance, not blunt condemnation."
+  },
+  "Vanuatu|2.6": {
+   "s": 1,
+   "line": "Adaptation finance is welcome, but it is not compensation. Where is loss and damage in this clause?"
+  },
+  "Vanuatu|2.1": {
+   "s": 1,
+   "line": "‘Well below two degrees’ is a retreat. The International Court of Justice has confirmed our obligations run further than this."
+  },
+  "France|2.2": {
+   "s": -1,
+   "line": "France cannot accept nuclear energy being grouped with coal and oil. Nuclear power emits no greenhouse gases."
+  },
+  "Saudi Arabia|2.2": {
+   "s": -2,
+   "line": "The Kingdom rejects any text singling out particular energy sources for elimination."
+  },
+  "Australia|2.2": {
+   "s": -1,
+   "line": "Australia supports the transition, but as COP31 president we must bring resource economies with us, not corner them."
+  },
+  "Türkiye|2.1": {
+   "s": 1,
+   "line": "As host of COP31, Türkiye needs this Assembly to arrive in November with momentum, not division."
+  },
+  "India|2.2": {
+   "s": 1,
+   "line": "India welcomes technology transfer — but developed nations must fund it, not merely request it of themselves."
+  },
+  "Tuvalu|2.1": {
+   "s": 2,
+   "line": "Two degrees is not a target for Tuvalu. It is a description of our disappearance."
+  },
+  "Brazil|2.3": {
+   "s": 2,
+   "line": "Brazil accepts this responsibility, and expects the world to pay for the forest it asks us to keep standing."
+  },
+  "China|2.2": {
+   "s": 0,
+   "line": "China notes that it manufactures the very technologies this clause asks to be transferred."
+  }
+ },
+ "lines": {
+  "FRONTLINE": {
+   "0": "We cannot celebrate a clause this weak.",
+   "1": "We support this, though it asks too little too slowly.",
+   "2": "This is the minimum our survival requires.",
+   "-1": "This language fails the states already losing territory.",
+   "-2": "We reject text that treats our disappearance as negotiable."
+  },
+  "EXTRACTIVE": {
+   "0": "We reserve our position pending clarification.",
+   "1": "We will not oppose language framed as transition rather than prohibition.",
+   "2": "We can accept this, as it imposes no obligation on production.",
+   "-1": "This clause threatens the livelihoods of our energy sector.",
+   "-2": "This is an attack on our economy and we will oppose it outright."
+  },
+  "DONOR": {
+   "0": "We support the intent but question the mechanism.",
+   "1": "We support this, consistent with our existing commitments.",
+   "2": "This reflects the ambition we have long advocated.",
+   "-1": "We cannot accept an open-ended call on our treasury.",
+   "-2": "This asks our taxpayers to underwrite obligations without limit."
+  },
+  "EMERGING": {
+   "0": "Our position depends entirely on who is being asked to pay.",
+   "1": "We support this, provided developed nations move first.",
+   "2": "This properly reflects common but differentiated responsibility.",
+   "-1": "This constrains our development without financing our alternative.",
+   "-2": "We will not accept a ceiling on growth the industrialised world never faced."
+  },
+  "REFORMER": {
+   "0": "We would prefer implementation detail before committing.",
+   "1": "We support this and can offer our own experience as a model.",
+   "2": "We have done this at home and we commend it to the Assembly.",
+   "-1": "We support the goal but this drafting will not achieve it.",
+   "-2": "We cannot support text this poorly constructed."
+  },
+  "DEVPRIORITY": {
+   "0": "We cannot commit to what we cannot afford.",
+   "1": "We support this if the means of implementation follow.",
+   "2": "With finance attached, we support this wholeheartedly.",
+   "-1": "This asks of us what wealthier states will not do themselves.",
+   "-2": "We reject obligations imposed without the capacity to meet them."
+  },
+  "SOVEREIGNTY": {
+   "0": "We note this clause without endorsing it.",
+   "1": "We can live with language this permissive.",
+   "2": "We accept this only because it binds no one.",
+   "-1": "This encroaches on matters properly decided nationally.",
+   "-2": "We reject this as an infringement of national sovereignty."
+  },
+  "BROKER": {
+   "0": "We would counsel compromise before this divides the room.",
+   "1": "We support this as a basis for consensus.",
+   "2": "This is text the whole Assembly can rally behind.",
+   "-1": "This will cost us votes we cannot afford to lose.",
+   "-2": "Pressing this will fracture the Assembly."
+  }
+ },
+ "flags": {
+  "Australia": {
+   "code": "au",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#00247D\"/><rect width=\"10\" height=\"7\" fill=\"#00247D\"/><path d=\"M0 0L10 7M10 0L0 7\" stroke=\"#fff\" stroke-width=\"1.2\"/><path d=\"M0 0L10 7M10 0L0 7\" stroke=\"#CF142B\" stroke-width=\"0.5\"/><rect x=\"4.1\" y=\"0\" width=\"1.8\" height=\"7\" fill=\"#fff\"/><rect x=\"0\" y=\"2.9\" width=\"10\" height=\"1.8\" fill=\"#fff\"/><rect x=\"4.5\" y=\"0\" width=\"1\" height=\"7\" fill=\"#CF142B\"/><rect x=\"0\" y=\"3.3\" width=\"10\" height=\"1\" fill=\"#CF142B\"/>\n      <circle cx=\"18\" cy=\"12\" r=\"1.1\" fill=\"#fff\"/>\n      <circle cx=\"21\" cy=\"6.5\" r=\"0.8\" fill=\"#fff\"/>\n      <circle cx=\"15\" cy=\"8.5\" r=\"0.8\" fill=\"#fff\"/>\n      <circle cx=\"19.5\" cy=\"14.5\" r=\"0.8\" fill=\"#fff\"/>\n      <circle cx=\"22\" cy=\"10.5\" r=\"0.6\" fill=\"#fff\"/></svg>"
+  },
+  "Barbados": {
+   "code": "bb",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"8\" height=\"16\" fill=\"#00267F\"/><rect x=\"8\" width=\"8\" height=\"16\" fill=\"#FFC726\"/><rect x=\"16\" width=\"8\" height=\"16\" fill=\"#00267F\"/>\n      <path d=\"M12 3v10M10.5 13h3M9.5 15h5\" stroke=\"#000\" stroke-width=\"1\"/></svg>"
+  },
+  "Brazil": {
+   "code": "br",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#009739\"/>\n      <path d=\"M12 2 L22 8 L12 14 L2 8 Z\" fill=\"#FEDD00\"/>\n      <circle cx=\"12\" cy=\"8\" r=\"3.2\" fill=\"#012169\"/>\n      <path d=\"M8.8 8a3.2 3.2 0 0 1 6.4 0\" stroke=\"#fff\" stroke-width=\"0.5\" fill=\"none\"/></svg>"
+  },
+  "Canada": {
+   "code": "ca",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#fff\"/><rect width=\"6\" height=\"16\" fill=\"#D80621\"/><rect x=\"18\" width=\"6\" height=\"16\" fill=\"#D80621\"/>\n      <path d=\"M12 4l1 2.4 2.4-1-0.6 2.4 2.2 0.6-1.8 1.6 1 2.2-2.4-0.4 0.2 2.4-1.6-1.6-1.6 1.6 0.2-2.4-2.4 0.4 1-2.2-1.8-1.6 2.2-0.6-0.6-2.4 2.4 1z\" fill=\"#D80621\"/></svg>"
+  },
+  "Central African Republic": {
+   "code": "cf",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"4\" fill=\"#003082\"/><rect y=\"4\" width=\"24\" height=\"4\" fill=\"#fff\"/><rect y=\"8\" width=\"24\" height=\"4\" fill=\"#289728\"/><rect y=\"12\" width=\"24\" height=\"4\" fill=\"#FFCE00\"/>\n      <rect x=\"10.8\" width=\"2.4\" height=\"16\" fill=\"#D21034\"/>\n      <path d=\"M3 1.2l0.5 1.4h1.5l-1.2 0.9 0.5 1.4-1.3-0.9-1.3 0.9 0.5-1.4-1.2-0.9h1.5z\" fill=\"#FFCE00\"/></svg>"
+  },
+  "Chile": {
+   "code": "cl",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"8\" fill=\"#fff\"/><rect y=\"8\" width=\"24\" height=\"8\" fill=\"#D52B1E\"/>\n      <rect width=\"8\" height=\"8\" fill=\"#0039A6\"/>\n      <path d=\"M4 2.4l0.6 1.8h1.9l-1.5 1.1 0.6 1.8-1.6-1.1-1.6 1.1 0.6-1.8-1.5-1.1h1.9z\" fill=\"#fff\"/></svg>"
+  },
+  "China": {
+   "code": "cn",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#DE2910\"/>\n      <path d=\"M5 3l0.7 2.1h2.2l-1.8 1.3 0.7 2.1L5 7.2 3.2 8.5l0.7-2.1L2.1 5.1h2.2z\" fill=\"#FFDE00\"/>\n      <circle cx=\"9.5\" cy=\"2\" r=\"0.6\" fill=\"#FFDE00\"/><circle cx=\"11\" cy=\"4\" r=\"0.6\" fill=\"#FFDE00\"/>\n      <circle cx=\"11\" cy=\"6.5\" r=\"0.6\" fill=\"#FFDE00\"/><circle cx=\"9.5\" cy=\"8.5\" r=\"0.6\" fill=\"#FFDE00\"/></svg>"
+  },
+  "Costa Rica": {
+   "code": "cr",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#002B7F\"/><rect y=\"2.3\" width=\"24\" height=\"11.4\" fill=\"#fff\"/><rect y=\"4.6\" width=\"24\" height=\"6.8\" fill=\"#CE1126\"/></svg>"
+  },
+  "Denmark": {
+   "code": "dk",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#C60C30\"/><rect x=\"8\" width=\"2.4\" height=\"16\" fill=\"#fff\"/><rect y=\"7\" width=\"24\" height=\"2.4\" fill=\"#fff\"/></svg>"
+  },
+  "Egypt": {
+   "code": "eg",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"5.33\" fill=\"#CE1126\"/><rect y=\"5.33\" width=\"24\" height=\"5.33\" fill=\"#fff\"/><rect y=\"10.66\" width=\"24\" height=\"5.34\" fill=\"#000\"/>\n      <circle cx=\"12\" cy=\"8\" r=\"1.8\" fill=\"#C09300\"/></svg>"
+  },
+  "Fiji": {
+   "code": "fj",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#68BFE5\"/><rect width=\"10\" height=\"7\" fill=\"#00247D\"/><path d=\"M0 0L10 7M10 0L0 7\" stroke=\"#fff\" stroke-width=\"1.2\"/><path d=\"M0 0L10 7M10 0L0 7\" stroke=\"#CF142B\" stroke-width=\"0.5\"/><rect x=\"4.1\" y=\"0\" width=\"1.8\" height=\"7\" fill=\"#fff\"/><rect x=\"0\" y=\"2.9\" width=\"10\" height=\"1.8\" fill=\"#fff\"/><rect x=\"4.5\" y=\"0\" width=\"1\" height=\"7\" fill=\"#CF142B\"/><rect x=\"0\" y=\"3.3\" width=\"10\" height=\"1\" fill=\"#CF142B\"/>\n      <path d=\"M17 8l3-2 3 2-1 3h-4z\" fill=\"#fff\" stroke=\"#002868\" stroke-width=\"0.4\"/></svg>"
+  },
+  "France": {
+   "code": "fr",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"8\" height=\"16\" fill=\"#0055A4\"/><rect x=\"8\" width=\"8\" height=\"16\" fill=\"#fff\"/><rect x=\"16\" width=\"8\" height=\"16\" fill=\"#EF4135\"/></svg>"
+  },
+  "Gambia": {
+   "code": "gm",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#CE1126\"/><rect y=\"5.5\" width=\"24\" height=\"5\" fill=\"#fff\"/><rect y=\"6\" width=\"24\" height=\"4\" fill=\"#0C1C8C\"/><rect y=\"11\" width=\"24\" height=\"5\" fill=\"#3A7728\"/></svg>"
+  },
+  "Germany": {
+   "code": "de",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"5.33\" fill=\"#000\"/><rect y=\"5.33\" width=\"24\" height=\"5.33\" fill=\"#DD0000\"/><rect y=\"10.66\" width=\"24\" height=\"5.34\" fill=\"#FFCE00\"/></svg>"
+  },
+  "Greece": {
+   "code": "gr",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#0D5EAF\"/>\n      <rect y=\"1.6\" width=\"24\" height=\"1.6\" fill=\"#fff\"/><rect y=\"4.800000000000001\" width=\"24\" height=\"1.6\" fill=\"#fff\"/><rect y=\"8\" width=\"24\" height=\"1.6\" fill=\"#fff\"/><rect y=\"11.200000000000001\" width=\"24\" height=\"1.6\" fill=\"#fff\"/><rect y=\"14.4\" width=\"24\" height=\"1.6\" fill=\"#fff\"/>\n      <rect width=\"9\" height=\"9\" fill=\"#0D5EAF\"/><rect x=\"3.5\" width=\"2\" height=\"9\" fill=\"#fff\"/><rect y=\"3.5\" width=\"9\" height=\"2\" fill=\"#fff\"/></svg>"
+  },
+  "India": {
+   "code": "in",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"5.33\" fill=\"#FF9933\"/><rect y=\"5.33\" width=\"24\" height=\"5.33\" fill=\"#fff\"/><rect y=\"10.66\" width=\"24\" height=\"5.34\" fill=\"#138808\"/>\n      <circle cx=\"12\" cy=\"8\" r=\"2\" fill=\"none\" stroke=\"#000080\" stroke-width=\"0.5\"/><circle cx=\"12\" cy=\"8\" r=\"0.4\" fill=\"#000080\"/></svg>"
+  },
+  "Japan": {
+   "code": "jp",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#fff\"/><circle cx=\"12\" cy=\"8\" r=\"4.6\" fill=\"#BC002D\"/></svg>"
+  },
+  "Kenya": {
+   "code": "ke",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"4.5\" fill=\"#000\"/><rect y=\"4.5\" width=\"24\" height=\"1\" fill=\"#fff\"/><rect y=\"5.5\" width=\"24\" height=\"5\" fill=\"#BB0000\"/><rect y=\"10.5\" width=\"24\" height=\"1\" fill=\"#fff\"/><rect y=\"11.5\" width=\"24\" height=\"4.5\" fill=\"#006600\"/>\n      <path d=\"M12 5.5l2.4 1.4v2.6l-2.4 1.4-2.4-1.4V6.9z\" fill=\"#BB0000\" stroke=\"#fff\" stroke-width=\"0.3\"/></svg>"
+  },
+  "Madagascar": {
+   "code": "mg",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"8\" height=\"16\" fill=\"#fff\"/><rect x=\"8\" width=\"16\" height=\"8\" fill=\"#FC3D32\"/><rect x=\"8\" y=\"8\" width=\"16\" height=\"8\" fill=\"#007E3A\"/></svg>"
+  },
+  "Mexico": {
+   "code": "mx",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"8\" height=\"16\" fill=\"#006847\"/><rect x=\"8\" width=\"8\" height=\"16\" fill=\"#fff\"/><rect x=\"16\" width=\"8\" height=\"16\" fill=\"#CE1126\"/>\n      <circle cx=\"12\" cy=\"8\" r=\"1.6\" fill=\"#8B5E3C\"/></svg>"
+  },
+  "Mongolia": {
+   "code": "mn",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"6\" height=\"16\" fill=\"#C4272F\"/><rect x=\"6\" width=\"12\" height=\"16\" fill=\"#015197\"/><rect x=\"18\" width=\"6\" height=\"16\" fill=\"#C4272F\"/>\n      <path d=\"M3 3v10M2 4.5h2M2 11.5h2\" stroke=\"#F9CF02\" stroke-width=\"0.8\" fill=\"none\"/></svg>"
+  },
+  "Morocco": {
+   "code": "ma",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#C1272D\"/>\n      <path d=\"M12 5l0.9 2.8h3l-2.4 1.8 0.9 2.8-2.4-1.8-2.4 1.8 0.9-2.8-2.4-1.8h3z\" fill=\"none\" stroke=\"#006233\" stroke-width=\"0.7\"/></svg>"
+  },
+  "Philippines": {
+   "code": "ph",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"8\" fill=\"#0038A8\"/><rect y=\"8\" width=\"24\" height=\"8\" fill=\"#CE1126\"/>\n      <path d=\"M0 0L9 8L0 16Z\" fill=\"#fff\"/>\n      <circle cx=\"3\" cy=\"8\" r=\"1.5\" fill=\"#FCD116\"/></svg>"
+  },
+  "Saudi Arabia": {
+   "code": "sa",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#006C35\"/>\n      <rect x=\"4\" y=\"10.5\" width=\"15\" height=\"1\" fill=\"#fff\"/><path d=\"M4 10.5l-1.4 0.5 1.4 0.5z\" fill=\"#fff\"/></svg>"
+  },
+  "South Africa": {
+   "code": "za",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M0 0H24V16H0Z\" fill=\"#DE3831\"/>\n      <path d=\"M0 0H24V6.4H0Z\" fill=\"#002395\"/>\n      <path d=\"M0 0L10 8L0 16Z\" fill=\"#000\" stroke=\"#FFB612\" stroke-width=\"1.2\"/>\n      <path d=\"M0 3.2L7 8L0 12.8Z\" fill=\"#fff\"/>\n      <path d=\"M0 4.8L5 8L0 11.2Z\" fill=\"#007A4D\"/></svg>"
+  },
+  "Spain": {
+   "code": "es",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#AA151B\"/><rect y=\"4\" width=\"24\" height=\"8\" fill=\"#F1BF00\"/></svg>"
+  },
+  "Türkiye": {
+   "code": "tr",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#E30A17\"/>\n      <circle cx=\"10\" cy=\"8\" r=\"4\" fill=\"#fff\"/><circle cx=\"11.3\" cy=\"8\" r=\"3.3\" fill=\"#E30A17\"/>\n      <path d=\"M15 8l0.7 2.1h2.2l-1.8 1.3 0.7 2.1-1.8-1.3-1.8 1.3 0.7-2.1-1.8-1.3h2.2z\" fill=\"#fff\"/></svg>"
+  },
+  "Tuvalu": {
+   "code": "tv",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#38A1DB\"/><rect width=\"10\" height=\"7\" fill=\"#00247D\"/><path d=\"M0 0L10 7M10 0L0 7\" stroke=\"#fff\" stroke-width=\"1.2\"/><path d=\"M0 0L10 7M10 0L0 7\" stroke=\"#CF142B\" stroke-width=\"0.5\"/><rect x=\"4.1\" y=\"0\" width=\"1.8\" height=\"7\" fill=\"#fff\"/><rect x=\"0\" y=\"2.9\" width=\"10\" height=\"1.8\" fill=\"#fff\"/><rect x=\"4.5\" y=\"0\" width=\"1\" height=\"7\" fill=\"#CF142B\"/><rect x=\"0\" y=\"3.3\" width=\"10\" height=\"1\" fill=\"#CF142B\"/>\n      <circle cx=\"15\" cy=\"4\" r=\"0.6\" fill=\"#FFCE00\"/><circle cx=\"18\" cy=\"3\" r=\"0.6\" fill=\"#FFCE00\"/><circle cx=\"21\" cy=\"5\" r=\"0.6\" fill=\"#FFCE00\"/><circle cx=\"16\" cy=\"8\" r=\"0.6\" fill=\"#FFCE00\"/><circle cx=\"19\" cy=\"7\" r=\"0.6\" fill=\"#FFCE00\"/><circle cx=\"22\" cy=\"9\" r=\"0.6\" fill=\"#FFCE00\"/><circle cx=\"15\" cy=\"11\" r=\"0.6\" fill=\"#FFCE00\"/><circle cx=\"18\" cy=\"12\" r=\"0.6\" fill=\"#FFCE00\"/></svg>"
+  },
+  "United Kingdom": {
+   "code": "gb",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#00247D\"/>\n      <path d=\"M0 0L24 16M24 0L0 16\" stroke=\"#fff\" stroke-width=\"2.2\"/>\n      <path d=\"M0 0L24 16M24 0L0 16\" stroke=\"#CF142B\" stroke-width=\"0.9\"/>\n      <rect x=\"9.6\" width=\"4.8\" height=\"16\" fill=\"#fff\"/><rect y=\"5.6\" width=\"24\" height=\"4.8\" fill=\"#fff\"/>\n      <rect x=\"10.6\" width=\"2.8\" height=\"16\" fill=\"#CF142B\"/><rect y=\"6.6\" width=\"24\" height=\"2.8\" fill=\"#CF142B\"/></svg>"
+  },
+  "United States of America": {
+   "code": "us",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"24\" height=\"16\" fill=\"#fff\"/>\n      <rect y=\"0\" width=\"24\" height=\"1.2307692307692308\" fill=\"#B31942\"/><rect y=\"1.2307692307692308\" width=\"24\" height=\"1.2307692307692308\" fill=\"#B31942\"/><rect y=\"2.4615384615384617\" width=\"24\" height=\"1.2307692307692308\" fill=\"#B31942\"/><rect y=\"3.6923076923076925\" width=\"24\" height=\"1.2307692307692308\" fill=\"#B31942\"/><rect y=\"4.923076923076923\" width=\"24\" height=\"1.2307692307692308\" fill=\"#B31942\"/><rect y=\"6.153846153846154\" width=\"24\" height=\"1.2307692307692308\" fill=\"#B31942\"/><rect y=\"7.384615384615385\" width=\"24\" height=\"1.2307692307692308\" fill=\"#B31942\"/>\n      <rect width=\"10\" height=\"8.6\" fill=\"#0A3161\"/>\n      <circle cx=\"1.5\" cy=\"1.2\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"3.5\" cy=\"1.2\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"5.5\" cy=\"1.2\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"7.5\" cy=\"1.2\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"2.5\" cy=\"2.6\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"4.5\" cy=\"2.6\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"6.5\" cy=\"2.6\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"1.5\" cy=\"4\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"3.5\" cy=\"4\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"5.5\" cy=\"4\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"7.5\" cy=\"4\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"2.5\" cy=\"5.4\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"4.5\" cy=\"5.4\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"6.5\" cy=\"5.4\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"1.5\" cy=\"6.8\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"3.5\" cy=\"6.8\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"5.5\" cy=\"6.8\" r=\"0.45\" fill=\"#fff\"/><circle cx=\"7.5\" cy=\"6.8\" r=\"0.45\" fill=\"#fff\"/></svg>"
+  },
+  "Vanuatu": {
+   "code": "vu",
+   "svg": "<svg class=\"flag\" width=\"24\" height=\"16\" viewBox=\"0 0 24 16\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M0 0H24V16H0Z\" fill=\"#CE1126\"/>\n      <path d=\"M0 0H24V16H0Z\" fill=\"#007A5E\" clip-path=\"url(#vuclip)\"/>\n      <defs><clipPath id=\"vuclip\"><path d=\"M0 16L14 8L0 0Z\"/></clipPath></defs>\n      <path d=\"M0 6.4L13 8L0 9.6Z\" fill=\"#000\" stroke=\"#FDCE12\" stroke-width=\"0.8\"/>\n      <circle cx=\"3.2\" cy=\"8\" r=\"1.1\" fill=\"#FDCE12\"/></svg>"
+  }
+ }
+}

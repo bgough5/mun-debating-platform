@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb, tabs %}
+{% block content %}
+{{ breadcrumb([("Prep and practise", "/me/prep"), ("Practise a speech", None)]) }}
+<h1>{{ icon("timer") }} Practise a speech</h1>
+<p class="lede">{% if mode == 'impromptu' %}Draw a surprise topic, plan it on a structure card, then speak to the timer.{% elif mode == 'prepared' %}Rehearse one of your speeches against its target time.{% else %}An argument the other side might run: think for 30 seconds, then rebut it out loud.{% endif %} Score yourself honestly afterwards; your teacher can add comments.</p>
+{{ tabs([("impromptu", "Impromptu", "/me/practice?mode=impromptu"), ("prepared", "Prepared speech", "/me/practice?mode=prepared"), ("rebuttal", "Rebuttal drill", "/me/practice?mode=rebuttal")], mode, "Kind of practice") }}
+<script type="application/json" id="practice-topics">{{ material|tojson }}</script>
+
+<form method="post" action="/me/practice" class="stack" style="max-width:none" id="practice-form" data-practice>{{ hidden_csrf(csrf) }}
+  <input type="hidden" name="mode" value="{{ mode }}">
+  <input type="hidden" name="actual_seconds" value="">
+
+  <section data-show-in="setup" aria-labelledby="h-setup"><h2 id="h-setup" class="h3">1. Your topic</h2>
+    {% if mode == 'prepared' %}
+      {% if material.prepared %}
+      <div class="field"><label for="pick">Your speech</label><select id="pick" data-prepared-select>
+        <option value="">Choose one, or type a topic below</option>{% for s in material.prepared %}<option value="{{ s.id }}" data-seconds="{{ s.seconds }}" data-title="{{ s.text }}" {% if chosen and chosen.id == s.id %}selected{% endif %}>{{ s.text }}</option>{% endfor %}</select></div>
+      {% else %}<p>No speeches written yet. <a href="/me/prep">Write one in Prep and practise</a>, or type a topic below.</p>{% endif %}
+    {% else %}
+      <p class="big-topic" data-topic-shown aria-live="polite"></p>
+      <p class="small muted" data-topic-context></p>
+      <div class="row">
+        <button type="button" class="secondary" data-practice-draw>{{ icon("refresh") }} Draw another</button>
+        {% if mode == 'impromptu' %}<div class="field"><label for="lv">Topics for</label><select id="lv" name="level">{% for v, t in [('any','Any year'),('junior','Junior years'),('middle','Middle years'),('senior','Senior years')] %}<option value="{{ v }}" {% if v == level %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>{% endif %}
+      </div>
+    {% endif %}
+    <div class="field"><label for="tp">Topic <span class="hint">{{ "Edit it if your teacher gave you one" if mode != 'prepared' else "The speech you're rehearsing" }}</span></label>
+      <input id="tp" type="text" name="topic" value="{{ chosen.text if chosen else '' }}" maxlength="300"></div>
+    <div class="row">
+      <div class="field"><label for="th">Thinking time</label><select id="th" name="think_seconds">{% for v, t in [(0,'None'),(30,'30 seconds'),(60,'1 minute'),(120,'2 minutes')] %}<option value="{{ v }}" {% if v == (0 if mode == 'prepared' else (30 if mode == 'rebuttal' else 60)) %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="tg">Speaking time</label><select id="tg" name="target_seconds">{% for v, t in [(30,'30 seconds'),(60,'1 minute'),(90,'1½ minutes'),(120,'2 minutes'),(180,'3 minutes'),(240,'4 minutes'),(300,'5 minutes'),(420,'7 minutes')] %}<option value="{{ v }}" {% if v == ((chosen.seconds if chosen else 180) if mode == 'prepared' else (60 if mode == 'rebuttal' else 120)) %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>
+    </div>
+    {% if mode == 'impromptu' %}
+    <div class="field"><label for="sc">Structure card</label><select id="sc" data-structure-select>{% for t in structures %}<option value="{{ t.code }}">{{ t.name }}</option>{% endfor %}</select></div>
+    {% endif %}
+    <label class="checks"><input type="checkbox" data-practice-bell checked> Bell sound (one ring for the warning, two at time)</label>
+    <p><button type="button" class="big" data-practice-go>{{ icon("play") }} {{ "Start thinking time" if mode != 'prepared' else "Start" }}</button></p>
+  </section>
+
+  <section data-show-in="think speak" aria-labelledby="h-go"><h2 id="h-go" class="visually-hidden">Timer</h2>
+    <p class="big-topic" data-topic-shown></p>
+    <div class="run-stage" data-phase="idle">
+      <p class="run-step-label" data-phase-label>Thinking time</p>
+      <p class="run-timer" role="timer" aria-label="Time remaining" data-text-idle="Ready"><span class="timer-value">0:00</span></p>
+      <p class="run-phase-text">Ready</p>
+    </div>
+    <div class="run-controls">
+      <button type="button" data-practice-skip data-show-in="think">{{ icon("next") }} Start speaking now</button>
+      <button type="button" class="secondary" data-practice-pause data-show-in="speak">Pause</button>
+      <button type="button" data-practice-stop data-show-in="speak">{{ icon("check") }} I've finished</button>
+    </div>
+  </section>
+
+  {% if mode == 'impromptu' %}
+  <section data-show-in="setup think" aria-labelledby="h-card">
+    {% for t in structures %}<div class="card structure-card" data-structure="{{ t.code }}" {% if not loop.first %}hidden{% endif %}>
+      <h2 class="h4" {% if loop.first %}id="h-card"{% endif %}>{{ t.name }}</h2><p class="small muted">{{ t.blurb }}</p>
+      <ol>{% for s in t.sections_l %}<li><strong>{{ s.label }}</strong>: {{ s.prompt }}</li>{% endfor %}</ol></div>{% endfor %}
+    <div class="field"><label for="nt">Notes <span class="hint">Key words only. Not saved.</span></label><textarea id="nt" rows="3" data-not-saved></textarea></div>
+  </section>
+  {% elif mode == 'rebuttal' %}
+  <section class="card structure-card" data-show-in="setup think" aria-labelledby="h-reb"><h2 id="h-reb" class="h4">Rebut in four steps</h2>
+    <ol><li><strong>They say</strong>: put their argument fairly, in one sentence.</li><li><strong>But</strong>: what's wrong with it?</li>
+      <li><strong>Because</strong>: your reason or example.</li><li><strong>So</strong>: why that wins the point for your side.</li></ol></section>
+  {% endif %}
+
+  <section data-show-in="review" aria-labelledby="h-review"><h2 id="h-review">How did it go?</h2>
+    <p>You spoke for <strong data-spoken>0:00</strong>.</p>
+    {% if rub %}<fieldset><legend>Score yourself ({{ rub.name }})</legend>
+    {% for c in crit %}<div class="field"><label for="c{{ c.id }}">{{ c.name }} <span class="hint">{{ c.hint }}</span></label>
+      <select id="c{{ c.id }}" name="c_{{ c.id }}"><option value="">—</option>{% for d in descriptors.get(c.id, []) %}<option value="{{ d.level }}">{{ d.level }}: {{ d.descriptor }}</option>{% endfor %}</select></div>{% endfor %}
+    </fieldset>{% endif %}
+    <div class="field"><label for="rf">What will you do differently next time?</label><textarea id="rf" name="reflection" rows="3"></textarea></div>
+    <div class="row"><button type="submit">Save this practice</button> <button type="button" class="secondary" data-practice-again>Practise again</button></div>
+  </section>
+</form>
+
+<h2>Your practice so far ({{ past|length }})</h2>
+{% for p in past %}<section class="card"><p><strong>{{ p.topic or 'Free topic' }}</strong> · {{ p.created_at|when }} · {{ p.actual_seconds|mmss if p.actual_seconds else '—' }}{% if p.actual_seconds %} of {{ p.target_seconds|mmss }}{% endif %}</p>
+  {% if p.reflection %}<p class="small"><em>{{ p.reflection }}</em></p>{% endif %}
+  {% if p.staff_comment %}<p class="small">Teacher: {{ p.staff_comment }}</p>{% endif %}
+  {% if modules.intelligence %}<p class="small"><a href="/me/practice/{{ p.id }}/coach">Get coaching on this</a></p>{% endif %}</section>
+{% else %}<p>None yet. Your first one counts toward the “First speech” milestone.</p>{% endfor %}
+{% endblock %}

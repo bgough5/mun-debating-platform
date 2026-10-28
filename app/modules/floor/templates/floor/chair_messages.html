@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Chair", "/chair"), (s.committee, "/chair/" ~ s.id), ("Delegate messages", None)]) }}
+<h1>{{ icon("message") }} Delegate messages: {{ s.committee }}</h1>
+<p class="lede">Notes students pass between delegations. They aren't assessed. Students are told that the chair can read every message. Hiding a message removes its text from both delegations' screens; it stays here.</p>
+<p id="live-status" class="small muted">Connecting…</p>
+<div id="chat" data-live-channel="chat:{{ s.id }}" hx-get="/chair/{{ s.id }}/f/messages" hx-trigger="live-update" hx-swap="innerHTML">
+{% include "floor/_chair_messages.html" %}
+</div>
+{% endblock %}

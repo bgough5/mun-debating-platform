@@ -1,0 +1,3 @@
+#!/bin/sh
+# Privacy guard: no databases, data/ folder or local config in git (spec §8.2).
+python tools/privacy_check.py || python3 tools/privacy_check.py

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb, empty_state %}
+{% block content %}
+{{ breadcrumb([("My page", "/me"), ("Prepare", "/me/committees/" ~ com.id ~ "/prepare"), ("Friends and foes", None)]) }}
+<h1>{{ icon("friends") }} Friends and foes: {{ com.name }}</h1>
+<p class="lede">Who is with you on each operative clause? Record your own reading after you talk to people. It's yours alone: nobody else sees it and it isn't marked. The preamble is left out on purpose: it sets the scene, and votes turn on the operative clauses.</p>
+{% if live %}<p><a href="/live/{{ live }}?tab=friends">{{ icon("committee") }} Back to the live session</a></p>{% endif %}
+{% if not clauses %}
+{{ empty_state("There are no operative clauses yet.", "When your teacher adds a draft resolution, its clauses appear here.", icon_name="resolution") }}
+{% else %}
+<nav aria-label="Operative clauses"><ul class="tabs">
+{% for c in summary %}<li><a href="?clause={{ c.id }}" {% if clause and c.id == clause.id %}aria-current="page"{% endif %}>Clause {{ c.position }}{% if c.friend or c.foe %} <span class="small">({{ c.friend }}✓ {{ c.foe }}✗)</span>{% endif %}</a></li>{% endfor %}
+</ul></nav>
+<section aria-labelledby="h-cl">
+<h2 id="h-cl">Operative clause {{ clause.position }}</h2>
+<blockquote class="paragraph">{{ clause.text }}</blockquote>
+<p class="small">Beside each delegation is the <strong>engine's estimate</strong> from the evidence the class has recorded. It is an estimate, not a fact: the badge says whether it rests on sourced evidence, estimates only, or nothing. Your own reading after talking to them is better evidence.</p>
+<form method="post" action="/me/committees/{{ com.id }}/friends-foes" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="clause" value="{{ clause.id }}">
+<div class="table-wrap"><table class="ff">
+<caption class="visually-hidden">Your reading of each delegation on operative clause {{ clause.position }}</caption>
+<thead><tr><th scope="col">Delegation</th><th scope="col">Your reading</th><th scope="col">Note</th><th scope="col">Engine estimate</th></tr></thead>
+<tbody>
+{% for d in sheet %}<tr>
+  <th scope="row">{{ d.name }}</th>
+  <td><fieldset class="ff-choice"><legend class="visually-hidden">{{ d.name }}</legend>
+    {% for st, lbl, ic in [('friend','Friend','yes'),('undecided','Undecided','abstain'),('foe','Foe','no')] %}
+    <label class="checks"><input type="radio" name="stance_{{ d.id }}" value="{{ st }}" {% if d.stance == st %}checked{% endif %}> {{ icon(ic) }} {{ lbl }}</label>{% endfor %}
+  </fieldset></td>
+  <td><label class="visually-hidden" for="fn{{ d.id }}">Note on {{ d.name }}</label><input id="fn{{ d.id }}" type="text" name="note_{{ d.id }}" value="{{ d.note }}" maxlength="200" size="18"></td>
+  <td>{% if d.estimate %}{{ {'friend':'Likely friend','foe':'Likely foe','undecided':'Could go either way'}[d.estimate] }}
+      <span class="small muted">({{ (d.p_yes * 100)|round|int }}% yes)</span> {{ d.quality|quality }}{% else %}<span class="muted">No estimate</span>{% endif %}</td>
+</tr>{% endfor %}
+</tbody></table></div>
+<button type="submit">Save my reading</button>
+</form>
+</section>
+{% endif %}
+{% endblock %}

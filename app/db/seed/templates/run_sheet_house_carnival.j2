@@ -1,0 +1,32 @@
+RUN SHEET — {{ event.name }}
+{{ event.starts_on or "Date to be set" }} · Start {{ event.start_time }} · Format: {{ format.name }}
+{{ teams|length }} teams · {{ houses|length }} houses · {{ rooms|length }} rooms · {{ rounds|length }} rounds
+
+BEFORE THE DAY
+- Rooms booked and signed: {% for room in rooms %}{{ room.name }}{% if room.accessible %} (accessible){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+- Adjudicator briefing notes printed, one per room; ballots on devices or printed as a backup
+- Timekeepers: one per room, with a phone timer and the timing signals below
+- House captains know their roll-call order and gathering spot
+- First aid kit and the first aid officer's location on every room sign
+- Projector link open on the hall screen (event page → Projector)
+
+TIMING SIGNALS (every room)
+- One knock: one minute left
+- Two knocks: time is up; finish your sentence
+- Continuous knocking: 30 seconds over time; please stop
+
+DAY PLAN
+{% for item in schedule -%}
+{{ item.time }}  {{ item.what }}{% if item.who %}  [{{ item.who }}]{% endif %}
+{% endfor %}
+{% for r in rounds %}
+ROUND {{ r.number }}{% if r.motion %} — {{ r.motion }}{% endif %}
+{{ r.debates|length }} debates{% if r.byes %}, {{ r.byes }} bye{% endif %}
+{% for d in r.debates -%}
+- {{ d.room or "Room to be set" }}: {{ d.aff }}{% if d.aff_house %} ({{ d.aff_house }}){% endif %} v {{ d.neg }}{% if d.neg_house %} ({{ d.neg_house }}){% endif %}{% if d.adjudicators %} — adjudicator{% if d.adjudicators|length > 1 %}s{% endif %}: {{ d.adjudicators|map(attribute="name")|join(", ") }}{% endif %}
+{% endfor %}{% endfor %}
+AFTER THE DAY
+- Check every debate has a ballot (event → Results)
+- Award house points for all rounds and the final placings; check the entries
+- Print certificates and thank-you notes for adjudicators and timekeepers
+- Back up the data (Admin → Data → Download a backup)

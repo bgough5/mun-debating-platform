@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<h1>{{ icon("ballot") }} Ballot: round {{ p.number }}</h1>
+{% if p.motion %}<p class="lede">Motion: {{ p.motion }}</p>{% endif %}
+{% if existing %}<div class="notice"><p>{{ existing|length }} ballot(s) already in{% if result %}: {{ teams[result.winner].name }} won ({{ result.split }}){% endif %}. Saving again replaces that adjudicator's ballot.</p></div>{% endif %}
+<form method="post" action="/debating/pairings/{{ p.id }}/ballot" class="stack" style="max-width:none">{{ hidden_csrf(csrf) }}
+  {% if access == 'manage' %}
+  <div class="field"><label for="badj">Adjudicator</label><select id="badj" name="adjudicator_id">{% for a in panel %}<option value="{{ a.id }}">{{ a.name }} ({{ a.role }})</option>{% else %}<option value="">No adjudicator allocated</option>{% endfor %}</select></div>
+  {% endif %}
+  {% for tid, t in teams.items() %}
+  <fieldset><legend>{{ t.side }}: {{ t.name }}</legend>
+  {% for pos in range(1, e.speakers_per_team + 1) %}
+    <div class="card">
+    <div class="field"><label for="spk_{{ tid }}_{{ pos }}">Speaker {{ pos }}{% if roles[pos-1] %} <span class="hint">{{ roles[pos-1] }}</span>{% endif %}</label>
+      <select id="spk_{{ tid }}_{{ pos }}" name="spk_{{ tid }}_{{ pos }}">{% for m in t.members %}<option value="{{ m.id }}" {% if loop.index == pos %}selected{% endif %}>{{ m.first_name }}{% if m.last_initial %} {{ m.last_initial }}.{% endif %}</option>{% endfor %}<option value="">Someone not on the team list</option></select></div>
+    <div class="row">{% for c in crit %}
+      <div class="field"><label for="s_{{ tid }}_{{ pos }}_{{ c.id }}">{{ c.name }} <span class="hint">{{ c.min_score|int }}–{{ c.max_score|int }}</span></label>
+        <input id="s_{{ tid }}_{{ pos }}_{{ c.id }}" type="number" inputmode="decimal" name="s_{{ tid }}_{{ pos }}_{{ c.id }}" min="{{ c.min_score }}" max="{{ c.max_score }}" step="0.5" required style="width:6rem"></div>
+    {% endfor %}</div>
+    <div class="field"><label for="c_{{ tid }}_{{ pos }}">Feedback for this speaker (they will see it)</label><input id="c_{{ tid }}_{{ pos }}" type="text" name="c_{{ tid }}_{{ pos }}"></div>
+    </div>
+  {% endfor %}
+  </fieldset>
+  {% endfor %}
+  <fieldset><legend>Who won?</legend><p class="small">The team with the higher total wins. Only if the totals are level do you need to choose.</p>
+    <div class="checks">{% for tid, t in teams.items() %}<label><input type="radio" name="winner" value="{{ tid }}"> {{ t.name }}</label>{% endfor %}</div></fieldset>
+  <div class="field"><label for="bc">Reason for decision and general feedback</label><textarea id="bc" name="comments" rows="4"></textarea></div>
+  <button type="submit" class="big">Submit ballot</button>
+</form>
+<details class="small"><summary>{{ icon("help") }} Feedback prompts for adjudicators</summary>
+<p>Questions to help you give feedback a speaker can use. Edit them under Admin → Adjudicator feedback prompts.</p>
+{% for crit_name, group in prompts|groupby("criterion") %}<h3>{{ crit_name|capitalize }}</h3><ul>{% for pr in group %}<li>{{ pr.prompt }}</li>{% endfor %}</ul>{% endfor %}
+</details>
+<details class="small"><summary>What the score bands mean</summary>
+{% for c in crit %}<h3>{{ c.name }} ({{ c.min_score|int }}–{{ c.max_score|int }})</h3><ol>{% for d in descriptors.get(c.id, []) %}<li>{{ d.descriptor }}</li>{% endfor %}</ol>{% endfor %}
+</details>
+{% endblock %}

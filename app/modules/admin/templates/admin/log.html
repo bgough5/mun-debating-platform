@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Admin", "/admin"), ("Change log", None)]) }}
+<h1>Change log</h1>
+<p class="lede">Every change is recorded with who made it. Restoring a version writes it back as a new change, so nothing is lost.</p>
+<form method="get" class="inline" role="search">
+  <div class="field"><label for="entity">Table</label><select id="entity" name="entity"><option value="">All</option>{% for e in entities %}<option {% if e == entity %}selected{% endif %}>{{ e }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="actor">Who</label><input id="actor" type="search" name="actor" value="{{ actor }}"></div>
+  <button type="submit" class="secondary">Filter</button>
+</form>
+{% set events = data %}
+{% include "admin/_events.html" %}
+{% if data %}<p><a href="/admin/log?entity={{ entity }}&actor={{ actor }}&before={{ data[-1].seq }}">Older changes</a></p>{% endif %}
+{% endblock %}

@@ -1,0 +1,8 @@
+code,name,threshold_num,threshold_den,denominator,at_threshold,min_yes,veto_iso3,notes
+ga_simple,GA simple majority,1,2,voting,fail,0,,More yes than no among members voting yes or no. Abstentions do not count. A tie fails.
+ga_two_thirds,GA two-thirds (important questions),2,3,voting,pass,0,,Yes must be at least two-thirds of yes plus no.
+sc_substantive,Security Council substantive,0,1,voting,pass,9,"CHN,FRA,RUS,GBR,USA",At least 9 yes and no permanent member votes no. A P5 abstention is not a veto. Evatt rules: confirm against this year's rulebook (D-011).
+sc_procedural,Security Council procedural,0,1,voting,pass,9,,At least 9 yes; no veto on procedural matters.
+proc_simple,Procedural simple majority,1,2,voting,fail,0,,For motions in class sessions: more yes than no.
+proc_two_thirds,Procedural two-thirds,2,3,voting,pass,0,,For motions such as closing debate.
+majority_present,Majority of members present,1,2,present,fail,0,,Custom example: abstentions count against.

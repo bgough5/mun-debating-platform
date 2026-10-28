@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, empty_state %}
+{% block content %}
+<h1>{{ icon("practice") }} Practice speeches</h1>
+<p class="lede">Students' own self-reviews. Add a comment to coach them; you never need to grade a practice speech.</p>
+{% for d in data %}
+<section class="card"><h2 class="small">{{ d.first_name }}{% if d.last_initial %} {{ d.last_initial }}.{% endif %} · {{ d.created_at|when }}</h2>
+  <p><strong>{{ d.topic or 'Free topic' }}</strong> · {{ d.actual_seconds|mmss if d.actual_seconds else '—' }} of {{ d.target_seconds|mmss }}</p>
+  <p class="small">Self-review: {% for k, v in d.scores.items() %}{{ k }} {{ v|num(0) }}{% if not loop.last %}, {% endif %}{% else %}none{% endfor %}</p>
+  {% if d.reflection %}<p class="small"><em>{{ d.reflection }}</em></p>{% endif %}
+  <form method="post" action="/debating/practice-speeches/{{ d.id }}" class="stack">{{ hidden_csrf(csrf) }}
+    <div class="field"><label for="sc{{ d.id }}">Your comment</label><textarea id="sc{{ d.id }}" name="staff_comment" rows="2">{{ d.staff_comment }}</textarea></div>
+    <button type="submit" class="secondary">Save comment</button></form></section>
+{% else %}{{ empty_state("No practice speeches yet.", "Students record them from Practise on their own page; they appear here for your comments.", icon_name="practice") }}{% endfor %}
+{% endblock %}

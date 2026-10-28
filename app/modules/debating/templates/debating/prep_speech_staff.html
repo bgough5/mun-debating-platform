@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Debating", "/debating"), ("Student preparation", "/debating/prep?class_id=" ~ student.class_id), (student.name, None)]) }}
+<h1>{{ icon("speech") }} {{ title }}</h1>
+<p class="lede">{{ template.name if template else 'Speech' }} · {{ words }} words, about {{ seconds|mmss }} at {{ wpm }} words a minute (target {{ speech.target_seconds|mmss }})</p>
+{% for s in sections %}<section class="card" aria-labelledby="ss{{ loop.index }}"><h2 id="ss{{ loop.index }}" class="h4">{{ loop.index }}. {{ s.label }}</h2><p>{{ s.text or '—' }}</p></section>{% endfor %}
+<form method="post" action="/debating/prep/speeches/{{ speech.id }}" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="sc">Comment for {{ student.first_name }}</label><textarea id="sc" name="staff_comment" rows="3" maxlength="2000">{{ speech.staff_comment }}</textarea></div>
+  <button type="submit">Save comment</button></form>
+{% endblock %}

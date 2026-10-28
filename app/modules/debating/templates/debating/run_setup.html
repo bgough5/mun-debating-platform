@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb %}
+{% macro times(name, label, value, choices, hint=None, id=None) %}
+<div class="field"><label for="{{ id or name }}">{{ label }}{% if hint %} <span class="hint">{{ hint }}</span>{% endif %}</label>
+  <select id="{{ id or name }}" name="{{ name }}">{% for v, t in choices %}<option value="{{ v }}" {% if v == value %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>
+{% endmacro %}
+{% set r = run or {} %}
+{% set speech_default = r.speech_seconds or (240 if kind == 'debate' else 120) %}
+{% block content %}
+{{ breadcrumb([("Debating", "/debating")] + ([(run.title, "/debating/runs/" ~ run.id)] if run else []) + [(title if not run else "Edit", None)]) }}
+<h1>{{ icon("debate" if kind == 'debate' else "speech") }} {{ title }}</h1>
+<p class="lede">{% if kind == 'debate' %}Type each team's speakers, set the times, then run it on the projector: the timer shows the bells as colour.{% else %}List the speakers in order, choose prepared or impromptu topics and the time, then run it on the projector.{% endif %}</p>
+
+{% if not run %}
+<form method="get" action="/debating/runs/new" class="inline no-print">
+  <input type="hidden" name="kind" value="{{ kind }}">
+  <div class="field"><label for="cls">Class <span class="hint">Optional: suggests your students' names and shows each student their own scores</span></label>
+    <select id="cls" name="class_id"><option value="">No class: type the names</option>{% for c in classes %}<option value="{{ c.id }}" {% if c.id == class_id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
+  <button type="submit" class="secondary">Use this class</button></form>
+{% endif %}
+
+<form method="post" action="{{ '/debating/runs/' ~ run.id ~ '/edit' if run else '/debating/runs' }}" class="stack" style="max-width:none" data-run-setup>
+  {{ hidden_csrf(csrf) }}<input type="hidden" name="kind" value="{{ kind }}">{% if class_id %}<input type="hidden" name="class_id" value="{{ class_id }}">{% endif %}
+  <p class="small muted">{{ icon("lock") }} First names only, with a last initial if two students share a name. {% if roster %}Names that match {{ (classes|selectattr('id','equalto',class_id)|first or {}).name or 'the class' }} list are linked, so each student sees their own time and scores.{% else %}Without a class, names stay on this run only.{% endif %}</p>
+  {% if roster %}<datalist id="roster">{% for s in roster %}<option value="{{ s.name }}">{% endfor %}</datalist>
+  <script type="application/json" id="roster-names">{{ roster|map(attribute='name')|list|tojson }}</script>{% endif %}
+
+  {% if kind == 'debate' %}
+  <div class="field"><label for="mo">Motion <span class="hint">Pick from the motion bank or type your own</span></label>
+    <input id="mo" type="text" name="motion" value="{{ r.motion or '' }}" list="motions" maxlength="300">
+    <datalist id="motions">{% for m in motions %}<option value="{{ m.motion }}">{% endfor %}</datalist></div>
+  <div class="grid">
+    {% for side, label in [('aff', 'Affirmative'), ('neg', 'Negative')] %}
+    <fieldset class="card"><legend>{{ label }}</legend>
+      <div class="field"><label for="{{ side }}_name">Team name</label><input id="{{ side }}_name" type="text" name="{{ side }}_name" value="{{ r[side ~ '_name'] or label }}" maxlength="40"></div>
+      {% for p in range(1, 5) %}{% set s = names.get(side ~ '_' ~ p) %}
+      <div class="field" data-slot="{{ p }}"><label for="{{ side }}_{{ p }}">{{ {1:'1st',2:'2nd',3:'3rd',4:'4th'}[p] }} speaker</label>
+        <input id="{{ side }}_{{ p }}" type="text" name="{{ side }}_{{ p }}" value="{{ s.name if s else '' }}" maxlength="24" autocomplete="off" {% if roster %}list="roster"{% endif %}></div>
+      {% endfor %}
+    </fieldset>{% endfor %}
+  </div>
+  {% if roster %}<p><button type="button" class="secondary" data-fill-teams>{{ icon("people") }} Fill empty places from the class list at random</button></p>{% endif %}
+  <div class="row">
+    {{ times("speakers_per_side", "Speakers per team", r.speakers_per_side or 3, [(1,'1'),(2,'2'),(3,'3'),(4,'4')]) }}
+    {{ times("speech_seconds", "Each speech", speech_default, [(60,'1 minute'),(90,'1½ minutes'),(120,'2 minutes'),(180,'3 minutes'),(240,'4 minutes'),(300,'5 minutes'),(360,'6 minutes'),(480,'8 minutes')]) }}
+    {{ times("warning_seconds", "Warning bell", r.warning_seconds if run else 60, [(0,'None'),(30,'30 seconds before'),(60,'1 minute before'),(120,'2 minutes before')]) }}
+    {{ times("prep_minutes", "Preparation time", (r.prep_seconds or 0) // 60, [(0,'None'),(5,'5 minutes'),(10,'10 minutes'),(15,'15 minutes'),(20,'20 minutes'),(30,'30 minutes'),(60,'1 hour')]) }}
+  </div>
+  <div class="row">
+    <label class="checks"><input type="checkbox" name="reply" value="1" {% if r.reply %}checked{% endif %}> Reply speeches (Negative first, then Affirmative)</label>
+    {{ times("reply_seconds", "Reply length", r.reply_seconds or 120, [(60,'1 minute'),(90,'1½ minutes'),(120,'2 minutes'),(180,'3 minutes')]) }}
+  </div>
+  {% else %}
+  <div class="field"><label for="names">Speakers, in order <span class="hint">One first name per line. For prepared speeches you can add a topic after a dash: “Mia - Why we need more trees”</span></label>
+    <textarea id="names" name="names" rows="8" required>{{ speech_lines }}</textarea></div>
+  {% if roster %}<p><button type="button" class="secondary" data-fill-round>{{ icon("people") }} The whole class in random order</button></p>{% endif %}
+  <fieldset><legend>Topics</legend>
+    <label class="checks"><input type="radio" name="topic_mode" value="prepared" {% if r.topic_mode != 'impromptu' %}checked{% endif %}> Prepared: students bring their own speech</label>
+    <label class="checks"><input type="radio" name="topic_mode" value="impromptu" {% if r.topic_mode == 'impromptu' %}checked{% endif %}> Impromptu: each speaker gets a surprise topic when their turn comes</label></fieldset>
+  <div class="row">
+    {{ times("level", "Impromptu topics for", r.level or 'middle', [('junior','Junior years'),('middle','Middle years'),('senior','Senior years')]) }}
+    {{ times("think_seconds", "Thinking time (impromptu)", r.think_seconds if run else 60, [(0,'None'),(15,'15 seconds'),(30,'30 seconds'),(60,'1 minute'),(120,'2 minutes')]) }}
+    {{ times("speech_seconds", "Each speech", speech_default, [(30,'30 seconds'),(60,'1 minute'),(90,'1½ minutes'),(120,'2 minutes'),(180,'3 minutes'),(240,'4 minutes'),(300,'5 minutes')]) }}
+    {{ times("warning_seconds", "Warning bell", r.warning_seconds if run else 30, [(0,'None'),(15,'15 seconds before'),(30,'30 seconds before'),(60,'1 minute before')]) }}
+  </div>
+  {% endif %}
+  <div class="field"><label for="ti">Title <span class="hint">Optional, e.g. “9B debate, week 3”</span></label><input id="ti" type="text" name="title" value="{{ r.title or '' }}" maxlength="80"></div>
+  <button type="submit">{{ "Save" if run else "Set it up" }}</button>
+</form>
+{% endblock %}

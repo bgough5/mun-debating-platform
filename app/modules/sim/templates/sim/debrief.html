@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb, empty_state %}
+{% block content %}
+{% set dv = d.division %}
+{% if staff %}{{ breadcrumb([("Chair", "/chair"), (s.committee, "/chair/" ~ s.id), ("Debrief", None)]) }}
+{% else %}{{ breadcrumb([(s.committee, "/live/" ~ s.id), ("Debrief", None)]) }}{% endif %}
+<h1>{{ icon("calibration") }} Debrief: {{ dv.title }}</h1>
+<p class="lede">{{ dv.summary }} · {{ d.rule.name }}</p>
+<div class="grid">
+<section class="card" aria-labelledby="h-res">
+  <h2 id="h-res">{{ icon("vote") }} The result</h2>
+  <p class="bigstat">{{ icon("ok" if dv.passed else "error") }} {{ "Passed" if dv.passed else "Failed" }}</p>
+  <p>{{ dv.yes }} yes · {{ dv.no }} no · {{ dv.abstain }} abstaining{% if dv.computed %} · {{ dv.computed }} of these votes were computed by the engine for delegations with no student{% endif %}.</p>
+</section>
+<section class="card" aria-labelledby="h-piv">
+  <h2 id="h-piv">{{ icon("whip") }} Which votes decided it</h2>
+  {% if d.pivotal %}<p>One changed vote from any of these would have {{ "sunk" if dv.passed else "carried" }} it:</p>
+  <ul>{% for p in d.pivotal %}<li><strong>{{ p.country }}</strong> {{ p.quality|quality }} voted {{ p.vote }}; a {{ p.flip_to|join(" or ") }} vote would have flipped the result.</li>{% endfor %}</ul>
+  {% else %}<p>No single delegation could have changed the result: the margin was wider than one vote.</p>{% endif %}
+</section>
+</div>
+
+<section class="card" aria-labelledby="h-whip">
+  <h2 id="h-whip">{{ icon("whip") }} Whip count: {{ "your predictions" if not staff else "students' predictions" }}</h2>
+  {% if not d.whip %}{{ empty_state("There was no whip count before this vote.", "Next time, start a whip count in the voting-procedure stage before opening the vote." if staff else None, icon_name="whip") }}
+  {% elif not d.whip.students %}<p class="muted">No predictions were made.</p>
+  {% else %}
+  <p class="small">Scored against the votes actually cast, never against the model. Votes the engine cast for delegations with no student are scored separately and marked computed.</p>
+  {% for st in d.whip.students %}
+  <h3>{{ st.name }}: {% if st.accuracy is not none %}{{ (st.human_ok + st.computed_ok) }} of {{ st.human_n + st.computed_n }} right{% else %}no predictions scored{% endif %}</h3>
+  <p class="small">Against students' votes: {{ st.human_ok }} of {{ st.human_n }}{% if st.computed_n %} · against computed votes: {{ st.computed_ok }} of {{ st.computed_n }} (computed){% endif %}{% if st.missing %} · {{ st.missing }} not predicted{% endif %}</p>
+  <div class="table-wrap"><table><caption class="visually-hidden">Predictions by {{ st.name }}</caption>
+  <thead><tr><th scope="col">Delegation</th><th scope="col">Predicted</th><th scope="col">Actual</th><th scope="col">Right?</th></tr></thead><tbody>
+  {% for it in st.predictions %}<tr><td>{{ it.country }}{% if it.computed %} <span class="label-computed">computed</span>{% endif %}</td>
+    <td>{% if it.predicted %}{{ it.predicted|stance }}{% else %}<span class="muted">not predicted</span>{% endif %}</td>
+    <td>{% if it.actual %}{{ it.actual|stance }}{% else %}<span class="muted">didn't vote</span>{% endif %}</td>
+    <td>{% if it.correct is none %}—{% elif it.correct %}{{ icon("ok") }} Right{% else %}{{ icon("error") }} Wrong{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% endfor %}{% endif %}
+</section>
+
+<section class="card" aria-labelledby="h-eng">
+  <h2 id="h-eng">{{ icon("prediction") }} How the engine did on this vote</h2>
+  {% if d.engine %}
+  <p>Before voting opened the engine gave this a <strong>{{ (d.engine.p_pass * 100)|round|int }}%</strong> chance of passing. It {{ "passed" if d.engine.passed else "failed" }}.</p>
+  <p>Against the {{ d.engine.n }} delegations voted by students, the engine's most likely vote was right {{ d.engine.modal_hits }} times. Brier score {{ d.engine.brier|num(3) }} (0 is perfect, 2 is worst; always guessing a third each scores 0.667); log loss {{ d.engine.log_loss|num(3) }}.</p>
+  <p class="small muted">One vote is far too few to judge the engine. These votes are added to the calibration report, where they count with every other recorded vote. Computed votes are the engine's own guesses and are never used to grade it.</p>
+  {% else %}<p class="muted">No students voted, or no prediction was stored, so there is nothing to check the engine against.</p>{% endif %}
+</section>
+
+<section class="card" aria-labelledby="h-prof">
+  <h2 id="h-prof">{{ icon("delegation") }} {{ "Delegate profiles" if staff else "Your delegate profile" }}</h2>
+  <p class="small">Feedback, not a grade. "Mandate" means what the evidence says the country would do; it is judged against the evidence-based prediction, and {{ "you can override it" if staff else "your teacher can override it" }} (D-009).</p>
+  {% for p in d.profiles %}
+  <div class="card">
+    <h3>{{ p.country }}{% if p.students %} ({{ p.students|join(", ") }}){% endif %}: {{ p.profile.name }}</h3>
+    <p class="small">Evidence about {{ p.country }} when the vote opened: {{ p.quality|quality }}{% if p.quality == 'estimate' %} — the mandate judgement below rests on the model's estimate, not on sourced evidence{% endif %}.</p>
+    <p>{{ p.profile.line }}</p>
+    <p class="small">Voted {{ p.vote|stance }} · Mandate: <strong>{{ {'consistent':'consistent','inconsistent':'against the evidence','borderline':'borderline','unjudged':'not judged'}[p.fidelity] }}</strong> ({{ p.why }}) · Coalition: <strong>{{ {'won':'on the winning side','lost':'on the losing side','abstained':'abstained'}[p.coalition] }}</strong></p>
+    {% if staff %}<details><summary>Judge the mandate yourself<span class="visually-hidden"> for {{ p.country }}</span></summary>
+      <form method="post" action="/chair/{{ s.id }}/debrief/{{ dv.id }}/fidelity" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="delegation_id" value="{{ p.delegation_id }}">
+        <fieldset><legend>Was this vote consistent with {{ p.country }}'s mandate?</legend><div class="checks">
+          <label><input type="radio" name="consistent" value="1" {% if p.override and p.override.consistent %}checked{% endif %} required> Consistent</label>
+          <label><input type="radio" name="consistent" value="0" {% if p.override and not p.override.consistent %}checked{% endif %}> Not consistent</label></div></fieldset>
+        <div class="field"><label for="why{{ p.delegation_id }}">Reason</label><input id="why{{ p.delegation_id }}" type="text" name="reason" value="{{ p.override.reason if p.override else '' }}" maxlength="300"></div>
+        <button type="submit" class="secondary">Save judgement</button></form></details>{% endif %}
+  </div>
+  {% else %}<p class="muted">{{ "No delegation with a student voted." if staff else "Your delegation didn't vote in this division." }}</p>{% endfor %}
+</section>
+{% if staff %}<p><a href="/chair/{{ s.id }}">{{ icon("chair") }} Back to the chair console</a></p>{% else %}<p><a href="/live/{{ s.id }}">Back to the live session</a></p>{% endif %}
+{% endblock %}

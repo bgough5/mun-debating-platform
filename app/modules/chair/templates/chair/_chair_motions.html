@@ -1,0 +1,26 @@
+{% from "_macros.html" import hidden_csrf %}
+{% for m in motions %}
+<div class="card">
+  <p><strong>{{ m.name }}</strong>{% if m.topic %}: {{ m.topic }}{% endif %}{% if m.duration_s %} · {{ (m.duration_s/60)|round(1) }} min{% endif %}{% if m.speaking_time_s %} · {{ m.speaking_time_s }} s speeches{% endif %}
+    <br><span class="small">Proposed by {{ m.proposer or 'chair' }}{% if m.seconder %}, seconded by {{ m.seconder }}{% elif m.needs_second %}, <strong>needs a second</strong>{% endif %} · {{ m.status }}</span></p>
+  {% if m.status == 'proposed' %}
+  <div class="row">
+    {% if m.needs_second and not m.seconder %}
+    <form method="post" action="/chair/{{ s.id }}/motions/{{ m.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="second">
+      <label class="visually-hidden" for="sec{{ m.id }}">Seconding delegation</label><select id="sec{{ m.id }}" name="delegation_id">{% for d in dels if d.students %}<option value="{{ d.id }}">{{ d.iso3 }}</option>{% endfor %}</select>
+      <button type="submit" class="secondary">Record second</button></form>{% endif %}
+    {% for a, lbl in [('consent','Pass (no objection)'),('vote','Put to a vote'),('withdrawn','Withdrawn'),('ruled_out','Rule out of order')] %}
+    <form method="post" action="/chair/{{ s.id }}/motions/{{ m.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="{{ a }}"><button type="submit" class="{{ '' if a == 'vote' else 'secondary' }}">{{ lbl }}<span class="visually-hidden"> ({{ m.name }})</span></button></form>
+    {% endfor %}
+  </div>{% endif %}
+</div>
+{% else %}<p class="muted">No motions on the floor. Delegates raise motions from their devices, or enter one below.</p>{% endfor %}
+<p class="small">Take them most disruptive first. An unmoderated caucus is at most {{ unmod_max_min }} minutes a motion; to extend it, take a new motion.</p>
+<details><summary>Entertain a motion</summary>
+<form method="post" action="/chair/{{ s.id }}/motions" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="pm">Motion</label><select id="pm" name="procedure_motion_id">{% for p in proc_motions %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="pd">Proposed by</label><select id="pd" name="proposer_delegation_id"><option value="">The chair</option>{% for d in dels %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}</select></div>
+  <div class="row"><div class="field"><label for="dm">Duration (minutes)</label><input id="dm" type="number" name="duration_min" min="1" max="120" style="width:6rem"></div>
+  <div class="field"><label for="sts">Speaking time (s)</label><input id="sts" type="number" name="speaking_time_s" min="10" max="900" style="width:6rem"></div></div>
+  <div class="field"><label for="mtopic">Topic</label><input id="mtopic" type="text" name="topic"></div>
+  <button type="submit" class="secondary">Entertain</button></form></details>

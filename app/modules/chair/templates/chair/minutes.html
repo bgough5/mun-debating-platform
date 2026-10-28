@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<p><a href="/chair/{{ s.id }}">Back to the session</a></p>
+<h1>{{ title }}</h1>
+<p class="lede">Generated from the session log. Edit, then save: every version is kept.</p>
+<div class="row no-print">
+  <form method="post" action="/chair/{{ s.id }}/minutes">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="generate"><button type="submit" class="secondary">Regenerate from the log</button></form>
+  <a class="button secondary" href="/chair/{{ s.id }}/minutes.docx" hx-boost="false">{{ icon("export") }} Export to Word</a>
+  <a class="button secondary" href="/chair/{{ s.id }}/minutes/print">{{ icon("print") }} Print / PDF</a>
+</div>
+<form method="post" action="/chair/{{ s.id }}/minutes" class="stack" style="max-width:none">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="mb">Minutes</label><textarea id="mb" name="body" rows="20" style="font-family:var(--mono)">{{ draft }}</textarea></div>
+  <button type="submit">Save as a new version</button></form>
+{% if versions %}<h2>Versions</h2><ul>{% for v in versions %}<li>Version {{ v.version }} · {{ 'generated' if v.generated else 'edited by ' ~ v.author }} · {{ v.created_at|when }}</li>{% endfor %}</ul>{% endif %}
+{% endblock %}

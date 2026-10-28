@@ -1,0 +1,83 @@
+"""South Oakleigh design tokens (D-058) and the colour pairs the interface uses.
+
+The values here must match the `:root` block of app/static/css/app.css;
+tests/test_design_contrast.py checks that, and checks every pair below
+against WCAG 2.2 AA: 4.5:1 for normal text, 3:1 for large text (24 px, or
+18.66 px bold) and for interface parts such as borders and focus rings.
+
+Colours are the South Oakleigh College design system's (D-080, replacing
+D-058's darker palette): white ground, College Maroon #621723, Green #135728
+and Gold #A98B00. Gold is never text (3.3:1 on white).
+"""
+from __future__ import annotations
+
+TOKENS = {
+    # South Oakleigh College design system (D-080): white ground, College Maroon leading, green and gold in support.
+    "maroon": "#621723",        # College Maroon: buttons, links, current page, table header rows
+    "maroon-dk": "#4A101B",     # hover and pressed states of maroon
+    "green": "#135728",         # College Green: success, "for", "yes"
+    "green-dk": "#0E4220",
+    "gold": "#A98B00",          # College Gold: heading bars, rules and the footer hairline; never text (3.3:1)
+    "gold-lt": "#D8B638",       # gold on maroon (eyebrows on dark panels)
+    "cream": "#FFFFFF",         # the page (kept as a name for older rules: it is white now)
+    "card": "#FFFFFF",          # cards, tables, inputs
+    "panel": "#F7F7F7",         # quiet panels, alternate table rows
+    "grey": "#EDEDED",          # neutral blocks
+    "ink": "#262626",           # all primary text
+    "gold-text": "#7A6206",     # the rare gold-coloured word on white (5.9:1)
+    "muted": "#4A4A4A",         # secondary text
+    "line": "#DDDDDD",          # hairline dividers (decorative; never the only sign of a control)
+    "control": "#858585",       # input and control borders: 3:1 on white and panel
+    "white": "#FFFFFF",
+    # Tints carry boxes, not pages
+    "ok-bg": "#E8EFE9", "err-bg": "#F4EBEC", "warn-bg": "#F6F1DC", "info-bg": "#F7F7F7",
+    "yes-bg": "#E8EFE9", "no-bg": "#F4EBEC", "abs-bg": "#EDEDED", "unk-bg": "#F7F7F7",
+    # Projector: the same clean white ground, read from the back of the room
+    "proj-bg": "#FFFFFF", "proj-card": "#F7F7F7", "proj-text": "#262626", "proj-accent": "#621723",
+    "proj-low": "#B3261E", "proj-line": "#DDDDDD",
+    # Speech timer bells as colour (D-075; the design system's on-screen timer colours). Ink text on each, and the
+    # words always say which phase it is, so colour is never the only signal.
+    "time-go": "#3FB36A", "time-warn": "#F2B705", "time-over": "#EF5A4F",
+}
+
+TEXT, LARGE, UI = 4.5, 3.0, 3.0
+
+# (foreground, background, minimum ratio, where it is used)
+PAIRS = [
+    ("ink", "cream", TEXT, "body text"), ("ink", "card", TEXT, "text on cards and tables"),
+    ("ink", "white", TEXT, "text in inputs"), ("ink", "panel", TEXT, "text on quiet panels and alternate rows"),
+    ("muted", "cream", TEXT, "secondary text"), ("muted", "card", TEXT, "secondary text on cards"), ("muted", "panel", TEXT, "secondary text on panels"),
+    ("maroon", "cream", TEXT, "links"), ("maroon", "card", TEXT, "links on cards, secondary buttons"), ("maroon", "panel", TEXT, "links on panels"),
+    ("white", "maroon", TEXT, "primary button, table header row"), ("white", "maroon-dk", TEXT, "primary button hover"),
+    ("gold-lt", "maroon", TEXT, "gold eyebrow on maroon"),
+    ("white", "green", TEXT, "success button"),
+    ("green", "cream", TEXT, "'for' text"), ("green-dk", "ok-bg", TEXT, "success message"),
+    ("gold-text", "cream", TEXT, "gold text on the page"), ("gold-text", "card", TEXT, "gold text on cards"),
+    ("ink", "warn-bg", TEXT, "warning message"), ("ink", "err-bg", TEXT, "error message"),
+    ("ink", "info-bg", TEXT, "information message"), ("ink", "ok-bg", TEXT, "success message body"),
+    ("maroon", "err-bg", TEXT, "error heading"),
+    ("green-dk", "yes-bg", TEXT, "Yes / Support badge"), ("maroon", "no-bg", TEXT, "No / Oppose badge"),
+    ("ink", "abs-bg", TEXT, "Abstain badge"), ("muted", "unk-bg", TEXT, "Unknown badge"),
+    ("control", "cream", UI, "input borders on the page"), ("control", "card", UI, "input borders on cards"),
+    ("control", "panel", UI, "input borders on panels"),
+    ("maroon", "cream", UI, "focus ring"), ("gold", "cream", UI, "focus ring outer halo and heading bars (non-text)"),
+    ("maroon", "card", UI, "secondary button border"),
+    ("proj-text", "proj-bg", TEXT, "projector text"), ("proj-text", "proj-card", TEXT, "projector cards"),
+    ("proj-accent", "proj-bg", TEXT, "projector headings"), ("proj-accent", "proj-card", TEXT, "projector accent on cards"),
+    ("proj-low", "proj-bg", TEXT, "projector timer, last 10 seconds"), ("proj-low", "proj-card", TEXT, "low timer on a card"),
+    ("proj-line", "proj-bg", 1.0, "projector dividers (decorative)"),
+    ("ink", "time-go", TEXT, "speech timer: speaking"), ("ink", "time-warn", TEXT, "speech timer: warning bell"),
+    ("ink", "time-over", TEXT, "speech timer: past time"),
+]
+
+
+def luminance(hex_colour: str) -> float:
+    h = hex_colour.lstrip("#")
+    rgb = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+    lin = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in rgb]
+    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+
+
+def contrast(a: str, b: str) -> float:
+    hi, lo = sorted((luminance(a), luminance(b)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)

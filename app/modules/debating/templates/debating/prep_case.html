@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb, confirm_delete %}
+{% from "debating/_prep_macros.html" import point_form, check_badge, score_text %}
+{% block content %}
+{{ breadcrumb([("Prep and practise", "/me/prep"), (side_label ~ " case", None)]) }}
+<h1>{{ icon("debate") }} {{ title }}</h1>
+<section class="info-box" aria-labelledby="h-sum"><h2 id="h-sum" class="h3">Where your case is up to</h2>
+  <ul class="plain">
+    <li>{{ icon("check" if summary.team_line else "info") }} Team line {{ "written" if summary.team_line else "still to write" }}</li>
+    <li>{{ icon("check" if summary.arguments_done >= 2 else "info") }} Arguments: {% if summary.arguments %}{{ summary.arguments_done }} of {{ summary.arguments }} complete{% else %}none yet{% endif %}{% if summary.arguments < 2 %} (aim for at least two){% endif %}</li>
+    <li>{{ icon("check" if summary.to_rebut and summary.rebuttals_done >= summary.to_rebut else "info") }} Rebuttals: {{ summary.rebuttals_done }} of {{ summary.to_rebut }} of their likely arguments answered</li>
+    {% if summary.self is not none or summary.staff is not none %}<li>{{ icon("ballot") }} Rubric scores (out of 5): {% if summary.self is not none %}you {{ (summary.self * 5)|num(1) }}{% endif %}{% if summary.self is not none and summary.staff is not none %} · {% endif %}{% if summary.staff is not none %}your teacher {{ (summary.staff * 5)|num(1) }}{% endif %}</li>{% endif %}
+  </ul>
+  <p class="small">“Complete” is the structure check: every part has a few words in it. It doesn't judge how good the point is; the rubric scores do that.</p>
+  {% if case.staff_comment %}<p><strong>Your teacher:</strong> {{ case.staff_comment }}</p>{% endif %}
+</section>
+
+<section class="card" id="setup" aria-labelledby="h-setup"><h2 id="h-setup">1. Set up the debate</h2>
+<form method="post" action="/me/prep/cases/{{ case.id }}" class="stack" style="max-width:none">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="tl">Team line <span class="hint">Your whole case in one sentence. Every speaker repeats it.</span></label>
+    <input id="tl" type="text" name="team_line" value="{{ case.team_line }}" maxlength="300"></div>
+  <div class="field"><label for="df">Definition and context <span class="hint">What the motion means, who it affects, and what you'll show.</span></label>
+    <textarea id="df" name="definition" rows="3" maxlength="1200">{{ case.definition }}</textarea></div>
+  <button type="submit" class="secondary">Save</button></form>
+</section>
+
+<section aria-labelledby="h-args"><h2 id="h-args">2. Your arguments</h2>
+<p class="lede">Each argument in four parts: claim, reasoning, an example, and why it matters. Aim for two or three strong ones rather than many weak ones.</p>
+{% for p in arguments %}
+<article class="card" id="p{{ p.id }}" aria-labelledby="ha{{ p.id }}"><h3 id="ha{{ p.id }}" class="h4">Argument {{ loop.index }}{% if p.parts_d.claim %}: {{ p.parts_d.claim[:80] }}{% endif %}</h3>
+  {{ point_form(case, 'argument', arg_parts, rubrics.argument, csrf, p=p) }}</article>
+{% endfor %}
+{% if arguments|length < max_points.argument %}
+<details class="card" {% if not arguments %}open{% endif %}><summary>{{ icon("add") }} {{ "Add your first argument" if not arguments else "Add another argument" }}</summary>
+  {{ point_form(case, 'argument', arg_parts, rubrics.argument, csrf) }}</details>
+{% endif %}
+</section>
+
+<section aria-labelledby="h-reb"><h2 id="h-reb">3. Rebut their likely arguments</h2>
+<p class="lede">What the {{ other_label }} is likely to say, and your answer to each, in four steps: they say, but, because, so.</p>
+{% if opposition %}<p class="small muted">{{ icon("info") }} These are common starting points written for this platform, not the only arguments and not evidence. Expect the other team to put them better: answer the strongest version.</p>{% endif %}
+{% for a in opposition %}
+<article class="card" {% if a.rebuttal %}id="p{{ a.rebuttal.id }}"{% endif %} aria-labelledby="ho{{ a.id }}">
+  <h3 id="ho{{ a.id }}" class="h4">They might say: “{{ a.argument }}”</h3>
+  {% if a.rebuttal %}{{ point_form(case, 'rebuttal', reb_parts, rubrics.rebuttal, csrf, p=a.rebuttal) }}
+  {% else %}<details><summary>Write a rebuttal</summary>{{ point_form(case, 'rebuttal', reb_parts, rubrics.rebuttal, csrf, source=a) }}</details>{% endif %}
+</article>
+{% else %}
+<p>{% if case.motion_id %}There are no likely arguments listed for this motion yet.{% else %}This motion isn't in the motion bank, so there's no list of likely arguments.{% endif %} Think about what the other side will say, and add those below.</p>
+{% endfor %}
+{% for p in custom %}
+<article class="card" id="p{{ p.id }}" aria-labelledby="hc{{ p.id }}"><h3 id="hc{{ p.id }}" class="h4">You expect: “{{ (p.parts_d.they_say or 'their argument')[:100] }}”</h3>
+  {{ point_form(case, 'rebuttal', reb_parts, rubrics.rebuttal, csrf, p=p) }}</article>
+{% endfor %}
+<details class="card"><summary>{{ icon("add") }} Add an argument you expect them to run</summary>
+  {{ point_form(case, 'rebuttal', reb_parts, rubrics.rebuttal, csrf) }}</details>
+</section>
+
+<p><a href="/me/practice?mode=rebuttal">{{ icon("timer") }} Practise rebuttal out loud against the clock</a></p>
+{{ confirm_delete("/me/prep/cases/" ~ case.id ~ "/delete", "this case", csrf) }}
+{% endblock %}

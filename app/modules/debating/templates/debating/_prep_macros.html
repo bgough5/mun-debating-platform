@@ -1,0 +1,37 @@
+{% from "_macros.html" import hidden_csrf %}
+
+{# The structure check, labelled for what it is: a count of parts written, not a judgement of quality (D-076). #}
+{% macro check_badge(chk) %}<span class="badge {{ 'st-yes' if chk.complete else 'st-abs' }}">{{ icon("check" if chk.complete else "info") }} Structure: {{ chk.done }} of {{ chk.total }} parts</span>{% endmacro %}
+
+{% macro score_text(mean, who) %}{% if mean is not none %}<span class="small">{{ who }}: <strong>{{ (mean * 5)|num(1) }}</strong> out of 5</span>{% endif %}{% endmacro %}
+
+{# One argument or rebuttal: four parts, the speaker who'll use it, and a self-review on the rubric. #}
+{% macro point_form(case, kind, spec, rub, csrf, p=None, source=None, max_speakers=3) %}
+{% set pid = p.id if p else ('new-' ~ kind ~ ('-' ~ source.id if source else '')) %}
+<form method="post" action="/me/prep/cases/{{ case.id }}/points" class="stack" style="max-width:none">{{ hidden_csrf(csrf) }}
+  <input type="hidden" name="kind" value="{{ kind }}">
+  {% if p %}<input type="hidden" name="point_id" value="{{ p.id }}">{% endif %}
+  {% if source and not p %}<input type="hidden" name="source_argument_id" value="{{ source.id }}">{% endif %}
+  <div class="part-grid">
+  {% for key, label, prompt, need in spec %}
+    {% set val = p.parts_d.get(key, '') if p else (source.argument if (source and key == 'they_say') else '') %}
+    <div class="field"><label for="{{ pid }}-{{ key }}">{{ label }} <span class="hint">{{ prompt }}</span></label>
+      <textarea id="{{ pid }}-{{ key }}" name="part_{{ key }}" rows="{{ 2 if key in ('claim', 'they_say') else 3 }}" maxlength="1200">{{ val }}</textarea></div>
+  {% endfor %}
+  </div>
+  {% if kind == 'argument' %}
+  <div class="field"><label for="{{ pid }}-sp">Which speaker runs it?</label>
+    <select id="{{ pid }}-sp" name="speaker"><option value="">Not decided</option>{% for n in range(1, 4) %}<option value="{{ n }}" {% if p and p.speaker == n %}selected{% endif %}>{{ {1:'1st',2:'2nd',3:'3rd'}[n] }} speaker</option>{% endfor %}</select></div>
+  {% endif %}
+  {% if rub %}
+  <details {% if p and p.self_d %}open{% endif %}><summary>Score it yourself ({{ rub.name }})</summary>
+    <div class="part-grid">{% for c in rub.criteria %}
+      <div class="field"><label for="{{ pid }}-s-{{ c.code }}">{{ c.name }} <span class="hint">{{ c.hint }}</span></label>
+        <select id="{{ pid }}-s-{{ c.code }}" name="self_{{ c.code }}"><option value="">Not scored</option>{% for lv in c.levels %}<option value="{{ lv.level }}" {% if p and p.self_d.get(c.code)|int == lv.level %}selected{% endif %}>{{ lv.level }}: {{ lv.descriptor }}</option>{% endfor %}</select></div>
+    {% endfor %}</div></details>
+  {% endif %}
+  <div class="row"><button type="submit">{{ "Save" if p else ("Save my rebuttal" if kind == 'rebuttal' else "Add this argument") }}</button>
+    {% if p %}{{ check_badge(p.check) }} {{ score_text(p.self_mean, "You") }} {{ score_text(p.staff_mean, "Teacher") }}{% endif %}</div>
+</form>
+{% if p %}<form method="post" action="/me/prep/cases/{{ case.id }}/points/{{ p.id }}/delete" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" class="link">Remove this {{ kind }}</button></form>{% endif %}
+{% endmacro %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<p><a href="/mun/resolutions/{{ target.resolution_id }}">Back to the resolution</a></p>
+<h1>{{ title }}</h1>
+<p class="lede">Record how each delegation actually voted. It is stored next to the saved prediction and used for calibration (spec W-1.6).</p>
+{% if outcome %}<div class="{{ 'ok-box' if outcome.passed else 'error-box' }}" role="status">Recorded result: {{ outcome.summary }}.</div>{% endif %}
+<form method="post" action="/mun/votes/{{ kind }}/{{ tid }}" class="stack" style="max-width:none">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="pid">Compare with saved prediction</label><select id="pid" name="prediction_id">
+    <option value="">Latest saved before the vote (automatic)</option>{% for s_ in snaps %}<option value="{{ s_.id }}">#{{ s_.id }} · {{ s_.created_at|when }} · {{ s_.p_pass|pct }}</option>{% endfor %}</select></div>
+  {% if not snaps %}<p class="notice">No prediction has been saved for this yet, so this vote can't be used for calibration. Save one from the prediction page first.</p>{% endif %}
+  <div class="table-wrap"><table>
+  <thead><tr><th scope="col">Delegation</th><th scope="col">Vote</th></tr></thead>
+  <tbody>{% for d in dels %}<tr><td><label for="v_{{ d.iso3 }}">{{ d.name }}</label></td>
+    <td><select id="v_{{ d.iso3 }}" name="v_{{ d.iso3 }}"><option value="">—</option>{% for v in ['yes','abstain','no','absent'] %}<option value="{{ v }}" {% if existing.get(d.iso3) == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></td></tr>{% endfor %}</tbody>
+  </table></div>
+  <button type="submit">Save votes</button>
+</form>
+{% endblock %}

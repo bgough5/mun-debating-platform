@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Help", "/help"), ("Student quick-start", None)]) }}
+<h1>{{ icon("student") }} Student quick-start</h1>
+<ol class="steps">
+  <li><strong>Sign in.</strong> On your laptop, open the address on your sign-in card, or go to the address on the board and type the code under your name. Your code already knows who you are.</li>
+  <li><strong>Your page.</strong> "My page" shows your delegation, tasks, live sessions, debates and practice.</li>
+  <li><strong>In a live session.</strong> The stage tracker shows where the committee is. "What you can do now" tells you what to do: answer the roll, add yourself to the speakers list, raise or second a motion, predict votes in a whip count, and vote.</li>
+  <li><strong>Debating.</strong> Your draws and results appear on your page. You see only your own scores and feedback.</li>
+  <li><strong>Prep and practise.</strong> Build a debate case and rebut the other side's likely arguments, write speeches from templates, and practise impromptu, prepared or rebuttal speeches against the clock; also a practice committee against computed delegations; a practice negotiation with a rule-based partner (not AI, unless your school has approved an AI service).</li>
+  <li><strong>If something goes wrong.</strong> Lost your card or code? Your teacher can show it to you or give you a new one. Signing in on another laptop signs you out of the first.</li>
+</ol>
+<p>The platform never writes your speech, clause or amendment. Predictions are estimates, not facts. <a href="/help/glossary">Glossary</a> · <a href="/privacy">Privacy</a></p>
+{% endblock %}

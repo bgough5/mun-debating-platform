@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<div class="signin">
+<h1>{{ icon("join") }} Sign in</h1>
+<p class="lede">Type the code from your sign-in card. It already knows your name.</p>
+<form method="post" action="/join" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="code">Your code <span class="hint">Six letters and numbers, under your name on the card</span></label>
+    <input id="code" type="text" name="code" autocomplete="off" autocapitalize="characters" spellcheck="false" required maxlength="40"
+           class="code-input" placeholder="K7Q-M2X" autofocus></div>
+  <button type="submit" class="big">Sign in</button>
+</form>
+<p class="small muted">Lost your card? Your teacher can show you your code. Staff: <a href="/login">sign in here</a>.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,245 @@
+<meta charset="utf-8">
+<title>MUN Committee Flow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one reading column for prose, figures allowed wider; South Oakleigh tokens from app/web/design.py. */
+:root {
+  --bg: #F4F0E6; --card: #FBFAF6; --ink: #2A2320; --muted: #655C55; --line: #D9D0C1; --edge: #8A7F76;
+  --chair: #8C332A; --chair-bg: #F6E1DD; --room: #7A6206; --room-bg: #FBF1D3; --app: #0A6B39; --app-bg: #DDEFE3;
+  --key-bg: #2A1512; --key-fg: #F4F0E6; --key-sub: #D4B441; --no-bg: #ECE7E1;
+  --serif: Cambria, "Iowan Old Style", Georgia, serif;
+  --sans: Calibri, Carlito, "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1B1210; --card: #261916; --ink: #F1EAE0; --muted: #BFB3A8; --line: #4A3631; --edge: #9C8F84;
+  --chair: #F0A497; --chair-bg: #3A1E1A; --room: #E2C55A; --room-bg: #33290F; --app: #7FD3A2; --app-bg: #12301F;
+  --key-bg: #D4B441; --key-fg: #1B1210; --key-sub: #3D211C; --no-bg: #332623; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #1B1210; --card: #261916; --ink: #F1EAE0; --muted: #BFB3A8; --line: #4A3631; --edge: #9C8F84;
+  --chair: #F0A497; --chair-bg: #3A1E1A; --room: #E2C55A; --room-bg: #33290F; --app: #7FD3A2; --app-bg: #12301F;
+  --key-bg: #D4B441; --key-fg: #1B1210; --key-sub: #3D211C; --no-bg: #332623; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--sans); }
+.wrap { max-width: 1160px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.prose { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--serif); text-wrap: balance; line-height: 1.2; }
+h1 { font-size: 2.1rem; margin: .2rem 0 .6rem; }
+h2 { font-size: 1.45rem; margin: 2.6rem 0 .5rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+h3 { font-size: 1.1rem; margin: 1.4rem 0 .3rem; }
+.eyebrow { font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--room); font-weight: 700; }
+.status { display: inline-block; border: 1.5px solid var(--chair); color: var(--chair); border-radius: 999px; padding: .1rem .7rem;
+  font-size: .85rem; font-weight: 700; }
+.status-ok { border-color: var(--app); color: var(--app); }
+.lede { font-size: 1.12rem; }
+a { color: var(--chair); }
+figure { margin: 1rem 0 0; }
+figcaption { color: var(--muted); font-size: .92rem; max-width: 80ch; margin-top: .4rem; }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+svg.d { display: block; width: 100%; height: auto; color: var(--edge); }
+svg.d .lbl { fill: var(--ink); font-family: var(--sans); font-size: 12px; }
+svg.d .strong { font-weight: 700; }
+svg.d .note { fill: var(--muted); font-family: var(--sans); font-size: 11.5px; }
+svg.d .elbl { fill: var(--muted); font-family: var(--sans); font-size: 11.5px; font-style: italic; }
+svg.d .ph-title { fill: var(--ink); font-family: var(--serif); font-size: 17px; font-weight: 700; }
+svg.d .ph-sub { fill: var(--room); font-family: var(--sans); font-size: 10px; letter-spacing: .1em; font-weight: 700; }
+svg.d .on-key { fill: var(--key-fg); }
+svg.d .on-key-muted { fill: var(--key-sub); }
+svg.d .on-exit { fill: var(--card); }
+svg.d .tag { font-family: var(--sans); font-size: 9.5px; letter-spacing: .1em; font-weight: 700; }
+svg.d .tag-room { fill: var(--room); } svg.d .tag-chair { fill: var(--chair); } svg.d .tag-app { fill: var(--app); }
+svg.d .edge { fill: none; stroke: var(--edge); stroke-width: 1.5; }
+svg.d .edge-back { stroke-dasharray: 5 4; }
+svg.d .edge-exit { stroke: var(--chair); }
+svg.d .b-room { fill: var(--room-bg); stroke: var(--room); stroke-width: 1.2; }
+svg.d .b-chair { fill: var(--chair-bg); stroke: var(--chair); stroke-width: 1.2; }
+svg.d .b-app { fill: var(--app-bg); stroke: var(--app); stroke-width: 1.2; }
+svg.d .b-plain, svg.d .b-head, svg.d .b-phase { fill: var(--card); stroke: var(--edge); stroke-width: 1.2; }
+svg.d .b-band { fill: var(--card); stroke: var(--edge); stroke-width: 1; stroke-dasharray: 4 3; }
+svg.d .b-key { fill: var(--key-bg); stroke: var(--key-bg); }
+svg.d .b-exit { fill: var(--chair); stroke: var(--chair); }
+svg.d .b-yes { fill: var(--app-bg); stroke: var(--app); stroke-width: 1.5; }
+svg.d .b-no { fill: var(--no-bg); stroke: var(--edge); stroke-width: 1.2; }
+svg.d .bg-chip { fill: var(--bg); }
+.legend { display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; font-size: .9rem; color: var(--muted); margin: .6rem 0 0; }
+.legend span { display: inline-flex; align-items: center; gap: .45rem; }
+.legend b { color: var(--ink); font-size: .78rem; letter-spacing: .1em; }
+.sw { width: 18px; height: 12px; border-radius: 3px; display: inline-block; border: 1.5px solid; }
+.sw-room { background: var(--room-bg); border-color: var(--room); }
+.sw-chair { background: var(--chair-bg); border-color: var(--chair); }
+.sw-app { background: var(--app-bg); border-color: var(--app); }
+.sw-back { border: 0; border-top: 2px dashed var(--edge); height: 0; border-radius: 0; }
+.tbl { overflow-x: auto; margin-top: .6rem; }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: .93rem; background: var(--card); }
+th, td { text-align: left; vertical-align: top; padding: .55rem .7rem; border-bottom: 1px solid var(--line); }
+thead th { font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--edge); }
+tbody th { font-family: var(--serif); font-size: 1rem; white-space: nowrap; }
+td.diff { color: var(--chair); font-weight: 700; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.2rem 2rem; }
+.cols > div { min-width: 0; }
+ol.prec { padding-left: 1.4rem; margin: .3rem 0; }
+ol.prec li { padding: .12rem 0; }
+.pill { display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  padding: .05rem .5rem; border-radius: 999px; border: 1.5px solid; vertical-align: .1em; }
+.p-have { color: var(--app); border-color: var(--app); }
+.p-new { color: var(--chair); border-color: var(--chair); }
+.p-change { color: var(--room); border-color: var(--room); }
+ul.build { list-style: none; padding: 0; margin: .4rem 0; }
+ul.build li { padding: .45rem 0; border-bottom: 1px solid var(--line); }
+ol.q { padding-left: 1.4rem; }
+ol.q li { margin: .7rem 0; }
+ol.q .rec { display: block; color: var(--muted); font-size: .95rem; }
+ol.q .rec b { color: var(--app); }
+.callout { background: var(--card); border-left: 4px solid var(--room); padding: .8rem 1rem; border-radius: 0 6px 6px 0; max-width: 80ch; }
+@media (max-width: 520px) { h1 { font-size: 1.7rem; } }
+</style>
+
+<div class="wrap">
+<header class="prose">
+  <div class="eyebrow">South Oakleigh College · Debating &amp; Model UN platform</div>
+  <h1>MUN committee flow</h1>
+  <p><span class="status status-ok">Decided and built</span> &nbsp;Ben approved this flow and the recommendations on 27 Oct 2026, and added student tabs and friends and foes sheets. Decisions D-068 to D-072.</p>
+  <p class="lede">A committee session that runs like a real UN meeting: the debate happens out loud in the room, and the program keeps the record. It holds the speakers list, the motions, the amendment text, the timers and the votes, and shows them to everyone. Debate cycles between speeches, caucuses and amendment votes until the committee votes to close debate and vote on the resolution as a whole.</p>
+</header>
+
+<h2>The session at a glance</h2>
+<figure>
+<div class="scroll"><svg class="d" viewBox="0 0 1080 290" role="img" aria-label="The session in five phases: prepare, open, debate, voting procedure, debrief. Debate loops until a motion to close debate passes; a failed resolution returns to debate if another draft is ready." style="min-width:820px"><defs><marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs><rect class="b-phase" x="20" y="60" width="184" height="156" rx="8"/><text class="ph-title" x="34" y="86">Prepare</text><text class="ph-sub" x="34" y="103">BEFORE THE LESSON</text><text class="lbl" x="34" y="132" font-size="12.5">Country assigned</text><text class="lbl" x="34" y="152" font-size="12.5">Country brief + issue</text><text class="lbl" x="34" y="172" font-size="12.5">Draft resolution read</text><text class="lbl" x="34" y="192" font-size="12.5">Opening statement written</text><path class="edge" d="M204,138.0 L234,138.0" marker-end="url(#ah1)"/><rect class="b-phase" x="234" y="60" width="184" height="156" rx="8"/><text class="ph-title" x="248" y="86">Open</text><text class="ph-sub" x="248" y="103">START OF LESSON 1</text><text class="lbl" x="248" y="132" font-size="12.5">Roll call</text><text class="lbl" x="248" y="152" font-size="12.5">Speakers list opens</text><text class="lbl" x="248" y="172" font-size="12.5">Opening statements</text><text class="lbl" x="248" y="192" font-size="12.5">spoken, 60–90 s each</text><path class="edge" d="M418,138.0 L448,138.0" marker-end="url(#ah1)"/><rect class="b-key" x="448" y="60" width="184" height="156" rx="8"/><text class="ph-title on-key" x="462" y="86">Debate</text><text class="ph-sub on-key-muted" x="462" y="103">THE FLOOR</text><text class="lbl on-key" x="462" y="132" font-size="12.5">Speakers list</text><text class="lbl on-key" x="462" y="152" font-size="12.5">Mod and unmod caucus</text><text class="lbl on-key" x="462" y="172" font-size="12.5">Amendments: debate, vote</text><text class="lbl on-key" x="462" y="192" font-size="12.5">Motions move between</text><path class="edge" d="M632,138.0 L662,138.0" marker-end="url(#ah1)"/><rect class="b-phase" x="662" y="60" width="184" height="156" rx="8"/><text class="ph-title" x="676" y="86">Voting procedure</text><text class="ph-sub" x="676" y="103">DOORS CLOSED</text><text class="lbl" x="676" y="132" font-size="12.5">Divide the question?</text><text class="lbl" x="676" y="152" font-size="12.5">Final vote</text><text class="lbl" x="676" y="172" font-size="12.5">GA majority · SC 9, no veto</text><text class="lbl" x="676" y="192" font-size="12.5">Explanations of vote</text><path class="edge" d="M846,138.0 L876,138.0" marker-end="url(#ah1)"/><rect class="b-phase" x="876" y="60" width="184" height="156" rx="8"/><text class="ph-title" x="890" y="86">Debrief</text><text class="ph-sub" x="890" y="103">END</text><text class="lbl" x="890" y="132" font-size="12.5">Result, pivotal votes</text><text class="lbl" x="890" y="152" font-size="12.5">Whip-count accuracy</text><text class="lbl" x="890" y="172" font-size="12.5">Delegate profiles</text><text class="lbl" x="890" y="192" font-size="12.5">Engine calibration</text><path class="edge" d="M488,60 C488,26 592,26 592,60" marker-end="url(#ah1)"/><text class="elbl" x="540.0" y="16" text-anchor="middle">loops until close debate passes</text><path class="edge edge-back" d="M754.0,216 L754.0,250 L540.0,250 L540.0,216" marker-end="url(#ah1)"/><text class="elbl" x="647.0" y="266" text-anchor="middle">resolution fails and another draft is ready</text></svg></div>
+<figcaption>Five phases. Preparation happens before the lesson. Debate is a loop, not a fixed sequence: motions decide what happens next. Suspending or adjourning saves the state, so a committee can run over several lessons.</figcaption>
+</figure>
+
+<h2>Who does what, phase by phase</h2>
+<p class="prose">The room leads. The program never stands in for a speech or a negotiation; it records what was decided and puts the same information on every screen.</p>
+<div class="tbl"><table>
+<thead><tr><th>Phase</th><th>In the room</th><th>Chair (moderator)</th><th>Student screens</th><th>Projector</th></tr></thead>
+<tbody>
+<tr><th>Prepare</th><td>Research; optional bloc meetings</td><td>Assigns countries; picks the issue and the draft resolution</td><td>Country brief with evidence badges (sourced, estimate only, unknown); issue brief; the draft resolution; a private space to write the opening statement in the student’s own words</td><td>Not used</td></tr>
+<tr><th>Open</th><td>Roll call answered aloud; opening statements spoken from the floor</td><td>Calls the roll; opens the speakers list; keeps time</td><td>Roll answer; the student’s own statement as speaking notes; place in the queue</td><td>Who is present; current speaker and timer</td></tr>
+<tr><th>Debate</th><td>Speeches, placards, motions, lobbying and negotiation</td><td>Recognises speakers, takes motions in order, runs votes, approves amendments for the floor</td><td>Speakers list, pending motions, all submitted amendments as tracked changes, suggested edits, the current text</td><td>Mode (formal, moderated, unmoderated), topic, timer, motion queue, the amendment on the floor</td></tr>
+<tr><th>Voting procedure</th><td>Placards, or each delegation answering a roll-call vote aloud</td><td>Closes the doors, takes motions to divide or vote by roll call, announces each result</td><td>The vote for the student’s own delegation; the text being voted on</td><td>Live tally; in the Security Council, the veto warning</td></tr>
+<tr><th>Debrief</th><td>Discussion of what moved votes</td><td>Leads it; can override a mandate judgement</td><td>Own whip-count accuracy, delegate profile, pivotal votes</td><td>Result, pivotal votes, how the engine did</td></tr>
+</tbody></table></div>
+
+<h2>The floor: where debate happens</h2>
+<p class="prose">After the opening statements the Chair opens the floor. Each motion that passes sends the committee somewhere; when that ends, the floor reopens. This repeats for as long as debate needs, across lessons if necessary, until a motion to close debate passes.</p>
+<figure>
+<div class="scroll"><svg class="d" viewBox="0 0 1120 620" role="img" aria-label="The floor: the Chair asks for points or motions. With no motion the speakers list continues. A passed motion leads to a moderated caucus, an unmoderated caucus of up to 10 minutes, an amendment debate and vote, a suspension, or, for close debate, to voting procedure. Everything except close debate returns to the floor." style="min-width:900px"><defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs><rect class="b-band" x="20" y="8" width="1080" height="34" rx="6"/><text class="lbl" x="560" y="30" text-anchor="middle">At any time: point of order · personal privilege · parliamentary inquiry · right of reply. Raised by placard (and logged on a device); the Chair answers. Only personal privilege interrupts a speaker.</text><rect class="b-key" x="380" y="62" width="360" height="64" rx="8"/><text class="ph-title on-key" x="560.0" y="89" text-anchor="middle">The floor is open</text><text class="lbl on-key" x="560.0" y="110" text-anchor="middle" font-size="12.5">Chair: “Are there any points or motions on the floor?”</text><text class="note" x="360" y="80" text-anchor="end">Every motion is moved, seconded and</text><text class="note" x="360" y="95" text-anchor="end">voted (figure 3). If it fails, the</text><text class="note" x="360" y="110" text-anchor="end">floor reopens.</text><text class="note" x="760" y="80" text-anchor="start">Several motions at once: taken most</text><text class="note" x="760" y="95" text-anchor="start">disruptive first. The first to pass is</text><text class="note" x="760" y="110" text-anchor="start">used; the rest lapse.</text><path class="edge" d="M560.0,126 L560.0,148"/><path class="edge" d="M110,148 L1015,148"/><path class="edge" d="M110,148 L110,166" marker-end="url(#ah2)"/><rect class="b-head" x="28.0" y="168" width="164" height="52" rx="6"/><text class="lbl strong" x="110" y="190" text-anchor="middle" font-size="13">No motion</text><text class="note" x="110" y="207" text-anchor="middle">general speakers list</text><path class="edge" d="M110,220 L110,236" marker-end="url(#ah2)"/><rect class="b-chair" x="28.0" y="238" width="164" height="48" rx="6"/><text class="tag tag-chair" x="38.0" y="252">CHAIR</text><text class="lbl" x="38.0" y="267" font-size="12">Calls the next</text><text class="lbl" x="38.0" y="281" font-size="12">speaker</text><path class="edge" d="M110,286 L110,296" marker-end="url(#ah2)"/><rect class="b-room" x="28.0" y="298" width="164" height="48" rx="6"/><text class="tag tag-room" x="38.0" y="312">ROOM</text><text class="lbl" x="38.0" y="327" font-size="12">Speech, 60–90 s,</text><text class="lbl" x="38.0" y="341" font-size="12">then yields</text><path class="edge" d="M110,346 L110,356" marker-end="url(#ah2)"/><rect class="b-app" x="28.0" y="358" width="164" height="48" rx="6"/><text class="tag tag-app" x="38.0" y="372">APP</text><text class="lbl" x="38.0" y="387" font-size="12">Timer and queue on</text><text class="lbl" x="38.0" y="401" font-size="12">every screen</text><path class="edge" d="M291,148 L291,166" marker-end="url(#ah2)"/><rect class="b-head" x="209.0" y="168" width="164" height="52" rx="6"/><text class="lbl strong" x="291" y="190" text-anchor="middle" font-size="13">Moderated caucus</text><text class="note" x="291" y="207" text-anchor="middle">topic · total · per speech</text><path class="edge" d="M291,220 L291,236" marker-end="url(#ah2)"/><rect class="b-chair" x="209.0" y="238" width="164" height="48" rx="6"/><text class="tag tag-chair" x="219.0" y="252">CHAIR</text><text class="lbl" x="219.0" y="267" font-size="12">Calls speakers</text><text class="lbl" x="219.0" y="281" font-size="12">from placards</text><path class="edge" d="M291,286 L291,296" marker-end="url(#ah2)"/><rect class="b-room" x="209.0" y="298" width="164" height="48" rx="6"/><text class="tag tag-room" x="219.0" y="312">ROOM</text><text class="lbl" x="219.0" y="327" font-size="12">Short speeches on</text><text class="lbl" x="219.0" y="341" font-size="12">the topic</text><path class="edge" d="M291,346 L291,356" marker-end="url(#ah2)"/><rect class="b-app" x="209.0" y="358" width="164" height="48" rx="6"/><text class="tag tag-app" x="219.0" y="372">APP</text><text class="lbl" x="219.0" y="387" font-size="12">Topic, timer, who</text><text class="lbl" x="219.0" y="401" font-size="12">has spoken</text><path class="edge" d="M472,148 L472,166" marker-end="url(#ah2)"/><rect class="b-head" x="390.0" y="168" width="164" height="52" rx="6"/><text class="lbl strong" x="472" y="190" text-anchor="middle" font-size="13">Unmoderated caucus</text><text class="note" x="472" y="207" text-anchor="middle">up to 10 min a motion</text><path class="edge" d="M472,220 L472,236" marker-end="url(#ah2)"/><rect class="b-room" x="390.0" y="238" width="164" height="48" rx="6"/><text class="tag tag-room" x="400.0" y="252">ROOM</text><text class="lbl" x="400.0" y="267" font-size="12">Delegates move,</text><text class="lbl" x="400.0" y="281" font-size="12">lobby, negotiate</text><path class="edge" d="M472,286 L472,296" marker-end="url(#ah2)"/><rect class="b-app" x="390.0" y="298" width="164" height="48" rx="6"/><text class="tag tag-app" x="400.0" y="312">APP</text><text class="lbl" x="400.0" y="327" font-size="12">Draft, merge and</text><text class="lbl" x="400.0" y="341" font-size="12">suggest amendments</text><path class="edge" d="M472,346 L472,356" marker-end="url(#ah2)"/><rect class="b-chair" x="390.0" y="358" width="164" height="48" rx="6"/><text class="tag tag-chair" x="400.0" y="372">CHAIR</text><text class="lbl" x="400.0" y="387" font-size="12">Time up: extend by</text><text class="lbl" x="400.0" y="401" font-size="12">motion, or resume</text><path class="edge" d="M653,148 L653,166" marker-end="url(#ah2)"/><rect class="b-head" x="571.0" y="168" width="164" height="52" rx="6"/><text class="lbl strong" x="653" y="190" text-anchor="middle" font-size="13">Introduce amendment</text><text class="note" x="653" y="207" text-anchor="middle">sponsor + signatories</text><path class="edge" d="M653,220 L653,236" marker-end="url(#ah2)"/><rect class="b-app" x="571.0" y="238" width="164" height="48" rx="6"/><text class="tag tag-app" x="581.0" y="252">APP</text><text class="lbl" x="581.0" y="267" font-size="12">Tracked changes on</text><text class="lbl" x="581.0" y="281" font-size="12">every screen</text><path class="edge" d="M653,286 L653,296" marker-end="url(#ah2)"/><rect class="b-room" x="571.0" y="298" width="164" height="48" rx="6"/><text class="tag tag-room" x="581.0" y="312">ROOM</text><text class="lbl" x="581.0" y="327" font-size="12">Speakers for and</text><text class="lbl" x="581.0" y="341" font-size="12">against</text><path class="edge" d="M653,346 L653,356" marker-end="url(#ah2)"/><rect class="b-room" x="571.0" y="358" width="164" height="48" rx="6"/><text class="tag tag-room" x="581.0" y="372">ROOM</text><text class="lbl" x="581.0" y="387" font-size="12">Motion to vote on</text><text class="lbl" x="581.0" y="401" font-size="12">the amendment</text><path class="edge" d="M653,406 L653,416" marker-end="url(#ah2)"/><rect class="b-chair" x="571.0" y="418" width="164" height="48" rx="6"/><text class="tag tag-chair" x="581.0" y="432">CHAIR</text><text class="lbl" x="581.0" y="447" font-size="12">Amendment vote</text><text class="lbl" x="581.0" y="461" font-size="12">(substantive)</text><path class="edge" d="M653,466 L653,476"/><path class="edge" d="M612,476 L694,476"/><path class="edge" d="M612,476 L612,488" marker-end="url(#ah2)"/><rect class="b-yes" x="574" y="490" width="76" height="34" rx="17"/><text class="lbl strong" x="612" y="512" text-anchor="middle">Adopted</text><path class="edge" d="M694,476 L694,488" marker-end="url(#ah2)"/><rect class="b-no" x="656" y="490" width="76" height="34" rx="17"/><text class="lbl strong" x="694" y="512" text-anchor="middle">Rejected</text><path class="edge" d="M834,148 L834,166" marker-end="url(#ah2)"/><rect class="b-head" x="752.0" y="168" width="164" height="52" rx="6"/><text class="lbl strong" x="834" y="190" text-anchor="middle" font-size="13">Close debate</text><text class="note" x="834" y="207" text-anchor="middle">on the resolution</text><path class="edge" d="M834,220 L834,236" marker-end="url(#ah2)"/><rect class="b-room" x="752.0" y="238" width="164" height="48" rx="6"/><text class="tag tag-room" x="762.0" y="252">ROOM</text><text class="lbl" x="762.0" y="267" font-size="12">Up to 2 speakers</text><text class="lbl" x="762.0" y="281" font-size="12">against</text><path class="edge" d="M834,286 L834,296" marker-end="url(#ah2)"/><rect class="b-chair" x="752.0" y="298" width="164" height="48" rx="6"/><text class="tag tag-chair" x="762.0" y="312">CHAIR</text><text class="lbl" x="762.0" y="327" font-size="12">Vote: two-thirds</text><text class="lbl" x="762.0" y="341" font-size="12">(SC: 9 of 15)</text><path class="edge edge-exit" d="M834,346 L834,356" marker-end="url(#ah2)"/><rect class="b-exit" x="752.0" y="358" width="164" height="40" rx="20"/><text class="lbl strong on-exit" x="834" y="383" text-anchor="middle">To voting procedure</text><path class="edge" d="M1015,148 L1015,166" marker-end="url(#ah2)"/><rect class="b-head" x="933.0" y="168" width="164" height="52" rx="6"/><text class="lbl strong" x="1015" y="190" text-anchor="middle" font-size="13">Suspend or adjourn</text><text class="note" x="1015" y="207" text-anchor="middle">break or end of lesson</text><path class="edge" d="M1015,220 L1015,236" marker-end="url(#ah2)"/><rect class="b-chair" x="933.0" y="238" width="164" height="48" rx="6"/><text class="tag tag-chair" x="943.0" y="252">CHAIR</text><text class="lbl" x="943.0" y="267" font-size="12">Pauses the timer or</text><text class="lbl" x="943.0" y="281" font-size="12">closes the sitting</text><path class="edge" d="M1015,286 L1015,296" marker-end="url(#ah2)"/><rect class="b-app" x="933.0" y="298" width="164" height="48" rx="6"/><text class="tag tag-app" x="943.0" y="312">APP</text><text class="lbl" x="943.0" y="327" font-size="12">Everything saved;</text><text class="lbl" x="943.0" y="341" font-size="12">resumes here</text><path class="edge edge-back" d="M110,406 L110,600"/><path class="edge edge-back" d="M291,406 L291,600"/><path class="edge edge-back" d="M472,406 L472,600"/><path class="edge edge-back" d="M612,524 L612,600"/><path class="edge edge-back" d="M694,524 L694,600"/><path class="edge edge-back" d="M1015,346 L1015,600"/><path class="edge edge-back" d="M1015,600 L12,600 L12,120 L378,120" marker-end="url(#ah2)"/><rect class="bg-chip" x="128" y="590" width="140" height="20"/><text class="elbl" x="198" y="604" text-anchor="middle">back to the floor</text></svg></div>
+<div class="legend" aria-label="Key"><span><i class="sw sw-room"></i><b>ROOM</b> spoken and done in person</span><span><i class="sw sw-chair"></i><b>CHAIR</b> the moderator’s call</span><span><i class="sw sw-app"></i><b>APP</b> what the program records and shows</span><span><i class="sw sw-back"></i>dashed: returns to an earlier point</span></div>
+<figcaption>Every column except “Close debate” returns to the floor. An unmoderated caucus is at most 10 minutes per motion; a further motion can extend it. The Chair can also open the floor for motions when a caucus timer runs out.</figcaption>
+</figure>
+
+<h2>Handling a motion</h2>
+<div class="cols">
+<div>
+<figure>
+<div class="scroll"><svg class="d" viewBox="0 0 1150 312" role="img" aria-label="Handling a motion: a delegate raises it; the Chair checks it is in order and seconded; with no objection it passes by consent, otherwise a procedural vote decides. Failed, lapsed or out-of-order motions return to the floor." style="min-width:860px"><defs><marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs><rect class="b-room" x="16" y="60" width="136" height="56" rx="6"/><text class="tag tag-room" x="26" y="74">ROOM</text><text class="lbl" x="26" y="89" font-size="12">Delegate moves:</text><text class="lbl" x="26" y="103" font-size="12">“Motion to…”</text><rect class="b-chair" x="212" y="60" width="136" height="56" rx="6"/><text class="tag tag-chair" x="222" y="74">CHAIR</text><text class="lbl" x="222" y="89" font-size="12">In order</text><text class="lbl" x="222" y="103" font-size="12">right now?</text><rect class="b-chair" x="408" y="60" width="136" height="56" rx="6"/><text class="tag tag-chair" x="418" y="74">CHAIR</text><text class="lbl" x="418" y="89" font-size="12">Seconded?</text><rect class="b-chair" x="604" y="60" width="136" height="56" rx="6"/><text class="tag tag-chair" x="614" y="74">CHAIR</text><text class="lbl" x="614" y="89" font-size="12">Any objection?</text><rect class="b-chair" x="800" y="60" width="136" height="56" rx="6"/><text class="tag tag-chair" x="810" y="74">CHAIR</text><text class="lbl" x="810" y="89" font-size="12">Procedural vote</text><text class="lbl" x="810" y="103" font-size="12">GA majority · SC 9</text><rect class="b-yes" x="996" y="60" width="136" height="56" rx="6"/><text class="lbl strong" x="1064.0" y="84" text-anchor="middle">Passes</text><text class="lbl" x="1064.0" y="100" text-anchor="middle">Chair enacts it</text><path class="edge" d="M152,88.0 L210,88.0" marker-end="url(#ah3)"/><path class="edge" d="M348,88.0 L406,88.0" marker-end="url(#ah3)"/><text class="elbl" x="378.0" y="81.0" text-anchor="middle">yes</text><path class="edge" d="M544,88.0 L602,88.0" marker-end="url(#ah3)"/><text class="elbl" x="574.0" y="81.0" text-anchor="middle">yes</text><path class="edge" d="M740,88.0 L798,88.0" marker-end="url(#ah3)"/><text class="elbl" x="770.0" y="81.0" text-anchor="middle">objection</text><path class="edge" d="M936,88.0 L994,88.0" marker-end="url(#ah3)"/><text class="elbl" x="966.0" y="81.0" text-anchor="middle">majority</text><path class="edge" d="M280.0,116 L280.0,168" marker-end="url(#ah3)"/><text class="elbl" x="286.0" y="150" text-anchor="start">no</text><rect class="b-no" x="212" y="170" width="136" height="38" rx="19"/><text class="lbl" x="280.0" y="194" text-anchor="middle">Ruled out of order</text><path class="edge" d="M476.0,116 L476.0,168" marker-end="url(#ah3)"/><text class="elbl" x="482.0" y="150" text-anchor="start">no</text><rect class="b-no" x="408" y="170" width="136" height="38" rx="19"/><text class="lbl" x="476.0" y="194" text-anchor="middle">Lapses</text><path class="edge" d="M672.0,116 L672.0,168" marker-end="url(#ah3)"/><text class="elbl" x="678.0" y="150" text-anchor="start">none</text><rect class="b-yes" x="604" y="170" width="136" height="38" rx="19"/><text class="lbl" x="672.0" y="194" text-anchor="middle">Passes by consent</text><path class="edge" d="M868.0,116 L868.0,168" marker-end="url(#ah3)"/><text class="elbl" x="874.0" y="150" text-anchor="start">not enough</text><rect class="b-no" x="800" y="170" width="136" height="38" rx="19"/><text class="lbl" x="868.0" y="194" text-anchor="middle">Fails: floor reopens</text><path class="edge" d="M672.0,208 L672.0,236 L1064.0,236 L1064.0,118" marker-end="url(#ah3)"/><rect class="b-app" x="16" y="258" width="1116" height="40" rx="6"/><text class="tag tag-app" x="26" y="272">APP</text><text class="lbl" x="26" y="287" font-size="12">Students can log a motion on their device; the Chair can enter one with a tap. Every screen shows the queue in order of precedence, who moved and seconded it, and the result.</text></svg></div>
+<figcaption>The same steps for every motion. Motions are spoken; students can also log them on their devices (one tap for a 3, 5 or 10 minute unmoderated caucus), and the Chair still decides.</figcaption>
+</figure>
+</div>
+</div>
+<div class="cols" style="margin-top:1rem">
+<div>
+<h3>Order of precedence</h3>
+<p>When several motions are on the floor, the Chair takes them in this order. Caucus motions with longer times go first. This is the order already in the app’s rules of procedure (editable in Admin).</p>
+<ol class="prec">
+<li>Adjourn the meeting</li><li>Suspend the meeting</li><li>Close debate and move to voting</li><li>Divide the question</li>
+<li>Unmoderated caucus</li><li>Moderated caucus</li><li>Set speaking time</li><li>Introduce an amendment</li>
+</ol>
+</div>
+<div>
+<h3>Points (any time)</h3>
+<p><b>Personal privilege</b>: a delegate can’t hear, or needs something. It is the only point that may interrupt a speaker.<br>
+<b>Order</b>: the procedure was not followed.<br>
+<b>Parliamentary inquiry</b>: a question to the Chair about the rules.<br>
+<b>Right of reply</b>: a delegation whose country was insulted asks to respond; the Chair decides.</p>
+<p>The Chair logs a point with one tap if it matters for the record. Most points are simply answered aloud.</p>
+</div>
+</div>
+
+<h2>An amendment’s life</h2>
+<p class="prose">Every submitted amendment is visible to everyone, shown as tracked changes against the current text. Anyone can suggest an edit to someone else’s amendment; the sponsors accept or decline it, and each accepted edit is a new version. This replaces amendments to amendments, which get confusing in a classroom.</p>
+<figure>
+<div class="scroll"><svg class="d" viewBox="0 0 1100 324" role="img" aria-label="An amendment&#x27;s life: draft (sponsors only), submitted (everyone sees the change and can suggest edits), ready (signatories reached), on the floor, vote, then adopted or rejected. A friendly amendment is added without a vote." style="min-width:860px"><defs><marker id="ah4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs><rect class="b-head" x="16" y="96" width="146" height="60" rx="6"/><text class="lbl strong" x="89.0" y="121" text-anchor="middle" font-size="13">Draft</text><text class="note" x="89.0" y="139" text-anchor="middle">sponsors only</text><rect class="b-head" x="206" y="96" width="146" height="60" rx="6"/><text class="lbl strong" x="279.0" y="121" text-anchor="middle" font-size="13">Submitted</text><text class="note" x="279.0" y="139" text-anchor="middle">everyone sees the change</text><rect class="b-head" x="396" y="96" width="146" height="60" rx="6"/><text class="lbl strong" x="469.0" y="121" text-anchor="middle" font-size="13">Ready</text><text class="note" x="469.0" y="139" text-anchor="middle">signatories reached</text><rect class="b-head" x="586" y="96" width="146" height="60" rx="6"/><text class="lbl strong" x="659.0" y="121" text-anchor="middle" font-size="13">On the floor</text><text class="note" x="659.0" y="139" text-anchor="middle">Chair approved; debate</text><rect class="b-head" x="776" y="96" width="146" height="60" rx="6"/><text class="lbl strong" x="849.0" y="121" text-anchor="middle" font-size="13">Vote</text><text class="note" x="849.0" y="139" text-anchor="middle">substantive</text><path class="edge" d="M162,126.0 L204,126.0" marker-end="url(#ah4)"/><path class="edge" d="M352,126.0 L394,126.0" marker-end="url(#ah4)"/><path class="edge" d="M542,126.0 L584,126.0" marker-end="url(#ah4)"/><path class="edge" d="M732,126.0 L774,126.0" marker-end="url(#ah4)"/><text class="elbl" x="184.0" y="119.0" text-anchor="middle">submit</text><text class="elbl" x="564.0" y="119.0" text-anchor="middle">introduce</text><text class="elbl" x="754.0" y="119.0" text-anchor="middle">motion</text><path class="edge" d="M246,96 C246,52 312,52 312,96" marker-end="url(#ah4)"/><text class="note" x="279.0" y="30" text-anchor="middle">anyone suggests an edit;</text><text class="note" x="279.0" y="44" text-anchor="middle">sponsor accepts or declines</text><rect class="b-no" x="960" y="30" width="130" height="40" rx="20"/><text class="lbl strong" x="1025" y="55" text-anchor="middle">Rejected</text><rect class="b-yes" x="960" y="150" width="130" height="40" rx="20"/><text class="lbl strong" x="1025" y="175" text-anchor="middle">Adopted</text><path class="edge" d="M922,126.0 L940,126.0 L940,50 L958,50" marker-end="url(#ah4)"/><path class="edge" d="M940,126.0 L940,170 L958,170" marker-end="url(#ah4)"/><text class="elbl" x="934" y="44" text-anchor="end">fails</text><text class="elbl" x="934" y="186" text-anchor="end">passes</text><path class="edge" d="M279.0,156 L279.0,216" marker-end="url(#ah4)"/><rect class="b-plain" x="186" y="218" width="186" height="44" rx="6"/><text class="lbl strong" x="279.0" y="236" text-anchor="middle">Friendly</text><text class="note" x="279.0" y="252" text-anchor="middle">all resolution sponsors agree</text><path class="edge" d="M372,240 L1025,240 L1025,192" marker-end="url(#ah4)"/><text class="elbl" x="531.0" y="234" text-anchor="middle">added without a vote</text><text class="note" x="1018" y="216" text-anchor="end">text changes; old version kept</text><rect class="b-band" x="16" y="282" width="702" height="30" rx="6"/><text class="lbl" x="367" y="302" text-anchor="middle">Withdrawn: the sponsors can withdraw it at any point before the vote.</text></svg></div>
+<figcaption>A draft stays private to its sponsors until they submit it. To reach the floor it needs its signatories and the Chair’s approval. An adopted amendment changes the resolution on every screen at once, and the earlier version stays in History, so it can be undone.</figcaption>
+</figure>
+
+<h2>Voting procedure</h2>
+<figure>
+<div class="scroll"><svg class="d" viewBox="0 0 990 352" role="img" aria-label="Voting procedure: the Chair closes the doors; optional motions to divide the question or vote by roll call; amendments on the floor are voted first, then the resolution as a whole. Adopted leads to explanations of vote and the debrief; failed leads back to the floor if another draft is ready, otherwise to the debrief." style="min-width:820px"><defs><marker id="ah5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs><rect class="b-chair" x="16" y="40" width="166" height="56" rx="6"/><text class="tag tag-chair" x="26" y="54">CHAIR</text><text class="lbl" x="26" y="69" font-size="12">Voting procedure:</text><text class="lbl" x="26" y="83" font-size="12">doors closed, no notes</text><rect class="b-room" x="206" y="40" width="166" height="56" rx="6"/><text class="tag tag-room" x="216" y="54">ROOM</text><text class="lbl" x="216" y="69" font-size="12">Optional motions:</text><text class="lbl" x="216" y="83" font-size="12">divide · roll call</text><rect class="b-chair" x="396" y="40" width="166" height="56" rx="6"/><text class="tag tag-chair" x="406" y="54">CHAIR</text><text class="lbl" x="406" y="69" font-size="12">Amendments on the</text><text class="lbl" x="406" y="83" font-size="12">floor voted first</text><rect class="b-room" x="586" y="40" width="166" height="56" rx="6"/><text class="tag tag-room" x="596" y="54">ROOM</text><text class="lbl" x="596" y="69" font-size="12">Vote on the</text><text class="lbl" x="596" y="83" font-size="12">resolution as a whole</text><path class="edge" d="M182,68.0 L204,68.0" marker-end="url(#ah5)"/><path class="edge" d="M372,68.0 L394,68.0" marker-end="url(#ah5)"/><path class="edge" d="M562,68.0 L584,68.0" marker-end="url(#ah5)"/><path class="edge" d="M752,68.0 L782,68.0" marker-end="url(#ah5)"/><rect class="b-key" x="784" y="40" width="186" height="56" rx="8"/><text class="lbl strong on-key" x="877.0" y="64" text-anchor="middle">Result</text><text class="lbl on-key" x="877.0" y="81" text-anchor="middle" font-size="11.5">GA: majority · SC: 9, no P5 no</text><path class="edge" d="M877.0,96 L877.0,122"/><path class="edge" d="M669,122 L877,122"/><path class="edge" d="M669,122 L669,146" marker-end="url(#ah5)"/><rect class="b-no" x="594" y="148" width="150" height="36" rx="18"/><text class="lbl strong" x="669" y="171" text-anchor="middle">Failed</text><path class="edge" d="M877,122 L877,146" marker-end="url(#ah5)"/><rect class="b-yes" x="802" y="148" width="150" height="36" rx="18"/><text class="lbl strong" x="877" y="171" text-anchor="middle">Adopted</text><path class="edge" d="M669,184 L669,214" marker-end="url(#ah5)"/><rect class="b-chair" x="594" y="216" width="150" height="44" rx="6"/><text class="tag tag-chair" x="604" y="230">CHAIR</text><text class="lbl" x="604" y="245" font-size="12">Another draft</text><text class="lbl" x="604" y="259" font-size="12">ready?</text><path class="edge edge-exit" d="M594,238 L474,238" marker-end="url(#ah5)"/><text class="elbl" x="530" y="232" text-anchor="middle">yes</text><rect class="b-exit" x="286" y="218" width="186" height="40" rx="20"/><text class="lbl strong on-exit" x="379" y="243" text-anchor="middle">Floor reopens with it</text><path class="edge" d="M877,184 L877,214" marker-end="url(#ah5)"/><rect class="b-room" x="802" y="216" width="150" height="44" rx="6"/><text class="tag tag-room" x="812" y="230">ROOM</text><text class="lbl" x="812" y="245" font-size="12">Explanations of</text><text class="lbl" x="812" y="259" font-size="12">vote, right of reply</text><path class="edge" d="M669,260 L669,296" marker-end="url(#ah5)"/><text class="elbl" x="675" y="282" text-anchor="start">no</text><path class="edge" d="M877,260 L877,296" marker-end="url(#ah5)"/><rect class="b-head" x="594" y="298" width="358" height="40" rx="6"/><text class="lbl strong" x="773.0" y="323" text-anchor="middle">Debrief</text></svg></div>
+<figcaption>Once close debate passes, there are no more speeches or caucuses. A failed resolution doesn’t have to end the session: if another draft is ready, the floor reopens with it.</figcaption>
+</figure>
+
+<h2>General Assembly and Security Council</h2>
+<p class="prose">The flow is the same in both. What changes is who sits, how votes are counted, and the veto. Rows in red differ most.</p>
+<div class="tbl"><table>
+<thead><tr><th></th><th>General Assembly</th><th>Security Council</th></tr></thead>
+<tbody>
+<tr><th>Seats</th><td>Every member state in the committee; one student per delegation, empty seats computed and labelled</td><td>15: five permanent members (China, France, Russia, the UK, the US) and ten elected. In a class of 25, some delegations have two students</td></tr>
+<tr><th>Roll call</th><td>“Present” or “present and voting” (cannot abstain on substantive votes)</td><td>“Present”</td></tr>
+<tr><th>Procedural votes</th><td>Simple majority; close debate needs two-thirds</td><td class="diff">9 of 15; no veto</td></tr>
+<tr><th>Amendment votes</th><td>Simple majority of those voting yes or no</td><td class="diff">9 yes and no permanent member votes no*</td></tr>
+<tr><th>Resolution vote</th><td>Simple majority; abstentions don’t count</td><td class="diff">9 yes and no permanent member votes no; a permanent member’s abstention is not a veto</td></tr>
+<tr><th>Draft resolutions</th><td>Sponsors plus signatories (suggested: one fifth of the committee)</td><td>Any member can table one; usually one delegation holds the pen</td></tr>
+<tr><th>Non-members</th><td>Not applicable</td><td>A state involved in the issue can be invited to speak, without a vote (optional)</td></tr>
+<tr><th>How debate feels</th><td>Large blocs; more unmoderated caucus; amendments win votes across blocs</td><td>Small and intense; more moderated caucus; everything turns on the permanent five</td></tr>
+<tr><th>What the app adds</th><td>Whip counts against a simple majority</td><td>A live veto warning when a permanent member is predicted, or votes, no</td></tr>
+</tbody></table></div>
+<p class="prose" style="font-size:.92rem;color:var(--muted)">* Treating amendment votes as substantive (so the veto applies) follows UN practice; check it against this year’s Evatt rulebook before we build (D-011).</p>
+
+<h2>The student’s screen during debate</h2>
+<p class="prose">Seven tabs, the same in every stage. They support the room; they don’t replace it.</p>
+<div class="tbl"><table>
+<thead><tr><th>Tab</th><th>What it does</th><th>Who sees it</th></tr></thead>
+<tbody>
+<tr><th>Floor</th><td>Stage, who is speaking, the live speakers list (join or leave), the amendment on the floor with speak-for and speak-against buttons, votes</td><td>Everyone</td></tr>
+<tr><th>Motions and votes</th><td>Motions on the floor in order of precedence; second a motion; one-tap unmoderated caucus (3, 5 or 10 minutes); vote on procedural motions</td><td>Everyone</td></tr>
+<tr><th>Points</th><td>Log a point of order, personal privilege or parliamentary inquiry, or ask for a right of reply; see the queue</td><td>Everyone; the Chair answers</td></tr>
+<tr><th>Messages</th><td>Notes to other delegations, like passing a note across the room. Not marked. Closed in voting procedure</td><td>The two delegations and the Chair</td></tr>
+<tr><th>My speech</th><td>The student’s own drafts: opening statement, speeches, notes, with a word count</td><td>Only the student</td></tr>
+<tr><th>Amendments</th><td>Every submitted amendment as tracked changes; sign, suggest edits, draft your own</td><td>Everyone (drafts: sponsors only)</td></tr>
+<tr><th>Friends and foes</th><td>For each operative clause, every delegation as friend, undecided or foe, beside the engine’s labelled estimate. The preamble is left out on purpose</td><td>Only the student</td></tr>
+</tbody></table></div>
+
+<h2>What already exists, and what’s new</h2>
+<div class="cols">
+<div>
+<h3>Already built (Phase 6)</h3>
+<ul class="build">
+<li><span class="pill p-have">have</span> Roll call, speakers list, timers, projector view</li>
+<li><span class="pill p-have">have</span> Motions with seconds, precedence, consent and procedural votes</li>
+<li><span class="pill p-have">have</span> Moderated and unmoderated caucus modes</li>
+<li><span class="pill p-have">have</span> Amendments that add, replace or delete a paragraph; sponsors, seconds and signatories; friendly amendments</li>
+<li><span class="pill p-have">have</span> GA and SC voting rules, including the veto; computed delegations for empty seats</li>
+<li><span class="pill p-have">have</span> Whip count, debrief, delegate profiles</li>
+</ul>
+</div>
+<div>
+<h3>Built on 27 Oct 2026</h3>
+<ul class="build">
+<li><span class="pill p-change">change</span> The nine fixed stages become five phases with an open floor in the middle, driven by motions</li>
+<li><span class="pill p-new">new</span> Prepare phase: country brief, issue brief, and a statement pad for the student’s own words</li>
+<li><span class="pill p-new">new</span> Amendment board: everything submitted is public, as tracked changes, with suggested edits</li>
+<li><span class="pill p-new">new</span> Amendment debate inside the session: speakers for and against, motion to vote, adopt</li>
+<li><span class="pill p-change">change</span> Unmoderated caucus capped at 10 minutes per motion, with extensions</li>
+<li><span class="pill p-new">new</span> Points and right of reply log; divide the question; roll-call votes; a second draft after a failed vote</li>
+</ul>
+</div>
+</div>
+
+<h2>Decisions</h2>
+<p class="prose">Ben accepted every recommendation, with two changes, marked below.</p>
+<ol class="q prose">
+<li>Who moderates: the <b>Chair</b> or the <b>Secretary-General</b>?<span class="rec"><b>Decided:</b> call the moderator the Chair (or President), as the UN and most school conferences do, and keep Secretary-General for the person running the whole conference. The app can use either title.</span></li>
+<li>How much support does an amendment need to reach the floor?<span class="rec"><b>Decided:</b> one fifth of the <em>delegations that have students</em>, minimum two. Computed seats can’t sign, so “one fifth of the committee” would be 7 of 33 GA seats: more than a class can reach (D-072).</span></li>
+<li>How is an amendment debated?<span class="rec"><b>Decided:</b> two speakers for and two against by default, then a vote; delegates can move to vote sooner.</span></li>
+<li>Amendments to amendments?<span class="rec"><b>Decided:</b> no. Use suggested edits, which the sponsors accept or decline.</span></li>
+<li>Closing debate: two-thirds or simple majority?<span class="rec"><b>Decided:</b> two-thirds (the current setting), so a large bloc can’t cut debate short.</span></li>
+<li>Placards or devices for votes?<span class="rec"><b>Decided:</b> placards for procedural votes, with the Chair entering the count; devices for amendment and resolution votes, so the record and the whip-count scoring are exact. The Chair can switch either way.</span></li>
+<li>Unmoderated caucus limit?<span class="rec"><b>Decided:</b> 10 minutes per motion as you asked, extendable by a new motion; the Chair can set a total cap per lesson.</span></li>
+<li>Opening statement length?<span class="rec"><b>Decided:</b> 60 seconds for Years 9–10 and 90 seconds for seniors, editable.</span></li>
+<li>If the resolution fails?<span class="rec"><b>Decided:</b> the floor reopens with a second draft if one is ready; otherwise go to the debrief.</span></li>
+<li>Can students raise motions from their devices?<span class="rec"><b>Decided (Ben):</b> yes, with tabs for motions, caucus votes and points. Students still say them aloud and the Chair decides (D-069).</span></li>
+</ol>
+
+<div class="callout prose" style="margin-top:2rem"><p style="margin:0"><b>Rules that stay as they are.</b> The program never writes a student’s statement, clause or amendment. Country positions are labelled as sourced, estimate only or unknown. Whip counts are scored against the votes actually cast. Empty seats are computed and always labelled.</p></div>
+</div>

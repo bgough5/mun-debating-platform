@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, empty_state %}
+{% block content %}
+{{ breadcrumb([("People", "/people"), (c.name, "/people/classes/" ~ c.id), ("Sign-in cards", None)]) }}
+<h1 class="no-print">{{ icon("print") }} Sign-in cards: {{ c.name }}</h1>
+<p class="no-print lede">One card per student, eight to an A4 page. Each card has the student's own address and code, so they sign in as themselves on any laptop: no class list, no waiting. Print with Ctrl+P and cut out.</p>
+<p class="no-print small">Address on the cards: <code>{{ addr }}</code>. If students can't reach that address, set <code>"join_base_url"</code> in <code>data/config.json</code> and reload. Keep the cards with the class set: a code is as good as a password.</p>
+{% if students %}
+<div class="join-cards">
+{% for st in students %}
+<div class="join-card">
+  <div class="jc-head"><img src="/static/soc_crest.png" alt=""><span>South Oakleigh College<br><strong>Debating &amp; Model UN</strong></span></div>
+  <p class="jc-name">{{ st.name }}</p>
+  <p class="jc-label">Go to</p><p class="jc-url">{{ addr }}/s/{{ st.login_code }}</p>
+  <p class="jc-label">or go to {{ addr }} and type your code</p><p class="jc-code">{{ st.code }}</p>
+  <p class="jc-foot">{{ c.name }} · Keep this card to yourself.</p>
+</div>{% endfor %}
+</div>
+{% else %}{{ empty_state("No students in this class yet.", "Add their first names on the class page first.", href="/people/classes/" ~ c.id, action="Back to the class", icon_name="people") }}{% endif %}
+{% endblock %}

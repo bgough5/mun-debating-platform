@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, hidden_csrf %}
+{% block content %}
+{{ breadcrumb([("People", "/people"), (st.class_name, "/people/classes/" ~ st.class_id), (title, None)]) }}
+<h1>{{ title }}</h1>
+{% if delegations %}<p>Delegations: {% for d in delegations %}{{ d.country }} ({{ d.committee }}{% if d.role == 'head' %}, head{% endif %}){% if not loop.last %}; {% endif %}{% endfor %}</p>{% endif %}
+{% include "people/_pathway.html" %}
+{% if actor.is_coordinator and st.first_name != 'Erased' %}
+<section class="card" style="margin-top:1rem" aria-labelledby="h-erase"><h2 id="h-erase">Erase this student's records</h2>
+<p>Use when a student or family asks, or when the student leaves the program (privacy rule 6). This removes their name, their own writing (practice reflections, AI practice chats, milestone notes, comments on their speeches) and their devices, and scrubs them from the change history. Their speaker scores and votes stay under the name "Erased" so other students' results don't change. This can't be undone, except by restoring a backup.</p>
+<form method="post" action="/people/students/{{ st.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="erase">
+<label class="checks"><input type="checkbox" name="confirm" value="yes" required> Yes, erase {{ title }} permanently</label>
+<button type="submit" class="danger" data-confirm="Erase {{ title }} permanently? This can't be undone.">Erase</button></form>
+</section>
+{% endif %}
+{% endblock %}

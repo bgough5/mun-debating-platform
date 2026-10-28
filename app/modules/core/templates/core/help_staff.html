@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Help", "/help"), ("Staff guide", None)]) }}
+<h1>{{ icon("people") }} Staff guide</h1>
+<div class="guide">{{ body }}</div>
+{% endblock %}

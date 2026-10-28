@@ -1,0 +1,24 @@
+RUN SHEET — {{ event.name }}
+{{ event.starts_on or "Date to be set" }} · Start {{ event.start_time }} · Format: {{ format.name }} · Preparation {{ event.prep_minutes }} minutes
+
+ROLES FOR EACH DEBATE
+- Chairperson (a student): introduces the debate and each speaker, and announces the result
+- Timekeeper (a student): times each speech and gives the signals
+- Adjudicator: scores matter, manner and method, decides the result and gives verbal feedback
+
+ORDER OF SPEAKERS ({{ format.name }})
+- 1st affirmative, 1st negative, 2nd affirmative, 2nd negative, 3rd affirmative, 3rd negative{% if format.reply %}, then reply speeches: negative first, affirmative last{% endif %}
+
+SCHEDULE
+{% for item in schedule -%}
+{{ item.time }}  {{ item.what }}{% if item.who %}  [{{ item.who }}]{% endif %}
+{% endfor %}
+{% for r in rounds %}
+ROUND {{ r.number }}{% if r.motion %} — {{ r.motion }}{% endif %}
+{% for d in r.debates -%}
+- {{ d.room or "Room to be set" }}: {{ d.aff }} (affirmative) v {{ d.neg }} (negative){% if d.adjudicators %} — {{ d.adjudicators|map(attribute="name")|join(", ") }}{% endif %}
+{% endfor %}{% endfor %}
+HOSTING CHECKLIST
+- Visiting school met at reception; visitor sign-in done
+- Water in every room; room signs show the debate and the bathroom location
+- Ballots entered on the night (event → round → ballot); results sent to the competition organiser

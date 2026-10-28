@@ -1,0 +1,14 @@
+{# The timer stage, shared by the teacher's page and the projector (D-075). The words always name the phase, so colour is never the only signal. #}
+{% set phase_text = {'idle': 'Ready', 'go': 'Speaking', 'warn': 'Warning bell: start wrapping up', 'over': 'Time: finish now'} %}
+{% if cur.kind in ('think', 'prep') %}{% set phase_text = {'idle': 'Ready', 'go': 'Thinking time' if cur.kind == 'think' else 'Preparation', 'warn': 'Nearly time', 'over': 'Time is up'} %}{% endif %}
+<div class="run-stage" data-phase="{{ phase }}">
+  <p class="run-step-label">{{ cur.index + 1 }} of {{ steps|length }} · {% if run.kind == 'debate' %}{{ cur.label }}{% else %}{{ 'Thinking time' if cur.kind == 'think' else 'Speech' }}{% endif %}</p>
+  {% if cur.kind != 'prep' %}<p class="run-who">{{ cur.who or (cur.label if cur.kind == 'reply' else '—') }}</p>{% else %}<p class="run-who">{{ run.motion or 'Preparation' }}</p>{% endif %}
+  {% if run.kind == 'speeches' and cur.speaker %}{% if cur.speaker.topic_shown and cur.speaker.topic %}<p class="run-topic">{{ cur.speaker.topic }}</p>{% elif run.topic_mode == 'impromptu' %}<p class="run-topic">Topic drawn when the turn starts</p>{% endif %}{% endif %}
+  <p class="run-timer" role="timer" aria-label="{{ cur.label }}: time remaining" data-remaining="{{ remaining }}" data-state="{{ run.timer_state }}"
+     data-warn="{{ cur.warn }}" data-step="{{ run.id }}-{{ cur.key }}" data-elapsed="{{ run.timer_elapsed }}"
+     data-text-idle="{{ phase_text.idle }}" data-text-go="{{ phase_text.go }}" data-text-warn="{{ phase_text.warn }}" data-text-over="{{ phase_text.over }}"
+><span class="timer-value">{% if remaining < 0 %}+{{ (-remaining)|mmss }}{% else %}{{ remaining|mmss }}{% endif %}</span></p>
+  <p class="run-phase-text">{{ phase_text[phase] }}{% if run.timer_state == 'paused' %} (paused){% endif %}</p>
+  {% if next %}<p class="run-next">Next: {{ next.who or next.label }}{% if run.kind == 'debate' and next.who %} ({{ next.label }}){% endif %}</p>{% endif %}
+</div>

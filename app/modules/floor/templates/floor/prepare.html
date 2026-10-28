@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb, empty_state %}
+{% block content %}
+{{ breadcrumb([("My page", "/me"), ("Prepare", None)]) }}
+<h1>{{ icon("task") }} Prepare: {{ com.name }}</h1>
+{% if live %}<div class="notice">{{ icon("committee") }} This committee is in session now. <a href="/live/{{ live }}">Go to the live session</a></div>{% endif %}
+{% if not mine %}
+{{ empty_state("You haven't been given a country in this committee yet.", "Your teacher assigns countries on the committee page.", icon_name="delegation") }}
+{% else %}
+<ol class="prep-steps">
+<li><section aria-labelledby="h-country"><h2 id="h-country">{{ icon("delegation") }} Your country: {{ mine.name }}</h2>
+  {% if brief.blocs %}<p>Member of: {{ brief.blocs|map(attribute='name')|join(', ') }}.</p>{% endif %}
+  {% for a in brief.archetypes %}<p><strong>Diplomatic style (estimate):</strong> {{ a.name }}. {{ a.blurb }}</p>{% endfor %}
+  <h3>What the class knows about {{ mine.name }}</h3>
+  {% if brief.evidence %}
+  <ul>{% for e in brief.evidence %}<li>{{ e.summary or e.condition_text or 'Position recorded' }}{% if e.position is not none %} ({{ '%+d'|format(e.position) }}){% endif %} {{ e.quality|quality }}
+    <span class="small muted">{{ e.source_label }}{% if e.source %}: {{ e.source }}{% endif %}</span></li>{% endfor %}</ul>
+  {% else %}<p class="muted">No evidence recorded yet. Research your country's real position and share sources with your teacher.</p>{% endif %}
+  <p class="small">Positions marked “estimate only” are guesses from the model or unsourced notes, not facts. Check them against your own research.</p>
+</section></li>
+<li><section aria-labelledby="h-issue"><h2 id="h-issue">{{ icon("conference") }} The issue</h2>
+  <p>{% if com.topic %}<strong>{{ com.topic }}</strong>. {% endif %}{{ com.conference }}. Voting rule: {{ com.rule }}.</p>
+</section></li>
+<li><section aria-labelledby="h-res"><h2 id="h-res">{{ icon("resolution") }} The proposed resolution</h2>
+  {% if clauses %}
+  {% for c in clauses %}{% if loop.first or c.title != loop.previtem.title %}<h3>{{ c.title }}</h3>{% endif %}
+  <p class="paragraph"><span class="small muted">{{ 'Operative' if c.kind == 'operative' else 'Preambular' }} {{ c.position }}.</span> {{ c.text }}</p>{% endfor %}
+  <p><a href="/me/committees/{{ com.id }}/friends-foes">{{ icon("friends") }} Friends and foes for each operative clause</a> · <a href="/mun/committees/{{ com.id }}/amendments">{{ icon("tracked") }} Amendments</a></p>
+  {% else %}<p class="muted">No draft resolution yet.</p>{% endif %}
+</section></li>
+<li><section aria-labelledby="h-open"><h2 id="h-open">{{ icon("speech") }} Your opening statement</h2>
+  <p class="small">You'll say this out loud from the floor. Write it in your own words: the program never writes it for you, and nobody else sees this draft. A good opening statement says your country's position, what it wants in the resolution, and who it hopes to work with.</p>
+  <form method="post" action="/me/committees/{{ com.id }}/speeches" class="stack">{{ hidden_csrf(csrf) }}
+    <input type="hidden" name="kind" value="opening"><input type="hidden" name="title" value="Opening statement"><input type="hidden" name="next" value="/me/committees/{{ com.id }}/prepare">
+    <div class="field"><label for="ob">Opening statement</label><textarea id="ob" name="body" rows="10" maxlength="6000">{{ opening.body if opening else '' }}</textarea>
+      {% if opening %}<p class="hint">{{ words(opening.body) }} words: about {{ seconds(opening.body) }} seconds out loud.</p>{% endif %}</div>
+    <button type="submit">Save</button></form>
+  {% if drafts|length > (1 if opening else 0) %}<p class="small">Other drafts: {% for d in drafts if d.kind != 'opening' %}{{ d.title }}{% if not loop.last %}, {% endif %}{% endfor %}. Edit them in the live session's My speech tab.</p>{% endif %}
+</section></li>
+</ol>
+{% endif %}
+{% endblock %}

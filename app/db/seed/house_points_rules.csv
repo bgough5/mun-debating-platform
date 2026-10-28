@@ -1,0 +1,9 @@
+code,label,kind,place,points
+win,Debate won,win,,3
+participation,Team debated,participation,,1
+team_1,1st place team,team_place,1,10
+team_2,2nd place team,team_place,2,6
+team_3,3rd place team,team_place,3,3
+speaker_1,Best speaker,speaker_place,1,3
+speaker_2,2nd best speaker,speaker_place,2,2
+speaker_3,3rd best speaker,speaker_place,3,1

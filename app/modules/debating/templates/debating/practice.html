@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Debating", "/debating"), ("Practice debates", None)]) }}
+<h1>{{ icon("practice") }} Practice debates</h1>
+<p class="lede">Tick who is here. The platform fits the format to the number: 1 student practises a solo speech; 2 debate one-on-one; 3 add a student adjudicator; larger groups get as many 3 v 3 rooms as fit, with smaller rooms and student adjudicators so no one sits out.</p>
+<form method="get" action="/debating/practice" class="inline">
+  <div class="field"><label for="pc">Class</label><select id="pc" name="class_id">{% for c in classes %}<option value="{{ c.id }}" {% if c.id == class_id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
+  <button type="submit" class="secondary">Show students</button></form>
+{% if students %}
+<form method="post" action="/debating/practice" class="stack" style="max-width:none">{{ hidden_csrf(csrf) }}<input type="hidden" name="class_id" value="{{ class_id }}">
+  <fieldset><legend>Who is here?</legend><div class="checks">{% for st in students %}<label><input type="checkbox" name="student_id" value="{{ st.id }}" checked> {{ st.first_name }}{% if st.last_initial %} {{ st.last_initial }}.{% endif %}</label>{% endfor %}</div></fieldset>
+  <div class="field"><label for="pm">Motion <span class="hint">Leave empty for a random one from the motion bank</span></label><input id="pm" type="text" name="motion" list="pmotions"><datalist id="pmotions">{% for m in motions %}<option value="{{ m.motion }}">{% endfor %}</datalist></div>
+  <button type="submit">Set up the practice</button></form>
+<p><a href="/debating/practice-speeches?class_id={{ class_id }}">Solo practice speeches from this class</a></p>
+{% endif %}
+<details><summary>How each group size is split</summary>
+<table><thead><tr><th scope="col">Students</th><th scope="col">Rooms</th></tr></thead><tbody>
+{% for n, plan in plans.items() %}<tr><td class="num">{{ n }}</td><td>{% for room in plan %}{{ room.format }}{% if room.adjudicators %} + {{ room.adjudicators }} adjudicator{{ 's' if room.adjudicators > 1 }}{% endif %}{% if not loop.last %}; {% endif %}{% endfor %}</td></tr>{% endfor %}
+</tbody></table></details>
+{% endblock %}

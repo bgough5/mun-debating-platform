@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb %}
+{% macro speaker_row(s) %}
+<tr>
+  <th scope="row">{{ s.name or '—' }}{% if not s.student_id %} <span class="small muted">(not on the class list)</span>{% endif %}
+    {% if run.kind == 'speeches' and s.topic %}<br><span class="small muted">{{ s.topic }}</span>{% endif %}</th>
+  <td class="num">{% if s.seconds %}{{ s.seconds|mmss }}{% if s.timing %} <span class="badge {{ 'st-yes' if s.timing == 'on time' else 'st-abs' }}">{{ s.timing }}</span>{% endif %}{% else %}—{% endif %}</td>
+  {% for c in criteria %}<td><label class="visually-hidden" for="sc_{{ s.id }}_{{ c.id }}">{{ c.name }} for {{ s.name }}</label>
+    <input id="sc_{{ s.id }}_{{ c.id }}" type="number" name="sc_{{ s.id }}_{{ c.id }}" min="{{ c.min_score|int }}" max="{{ c.max_score|int }}" step="0.5"
+           value="{{ s.scores_d.get(c.id|string, '') }}" class="score-input"></td>{% endfor %}
+  <td class="num"><strong>{{ s.total|num(1) if s.scores_d else '—' }}</strong></td>
+  <td><label class="visually-hidden" for="cm_{{ s.id }}">Comment for {{ s.name }}</label><textarea id="cm_{{ s.id }}" name="cm_{{ s.id }}" rows="2" maxlength="1000">{{ s.comment }}</textarea></td>
+</tr>
+{% endmacro %}
+{% block content %}
+{{ breadcrumb([("Debating", "/debating"), (run.title, "/debating/runs/" ~ run.id), ("Results", None)]) }}
+<h1>{{ icon("ballot") }} {{ title }}</h1>
+<p class="lede">Score each speaker on {{ rubric.name if rubric else 'the rubric' }} (all optional), then save. Students whose names match the class list see their own time, scores and comment on their page; nobody sees anyone else's.</p>
+<p class="small muted">Timing: “short” is under three quarters of the time allowed ({{ (run.speech_seconds * 0.75)|mmss }}); “over” is more than 15 seconds past it ({{ (run.speech_seconds + 15)|mmss }}).
+  {% for c in criteria %}<br><strong>{{ c.name }}</strong> ({{ c.min_score|int }}–{{ c.max_score|int }}): {{ c.hint }}{% endfor %}</p>
+<form method="post" action="/debating/runs/{{ run.id }}/results" class="stack" style="max-width:none">{{ hidden_csrf(csrf) }}
+{% set heads %}<thead><tr><th scope="col">Speaker</th><th scope="col" class="num">Time</th>{% for c in criteria %}<th scope="col">{{ c.name }}<br><span class="small muted">out of {{ c.max_score|int }}</span></th>{% endfor %}<th scope="col" class="num">Total</th><th scope="col">Comment</th></tr></thead>{% endset %}
+{% if run.kind == 'debate' %}
+  {% for side in ('aff', 'neg') %}{% set t = teams[side] %}
+  <div class="table-wrap"><table><caption>{{ t.name }}{% if t.scored %}: {{ t.total|num(1) }}{% endif %}</caption>{{ heads }}
+  <tbody>{% for s in t.speakers %}{{ speaker_row(s) }}{% endfor %}</tbody></table></div>
+  {% endfor %}
+  {% set lead = 'aff' if teams.aff.total > teams.neg.total else ('neg' if teams.neg.total > teams.aff.total else '') %}
+  <fieldset><legend>Result</legend>
+    {% for side in ('aff', 'neg') %}<label class="checks"><input type="radio" name="winner" value="{{ side }}" {% if run.winner == side %}checked{% endif %}> {{ teams[side].name }} wins</label>{% endfor %}
+    <label class="checks"><input type="radio" name="winner" value="" {% if not run.winner %}checked{% endif %}> No result yet</label>
+    {% if lead and teams.aff.scored and teams.neg.scored %}<p class="small muted">The scores so far favour {{ teams[lead].name }}. The decision is yours: it can differ when a team won the key clash.</p>{% endif %}
+  </fieldset>
+{% else %}
+  <div class="table-wrap"><table><caption>Speakers</caption>{{ heads }}<tbody>{% for s in speakers|sort(attribute='position') %}{{ speaker_row(s) }}{% endfor %}</tbody></table></div>
+{% endif %}
+  <div class="field"><label for="oc">Comment for the whole class <span class="hint">Optional. Only staff see it; it prints with this page.</span></label><textarea id="oc" name="comment" rows="3" maxlength="2000">{{ run.comment }}</textarea></div>
+  <div class="row"><button type="submit">Save scores</button> <button type="button" class="secondary" data-print>{{ icon("print") }} Print</button></div>
+</form>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Prep and practise", "/me/prep"), (speech.title, "/me/prep/speeches/" ~ speech.id), ("Rehearse", None)]) }}
+<h1>{{ icon("play") }} {{ title }}</h1>
+<p class="lede">One part at a time, against your target of {{ speech.target_seconds|mmss }}. Use the arrow keys or the buttons to move on. When you're done, save it as a practice speech to score yourself.</p>
+<div data-practice data-rehearsing>
+  <input type="hidden" name="target_seconds" value="{{ speech.target_seconds }}">
+  <input type="hidden" name="think_seconds" value="0">
+  <div class="run-stage" data-phase="idle">
+    <p class="run-step-label" data-phase-label>Your speech</p>
+    <p class="run-timer" role="timer" aria-label="Time remaining" data-text-idle="Ready" data-text-go="Speaking" data-text-warn="Warning bell: start wrapping up" data-text-over="Time: finish now"><span class="timer-value">{{ speech.target_seconds|mmss }}</span></p>
+    <p class="run-phase-text">Ready</p>
+  </div>
+  <div class="run-controls">
+    <button type="button" data-practice-go data-show-in="setup review">{{ icon("play") }} Start the timer</button>
+    <button type="button" class="secondary" data-practice-pause data-show-in="speak">Pause</button>
+    <button type="button" class="secondary" data-practice-stop data-show-in="speak">Stop</button>
+  </div>
+  <p data-show-in="setup speak think review"><label class="checks"><input type="checkbox" data-practice-bell checked> Bell sound</label></p>
+  <h2 id="h-review" class="visually-hidden" data-show-in="review">Finished</h2>
+  <p data-show-in="review"><a class="button secondary" href="/me/practice?mode=prepared&amp;speech={{ speech.id }}">Score this rehearsal in my practice log</a></p>
+</div>
+<div data-rehearse data-at="0" class="card">
+  <p class="small muted" data-card-pos>Card 1 of {{ sections|length }}</p>
+  {% for s in sections %}<section data-card {% if not loop.first %}hidden{% endif %} aria-labelledby="rc{{ loop.index }}"><h2 id="rc{{ loop.index }}" class="h3">{{ loop.index }}. {{ s.label }}</h2>
+    <p class="rehearse-card">{{ s.text or '(empty)' }}</p></section>{% endfor %}
+  <div class="row"><button type="button" class="secondary" data-card-prev>{{ icon("undo") }} Back</button><button type="button" data-card-next>Next part {{ icon("next") }}</button></div>
+</div>
+{% endblock %}

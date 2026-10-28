@@ -1,0 +1,4 @@
+code,name,default_rule_code,default_procedure_code,notes
+ga_plenary,General Assembly plenary,ga_simple,ga_simplified,
+ga_third,GA Third Committee,ga_simple,ga_simplified,
+sc,Security Council,sc_substantive,sc_simplified,15 members: 5 permanent and 10 elected.

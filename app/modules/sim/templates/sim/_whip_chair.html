@@ -1,0 +1,18 @@
+{% from "_macros.html" import hidden_csrf %}
+  <h3>{{ icon("whip") }} Whip count</h3>
+  {% if whip_round %}
+    <p><strong>{{ whip_round.title }}</strong>: {{ whip_round.made }} of {{ whip_round.asked }} predictions made ({{ whip_round.students }} student{{ "" if whip_round.students == 1 else "s" }} × {{ whip_round.per_student }} delegation{{ "" if whip_round.per_student == 1 else "s" }} each).</p>
+    <div class="row">
+      <form method="post" action="/chair/{{ s.id }}/whip/{{ whip_round.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="open"><button type="submit">{{ icon("vote") }} Lock predictions and open the vote</button></form>
+      <form method="post" action="/chair/{{ s.id }}/whip/{{ whip_round.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="cancel"><button type="submit" class="secondary">Cancel the whip count</button></form>
+    </div>
+  {% elif not division %}
+    <p class="small">Before a vote, each student predicts how a few named delegations will vote. They're scored against the votes actually cast, never against the model.</p>
+    <form method="post" action="/chair/{{ s.id }}/whip" class="stack">{{ hidden_csrf(csrf) }}
+      <div class="field"><label for="wt">Predict the vote on</label><select id="wt" name="target">
+        {% for a in amendments %}<option value="amendment:{{ a.id }}">Amendment {{ a.id }} to paragraph {{ a.position }}</option>{% endfor %}
+        {% for p in paragraphs %}<option value="paragraph:{{ p.id }}">Operative paragraph {{ p.position }}</option>{% endfor %}
+        {% for r in resolutions %}<option value="resolution:{{ r.id }}">Resolution: {{ r.title }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="wn">Delegations per student</label><input id="wn" type="number" name="per_student" min="1" max="15" value="5" style="width:6rem"></div>
+      <button type="submit">{{ icon("whip") }} Start the whip count</button></form>
+  {% else %}<p class="small">Voting is open below.</p>{% endif %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb %}
+{% block content %}
+{{ breadcrumb([("People", "/people"), (c.name, "/people/classes/" ~ c.id), ("Poster", None)]) }}
+<div class="join-poster">
+  <div class="jc-head"><img src="/static/soc_crest.png" alt=""><span>South Oakleigh College · Debating &amp; Model UN</span></div>
+  <h1>Sign in: {{ c.name }}</h1>
+  <p class="jc-label">On your laptop, go to</p><p class="jp-url">{{ addr }}</p>
+  <p class="jc-label">and type the code on your sign-in card</p>
+  <p>Your code already knows your name. Signing in on a new laptop signs you out of the old one.</p>
+</div>
+{% endblock %}

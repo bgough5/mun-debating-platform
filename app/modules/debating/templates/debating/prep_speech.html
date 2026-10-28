@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb, confirm_delete %}
+{% block content %}
+{{ breadcrumb([("Prep and practise", "/me/prep"), (speech.title, None)]) }}
+<h1>{{ icon("speech") }} {{ title }}</h1>
+<p class="lede">{{ template.name if template else 'Speech' }}{% if template and template.blurb %}: {{ template.blurb }}{% endif %} Write each part in your own words; the prompts are there to help, not to copy.</p>
+{% if speech.staff_comment %}<p class="info-box"><strong>Your teacher:</strong> {{ speech.staff_comment }}</p>{% endif %}
+<div class="row no-print"><a class="button secondary" href="/me/prep/speeches/{{ speech.id }}/rehearse">{{ icon("play") }} Rehearse with the timer</a>
+  <a class="button secondary" href="/me/prep/speeches/{{ speech.id }}/cards">{{ icon("print") }} Cue cards</a></div>
+<form method="post" action="/me/prep/speeches/{{ speech.id }}" class="stack" style="max-width:none" data-speech-writer>{{ hidden_csrf(csrf) }}
+  <div class="row">
+    <div class="field"><label for="stl">Title</label><input id="stl" type="text" name="title" value="{{ speech.title }}" maxlength="120"></div>
+    <div class="field"><label for="tgt">Target length</label><select id="tgt" name="target_seconds">{% for v, t in [(60,'1 minute'),(120,'2 minutes'),(180,'3 minutes'),(240,'4 minutes'),(300,'5 minutes'),(420,'7 minutes'),(600,'10 minutes')] %}<option value="{{ v }}" {% if v == speech.target_seconds %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>
+  </div>
+  <p class="structure-meter" role="status" data-speech-total>{{ words }} words · about {{ seconds|mmss }} at {{ wpm }} words a minute</p>
+  {% for s in sections %}
+  <div class="field"><label for="sec-{{ s.key }}">{{ loop.index }}. {{ s.label }} {% if s.prompt %}<span class="hint">{{ s.prompt }}</span>{% endif %}</label>
+    <textarea id="sec-{{ s.key }}" name="sec_{{ s.key }}" rows="4" maxlength="4000" data-section>{{ s.text }}</textarea>
+    <p class="small muted" data-count-for="sec-{{ s.key }}">{{ s.words }} word{{ 's' if s.words != 1 }}</p></div>
+  {% endfor %}
+  <button type="submit">Save</button>
+</form>
+<p class="small muted">The time is an estimate at {{ wpm }} words a minute, a steady speaking pace. Time yourself when you rehearse: that's the real number.</p>
+{{ confirm_delete("/me/prep/speeches/" ~ speech.id ~ "/delete", "this speech", csrf) }}
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ icon("warning") }} {{ title }}</h1>
+<div class="error-box" role="alert"><p><strong>What happened:</strong> {{ message }}</p></div>
+<h2>What you can do</h2>
+<ul>
+  <li><a href="javascript:history.back()">Go back</a> and try again.</li>
+  <li><a href="/">{{ icon("home") }} Go to the home page</a>.</li>
+  {% if not actor %}<li>Staff: <a href="/login">sign in</a>. Students: <a href="/join">join your class</a>.</li>{% endif %}
+  <li>If it keeps happening, tell the coordinator what you were doing. Nothing you saved has been lost.</li>
+</ul>
+{% endblock %}

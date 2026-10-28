@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, empty_state %}
+{% block content %}
+<h1>{{ icon("practice") }} Practice committee</h1>
+<p class="lede">Run a delegation against a computed chamber: lobby the other delegations, amend the paragraph if you need to, then call the vote and see how well you read the room. One to three students; nothing you do here changes your class's work.</p>
+{% if mine %}
+<section aria-labelledby="h-mine"><h2 id="h-mine">Your practice runs</h2>
+<ul>{% for m in mine %}<li><a href="/me/sim/{{ m.id }}">{{ m.committee }}: paragraph {{ m.position }}, as {{ m.iso3 }}</a> — {{ "voted" if m.stage == 'voted' else "lobbying" }}</li>{% endfor %}</ul></section>
+{% endif %}
+<section class="card" aria-labelledby="h-new"><h2 id="h-new">{{ icon("add") }} Start a practice run</h2>
+{% if not options %}{{ empty_state("Your class has no committee with a draft resolution yet.", "Ask your teacher to set up a committee and a draft resolution, then come back.", icon_name="committee") }}
+{% else %}
+{% for o in options %}
+<form method="post" action="/me/sim" class="stack card">{{ hidden_csrf(csrf) }}<input type="hidden" name="committee_id" value="{{ o.id }}">
+  <h3>{{ icon("committee") }} {{ o.name }}</h3>
+  <div class="field"><label for="pp{{ o.id }}">Paragraph to pass</label><select id="pp{{ o.id }}" name="paragraph_id_{{ o.id }}">{% for p in o.paras %}<option value="{{ p.id }}">Operative paragraph {{ p.position }} ({{ p.title[:40] }})</option>{% endfor %}</select></div>
+  <div class="field"><label for="pc{{ o.id }}">Your delegation</label><select id="pc{{ o.id }}" name="iso3_{{ o.id }}">{% for c in o.countries %}<option value="{{ c.iso3 }}">{{ c.name }}</option>{% endfor %}</select></div>
+  <button type="submit">{{ icon("play") }} Start</button>
+</form>{% endfor %}{% endif %}
+</section>
+{% endblock %}

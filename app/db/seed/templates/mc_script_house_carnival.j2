@@ -1,0 +1,37 @@
+MC SCRIPT — {{ event.name }}
+
+OPENING
+Good {{ time_of_day }}, everyone, and welcome to the {{ event.name }}!
+I'd like to begin by acknowledging the Traditional Owners of the land on which we meet, and pay my respects to Elders past and present.
+Today {{ teams|length }} teams from {{ houses|length }} houses will debate across {{ rounds|length }} rounds. Every debate earns points for your house, and so does good sportsmanship.
+
+HOUSE ROLL CALL
+When I call your house, make some noise — then please be ready to listen.
+{% for h in houses -%}
+- {{ h.name }}!
+{% endfor %}
+HOUSEKEEPING
+- Your room and opponents are on the screen and on the noticeboard. If you can't find your room, ask a teacher in a lanyard.
+- Speeches are timed. One knock means one minute left; two knocks mean time is up.
+- Adjudicators' decisions are final. Thank your opponents and your adjudicator after every debate.
+- If you feel unwell, tell the nearest teacher. First aid is in the staffroom.
+{% for r in rounds %}
+ROUND {{ r.number }}
+{% if r.motion %}The motion for round {{ r.number }} is: "{{ r.motion }}".
+I'll say that again: "{{ r.motion }}".{% else %}The motion for round {{ r.number }} will be on the screen in a moment.{% endif %}
+You have {{ event.prep_minutes }} minutes to prepare. Affirmative teams, you open each debate. Please move to your rooms now.
+{% if not loop.last %}
+BETWEEN ROUNDS
+Welcome back. Thank you to our adjudicators for getting the results in so quickly.
+{% endif %}{% endfor %}
+RESULTS
+{% if ladder %}After {{ rounds|length }} rounds, our top three teams are:
+{% for row in ladder[:3] -%}
+{{ loop.index }}. {{ row.team }} ({{ row.house }}) — {{ row.wins|int }} wins
+{% endfor %}{% endif %}
+{% if house_totals %}And the house points for today, from fourth to first:
+{% for h in house_totals|reverse -%}
+{{ house_totals|length - loop.index0 }}. {{ h.name }} — {{ h.points }} points
+{% endfor %}{% endif %}
+THANK YOUS
+Thank you to our adjudicators, timekeepers, house captains and every speaker today. Debating takes courage: well done.

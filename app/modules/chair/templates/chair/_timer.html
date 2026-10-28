@@ -1,0 +1,20 @@
+{# One timer: the server sends the remaining time; live.js counts down and announces 60/30/10/0 s. #}
+{% macro timer(t, controls=false, sid=none, csrf='') %}
+<div class="card">
+  <p><strong>{{ t.label or t.kind|capitalize }}</strong> <span class="small muted">({{ t.state }}{% if t.extended_s %}, +{{ t.extended_s|int }} s added{% endif %})</span></p>
+  <p class="timer {% if t.remaining <= 10 %}low{% endif %}" data-remaining="{{ t.remaining }}" data-state="{{ t.state }}" data-label="{{ t.label or 'Timer' }}"
+     role="timer" aria-label="{{ t.label or 'Timer' }} time remaining"><span class="timer-value">{{ t.remaining|mmss }}</span></p>
+  {% if controls %}
+  <div class="row no-print">
+    {% for a, lbl in ([('pause','Pause')] if t.state == 'running' else [('start','Start' if t.state == 'idle' else 'Resume')]) + [('reset','Reset'), ('stop','Stop')] %}
+    <form method="post" action="/chair/{{ sid }}/timers/{{ t.id }}" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="{{ a }}">
+      <button type="submit" class="{{ '' if a in ('start','pause') else 'secondary' }}">{{ lbl }}<span class="visually-hidden"> {{ t.label }}</span></button></form>
+    {% endfor %}
+    {% for secs in (15, 30, 60) %}
+    <form method="post" action="/chair/{{ sid }}/timers/{{ t.id }}" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="extend"><input type="hidden" name="seconds" value="{{ secs }}">
+      <button type="submit" class="secondary">+{{ secs }} s<span class="visually-hidden"> extra time for {{ t.label }}</span></button></form>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endmacro %}

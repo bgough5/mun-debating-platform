@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<h1>Admin</h1>
+<p class="lede">Everything configurable is data: edit it here, no code needed. Every change is logged and can be undone or restored.</p>
+<div class="grid">
+  <section class="card" aria-labelledby="h-data">
+    <h2 id="h-data">Data and safety</h2>
+    <p>Open dataset: <strong>{{ settings.dataset }}</strong>{% if demo %} (fake data){% endif %}.</p>
+    <p>Last backup: {% if backup_age is none %}<strong>none yet</strong>{% else %}{{ (backup_age/3600)|round(1) }} hours ago{% endif %}.</p>
+    <ul>
+      <li><a href="/admin/data">Demo mode, backups and restore</a></li>
+      <li><a href="/admin/log">Change log (who changed what)</a></li>
+      <li><a href="/admin/model">Prediction model versions</a></li>
+      <li><a href="/people/staff">Staff accounts</a></li>
+    </ul>
+    <form method="post" action="/admin/undo">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">{{ icon("undo") }} Undo my last change</button></form>
+  </section>
+  <section class="card" aria-labelledby="h-ref">
+    <h2 id="h-ref">Reference tables</h2>
+    <table>
+      <thead><tr><th scope="col">Table</th><th scope="col" class="num">Rows</th><th scope="col">CSV</th></tr></thead>
+      <tbody>
+      {% for t in tables %}
+        <tr><td><a href="/admin/t/{{ t.name }}">{{ t.label }}</a></td><td class="num">{{ counts[t.name] }}</td>
+            <td><a href="/admin/csv/{{ t.name }}.csv">{{ icon("export") }} Export<span class="visually-hidden"> {{ t.label }}</span></a></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  <section class="card" aria-labelledby="h-exp">
+    <h2 id="h-exp">Export any other table (CSV)</h2>
+    <ul class="small">{% for n in export_only %}<li><a href="/admin/csv/{{ n }}.csv">{{ n }}</a></li>{% endfor %}</ul>
+  </section>
+</div>
+<section class="card" aria-labelledby="h-recent">
+  <h2 id="h-recent">Recent changes</h2>
+  {% include "admin/_events.html" %}
+</section>
+{% endblock %}

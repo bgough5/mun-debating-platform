@@ -1,0 +1,22 @@
+{
+ "cells": 279,
+ "computed_cells": 263,
+ "near_boundary_within_0_10_inclusive": 78,
+ "near_boundary_within_0_10_strict": 55,
+ "near_boundary_within_0_10_no_tolerance": 62,
+ "abstain_cells": 83,
+ "identical_blends": [
+  [
+   "Germany",
+   "Spain"
+  ]
+ ],
+ "amendment_cases": 54,
+ "amendment_flips": 2,
+ "override_amendment_cases": 96,
+ "override_changed": 51,
+ "rubric": {
+  "keyword_salad": "30/30",
+  "real_offer": "15/30"
+ }
+}

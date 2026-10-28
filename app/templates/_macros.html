@@ -1,0 +1,78 @@
+{% macro csrf_input() %}<input type="hidden" name="csrf" value="{{ caller_csrf if caller_csrf is defined else '' }}">{% endmacro %}
+
+{% macro hidden_csrf(csrf) %}<input type="hidden" name="csrf" value="{{ csrf }}">{% endmacro %}
+
+{# Destructive actions: a confirmation that names the item, without needing JavaScript (spec R4). #}
+{% macro confirm_delete(action, item, csrf, label="Delete", verb="delete") %}
+<details class="no-print">
+  <summary>{{ label }}…</summary>
+  <form method="post" action="{{ action }}" class="inline">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="checks"><input type="checkbox" name="confirm" value="yes" required> Yes, {{ verb }} {{ item }}</label>
+    <button type="submit" class="danger">{{ label }}</button>
+  </form>
+</details>
+{% endmacro %}
+
+{% macro flag(svg, name="") %}{% if svg %}<span role="img" aria-label="Flag of {{ name }}">{{ svg|safe }}</span>{% endif %}{% endmacro %}
+
+{% macro meter(py, pa, pn) %}
+<div class="meter" role="img" aria-label="Yes {{ (py*100)|round|int }}%, abstain {{ (pa*100)|round|int }}%, no {{ (pn*100)|round|int }}%"
+     style="grid-template-columns: {{ py*100 }}% {{ pa*100 }}% {{ pn*100 }}%"><span class="y"></span><span class="a"></span><span class="n"></span></div>
+{% endmacro %}
+
+{% macro breadcrumb(items) %}
+<nav class="breadcrumb" aria-label="Breadcrumb"><ol>
+{% for label, href in items %}<li>{% if href %}<a href="{{ href }}">{{ label }}</a>{% else %}<span aria-current="page">{{ label }}</span>{% endif %}</li>{% endfor %}
+</ol></nav>
+{% endmacro %}
+
+{% macro select(name, options, selected=None, label=None, hint=None, blank=None, id=None, required=False) %}
+<div class="field">
+  {% if label %}<label for="{{ id or name }}">{{ label }}{% if hint %} <span class="hint">{{ hint }}</span>{% endif %}</label>{% endif %}
+  <select name="{{ name }}" id="{{ id or name }}" {% if required %}required{% endif %}>
+    {% if blank is not none %}<option value="">{{ blank }}</option>{% endif %}
+    {% for value, text in options %}<option value="{{ value }}" {% if selected is not none and value|string == selected|string %}selected{% endif %}>{{ text }}</option>{% endfor %}
+  </select>
+</div>
+{% endmacro %}
+
+{% macro input(name, label, value="", type="text", hint=None, required=False, id=None, extra="") %}
+<div class="field">
+  <label for="{{ id or name }}">{{ label }}{% if hint %} <span class="hint">{{ hint }}</span>{% endif %}</label>
+  <input type="{{ type }}" name="{{ name }}" id="{{ id or name }}" value="{{ value if value is not none else '' }}" {% if required %}required{% endif %} {{ extra|safe }}>
+</div>
+{% endmacro %}
+
+{% macro textarea(name, label, value="", hint=None, required=False, id=None, rows=4) %}
+<div class="field">
+  <label for="{{ id or name }}">{{ label }}{% if hint %} <span class="hint">{{ hint }}</span>{% endif %}</label>
+  <textarea name="{{ name }}" id="{{ id or name }}" rows="{{ rows }}" {% if required %}required{% endif %}>{{ value or '' }}</textarea>
+</div>
+{% endmacro %}
+
+{# ---------- design system components (D-058) ---------- #}
+
+{# Tabs as links: each tab is a real page or fragment URL, so they work without JavaScript and with the back button. #}
+{% macro tabs(items, current, label="Sections") %}
+<nav aria-label="{{ label }}"><ul class="tabs">
+{% for key, text, href in items %}<li><a href="{{ href }}" {% if key == current %}aria-current="page"{% endif %}>{{ text }}</a></li>{% endfor %}
+</ul></nav>
+{% endmacro %}
+
+{# An empty state always says what to do next. #}
+{% macro empty_state(message, next=None, href=None, action=None, icon_name="inbox") %}
+<div class="empty">{{ icon(icon_name) }}<p>{{ message }}</p>{% if next %}<p class="next">{{ next }}</p>{% endif %}
+{% if href and action %}<p><a class="button secondary" href="{{ href }}">{{ action }}</a></p>{% endif %}</div>
+{% endmacro %}
+
+{# Loading state for htmx requests: shown only while a request is running. #}
+{% macro loading(text="Loading…") %}<span class="htmx-indicator" role="status"><span class="spinner" aria-hidden="true"></span>{{ text }}</span>{% endmacro %}
+
+{# A native dialog. Open it with a button carrying data-dialog-open="id". #}
+{% macro dialog(id, title) %}
+<dialog id="{{ id }}" aria-labelledby="{{ id }}-title">
+  <div class="dialog-head"><h2 id="{{ id }}-title">{{ title }}</h2><button type="button" class="secondary icon-only" data-dialog-close aria-label="Close">{{ icon("x") }}</button></div>
+  <div class="dialog-body">{{ caller() }}</div>
+</dialog>
+{% endmacro %}

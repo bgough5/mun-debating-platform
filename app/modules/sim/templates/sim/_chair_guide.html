@@ -1,0 +1,94 @@
+{% from "_macros.html" import hidden_csrf %}
+{% from "sim/_stages.html" import tracker %}
+{{ tracker(sim) }}
+<div class="cols-2">
+<div>
+  <p class="eyebrow">Stage {{ sim.stage_index + 1 }} of {{ sim.stages|length }}</p>
+  <h3>{{ icon("stage") }} {{ sim.stage.name }}</h3>
+  <p class="small muted">What to say:</p>
+  <blockquote class="script">{{ sim.script }}</blockquote>
+  <p><strong>What happens next:</strong> {{ sim.chair_next }}</p>
+  <div class="row">
+    {% if sim.prev_stage %}<form method="post" action="/chair/{{ s.id }}/stage">{{ hidden_csrf(csrf) }}<input type="hidden" name="stage" value="{{ sim.prev_stage.code }}"><button type="submit" class="secondary">Back to {{ sim.prev_stage.name }}</button></form>{% endif %}
+    {% if sim.next_stage %}<form method="post" action="/chair/{{ s.id }}/stage">{{ hidden_csrf(csrf) }}<input type="hidden" name="stage" value="{{ sim.next_stage.code }}"><button type="submit">{{ icon("next") }} Next: {{ sim.next_stage.name }}</button></form>{% endif %}
+  </div>
+  <details><summary>Jump to a stage</summary>
+    <form method="post" action="/chair/{{ s.id }}/stage" class="inline">{{ hidden_csrf(csrf) }}
+      <div class="field"><label for="jump">Stage</label><select id="jump" name="stage">{% for st in sim.stages %}<option value="{{ st.code }}" {% if st.code == sim.stage.code %}selected{% endif %}>{{ st.position }}. {{ st.name }}</option>{% endfor %}</select></div>
+      <button type="submit" class="secondary">Go</button></form>
+    <p class="small">The script for each stage is editable under Admin → Procedure stages.</p>
+  </details>
+</div>
+<div>
+{% if sim.stage.code == 'roll_call' %}
+  <h3>{{ icon("roll-call") }} Roll call</h3>
+  <p>{{ present }} of {{ roll|length }} present{% if present %}; a simple majority is {{ present // 2 + 1 }}{% endif %}.</p>
+  <form method="post" action="/chair/{{ s.id }}/roll">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="computed"><button type="submit" class="secondary">Answer for delegations without a student (computed)</button></form>
+  <div class="table-wrap"><table><caption class="visually-hidden">Roll call</caption><thead><tr><th scope="col">Delegation</th><th scope="col">Answer</th><th scope="col">Record</th></tr></thead><tbody>
+  {% for r in roll %}<tr><td>{{ r.name }}{% if r.students == 0 %} <span class="label-computed">computed</span>{% endif %}</td>
+    <td>{% if r.status %}{{ {'present':'Present','present_and_voting':'Present and voting','absent':'Absent'}[r.status] }}{% else %}<span class="muted">not yet</span>{% endif %}</td>
+    <td>{% for code, label in [('present','Present'),('present_and_voting','P & V'),('absent','Absent')] %}<form method="post" action="/chair/{{ s.id }}/roll" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="delegation_id" value="{{ r.id }}"><input type="hidden" name="status" value="{{ code }}"><button type="submit" class="link">{{ label }}<span class="visually-hidden"> for {{ r.name }}</span></button></form>{% endfor %}</td></tr>{% endfor %}
+  </tbody></table></div>
+{% elif sim.stage.code == 'agenda' %}
+  <h3>{{ icon("calendar") }} Agenda</h3>
+  <form method="post" action="/chair/{{ s.id }}/agenda" class="stack">{{ hidden_csrf(csrf) }}
+    <div class="field"><label for="ag">Agenda topic</label><input id="ag" type="text" name="agenda" value="{{ s.agenda }}" required maxlength="200"></div>
+    <button type="submit">Set the agenda</button></form>
+{% elif sim.stage.code in ('opening_speeches', 'floor') %}
+  {% if draft %}<div><p>{{ icon("resolution") }} Debating: <a href="/mun/resolutions/{{ draft.id }}">{{ draft.title }}</a></p>{% if other_drafts %}
+    <details><summary>Change the draft</summary><form method="post" action="/chair/{{ s.id }}/floor" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="draft">
+      <div class="field"><label for="drs">Draft resolution</label><select id="drs" name="resolution_id">{% for r in other_drafts %}<option value="{{ r.id }}">{{ r.title }}</option>{% endfor %}</select></div>
+      <button type="submit" class="secondary">Debate this draft</button></form></details>{% endif %}</div>
+  {% else %}<p class="muted">No draft resolution yet. <a href="/mun/committees/{{ s.committee_id }}">Add one on the committee page.</a></p>{% endif %}
+  {% if sim.stage.code == 'floor' %}
+  {% if floor_amendment %}
+  <div class="card accent"><h3>{{ icon("amendment") }} On the floor: amendment {{ floor_amendment.id }}</h3>
+    <p><strong>{{ floor_amendment.kind_label }}</strong> · {{ floor_amendment.sponsor_name or 'chair' }}</p>
+    <p class="paragraph diff">{{ floor_amendment.diff }}</p>
+    <p class="small">Take speakers for and against (the speakers list now shows only them), then a motion to vote on the amendment.</p>
+    <div class="row">
+      <form method="post" action="/chair/{{ s.id }}/floor">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="vote_amendment"><input type="hidden" name="amendment_id" value="{{ floor_amendment.id }}"><button type="submit" {% if division %}disabled{% endif %}>{{ icon("vote") }} Vote on the amendment</button></form>
+      <form method="post" action="/chair/{{ s.id }}/floor">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="friendly"><input type="hidden" name="amendment_id" value="{{ floor_amendment.id }}"><button type="submit" class="secondary">Accept as friendly</button></form>
+      <form method="post" action="/chair/{{ s.id }}/floor">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="clear"><button type="submit" class="secondary">Take it off the floor</button></form>
+    </div></div>
+  {% include "sim/_whip_chair.html" %}
+  {% endif %}
+  <h3>{{ icon("tracked") }} Amendments</h3>
+  <p class="small">Needs {{ board[0].needed if board else 2 }} signatories to reach the floor. <a href="/mun/committees/{{ s.committee_id }}/amendments">Open the board</a></p>
+  {% for a in board if a.state in ('ready', 'submitted') %}
+  <div class="card"><p><strong>{{ a.id }}. {{ a.kind_label }}</strong> · {{ a.state_label }}{% if a.sponsor_name %} · {{ a.sponsor_name }}{% endif %}</p>
+    <form method="post" action="/chair/{{ s.id }}/floor" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="bring"><input type="hidden" name="amendment_id" value="{{ a.id }}">
+      {% if a.state == 'submitted' %}<label class="checks"><input type="checkbox" name="override" value="1"> Bring it anyway</label>{% endif %}
+      <button type="submit" class="secondary" {% if floor_amendment or division %}disabled{% endif %}>Bring to the floor<span class="visually-hidden"> (amendment {{ a.id }})</span></button></form>
+    <form method="post" action="/chair/{{ s.id }}/floor" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="friendly"><input type="hidden" name="amendment_id" value="{{ a.id }}"><button type="submit" class="link">Friendly<span class="visually-hidden"> (amendment {{ a.id }})</span></button></form></div>
+  {% else %}<p class="muted">None waiting.</p>{% endfor %}
+  <p><a href="/chair/{{ s.id }}/messages">{{ icon("message") }} Delegate messages</a></p>
+  {% endif %}
+{% elif sim.stage.code == 'voting_procedure' %}
+  <h3>{{ icon("resolution") }} Voting procedure</h3>
+  {% if floor_amendment %}<div><p>{{ icon("warning") }} Amendment {{ floor_amendment.id }} is still on the floor: vote on it first.</p>
+    <form method="post" action="/chair/{{ s.id }}/floor" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="vote_amendment"><input type="hidden" name="amendment_id" value="{{ floor_amendment.id }}"><button type="submit" {% if division %}disabled{% endif %}>Vote on the amendment</button></form></div>{% endif %}
+  {% if draft and not division and not whip_round %}
+  <form method="post" action="/chair/{{ s.id }}/divisions" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="target" value="resolution:{{ draft.id }}">
+    <button type="submit">{{ icon("vote") }} Vote on {{ draft.title }}</button></form>
+  {% endif %}
+  {% if roll_order %}<details><summary>Roll-call vote order</summary><p class="small">If a delegation moves to vote by roll call, call them in this order (drawn by lot). Each answers yes, no or abstain; enter their votes as they answer.</p>
+    <ol>{% for d in roll_order %}<li>{{ d.name }}</li>{% endfor %}</ol></details>{% endif %}
+  {% if last_vote and last_vote.target_kind == 'resolution' and not last_vote.passed and other_drafts %}
+  <div class="card"><p>{{ icon("info") }} The resolution failed. Another draft is ready:</p>
+    <form method="post" action="/chair/{{ s.id }}/floor" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="reopen">
+      <div class="field"><label for="rod">Draft</label><select id="rod" name="resolution_id">{% for r in other_drafts %}<option value="{{ r.id }}">{{ r.title }}</option>{% endfor %}</select></div>
+      <button type="submit">Reopen the floor with it</button></form></div>
+  {% endif %}
+
+  {% include "sim/_whip_chair.html" %}
+{% elif sim.stage.code == 'debrief' %}
+  <h3>{{ icon("calibration") }} Debrief</h3>
+  {% if last_vote %}<p><a class="button" href="/chair/{{ s.id }}/debrief/{{ last_vote.id }}">{{ icon("view") }} Show the debrief: {{ last_vote.title }}</a></p>
+  {% else %}<p class="muted">No substantive vote has closed yet.</p>{% endif %}
+{% else %}
+  <h3>{{ icon("info") }} Students see</h3>
+  <p>{{ sim.student_prompt }}</p>
+{% endif %}
+</div>
+</div>

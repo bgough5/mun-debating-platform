@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, confirm_delete %}
+{% block content %}
+{{ breadcrumb([("Debating", "/debating"), (run.title, None)]) }}
+<h1>{{ icon("debate" if run.kind == 'debate' else "speech") }} {{ run.title }}</h1>
+<p class="lede">{% if run.kind == 'debate' %}{% if run.motion %}{{ run.motion }}{% else %}Class debate{% endif %}{% else %}Speaking round: {{ speakers|length }} speaker{{ 's' if speakers|length != 1 }}, {{ 'impromptu' if run.topic_mode == 'impromptu' else 'prepared' }}{% endif %}{% if class_name %} · {{ class_name }}{% endif %}</p>
+<div class="row no-print">
+  <a class="button" href="/debating/present/{{ run.projector_token }}" target="_blank" rel="noopener">{{ icon("projector") }} Open the projector view</a>
+  <a class="button secondary" href="/debating/runs/{{ run.id }}/results">{{ icon("ballot") }} Scores and results</a>
+  <a class="button secondary" href="/debating/runs/{{ run.id }}/edit">{{ icon("edit") }} Names and times</a>
+</div>
+<div id="run-main" data-live-channel="run:{{ run.id }}" hx-get="/debating/runs/{{ run.id }}/f" hx-trigger="live-update" hx-swap="innerHTML" data-run-control="{{ run.id }}">
+{% include "debating/_run_main.html" %}
+</div>
+<p id="live-status" class="small"></p>
+{{ confirm_delete("/debating/runs/" ~ run.id ~ "/delete", "this " ~ ("debate" if run.kind == 'debate' else "speaking round"), csrf) }}
+{% endblock %}

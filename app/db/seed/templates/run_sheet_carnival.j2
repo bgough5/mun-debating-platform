@@ -1,0 +1,14 @@
+RUN SHEET — {{ event.name }}
+{{ event.starts_on }} · Format: {{ format.name }} · {{ teams|length }} teams · {{ rooms|length }} rooms
+
+{% for item in schedule -%}
+{{ item.time }}  {{ item.what }}{% if item.who %}  [{{ item.who }}]{% endif %}
+{% endfor %}
+Rounds
+{% for r in rounds -%}
+Round {{ r.number }}{% if r.motion %}: {{ r.motion }}{% endif %} — {{ r.pairings|length }} debates{% if r.byes %}, {{ r.byes }} bye{% endif %}
+{% endfor %}
+Rooms
+{% for room in rooms -%}
+- {{ room.name }}{% if room.accessible %} (accessible){% endif %}
+{% endfor %}

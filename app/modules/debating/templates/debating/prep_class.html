@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, empty_state %}
+{% block content %}
+{{ breadcrumb([("Debating", "/debating"), ("Student preparation", None)]) }}
+<h1>{{ icon("task") }} {{ title }}</h1>
+<p class="lede">Each student's debate cases, speech drafts and practice speeches. Open one to score it on the rubric and leave a comment; the student sees both.</p>
+<p><a href="/debating/practice-speeches?class_id={{ cls.id }}">{{ icon("timer") }} Practice speeches from this class</a></p>
+{% set any_work = students|selectattr('cases')|list or students|selectattr('speeches')|list %}
+{% if students %}
+<div class="table-wrap"><table><caption>Preparation by student</caption>
+<thead><tr><th scope="col">Student</th><th scope="col">Debate cases</th><th scope="col">Speeches</th><th scope="col" class="num">Practice speeches</th></tr></thead>
+<tbody>{% for s in students %}<tr><th scope="row">{{ s.first_name }}{% if s.last_initial %} {{ s.last_initial }}.{% endif %}</th>
+<td>{% for c in s.cases %}<a href="/debating/prep/cases/{{ c.id }}">{{ c.side_label }}: {{ c.motion[:60] }}</a> <span class="small muted">({{ c.summary.arguments_done }} argument{{ 's' if c.summary.arguments_done != 1 }}, {{ c.summary.rebuttals_done }} rebuttal{{ 's' if c.summary.rebuttals_done != 1 }}{% if c.summary.staff is not none %}, scored{% endif %})</span>{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}</td>
+<td>{% for p in s.speeches %}<a href="/debating/prep/speeches/{{ p.id }}">{{ p.title }}</a> <span class="small muted">({{ p.words }} words)</span>{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}</td>
+<td class="num">{{ s.practice }}</td></tr>{% endfor %}</tbody></table></div>
+{% if not any_work %}<p class="small muted">Nothing written yet. Students start from Prep and practise on their page.</p>{% endif %}
+{% else %}{{ empty_state("No students in this class yet.", "Add them on the class page.", icon_name="people") }}{% endif %}
+{% endblock %}

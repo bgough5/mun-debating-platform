@@ -1,0 +1,39 @@
+{% from "_macros.html" import hidden_csrf %}
+{% from "chair/_timer.html" import timer %}
+{% if open_points %}
+<div class="card accent" aria-labelledby="h-points" data-announce="{{ open_points|length ~ ' point(s) waiting' }}" data-announce-key="points">
+  <h3 id="h-points">{{ icon("point") }} Points waiting ({{ open_points|length }})</h3>
+  <ul class="plain">{% for p in open_points %}<li><strong>{{ p.label }}</strong>: {{ p.country }}{% if p.who %} ({{ p.who }}){% endif %}{% if p.note %}: “{{ p.note }}”{% endif %}
+    {% for st, lbl in ([('granted','Grant'),('declined','Decline')] if p.kind == 'reply' else [('answered','Answered'),('declined','Decline')]) %}
+    <form method="post" action="/chair/{{ s.id }}/points/{{ p.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="status" value="{{ st }}"><button type="submit" class="{{ '' if loop.first else 'secondary' }}">{{ lbl }}<span class="visually-hidden"> {{ p.label }} from {{ p.country }}</span></button></form>{% endfor %}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+<div class="card" data-announce="{{ 'Now speaking: ' ~ current.country if current else 'No one has the floor' }}" data-announce-key="speaker">
+  <p>Now speaking: <strong>{% if current %}{{ current.country }}{% if current.first_name %} ({{ current.first_name }}{% if current.last_initial %} {{ current.last_initial }}.{% endif %}){% endif %}{% else %}no one{% endif %}</strong></p>
+  <div class="row">
+    <form method="post" action="/chair/{{ s.id }}/next">{{ hidden_csrf(csrf) }}<button type="submit">{{ icon("next") }} Next speaker</button></form>
+    {% if current %}{% for to in ['chair','questions','another delegate'] %}
+    <form method="post" action="/chair/{{ s.id }}/yield">{{ hidden_csrf(csrf) }}<input type="hidden" name="to" value="{{ to }}"><button type="submit" class="secondary">Yield to {{ to }}</button></form>{% endfor %}{% endif %}
+    {% if s.mode in ('moderated','unmoderated') %}<form method="post" action="/chair/{{ s.id }}/end-caucus">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">End caucus</button></form>{% endif %}
+  </div>
+</div>
+{% for t in timers %}{{ timer(t, true, s.id, csrf) }}{% endfor %}
+<h3>{{ icon("speakers") }} {% if floor_amendment %}Speakers on amendment {{ floor_amendment.id }}{% elif s.mode == 'moderated' %}Moderated caucus list{% else %}Speakers list{% endif %} ({{ queue|length }})</h3>
+<ol class="speakers">
+{% for e in queue %}<li>{{ e.country }}{% if e.first_name %} ({{ e.first_name }}){% endif %}{% if e.side %} <span class="badge {{ 'st-yes' if e.side == 'for' else 'st-no' }}">{{ e.side }}</span>{% endif %}
+  {% for a, lbl in [('up','Move up'),('down','Move down'),('remove','Remove')] %}
+  <form method="post" action="/chair/{{ s.id }}/entries/{{ e.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="{{ a }}"><button type="submit" class="link">{{ lbl }}<span class="visually-hidden"> {{ e.country }}</span></button></form>
+  {% endfor %}</li>
+{% else %}<li class="muted">Empty</li>{% endfor %}
+</ol>
+{% if floor_amendment %}
+<form method="post" action="/chair/{{ s.id }}/floor" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="side">
+  <div class="field"><label for="sdd">Add a speaker</label><select id="sdd" name="delegation_id">{% for d in dels %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="sds">Side</label><select id="sds" name="side"><option value="for">For</option><option value="against">Against</option></select></div>
+  <button type="submit" class="secondary">Add</button></form>
+{% else %}
+<form method="post" action="/chair/{{ s.id }}/speakers" class="inline">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="sd">Add a delegation</label><select id="sd" name="delegation_id">{% for d in dels %}<option value="{{ d.id }}">{{ d.name }}{% if not d.students %} (computed){% endif %}</option>{% endfor %}</select></div>
+  <div class="field"><label for="lk">List</label><select id="lk" name="list_kind"><option value="general">General</option><option value="moderated" {% if s.mode == 'moderated' %}selected{% endif %}>Moderated caucus</option></select></div>
+  <button type="submit" class="secondary">Add</button></form>
+{% endif %}

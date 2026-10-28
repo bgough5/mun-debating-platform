@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Debating", "/debating"), (e.name, "/debating/events/" ~ e.id), ("Set up", None)]) }}
+<h1>Set up: {{ e.name }}</h1>
+<h2>{{ icon("people") }} Teams ({{ teams|length }})</h2>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Team</th><th scope="col">House</th><th scope="col">Speakers</th><th scope="col"><span class="visually-hidden">Remove</span></th></tr></thead>
+<tbody>{% for t in teams %}<tr><td>{{ t.name }}{% if t.needs_accessible %} <span class="small">(accessible room)</span>{% endif %}</td><td>{{ t.house or '—' }}</td>
+<td>{% for m in members.get(t.id, []) %}{{ m.first_name }}{% if m.last_initial %} {{ m.last_initial }}.{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+<td><details><summary>Remove…<span class="visually-hidden"> {{ t.name }}</span></summary><form method="post" action="/debating/events/{{ e.id }}/setup" class="inline">{{ hidden_csrf(csrf) }}
+  <input type="hidden" name="action" value="remove_team"><input type="hidden" name="team_id" value="{{ t.id }}">
+  <label class="checks"><input type="checkbox" name="confirm" value="yes" required> Yes, remove {{ t.name }}</label><button type="submit" class="danger">Remove</button></form></details></td></tr>
+{% else %}<tr><td colspan="4">No teams yet.</td></tr>{% endfor %}</tbody></table></div>
+<div class="grid" style="margin-top:1rem">
+<section class="card" aria-labelledby="h-auto"><h2 id="h-auto">Make teams from a class</h2>
+<form method="post" action="/debating/events/{{ e.id }}/setup" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="auto_teams">
+  <div class="field"><label for="ac">Class</label><select id="ac" name="class_id">{% for c in classes %}<option value="{{ c.id }}" {% if c.id == e.class_id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
+  <label class="checks"><input type="checkbox" name="by_house" value="1" {% if e.kind == 'carnival' %}checked{% endif %}> One house per team (house carnival)</label>
+  <button type="submit">Make teams of {{ e.speakers_per_team }}</button>
+  <p class="small muted">Students already in a team are skipped. Leftovers become reserves rather than being left out.</p></form></section>
+<section class="card" aria-labelledby="h-team"><h2 id="h-team">Add one team</h2>
+<form method="post" action="/debating/events/{{ e.id }}/setup" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="team">
+  <div class="field"><label for="tn">Team name</label><input id="tn" type="text" name="name" required></div>
+  <div class="field"><label for="th">House</label><select id="th" name="house_id"><option value="">—</option>{% for h in houses %}<option value="{{ h.id }}">{{ h.name }}</option>{% endfor %}</select></div>
+  {% for i in range(e.speakers_per_team) %}
+  <div class="field"><label for="tm{{ i }}">Speaker {{ i + 1 }}</label><select id="tm{{ i }}" name="student_id"><option value="">—</option>
+    {% for st in class_students if st.id not in in_team %}<option value="{{ st.id }}">{{ st.first_name }}{% if st.last_initial %} {{ st.last_initial }}.{% endif %}</option>{% endfor %}</select></div>
+  {% endfor %}
+  <label class="checks"><input type="checkbox" name="needs_accessible" value="1"> Needs an accessible room</label>
+  <button type="submit" class="secondary">Add team</button>
+  {% if not e.class_id %}<p class="small muted">For a school-wide event, use “Make teams from a class” for each year group.</p>{% endif %}</form></section>
+</div>
+<div class="grid">
+<section class="card" aria-labelledby="h-rooms"><h2 id="h-rooms">{{ icon("room") }} Rooms ({{ rooms|length }})</h2>
+  <ul class="small">{% for r in rooms %}<li>{{ r.name }}{% if not r.accessible %} (not accessible){% endif %}
+    <form method="post" action="/debating/events/{{ e.id }}/setup" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="remove"><input type="hidden" name="table" value="room"><input type="hidden" name="id" value="{{ r.id }}"><button type="submit" class="link">remove<span class="visually-hidden"> {{ r.name }}</span></button></form></li>{% endfor %}</ul>
+  <form method="post" action="/debating/events/{{ e.id }}/setup" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="rooms">
+    <div class="field"><label for="rn">Room names, one per line <span class="hint">Most important first (top debates go there)</span></label><textarea id="rn" name="names" rows="3"></textarea></div>
+    <div class="field"><label for="rc">…or just how many</label><input id="rc" type="number" name="count" min="1" max="200"></div>
+    <label class="checks"><input type="checkbox" name="not_accessible" value="1"> These rooms are not wheelchair accessible</label>
+    <button type="submit" class="secondary">Add rooms</button></form></section>
+<section class="card" aria-labelledby="h-adj"><h2 id="h-adj">{{ icon("adjudicator") }} Adjudicators ({{ adjs|length }})</h2>
+  <ul class="small">{% for a in adjs %}<li>{{ a.name }} · rating {{ a.rating }}{% if a.house %} · {{ a.house }} (won't judge {{ a.house }} teams){% endif %}{% if a.student_id %} · student{% endif %}
+    <form method="post" action="/debating/events/{{ e.id }}/setup" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="remove"><input type="hidden" name="table" value="adjudicator"><input type="hidden" name="id" value="{{ a.id }}"><button type="submit" class="link">remove<span class="visually-hidden"> {{ a.name }}</span></button></form></li>{% endfor %}</ul>
+  <form method="post" action="/debating/events/{{ e.id }}/setup" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="adjudicator">
+    <div class="field"><label for="an">Name <span class="hint">or choose a staff member or student below</span></label><input id="an" type="text" name="name"></div>
+    <div class="field"><label for="as">Staff member</label><select id="as" name="staff_id"><option value="">—</option>{% for s_ in staff %}<option value="{{ s_.id }}">{{ s_.name }}</option>{% endfor %}</select></div>
+    {% if class_students %}<div class="field"><label for="ast">Student adjudicator</label><select id="ast" name="student_id"><option value="">—</option>{% for st in class_students %}<option value="{{ st.id }}">{{ st.first_name }}{% if st.last_initial %} {{ st.last_initial }}.{% endif %}</option>{% endfor %}</select></div>{% endif %}
+    <div class="row"><div class="field"><label for="ar">Rating (0–10)</label><input id="ar" type="number" name="rating" value="5" min="0" max="10" step="0.5" style="width:6rem"></div>
+    <div class="field"><label for="ah">House (conflict)</label><select id="ah" name="house_id"><option value="">—</option>{% for h in houses %}<option value="{{ h.id }}">{{ h.name }}</option>{% endfor %}</select></div></div>
+    <button type="submit" class="secondary">Add adjudicator</button></form></section>
+</div>
+<section class="card" aria-labelledby="h-set"><h2 id="h-set">Settings</h2>
+<form method="post" action="/debating/events/{{ e.id }}/setup" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="settings">
+  <label class="checks"><input type="checkbox" name="avoid_same_house" value="1" {% if e.avoid_same_house %}checked{% endif %}> Avoid two teams from the same house debating each other</label>
+  <label class="checks"><input type="checkbox" name="bye_counts_as_win" value="1" {% if e.bye_counts_as_win %}checked{% endif %}> A bye counts as a win</label>
+  <div class="row"><div class="field"><label for="st">Start time</label><input id="st" type="text" name="start_time" value="{{ e.start_time }}" size="6"></div>
+  <div class="field"><label for="rmn">Minutes per round</label><input id="rmn" type="number" name="round_minutes" value="{{ e.round_minutes }}" min="20" max="240" style="width:6rem"></div>
+  <div class="field"><label for="bm">Break between rounds</label><input id="bm" type="number" name="break_minutes" value="{{ e.break_minutes }}" min="0" max="120" style="width:6rem"></div></div>
+  <button type="submit" class="secondary">Save settings</button></form></section>
+{% endblock %}

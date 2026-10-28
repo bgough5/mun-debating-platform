@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Model UN", "/mun"), ("Calibration report", None)]) }}
+<h1>{{ icon("calibration") }} Calibration report</h1>
+<p class="lede">Does the engine's confidence match what happened? Two separate targets, never pooled (D-013):
+<a href="/mun/calibration?context=conference" {% if context == 'conference' %}aria-current="page"{% endif %}>conference votes</a> ·
+<a href="/mun/calibration?context=real_un" {% if context == 'real_un' %}aria-current="page"{% endif %}>real UN votes (backtests)</a>.</p>
+{% if not rep %}
+<div class="notice"><p>No recorded votes with a saved prediction yet. Save a prediction before a vote, then record the actual vote.</p></div>
+{% else %}
+{% for w_ in rep.warnings %}<div class="notice">{{ w_ }}</div>{% endfor %}
+<div class="grid">
+  <section class="card"><h2>Sample</h2><p class="bigstat">{{ rep.n }}</p><p>country-votes across {{ rep.votes }} vote(s).</p></section>
+  <section class="card"><h2>Brier score</h2><p class="bigstat">{{ rep.brier|num(3) }}</p><p>90% interval {{ rep.brier_ci[0]|num(3) }}–{{ rep.brier_ci[1]|num(3) }}. Lower is better; 0 is perfect, about 0.67 is a uniform guess.</p></section>
+  <section class="card"><h2>Log loss</h2><p class="bigstat">{{ rep.log_loss|num(3) }}</p><p>90% interval {{ rep.log_loss_ci[0]|num(3) }}–{{ rep.log_loss_ci[1]|num(3) }}. Lower is better; a uniform guess scores 1.099.</p></section>
+  <section class="card"><h2>Verdict</h2><p class="bigstat" style="font-size:1.4rem">{{ rep.verdict }}</p><p>Expected calibration error {{ rep.ece|num(3) }}.</p></section>
+</div>
+<h2>Against baselines</h2>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Baseline</th><th scope="col" class="num">Its Brier</th><th scope="col" class="num">Model minus baseline (90% interval)</th><th scope="col">Result</th></tr></thead>
+<tbody>{% for b in rep.baselines %}<tr><td>{{ b.name }}</td><td class="num">{{ b.brier|num(3) }}</td>
+<td class="num">{{ '%+.3f'|format(b.diff) }} ({{ '%+.3f'|format(b.diff_lo) }} to {{ '%+.3f'|format(b.diff_hi) }})</td>
+<td>{% if b.beats %}Model is better{% elif b.loses %}<strong>Model is worse</strong>{% else %}No clear difference{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+<h2>Reliability</h2>
+<p class="small">When the engine says “30%”, does it happen about 30% of the time? Each row pools yes, abstain and no predictions in that band. A flagged row is outside the
+95% interval (corrected for the number of rows).</p>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Predicted band</th><th scope="col" class="num">n</th><th scope="col" class="num">Mean predicted</th><th scope="col" class="num">Happened</th><th scope="col">95% interval</th><th scope="col">Flag</th></tr></thead>
+<tbody>{% for b in rep.reliability %}<tr><td>{{ (b.lo*100)|int }}–{{ (b.hi*100)|int }}%</td><td class="num">{{ b.n }}</td><td class="num">{{ b.mean_predicted|pct }}</td><td class="num">{{ b.observed|pct }}</td>
+<td>{{ b.ci_lo|pct }}–{{ b.ci_hi|pct }}</td><td>{% if b.flagged %}<strong>Outside</strong>{% else %}ok{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+{% endif %}
+{% endblock %}

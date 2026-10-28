@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, hidden_csrf, flag %}
+{% block content %}
+{{ breadcrumb([("Model UN", "/mun" if access == 'manage' else None), (com.conference, "/mun/conferences/" ~ com.conference_id if access == 'manage' else None), (com.name, None)]) }}
+<h1>{{ com.name }}</h1>
+<p class="lede">{{ com.conference }} · Voting rule: <strong>{{ com.rule }}</strong>{% if com.topic %} · Topic: {{ com.topic }}{% endif %}{% if com.class_name %} · Class: {{ com.class_name }}{% endif %}</p>
+{% if mine %}<div class="ok-box">You are in the <strong>{{ mine.iso3 }}</strong> delegation.</div>{% endif %}
+<div class="row no-print">
+  <a class="button secondary" href="/mun/committees/{{ com.id }}/evidence">Evidence</a>
+  {% if modules.chair and access == 'manage' %}<a class="button secondary" href="/chair/committee/{{ com.id }}">Run a live session</a>{% endif %}
+</div>
+
+<h2>{{ icon("resolution") }} Resolutions</h2>
+<ul>{% for r in resolutions %}<li><a href="/mun/resolutions/{{ r.id }}">{{ r.title }}</a> <span class="muted">({{ r.status }})</span></li>{% else %}<li>None yet.</li>{% endfor %}</ul>
+{% if access == 'manage' or mine %}
+<form method="post" action="/mun/committees/{{ com.id }}/resolutions" class="inline">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="rt">New draft resolution title</label><input id="rt" name="title" required></div><button type="submit" class="secondary">Create</button></form>
+{% endif %}
+
+<h2 id="tasks">{{ icon("task") }} Lobbying tasks</h2>
+{% if tasks %}
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Task</th><th scope="col">For</th><th scope="col">Assigned to</th><th scope="col">Status</th><th scope="col">Talking points and notes</th></tr></thead>
+<tbody>{% for t in tasks %}
+<tr><td>{{ t.title }}<br><span class="small muted">{{ t.notes }}</span></td><td>{{ t.iso3 }}</td>
+<td>{% if t.first_name %}{{ t.first_name }}{% if t.last_initial %} {{ t.last_initial }}.{% endif %}{% else %}<span class="muted">Unassigned</span>{% endif %}</td>
+<td colspan="2">
+  <form method="post" action="/mun/tasks/{{ t.id }}" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="back" value="/mun/committees/{{ com.id }}#tasks">
+    <div class="field"><label for="ts{{ t.id }}">Status<span class="visually-hidden"> of {{ t.title }}</span></label>
+      <select id="ts{{ t.id }}" name="status">{% for s_ in ['todo','doing','done'] %}<option value="{{ s_ }}" {% if s_ == t.status %}selected{% endif %}>{{ {'todo':'To do','doing':'Doing','done':'Done'}[s_] }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="tp{{ t.id }}">Talking points (your own words)</label><textarea id="tp{{ t.id }}" name="talking_points" rows="2">{{ t.talking_points }}</textarea></div>
+    <button type="submit" class="secondary">Save<span class="visually-hidden"> {{ t.title }}</span></button></form>
+  <p class="small"><a href="/mun/committees/{{ com.id }}/evidence?iso3={{ t.target_iso3 or '' }}">Record what you learned</a></p>
+</td></tr>{% endfor %}</tbody></table></div>
+{% else %}<p>No tasks yet. Open a prediction and use “Create lobbying tasks”.</p>{% endif %}
+
+<h2>{{ icon("delegation") }} Delegations ({{ dels|length }})</h2>
+<p class="small">A delegation with no students is voted by the prediction engine and labelled <span class="label-computed">computed</span>.</p>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Country</th><th scope="col">Students</th>{% if access == 'manage' %}<th scope="col"><span class="visually-hidden">Manage</span></th>{% endif %}</tr></thead>
+<tbody>{% for d in dels %}
+<tr><td>{{ flag(d.flag_svg, d.name) }} {{ d.name }} <span class="iso">{{ d.iso3 }}</span>{% if d.p5 %} <span class="small muted">(P5)</span>{% endif %}</td>
+<td>{% for m in by_del.get(d.id, []) %}{{ m.first_name }}{% if m.last_initial %} {{ m.last_initial }}.{% endif %}{% if m.role == 'head' %} (head){% endif %}
+  {% if access == 'manage' %}<form method="post" action="/mun/members/{{ m.id }}/remove" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" class="link">remove<span class="visually-hidden"> {{ m.first_name }} from {{ d.name }}</span></button></form>{% endif %}{% if not loop.last %}, {% endif %}
+  {% else %}<span class="label-computed">computed</span>{% endfor %}</td>
+{% if access == 'manage' %}<td>
+  <details><summary>Remove…<span class="visually-hidden"> {{ d.name }}</span></summary><form method="post" action="/mun/delegations/{{ d.id }}/remove" class="inline">{{ hidden_csrf(csrf) }}
+    <label class="checks"><input type="checkbox" name="confirm" value="yes" required> Yes, remove {{ d.name }}</label><button type="submit" class="danger">Remove</button></form></details></td>{% endif %}
+</tr>{% endfor %}</tbody></table></div>
+
+{% if access == 'manage' %}
+<div class="grid" style="margin-top:1rem">
+<section class="card" aria-labelledby="h-addd"><h2 id="h-addd">Add delegations</h2>
+<form method="post" action="/mun/committees/{{ com.id }}/delegations" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="isl">ISO-3 codes <span class="hint">Separated by spaces or commas, e.g. AUS FJI USA</span></label><input id="isl" name="iso3_list"></div>
+  <div class="field"><label for="bl">…or every member of a bloc</label><select id="bl" name="bloc_id"><option value="">— none —</option>{% for b in blocs %}<option value="{{ b.id }}">{{ b.name }}</option>{% endfor %}</select></div>
+  <label class="checks"><input type="checkbox" name="all_un" value="1"> …or all 193 UN members</label>
+  <button type="submit">Add</button></form></section>
+<section class="card" aria-labelledby="h-alloc"><h2 id="h-alloc">Allocate students</h2>
+{% if com.class_id %}
+  <p>{{ unallocated|length }} student(s) in {{ com.class_name }} have no delegation here.</p>
+  <form method="post" action="/mun/committees/{{ com.id }}/allocate">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Allocate everyone automatically</button></form>
+  <form method="post" action="/mun/committees/{{ com.id }}/allocate" class="stack" style="margin-top:.75rem">{{ hidden_csrf(csrf) }}
+    <div class="field"><label for="as">Student</label><select id="as" name="student_id">{% for st in unallocated %}<option value="{{ st.id }}">{{ st.first_name }}{% if st.last_initial %} {{ st.last_initial }}.{% endif %}</option>{% endfor %}</select></div>
+    <div class="field"><label for="ad">Delegation</label><select id="ad" name="delegation_id">{% for d in dels %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="ar">Role</label><select id="ar" name="role"><option value="delegate">Delegate</option><option value="head">Head of delegation</option></select></div>
+    <button type="submit">Allocate</button></form>
+{% else %}<p>Link a class to this committee to allocate students.</p>{% endif %}
+</section>
+</div>
+{% endif %}
+{% endblock %}

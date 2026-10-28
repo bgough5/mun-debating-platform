@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, empty_state %}
+{% from "debating/_prep_macros.html" import score_text %}
+{% block content %}
+<h1>{{ icon("practice") }} Prep and practise</h1>
+<p class="lede">Build a debate case, rebut the other side, write a speech, and practise speaking against the clock. Everything here is your own work: the platform gives you structures and prompts, never the words.</p>
+
+<div class="grid">
+<section class="card" aria-labelledby="h-speak"><h2 id="h-speak">{{ icon("timer") }} Speaking practice</h2>
+  <ul class="plain">
+    <li><a href="/me/practice?mode=impromptu"><strong>Impromptu</strong></a>: a surprise topic, a minute to think, then speak.</li>
+    <li><a href="/me/practice?mode=prepared"><strong>Prepared speech</strong></a>: rehearse one of your speeches to time.</li>
+    <li><a href="/me/practice?mode=rebuttal"><strong>Rebuttal drill</strong></a>: answer an argument out loud in one minute.</li>
+  </ul>
+  <p class="small muted">{{ practice }} practice speech{{ 'es' if practice != 1 }} saved so far.</p></section>
+
+<section class="card" aria-labelledby="h-newcase"><h2 id="h-newcase">{{ icon("debate") }} Start a debate case</h2>
+<form method="post" action="/me/prep/cases" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="mid">Motion</label>
+    <select id="mid" name="motion_id"><option value="">Type my own (below)</option>
+    {% for lv, ms in levels %}<optgroup label="{{ {'junior':'Junior','middle':'Middle','senior':'Senior'}[lv] }}">{% for m in ms %}<option value="{{ m.id }}">{{ m.motion }}</option>{% endfor %}</optgroup>{% endfor %}</select></div>
+  <div class="field"><label for="mtx">Or type a motion <span class="hint">e.g. one your teacher gave you</span></label><input id="mtx" type="text" name="motion" maxlength="300"></div>
+  <fieldset><legend>Your side</legend>
+    <label class="checks"><input type="radio" name="side" value="aff" checked> Affirmative (for)</label>
+    <label class="checks"><input type="radio" name="side" value="neg"> Negative (against)</label></fieldset>
+  <button type="submit">Start the case</button></form></section>
+
+<section class="card" aria-labelledby="h-newspeech"><h2 id="h-newspeech">{{ icon("speech") }} Write a speech</h2>
+<form method="post" action="/me/prep/speeches" class="stack">{{ hidden_csrf(csrf) }}
+  <fieldset><legend>Structure</legend>{% for t in templates %}
+    <label class="checks"><input type="radio" name="template_code" value="{{ t.code }}" {% if loop.first %}checked{% endif %}> <span><strong>{{ t.name }}</strong><br><span class="small muted">{{ t.blurb }}</span></span></label>{% endfor %}</fieldset>
+  <div class="field"><label for="stt">Title or topic</label><input id="stt" type="text" name="title" maxlength="120"></div>
+  <button type="submit">Start writing</button></form></section>
+</div>
+
+<section aria-labelledby="h-cases"><h2 id="h-cases">My debate cases</h2>
+{% if cases %}<div class="table-wrap"><table><thead><tr><th scope="col">Motion</th><th scope="col">Side</th><th scope="col">Arguments</th><th scope="col">Rebuttals</th><th scope="col">Scores (out of 5)</th></tr></thead><tbody>
+{% for c in cases %}<tr><td><a href="/me/prep/cases/{{ c.id }}">{{ c.motion }}</a></td><td>{{ c.side_label }}</td>
+<td>{{ c.summary.arguments_done }} of {{ c.summary.arguments }} complete</td><td>{{ c.summary.rebuttals_done }} of {{ c.summary.to_rebut }}</td>
+<td>{% if c.summary.self is not none %}You {{ (c.summary.self * 5)|num(1) }}{% endif %}{% if c.summary.staff is not none %} · Teacher {{ (c.summary.staff * 5)|num(1) }}{% endif %}{% if c.summary.self is none and c.summary.staff is none %}—{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>
+{% else %}{{ empty_state("No cases yet.", "Pick a motion and a side above to start one.", icon_name="debate") }}{% endif %}
+</section>
+
+<section aria-labelledby="h-speeches"><h2 id="h-speeches">My speeches</h2>
+{% if speeches %}<ul class="plain">{% for s in speeches %}<li><a href="/me/prep/speeches/{{ s.id }}">{{ s.title }}</a> <span class="small muted">· {{ s.words }} words, about {{ s.seconds|mmss }}{% if s.staff_comment %} · teacher's comment{% endif %}</span></li>{% endfor %}</ul>
+{% else %}{{ empty_state("No speeches yet.", "Choose a structure above and start writing.", icon_name="speech") }}{% endif %}
+</section>
+
+{% if results %}
+<section aria-labelledby="h-class"><h2 id="h-class">{{ icon("ballot") }} My speeches in class</h2>
+<ul class="plain">{% for r in results %}<li class="card"><p><strong>{{ r.title }}</strong> · {{ r.created_at|when }}{% if r.seconds %} · {{ r.seconds|mmss }}{% if r.timing %} ({{ r.timing }}){% endif %}{% endif %}{% if r.result %} · your team {{ r.result }}{% endif %}</p>
+  {% if r.kind == 'speeches' and r.topic %}<p class="small">Topic: {{ r.topic }}</p>{% endif %}
+  {% if r.score_list %}<p class="small">{% for name, v, mx in r.score_list %}{{ name }} {{ v|num(1) }}/{{ mx|int }}{% if not loop.last %} · {% endif %}{% endfor %}</p>{% endif %}
+  {% if r.comment %}<p class="small"><strong>Teacher:</strong> {{ r.comment }}</p>{% endif %}</li>{% endfor %}</ul>
+</section>
+{% endif %}
+{% endblock %}

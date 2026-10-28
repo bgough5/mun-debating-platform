@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Debating", "/debating"), (e.name, "/debating/events/" ~ e.id), (label, None)]) }}
+<h1>{{ label }}: {{ e.name }}</h1>
+<p class="lede">Filled in from the event and the template (Admin → Templates). Edit, then save: every version is kept.</p>
+<div class="row no-print">
+  <form method="post" action="/debating/events/{{ e.id }}/documents/{{ kind }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="generate">
+    <div class="field"><label for="tpl">Template</label><select id="tpl" name="template">{% for t in templates %}<option value="{{ t.code }}" {% if t.code == default_template %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></div>
+    <button type="submit" class="secondary">{{ icon("refresh") }} Regenerate from this template</button></form>
+  <a class="button secondary" href="/debating/events/{{ e.id }}/documents/{{ kind }}/export.docx" hx-boost="false">{{ icon("export") }} Export to Word</a>
+  <a class="button secondary" href="/debating/events/{{ e.id }}/documents/{{ kind }}/print">{{ icon("print") }} Print / PDF</a>
+</div>
+<form method="post" action="/debating/events/{{ e.id }}/documents/{{ kind }}" class="stack" style="max-width:none">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="db">{{ label }}</label><textarea id="db" name="body" rows="24" style="font-family:var(--mono)">{{ draft }}</textarea></div>
+  <button type="submit">Save as a new version</button></form>
+{% if versions %}<h2>Versions</h2><ul class="small">{% for v in versions %}<li>Version {{ v.version }} · {{ 'generated' if v.generated else 'edited by ' ~ v.author }} · {{ v.created_at|when }}</li>{% endfor %}</ul>{% endif %}
+{% endblock %}

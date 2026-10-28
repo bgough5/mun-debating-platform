@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf %}
+{% block content %}
+<h1>{{ title }}</h1>
+{% if ai_live %}<div class="notice"><p><span class="label-ai">AI</span> The other delegation is played by an AI service your school has approved ({{ prov.name if prov else 'AI' }}). Its positions are <strong>estimates, not facts</strong>, and it will never write your speech or clauses: it only answers as the country might.</p></div>
+{% else %}<div class="info-box"><p>{{ icon("info") }} <strong>This is not AI.</strong> A rule-based practice partner on this laptop answers in each country's diplomatic style, from the platform's archetype model. It moves when you make a concrete, conditional offer. Its positions are <strong>estimates, not facts</strong>, and it never writes your speech or clauses.</p></div>{% endif %}
+{% if prov %}
+<form method="post" action="/me/ai-practice" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="apc">Negotiate with</label><select id="apc" name="iso3">{% for c in countries %}<option value="{{ c.iso3 }}">{{ c.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="app">About which paragraph (optional)</label><select id="app" name="paragraph_id"><option value="">General</option>{% for p in paras %}<option value="{{ p.id }}">{{ p.committee }}: paragraph {{ p.position }}</option>{% endfor %}</select></div>
+  <button type="submit">Start</button></form>
+{% else %}<p>Practice negotiation is switched off.</p>{% endif %}
+{% if past %}<h2>Earlier practice</h2><ul>{% for p in past %}<li><a href="/me/ai-practice/{{ p.id }}">{{ p.country }} · {{ p.created_at|when }}</a></li>{% endfor %}</ul>{% endif %}
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Debating", "/debating"), (e.name, "/debating/events/" ~ e.id), ("Results", None)]) }}
+<h1>{{ icon("ladder") }} Results: {{ e.name }}</h1>
+<p class="no-print"><a href="/debating/events/{{ e.id }}/results.csv?what=ladder" hx-boost="false">Ladder CSV</a> · <a href="/debating/events/{{ e.id }}/results.csv?what=speakers" hx-boost="false">Speaker tab CSV</a></p>
+<div class="cols-2">
+<section aria-labelledby="h-lad"><h2 id="h-lad">{{ icon("ladder") }} Team ladder</h2>
+<p class="small">Ranked by wins, then total team points, then margin, then a fixed order (no ties left open).</p>
+<div class="table-wrap"><table><thead><tr><th scope="col" class="num">#</th><th scope="col">Team</th><th scope="col">House</th><th scope="col" class="num">Wins</th><th scope="col" class="num">Points</th><th scope="col" class="num">Margin</th><th scope="col">Sides</th></tr></thead>
+<tbody>{% for t in ladder %}<tr><td class="num">{{ t.rank }}</td><td>{{ t.team }}</td><td>{{ t.house }}</td><td class="num">{{ t.wins|num(0) }}</td><td class="num">{{ t.points }}</td><td class="num">{{ t.margin }}</td><td class="small">{{ t.aff }}A {{ t.neg }}N{% if t.byes %} {{ t.byes }} bye{% endif %}</td></tr>
+{% else %}<tr><td colspan="7">No results yet.</td></tr>{% endfor %}</tbody></table></div></section>
+<section aria-labelledby="h-hp"><h2 id="h-hp">{{ icon("house") }} House points</h2>
+<ol>{% for h in totals %}<li><strong>{{ h.name }}</strong>: {{ h.points|num(1) }}</li>{% endfor %}</ol>
+<form method="post" action="/debating/events/{{ e.id }}/housepoints" class="inline no-print">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="all_rounds"><button type="submit" class="secondary">Award for all rounds</button></form>
+<form method="post" action="/debating/events/{{ e.id }}/housepoints" class="inline no-print">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="final"><button type="submit" class="secondary">Award final placings</button></form>
+<details class="no-print"><summary>Add or remove points by hand</summary>
+<form method="post" action="/debating/events/{{ e.id }}/housepoints" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="manual">
+  <div class="field"><label for="hh">House</label><select id="hh" name="house_id">{% for h in houses %}<option value="{{ h.id }}">{{ h.name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="hpts">Points (negative to remove)</label><input id="hpts" type="number" name="points" step="0.5"></div>
+  <div class="field"><label for="hr">Reason</label><input id="hr" type="text" name="reason" required></div>
+  <button type="submit" class="secondary">Add</button></form></details>
+</section></div>
+<h2>{{ icon("award") }} Speaker tab</h2>
+<div class="table-wrap"><table><thead><tr><th scope="col" class="num">#</th><th scope="col">Speaker</th><th scope="col">House</th><th scope="col" class="num">Debates</th><th scope="col" class="num">Average</th></tr></thead>
+<tbody>{% for s_ in tab[:50] %}<tr><td class="num">{{ s_.rank }}</td><td>{{ s_.name }}</td><td>{{ s_.house or '' }}</td><td class="num">{{ s_.debates }}</td><td class="num">{{ s_.average }}</td></tr>
+{% else %}<tr><td colspan="5">No speaker scores yet.</td></tr>{% endfor %}</tbody></table></div>
+{% if tab|length > 50 %}<p class="small">Top 50 shown; the CSV has everyone.</p>{% endif %}
+<h2>House point entries</h2>
+<p class="small">Every entry says who made it. Reversing adds a cancelling entry, so the record is never lost (spec §8.4).</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">#</th><th scope="col">House</th><th scope="col" class="num">Points</th><th scope="col">Reason</th><th scope="col">By</th><th scope="col"><span class="visually-hidden">Reverse</span></th></tr></thead>
+<tbody>{% for en in entries %}<tr><td>{{ en.id }}</td><td>{{ en.house }}</td><td class="num">{{ en.points|num(1) }}</td><td>{{ en.reason }}{% if en.reversed_by_id %} <span class="muted">(reversed)</span>{% endif %}</td><td class="small">{{ en.entered_by }}</td>
+<td>{% if not en.reversed_by_id and not en.reverses_id %}<form method="post" action="/debating/events/{{ e.id }}/housepoints" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="reverse"><input type="hidden" name="entry_id" value="{{ en.id }}"><button type="submit" class="link">Reverse<span class="visually-hidden"> entry {{ en.id }}</span></button></form>{% endif %}</td></tr>
+{% else %}<tr><td colspan="6">None yet.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

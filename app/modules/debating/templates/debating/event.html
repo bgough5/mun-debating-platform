@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Debating", "/debating"), (e.name, None)]) }}
+<h1>{{ e.name }}</h1>
+<p class="lede">{{ e.kind|capitalize }} · {{ e.format_name }} · {{ e.rubric_name }}{% if e.starts_on %} · {{ e.starts_on }}{% endif %} · {{ e.status }}</p>
+<div class="row no-print">
+  <a class="button secondary" href="/debating/events/{{ e.id }}/setup">Teams, rooms, adjudicators ({{ counts.team }} / {{ counts.room }} / {{ counts.adjudicator }})</a>
+  <a class="button secondary" href="/debating/events/{{ e.id }}/results">Results and house points</a>
+  <a class="button secondary" href="/debating/events/{{ e.id }}/documents/run_sheet">Run sheet</a>
+  <a class="button secondary" href="/debating/events/{{ e.id }}/documents/mc_script">MC script</a>
+  <a class="button secondary" href="/debating/projector/{{ e.projector_token }}" target="_blank" rel="noopener">{{ icon("projector") }} Projector view</a>
+</div>
+<h2>{{ icon("draw") }} Rounds</h2>
+<div class="table-wrap"><table>
+<thead><tr><th scope="col">Round</th><th scope="col">Draw</th><th scope="col">Motion</th><th scope="col">Results in</th><th scope="col">Status</th></tr></thead>
+<tbody>{% for r in rounds %}<tr><td><a href="/debating/rounds/{{ r.id }}">Round {{ r.number }}</a></td><td>{{ 'Random' if r.kind == 'random' else 'Power-paired' }}</td>
+<td>{{ r.motion or '—' }}</td><td>{{ r.results }} of {{ r.debates }}</td><td>{{ r.status }}</td></tr>
+{% else %}<tr><td colspan="5">No rounds yet.</td></tr>{% endfor %}</tbody></table></div>
+<section class="card no-print" style="margin-top:1rem" aria-labelledby="h-nr"><h2 id="h-nr">{{ icon("draw") }} Draw the next round</h2>
+<form method="post" action="/debating/events/{{ e.id }}/rounds" class="stack">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="rk">Draw</label><select id="rk" name="kind"><option value="">Automatic (round 1 random, then power-paired)</option><option value="random">Random</option><option value="power">Power-paired</option></select></div>
+  <div class="field"><label for="rm">Motion</label><input id="rm" type="text" name="motion" list="motions"><datalist id="motions">{% for m in motions %}<option value="{{ m.motion }}">{% endfor %}</datalist></div>
+  <div class="field"><label for="ri">Information for the round (optional)</label><textarea id="ri" name="info" rows="2"></textarea></div>
+  <button type="submit">{{ icon("draw") }} Generate the draw</button>
+  <p class="small muted">The draw is seeded, so it can be reproduced. Power pairing needs every earlier result in first.</p></form></section>
+{% if ladder %}<h2>{{ icon("ladder") }} Ladder (top 8)</h2><ol>{% for t in ladder %}<li>{{ t.team }}{% if t.house %} ({{ t.house }}){% endif %} — {{ t.wins|num(0) }} wins, {{ t.points }} points</li>{% endfor %}</ol>{% endif %}
+{% if totals %}<h2>{{ icon("house") }} House points</h2><ol>{% for h in totals %}<li>{{ h.name }}: {{ h.points|num(0) }}</li>{% endfor %}</ol>{% endif %}
+{% endblock %}

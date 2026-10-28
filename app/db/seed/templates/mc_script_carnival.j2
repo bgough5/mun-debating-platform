@@ -1,0 +1,26 @@
+MC SCRIPT — {{ event.name }}
+
+OPENING
+Good {{ time_of_day }}, everyone, and welcome to the {{ event.name }}.
+I'd like to begin by acknowledging the Traditional Owners of the land on which we meet, and pay my respects to Elders past and present.
+Today {{ teams|length }} teams from {{ houses|length }} houses will debate across {{ rounds|length }} rounds.
+
+HOUSE ROLL CALL
+{% for h in houses -%}
+- {{ h.name }}
+{% endfor %}
+{% for r in rounds %}
+ROUND {{ r.number }}
+{% if r.motion %}The motion for round {{ r.number }} is: "{{ r.motion }}".{% else %}The motion for this round will be announced from the run sheet.{% endif %}
+Preparation time is {{ event.prep_minutes }} minutes. Please move to your rooms now.
+{% endfor %}
+RESULTS
+{% if ladder %}After {{ rounds|length }} rounds, the top teams are:
+{% for row in ladder[:3] -%}
+{{ loop.index }}. {{ row.team }} ({{ row.house }}) — {{ row.wins }} wins
+{% endfor %}{% endif %}
+{% if house_totals %}House points:
+{% for h in house_totals -%}
+{{ loop.index }}. {{ h.name }} — {{ h.points }}
+{% endfor %}{% endif %}
+Thank you to our adjudicators, timekeepers and every speaker today.

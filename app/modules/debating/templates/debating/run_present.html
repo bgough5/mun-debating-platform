@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block bodyclass %}projector{% endblock %}
+{% block bodyattrs %}data-projector-token="{{ token }}"{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="proj-brand"><img src="/static/soc_crest.png" alt="">South Oakleigh College · Debating &amp; Public Speaking</div>
+<h1 class="visually-hidden">{{ run.title }}</h1>
+<div id="present-main" data-live-channel="run:{{ run.id }}" hx-get="/debating/present/{{ token }}/f" hx-trigger="live-update" hx-swap="innerHTML">
+{% include "debating/_run_present.html" %}
+</div>
+<p class="small"><button type="button" class="link" data-bell-toggle data-bell-default="off" aria-pressed="false">Bell sound off</button> <span id="live-status"></span></p>
+{% endblock %}
