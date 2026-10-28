@@ -25,12 +25,10 @@ Screenshots help: press Windows + Shift + S and paste into an email to yourself,
 
 | ID | Do | You should see |
 |---|---|---|
-| 0.1 | Double-click `start_platform.bat` in the project folder. | A black window prints two addresses. Leave it open. |
-| 0.2 | In Edge, open `http://localhost:8080/` and sign in as coordinator. | The dashboard, with the DEMO banner. If it isn't demo, switch under Admin → Data. |
-| 0.3 | Open an **InPrivate** Edge window (Ctrl + Shift + N) at `http://localhost:8080/join`. This is your "student laptop". | The student sign-in page. |
+| 0.1 | Double-click **SOC Debating & MUN** on the desktop. | Within about 7 seconds: a staff window, and a private (InPrivate) student window. A minimised black window runs the platform; closing it stops the platform. |
+| 0.2 | In the staff window, sign in as coordinator. | The dashboard, with the DEMO banner. If it isn't demo, switch under Admin → Data. |
+| 0.3 | The private window is your "student laptop". | The student sign-in page. |
 | 0.4 | Keep the two windows side by side. | |
-
-(The one-click desktop launcher will replace steps 0.1 to 0.4 once it's built.)
 
 ## A. Classes and sign-in (15 min)
 

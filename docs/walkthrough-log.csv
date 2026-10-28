@@ -1,7 +1,7 @@
 ﻿ID,Area,Step,What happened,Severity (Blocker / Confusing / Cosmetic / Idea),Expected instead,Time taken,Notes
-0.1,Set up,Double-click start_platform.bat in the project folder.,,,,,
-0.2,Set up,"In Edge, open http://localhost:8080/ and sign in as coordinator.",,,,,
-0.3,Set up,"Open an InPrivate Edge window (Ctrl + Shift + N) at http://localhost:8080/join. This is your ""student laptop"".",,,,,
+0.1,Set up,Double-click SOC Debating & MUN on the desktop.,,,,,
+0.2,Set up,"In the staff window, sign in as coordinator.",,,,,
+0.3,Set up,The private window is your student laptop.,,,,,
 0.4,Set up,Keep the two windows side by side.,,,,,
 A.1,Classes and sign-in,People → Year 9 Model UN (demo).,,,,,
 A.2,Classes and sign-in,Open the sign-in cards and use print preview (Ctrl + P).,,,,,

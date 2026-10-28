@@ -62,7 +62,14 @@ then sign out and in again.
 
 ## Run it (Windows)
 
-Double-click `start_platform.bat` (or run `.\start_platform.ps1`). The first run creates `.venv` and installs
+**One click:** the **SOC Debating & MUN** shortcut on the desktop, with the College crest. It starts the platform in a
+minimised window (close that window to stop it), then opens the staff view in Edge and the student view in an
+InPrivate window, so the two sign-ins never mix. If the platform is already running it just opens the two windows.
+Measured on Ben's laptop: 7 s from click to both windows; 62 s the very first time on a new copy, while it installs.
+To put the shortcut on a desktop: `powershell -ExecutionPolicy Bypass -File tools\install_desktop_shortcut.ps1`.
+All private windows share one sign-in, so this shows one student at a time.
+
+Or by hand: double-click `start_platform.bat` (or run `.\start_platform.ps1`). The first run creates `.venv` and installs
 `requirements.txt` (needs internet once). Then:
 
 - Staff, on the laptop: `http://localhost:8080/` — the first visit asks you to set the coordinator passphrase.
