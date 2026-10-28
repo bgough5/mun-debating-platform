@@ -59,6 +59,8 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
 
 ## Gotchas
 
+- **Security (D-083, `docs/security-audit.md`):** CSV goes through `app.exports.csv_bytes` (it neutralises formulas); redirect targets from a form or Referer go through `app.web.safety.safe_path` / `safe_back`; stored markup is never `|safe`. Use `|safe_svg` for flags, and add an allowlisted filter for anything else. Ownership checks use account IDs (the change log), never display names, and take the committee from the record, never the form. Run `tests/security` after touching any of these.
+
 - Jinja: don't pass a context key called `path` or a dict key called `items` (clash with the base template's `req_path` and `dict.items`).
 - FastAPI routes match in order: a literal path like `/t/{name}/import` must not sit under a `/t/{name}/{key}` route.
 - `<input>` without a `type` attribute misses the form CSS; always give one (axe flagged it as a target-size failure).

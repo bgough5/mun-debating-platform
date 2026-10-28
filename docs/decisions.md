@@ -322,3 +322,13 @@ Ten phases are built and tested, but no real teacher or student has used the pla
 PR #1 (`platform-build`) is merged into `main` with a merge commit, so the phase tags and history stay intact. The merge is tagged `feature-freeze`.
 
 From here, work happens on short branches from `main`, one per piece of work, pushed and merged after tests pass. `platform-build` stays on GitHub as history and is not used for new work.
+
+### D-083 Security hardening after the 29 Oct stress test — Decided (29 Oct 2026, Ben)
+Five findings, each confirmed by a test that failed on the old code. All five now pass (`tests/security/test_hardening.py`). Full write-up: `docs/security-audit.md`.
+- **S-1:** CSV export cells that start like a formula are prefixed with an apostrophe, and the apostrophe is removed again on import.
+- **S-2:** the sign-in throttle counts per account **and per laptop**, so no one can lock the coordinator out from another laptop.
+- **S-3:** one strict same-site check (`safe_path`, `safe_back`) for every redirect taken from a form or the Referer header. Testing showed the backslash case wasn't exploitable (the framework percent-encodes it); this is for consistency.
+- **S-4:** evidence deletion is decided by the evidence itself, never the form: its own committee, and its creator taken from the change log rather than a matching display name.
+- **S-5:** flag SVG is rebuilt from an allowlist of plain shapes when pages are drawn, and unsafe markup is refused when saving.
+
+Helpers live in `app/web/safety.py`. Use them for any new export, redirect or stored markup.
