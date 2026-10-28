@@ -74,6 +74,10 @@ def test_chair_browser_killed_recovers_same_state(browser, live):
         chair.click("#floor button:has-text('Add')")
         chair.wait_for_selector(f"#floor h3:has-text('Speakers list ({i})')")
     chair.click("button:has-text('Next speaker')")
+    # Wait until Next speaker has landed (three added, one called: two waiting). Waiting only for "a timer"
+    # passed at once when an earlier test in this module had left a timer for the same country (Australia),
+    # so Start went to that old, finished timer and the test timed out in full runs (it passed alone).
+    chair.wait_for_selector("#floor h3:has-text('Speakers list (2)')")
     chair.wait_for_selector("#floor .timer")
     chair.locator("#floor form:has(input[value='start']) button").first.click()
     chair.wait_for_selector("#floor .timer[data-state='running']")
