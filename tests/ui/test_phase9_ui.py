@@ -117,7 +117,9 @@ def test_student_prep_pages_are_accessible_and_the_word_count_is_live(browser, l
     pg.fill("#sec-hook", " ".join(["tree"] * 65))
     assert pg.inner_text("[data-speech-total]").startswith("65 words · about 0:30")
     assert not axe(pg, "p9_prep_speech")
-    pg.click("button:has-text('Save')")
+    # Saving reloads the page; wait for it, or under load the next click lands mid-reload and is lost.
+    with pg.expect_navigation():
+        pg.click("button:has-text('Save')")
     pg.click("a:has-text('Rehearse with the timer')")
     pg.wait_for_url(re.compile(r"/rehearse$"))
     pg.locator("body").click(position={"x": 5, "y": 300})
