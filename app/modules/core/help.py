@@ -85,16 +85,24 @@ CONTEXT = [
         "Tournament and carnival tools (draws, ballots, ladders, house points) are hidden unless the coordinator switches them on at the bottom of this page.",
     ]),
     ("/people", "People", [
-        "Classes, their codes and rosters (first names only), staff, and each student's pathway.",
-        "Print sign-in cards from the class page: each card has one student's own code. A student who's away simply doesn't sign in.",
+        "Students: everyone entered, in one list with year levels (first names only). Groups only decide which teachers see whom.",
+        "Print sign-in cards from the Students page: each card has one student's own code. A student who's away simply doesn't sign in.",
         "Lost card or shared code? Open the student under Manage and give them a new code; the old one stops working.",
+    ]),
+    ("/start", "Starting an activity", [
+        "Choose UNAA or Evatt Model UN, a class debate, public speaking or your own format.",
+        "Tick who's here today. Students stay on the list once entered; add first-timers under \"First time here?\" and they are ticked for you.",
+        "Any number works. Model UN shares the countries out (a country with no student is voted by the engine and labelled computed); more than eight debaters are split into several debates; public speaking takes everyone ticked.",
+        "Difficulty changes speech times and the motions and impromptu topics offered. Suggested picks it from the year levels of the students ticked.",
+        "Everything is saved as you go. Open the activity again later from Model UN or Debating.",
     ]),
     ("/intel", "Intelligence", [
         "UN voting data can't be imported until its licence is confirmed here. Synthetic test data is for the demo only.",
         "AI features are offline unless the school's approval is recorded in AI settings.",
     ]),
     ("/", "This platform", [
-        "Model UN: prediction, resolution workspace and live chair tools. Debating: draws, ballots, ladders and house points.",
+        "Start an activity (from the Dashboard): Model UN, a class debate, public speaking or your own format, for whoever is here today.",
+        "Model UN: prediction, resolution workspace and live chair tools. Debating: class debates, speaking rounds and student preparation.",
         "Students sign in at /join with the personal code on their sign-in card.",
         "Every change is saved as it happens; Undo and History are available on most pages.",
     ]),

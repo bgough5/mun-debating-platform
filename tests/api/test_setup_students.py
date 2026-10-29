@@ -27,9 +27,17 @@ def test_first_timers_join_the_list_with_a_year_level_and_a_code(app, coord):
     assert {(a["first_name"], a["last_initial"], a["year_level"], a["g"]) for a in added} == {("Priya", "", 11, "Students"), ("Tom", "K", 11, "Students")}
     assert all(a["login_code"] for a in added)
     # Adding more later reuses the same default group.
-    coord.post("/people/students", {"names": "Ana", "year_level": ""})
+    coord.post("/people/students", {"names": "Ana, 7\nBo Year 12\nCy", "year_level": "9"})
     assert db_one(app, "SELECT COUNT(*) AS n FROM class WHERE name = 'Students' AND deleted_at IS NULL")["n"] == 1
-    assert db_one(app, "SELECT year_level FROM student WHERE first_name = 'Ana'")["year_level"] is None
+    got = {r["first_name"]: r["year_level"] for r in db_rows(app, "SELECT first_name, year_level FROM student WHERE first_name IN ('Ana', 'Bo', 'Cy')")}
+    assert got == {"Ana": 7, "Bo": 12, "Cy": 9}             # typed on the line, else the year chosen for everyone
+
+
+def test_every_new_student_needs_a_year_level(app, coord):
+    r = coord.post("/people/students", {"names": "Dee, 8\nEve", "year_level": ""})
+    assert r.status_code == 400 and "Give Eve a year level" in r.text
+    assert not db_rows(app, "SELECT id FROM student WHERE first_name IN ('Dee', 'Eve')")     # nothing half-added
+    assert coord.post("/people/students", {"names": "Fay, 13"}).status_code == 400
 
 
 def test_year_level_can_be_changed_and_is_checked(app, coord):

@@ -29,7 +29,10 @@ see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun
 - **Tournaments and carnivals:** events, houses, teams, rooms, adjudicators; seeded draws (random, then power-paired);
   rubric ballots and panels; ladders and speaker tabs; house points with reversals; run sheets and MC scripts;
   projector view; class practice for any number of students; a 325-student carnival generator for rehearsal.
-- **People:** classes, staff, student pathways and milestones.
+- **Start an activity (D-084):** one screen for UNAA or Evatt Model UN, a class debate, public speaking or your own
+  format. Tick who's here today from one student list (or add first-timers), choose junior, middle or senior
+  (suggested from year levels), and go; any number of students.
+- **People:** one student list with year levels, groups (which teachers see whom), staff, student pathways and milestones.
 - **Intelligence:** licence-gated UN voting-history import (locked: licences not confirmed, D-051), voting-history
   priors, backtests against baselines, and AI features behind a provider interface that is offline by default (D-053).
 - **Hardening:** permissions audit, backups and restore, retention purge and student erasure, accessibility checks.

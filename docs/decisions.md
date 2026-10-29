@@ -345,6 +345,17 @@ His model is simple. Students come and go, and different classes use the platfor
 - **Tournament and carnival tools are hidden** (`show_tournaments`, off by default). The coordinator can show them again at the bottom of the Debating page; nothing is deleted.
 - **Demo:** the demo groups mix year levels. Year levels come from their own random stream, so the rest of the demo data is identical.
 
+**Stage 2 (29 Oct 2026): Start an activity** (`/start`, `app/modules/core/start.py`, button on the Dashboard):
+- **Choose the activity:** UNAA (the General Assembly climate pack), Evatt (the fictional Veloria Security Council crisis), a class debate, public speaking, or your own format. Kinds whose module is switched off aren't offered.
+- **Choose the students:** tick who's here, grouped by year level with "Tick all" for each year. A name search and a year-level filter only hide students, so anyone already ticked stays ticked. A name that appears twice shows the student's group. First-timers are added inline into the one list and ticked, without losing the rest of the form.
+- **Every new student gets a year level** (Ben, 29 Oct), here and on People → Students. Type it after the name ("Sam L, 9", "Sam Year 9"), or choose one year level for everyone typed. A line with neither is refused, and nothing in that batch is added.
+- **Difficulty:** junior, middle or senior, or suggested from the median year level of the students ticked (8 or below is junior, 11 or above is senior, otherwise middle, and middle when no year levels are recorded). The level sets speech times and the motions and impromptu topics offered. Every value can still be changed once the activity is open.
+- **Any number of students:**
+  - **Model UN** shares the delegations out, round robin; countries with no student are voted by the engine and labelled computed (D-079).
+  - **Debates** split into rooms of up to eight, all on the same motion. With an odd number, one side has a spare slot.
+  - **Public speaking** takes everyone, in rounds of up to 30.
+  - **Your own format** is a speaking round that opens straight on its full settings page.
+- **Linking and access:** ticked students are linked to their speaking slots by id, not by typed name, so a group can mix students from any group. Staff can tick only students in their own groups, and the activity belongs to a group they can run.
+
 **Next:**
-- **Stage 2:** one "Start an activity" screen: UNAA (General Assembly), Evatt (Security Council), class debate, public speaking, or custom. Tick who's taking part (or add them), choose junior, middle or senior (suggested from their year levels), then go.
 - **Stage 3:** activities in progress listed with Resume, and a fresh "who's here today?".

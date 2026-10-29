@@ -139,6 +139,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     from app.modules.core.routes import router as core_router
     app.include_router(core_router)
+    from app.modules.core.start import router as start_router
+    app.include_router(start_router)
     from app.modules.core.wizard import router as wizard_router
     from app.modules.core.help import router as help_router
     app.include_router(wizard_router)

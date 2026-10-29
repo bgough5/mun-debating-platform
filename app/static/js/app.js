@@ -163,12 +163,58 @@
     }
   }, true);
 
+  function countTicked(form) {
+    var out = form && form.querySelector("[data-tick-count]");
+    if (out) out.textContent = form.querySelectorAll("input[name=student_id]:checked").length + " ticked";
+  }
+  document.addEventListener("change", function (e) {
+    if (e.target && e.target.name === "student_id") countTicked(e.target.form);
+    if (e.target && e.target.hasAttribute("data-find-year")) findStudents(e.target.closest("form"));
+  });
+  // Find a student by name, or show one year level. Only hides rows: anyone ticked stays ticked (D-084).
+  function findStudents(form) {
+    var box = form.querySelector("[data-find]");
+    if (!box) return;
+    var q = box.querySelector("[data-find-name]").value.trim().toLowerCase();
+    var yr = box.querySelector("[data-find-year]").value;
+    var shown = 0;
+    form.querySelectorAll(".year-block").forEach(function (b) {
+      var n = 0;
+      var yearOk = !yr || b.getAttribute("data-year") === yr;
+      b.querySelectorAll(".checks label").forEach(function (l) {
+        var ok = yearOk && (!q || l.textContent.toLowerCase().indexOf(q) !== -1);
+        l.hidden = !ok;
+        if (ok) n++;
+      });
+      b.hidden = n === 0;
+      shown += n;
+    });
+    box.querySelector("[data-find-none]").hidden = shown > 0;
+  }
+  document.addEventListener("input", function (e) {
+    if (e.target && e.target.hasAttribute("data-find-name")) findStudents(e.target.closest("form"));
+  });
+  function showFind() { document.querySelectorAll("[data-find]").forEach(function (b) { b.hidden = false; }); }
+  showFind();
+  document.addEventListener("htmx:load", showFind);         // boosted navigation swaps the page in
+  document.addEventListener("keydown", function (e) {
+    // Enter in the search box filters; it must not submit the form.
+    if (e.key === "Enter" && e.target && e.target.hasAttribute && e.target.hasAttribute("data-find-name")) e.preventDefault();
+  });
+
   document.addEventListener("click", function (e) {
     var t = e.target;
     if (t && t.id === "easy-read-toggle") {
       var on = !document.body.classList.contains("easy-read");
       try { localStorage.setItem("easyRead", on ? "1" : "0"); } catch (err) { /* ignore */ }
       applyEasyRead();
+    }
+    // Start an activity: tick or untick a whole year level, and keep the "N ticked" count current (D-084).
+    var all = t && t.closest && t.closest("[data-tick-all], [data-tick-none]");
+    if (all) {
+      var on = all.hasAttribute("data-tick-all");
+      all.closest(".year-block").querySelectorAll("input[type=checkbox]").forEach(function (b) { b.checked = on; });
+      countTicked(all.closest("form"));
     }
     // Destructive actions confirm and name the item (spec R4).
     var confirmFor = t && t.closest && t.closest("[data-confirm]");
