@@ -29,6 +29,8 @@ DEFAULTS: dict = {
     "ai": {"provider": "fake", "school_approved": False, "api_key_env": ""},
     "max_live_students": 25,
     "stale_evidence_days": 180,
+    # Debating is for the classroom (D-074): tournament and carnival tools are hidden unless switched on (D-084).
+    "show_tournaments": False,
 }
 
 

@@ -29,7 +29,9 @@
 
 <p><a href="/debating/practice">{{ icon("practice") }} Several practice debates at once</a>: tick who is here and the platform splits the class into rooms.</p>
 
+{% if show_tournaments %}
 <section aria-labelledby="h-tourn"><h2 id="h-tourn">{{ icon("award") }} Tournaments and carnivals</h2>
+{% if actor.is_coordinator %}<form method="post" action="/debating/tournaments" class="inline no-print">{{ hidden_csrf(csrf) }}<input type="hidden" name="show" value="0"><button type="submit" class="secondary">Hide these tools</button></form>{% endif %}
 <details {% if events %}open{% endif %}><summary>Draws, ballots, ladders and house points for competitions and the house carnival</summary>
 <div class="row no-print">{% if actor.is_coordinator %}<a class="button secondary" href="/admin/t/motion_bank">Motion bank</a> <a class="button secondary" href="/admin/t/house">Houses</a>{% endif %}</div>
 <div class="table-wrap"><table>
@@ -63,4 +65,8 @@
 </div>
 </details>
 </section>
+{% elif actor.is_coordinator %}
+<p class="small muted no-print">Tournament and carnival tools (draws, ballots, ladders, house points) are hidden: this section is for classroom debating and public speaking (D-074).</p>
+<form method="post" action="/debating/tournaments" class="inline no-print">{{ hidden_csrf(csrf) }}<input type="hidden" name="show" value="1"><button type="submit" class="secondary">Show tournament tools</button></form>
+{% endif %}
 {% endblock %}

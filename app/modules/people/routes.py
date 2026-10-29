@@ -63,6 +63,100 @@ def classes_redirect(request: Request, s=Depends(require_staff)):
     return redirect("/people")
 
 
+# ---------- one student list (D-084): everyone entered once, filtered by year level ----------
+
+YEARS = list(range(5, 13))
+POOL_NAME = "Students"
+
+
+def year_level(raw) -> int | None:
+    if raw in (None, "", "none"):
+        return None
+    try:
+        y = int(raw)
+    except (TypeError, ValueError):
+        raise UserError("Year level must be a number from 5 to 12.")
+    if y not in YEARS:
+        raise UserError("Year level must be from 5 to 12.")
+    return y
+
+
+def pool_class_id(w) -> int:
+    """The group new students go into when added from the Students page. Groups stay in the background
+    (they decide which teachers see whom); activities pick students from everyone, by ticking."""
+    c = one(w.conn, "SELECT id FROM class WHERE name = ? AND deleted_at IS NULL ORDER BY id LIMIT 1", (POOL_NAME,))
+    return c["id"] if c else create_class(w, POOL_NAME, None)[0]
+
+
+def visible_students(conn, actor, year: str = "", q: str = "", include_left: bool = False) -> list[dict]:
+    """Every student this person may see (the coordinator: everyone; staff: their groups), newest filters applied."""
+    sql = ("SELECT st.*, c.name AS group_name FROM student st JOIN class c ON c.id = st.class_id "
+           "WHERE st.deleted_at IS NULL AND c.deleted_at IS NULL")
+    params: list = []
+    if not include_left:
+        sql += " AND st.active = 1 AND c.archived_at IS NULL"
+    if year == "none":
+        sql += " AND st.year_level IS NULL"
+    elif year:
+        sql += " AND st.year_level = ?"
+        params.append(year_level(year))
+    if q.strip():
+        sql += " AND st.first_name LIKE ?"
+        params.append(f"%{q.strip()}%")
+    ids = staff_class_ids(conn, actor)
+    data = rows(conn, sql + " ORDER BY st.year_level IS NULL, st.year_level, st.first_name, st.last_initial", params)
+    data = [st for st in data if ids is None or st["class_id"] in ids]
+    for st in data:
+        st["name"] = display_name(st["first_name"], st["last_initial"])
+    return data
+
+
+@router.get("/students")
+def students_list(request: Request, year: str = "", q: str = "", show: str = "", s=Depends(require_staff)):
+    with request.app.state.db.read() as conn:
+        students = visible_students(conn, s.actor, year, q, include_left=show == "left")
+        everyone = visible_students(conn, s.actor)
+    counts: dict = {}
+    for st in everyone:
+        counts[st["year_level"]] = counts.get(st["year_level"], 0) + 1
+    back = str(request.url.path) + (f"?{request.url.query}" if request.url.query else "")
+    return render(request, "people/students.html", {"title": "Students", "students": students, "years": YEARS, "counts": counts,
+                                                    "year": year, "q": q, "show": show, "back": back})
+
+
+@router.post("/students")
+def students_add_to_list(request: Request, s=Depends(require_staff), form=Depends(form_data)):
+    """Add first-timers to the one list. They go into the default group; a year level applies to every name typed."""
+    y = year_level(form.get("year_level"))
+    with request.app.state.db.write(request.state.actor) as w:
+        cid = pool_class_id(w)
+        if not can_run_class(w.conn, request.state.actor, cid):
+            raise UserError("Only the coordinator (or a teacher given the Students group) can add students to the list.", 403)
+        before = scalar(w.conn, "SELECT COALESCE(MAX(id), 0) FROM student")
+        msg = add_students(w, cid, (form.get("names") or "").splitlines())
+        if y is not None:
+            for r in rows(w.conn, "SELECT id FROM student WHERE id > ? AND class_id = ?", (before, cid)):
+                w.update("student", r["id"], {"year_level": y}, f"class:{cid}")
+    from app.web.safety import safe_path
+    return redirect(safe_path(form.get("back"), "/people/students"), msg)
+
+
+@router.get("/cards")
+def cards_for_list(request: Request, year: str = "", q: str = "", s=Depends(require_staff)):
+    """Sign-in cards for the students the Students page is showing (one year level, or everyone)."""
+    from app.modules.people.codes import shown
+    from app.web.net import student_base_url
+    with request.app.state.db.read() as conn:
+        students = visible_students(conn, s.actor, year, q)
+    for st in students:
+        st["code"] = shown(st["login_code"])
+    base = student_base_url(request)
+    label = f"Year {year}" if year and year != "none" else "Students"
+    return render(request, "people/join_cards.html", {"title": f"Sign-in cards: {label}", "label": label, "base": base,
+                                                      "addr": _bare(base), "students": students,
+                                                      "crumb": ("Students", "/people/students")})
+
+
 def create_class(w, name: str, year: int | None) -> tuple[int, str]:
     name = (name or "").strip()
     if not name:
@@ -174,6 +268,10 @@ def student_edit(request: Request, student_id: int, s=Depends(require_staff), fo
         elif action == "activate":
             w.update("student", student_id, {"active": 1}, ch)
             msg = "Student is active again."
+        elif action == "year":
+            y = year_level(form.get("year_level"))
+            w.update("student", student_id, {"year_level": y}, ch)
+            msg = f"{st['first_name']}: " + (f"Year {y}." if y else "year level cleared.")
         elif action == "delete":
             if form.get("confirm") != "yes":
                 raise UserError("Tick the confirmation box to delete.")
@@ -201,7 +299,8 @@ def student_edit(request: Request, student_id: int, s=Depends(require_staff), fo
             msg = f"New code for {st['first_name']}: {shown(code)}. The old code no longer works. Print a new card from the class page."
         else:
             raise UserError("Unknown action.")
-    return redirect(f"/people/classes/{st['class_id']}", msg)
+    from app.web.safety import safe_path
+    return redirect(safe_path(form.get("back"), f"/people/classes/{st['class_id']}"), msg)
 
 
 @router.post("/classes/{class_id}")
@@ -256,8 +355,9 @@ def join_cards(request: Request, class_id: int, s=Depends(require_staff)):
         st["code"] = shown(st["login_code"])
         st["name"] = display_name(st["first_name"], st["last_initial"])
     base = student_base_url(request)
-    return render(request, "people/join_cards.html", {"title": f"Sign-in cards: {c['name']}", "c": c, "base": base,
-                                                      "addr": _bare(base), "students": students})
+    return render(request, "people/join_cards.html", {"title": f"Sign-in cards: {c['name']}", "label": c["name"], "base": base,
+                                                      "addr": _bare(base), "students": students,
+                                                      "crumb": (c["name"], f"/people/classes/{c['id']}")})
 
 
 @router.get("/classes/{class_id}/poster")

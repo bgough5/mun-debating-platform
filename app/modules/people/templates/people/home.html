@@ -2,21 +2,25 @@
 {% from "_macros.html" import hidden_csrf %}
 {% block content %}
 <h1>People</h1>
-<p class="lede">Classes, rosters and pathways. Only first names are stored, plus a last initial when two students share a name.</p>
+<p class="lede">Only first names are stored, plus a last initial when two students share a name.</p>
+<section class="card" aria-labelledby="h-st"><h2 id="h-st">{{ icon("people") }} <a href="/people/students">Students</a></h2>
+<p>Everyone in one list, with their year level. Enter a student once; for each activity, tick who's taking part that day. <a href="/people/students">Open the student list</a>.</p></section>
+<h2>Groups</h2>
+<p class="small">Groups only decide which teachers see which students. Activities don't depend on them: you can tick students from any group.</p>
 <div class="table-wrap"><table>
-  <caption>Classes</caption>
-  <thead><tr><th scope="col">Class</th><th scope="col">Year</th><th scope="col" class="num">Students</th><th scope="col">Status</th></tr></thead>
+  <caption>Groups</caption>
+  <thead><tr><th scope="col">Group</th><th scope="col">Year</th><th scope="col" class="num">Students</th><th scope="col">Status</th></tr></thead>
   <tbody>{% for c in classes %}
   <tr><td><a href="/people/classes/{{ c.id }}">{{ c.name }}</a></td><td>{{ c.year }}</td><td class="num">{{ c.n }}</td>
       <td>{{ 'Archived' if c.archived_at else 'Active' }}</td></tr>
-  {% else %}<tr><td colspan="4">No classes yet.</td></tr>{% endfor %}</tbody>
+  {% else %}<tr><td colspan="4">No groups yet.</td></tr>{% endfor %}</tbody>
 </table></div>
 {% if actor.is_coordinator %}
-<section class="card" style="margin-top:1rem" aria-labelledby="h-new"><h2 id="h-new">New class</h2>
+<section class="card" style="margin-top:1rem" aria-labelledby="h-new"><h2 id="h-new">New group</h2>
 <form method="post" action="/people/classes" class="inline">{{ hidden_csrf(csrf) }}
-  <div class="field"><label for="cname">Class name</label><input id="cname" type="text" name="name" required></div>
+  <div class="field"><label for="cname">Group name</label><input id="cname" type="text" name="name" required></div>
   <div class="field"><label for="cyear">Year</label><input id="cyear" name="year" type="number" value="2026" min="2020" max="2100"></div>
-  <button type="submit">Create class</button>
+  <button type="submit">Create group</button>
 </form>
 <p class="small"><a href="/people/staff">Staff accounts</a></p></section>
 {% endif %}

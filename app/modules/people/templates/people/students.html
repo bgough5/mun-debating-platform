@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, hidden_csrf %}
+{% block content %}
+{{ breadcrumb([("People", "/people"), ("Students", None)]) }}
+<h1>{{ icon("people") }} Students</h1>
+<p class="lede">Everyone who has been entered, in one list. Enter a student once and they stay here. For each activity you tick who's taking part that day.</p>
+
+<form method="get" action="/people/students" class="inline" role="search" aria-label="Filter students">
+  <div class="field"><label for="fy">Year level</label>
+    <select id="fy" name="year">
+      <option value="">All years ({{ counts.values()|sum }})</option>
+      {% for y in years %}{% if counts.get(y) or year == y|string %}<option value="{{ y }}" {% if year == y|string %}selected{% endif %}>Year {{ y }} ({{ counts.get(y, 0) }})</option>{% endif %}{% endfor %}
+      {% if counts.get(None) or year == 'none' %}<option value="none" {% if year == 'none' %}selected{% endif %}>Year not set ({{ counts.get(None, 0) }})</option>{% endif %}
+    </select></div>
+  <div class="field"><label for="fq">Name</label><input id="fq" type="search" name="q" value="{{ q }}"></div>
+  <label class="checkline"><input type="checkbox" name="show" value="left" {% if show == 'left' %}checked{% endif %}> Include students who have left</label>
+  <button type="submit" class="secondary">Show</button>
+</form>
+
+<div class="table-wrap"><table>
+  <caption>{{ students|length }} student{{ '' if students|length == 1 else 's' }}</caption>
+  <thead><tr><th scope="col">Name</th><th scope="col">Year level</th><th scope="col">Group</th><th scope="col">Status</th></tr></thead>
+  <tbody>{% for st in students %}
+  <tr><td><a href="/people/students/{{ st.id }}">{{ st.name }}</a></td>
+      <td><form method="post" action="/people/students/{{ st.id }}" class="inline">{{ hidden_csrf(csrf) }}
+            <input type="hidden" name="action" value="year"><input type="hidden" name="back" value="{{ back }}">
+            <label class="visually-hidden" for="y{{ st.id }}">Year level for {{ st.name }}</label>
+            <select id="y{{ st.id }}" name="year_level"><option value="">Not set</option>
+              {% for y in years %}<option value="{{ y }}" {% if st.year_level == y %}selected{% endif %}>Year {{ y }}</option>{% endfor %}</select>
+            <button type="submit" class="secondary">Save</button></form></td>
+      <td>{{ st.group_name }}</td><td>{{ 'Active' if st.active else 'Left' }}</td></tr>
+  {% else %}<tr><td colspan="4">No students match. Clear the filters, or add students below.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% if students %}<p><a href="/people/cards?year={{ year|urlencode }}&amp;q={{ q|urlencode }}">{{ icon("print") }} Print sign-in cards for the {{ students|length }} shown</a></p>{% endif %}
+
+<section class="card" aria-labelledby="h-add"><h2 id="h-add">{{ icon("add") }} Add students</h2>
+<p class="small">One per line: a first name, plus a last initial if two share a name (for example "Sam L"). Only first names are stored. Each student gets their own sign-in code.</p>
+<form method="post" action="/people/students" class="stack">{{ hidden_csrf(csrf) }}
+  <input type="hidden" name="back" value="{{ back }}">
+  <div class="field"><label for="an">Names</label><textarea id="an" name="names" rows="4" required></textarea></div>
+  <div class="field"><label for="ay">Year level <span class="hint">for everyone in this list; change anyone's later</span></label>
+    <select id="ay" name="year_level"><option value="">Not set</option>{% for y in years %}<option value="{{ y }}">Year {{ y }}</option>{% endfor %}</select></div>
+  <button type="submit">Add</button>
+</form></section>
+{% endblock %}

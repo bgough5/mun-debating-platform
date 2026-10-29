@@ -14,7 +14,7 @@ from app.exports import csv_bytes, text_docx
 from app.modules.debating import service as S
 from app.modules.debating.access import adjudicates, debate_access
 from app.util import display_name, now_iso
-from app.web.auth import require_any, require_staff, require_student, staff_class_ids
+from app.web.auth import require_any, require_coordinator, require_staff, require_student, staff_class_ids
 from app.web.http import form_data, form_float, form_int, redirect
 from app.web.templating import render
 
@@ -62,7 +62,16 @@ def debating_home(request: Request, sess=Depends(require_staff)):
         from app.modules.debating.classroom import runs_for
         runs = runs_for(conn, sess.actor)
     return render(request, "debating/home.html", {"title": "Debating and public speaking", "events": events, "formats": formats,
-                                                  "rubrics": rubrics, "classes": classes, "totals": totals, "runs": runs})
+                                                  "rubrics": rubrics, "classes": classes, "totals": totals, "runs": runs,
+                                                  "show_tournaments": bool(request.app.state.settings.get("show_tournaments"))})
+
+
+@router.post("/debating/tournaments")
+def tournaments_toggle(request: Request, sess=Depends(require_coordinator), form=Depends(form_data)):
+    """Show or hide the tournament and carnival tools (D-084). Nothing is deleted either way."""
+    show = form.get("show") == "1"
+    request.app.state.settings.set("show_tournaments", show)
+    return redirect("/debating", "Tournament tools shown." if show else "Tournament tools hidden. Nothing was deleted.")
 
 
 @router.post("/debating/events")

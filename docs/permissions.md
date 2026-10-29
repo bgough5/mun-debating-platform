@@ -26,9 +26,9 @@ student may open a resolution only in their own class's committee, and a ballot 
 | Public | 24 |
 | Signed in (any role, checked per item) | 29 |
 | Students only | 45 |
-| Staff and coordinator | 99 |
-| Coordinator only | 38 |
-| **Total** | **235** |
+| Staff and coordinator | 102 |
+| Coordinator only | 39 |
+| **Total** | **239** |
 
 ## Coordinator only
 
@@ -56,6 +56,7 @@ student may open a resolution only in their own class's committee, and a ballot 
 | POST | `/admin/t/{name}/{key}/delete` |
 | POST | `/admin/t/{name}/{key}/restore` |
 | POST | `/admin/undo` |
+| POST | `/debating/tournaments` |
 | POST | `/intel/ai` |
 | POST | `/intel/backtest/{source_id}` |
 | POST | `/intel/sources/{source_id}/confirm` |
@@ -167,12 +168,15 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/mun/votes/{kind}/{tid}` |
 | POST | `/mun/votes/{kind}/{tid}` |
 | GET | `/people` |
+| GET | `/people/cards` |
 | GET | `/people/classes` |
 | GET | `/people/classes/{class_id}` |
 | POST | `/people/classes/{class_id}` |
 | GET | `/people/classes/{class_id}/join-cards` |
 | GET | `/people/classes/{class_id}/poster` |
 | POST | `/people/classes/{class_id}/students` |
+| GET | `/people/students` |
+| POST | `/people/students` |
 | GET | `/people/students/{student_id}` |
 | POST | `/people/students/{student_id}` |
 | POST | `/people/students/{student_id}/milestones` |

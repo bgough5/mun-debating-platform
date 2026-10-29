@@ -40,11 +40,15 @@ def fake_people(rng: random.Random, n: int) -> list[tuple[str, str]]:
     return out
 
 
-def make_class(w: Writer, name: str, year: int, n: int, rng: random.Random, code: str | None = None) -> tuple[int, list[int]]:
+def make_class(w: Writer, name: str, year: int, n: int, rng: random.Random, code: str | None = None,
+               years: tuple[int, ...] = ()) -> tuple[int, list[int]]:
     cid = w.insert("class", {"name": name, "year": year, "code": code or new_code(), "code_set_at": now_iso()}, log=False)
+    # Year levels come from their own random stream, so adding them doesn't change any other demo data (D-084).
+    yr = random.Random(f"{name}|years")
     ids = []
     for f, i in fake_people(rng, n):
-        ids.append(w.insert("student", {"class_id": cid, "first_name": f, "last_initial": i}, log=False))
+        ids.append(w.insert("student", {"class_id": cid, "first_name": f, "last_initial": i,
+                                        "year_level": yr.choice(years) if years else None}, log=False))
     return cid, ids
 
 
@@ -56,9 +60,10 @@ def populate_demo(conn, seed: int = 2026) -> dict:
     w = Writer(conn, SYSTEM)
     try:
         info: dict = {}
-        info["mun_class"], mun_students = make_class(w, "Year 9 Model UN (demo)", 2026, 25, rng, code="DEMO9M")
-        info["small_class"], small = make_class(w, "Lunchtime MUN club (demo)", 2026, 3, rng, code="DEMO3C")
-        info["debate_class"], debaters = make_class(w, "Year 8 Debating (demo)", 2026, 20, rng, code="DEMO8D")
+        # Groups mix year levels, as real ones do.
+        info["mun_class"], mun_students = make_class(w, "Year 9 Model UN (demo)", 2026, 25, rng, code="DEMO9M", years=(9, 10, 11))
+        info["small_class"], small = make_class(w, "Lunchtime MUN club (demo)", 2026, 3, rng, code="DEMO3C", years=(7, 10, 12))
+        info["debate_class"], debaters = make_class(w, "Year 8 Debating (demo)", 2026, 20, rng, code="DEMO8D", years=(7, 8, 9))
         staff_id = w.insert("staff", {"name": "Demo Chair", "pass_hash": hash_passphrase(DEMO_STAFF_PASSPHRASE)}, log=False)
         for cid in (info["mun_class"], info["small_class"], info["debate_class"]):
             w.insert("staff_class", {"staff_id": staff_id, "class_id": cid}, log=False)

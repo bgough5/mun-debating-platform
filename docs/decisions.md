@@ -332,3 +332,19 @@ Five findings, each confirmed by a test that failed on the old code. All five no
 - **S-5:** flag SVG is rebuilt from an allowlist of plain shapes when pages are drawn, and unsafe markup is refused when saving.
 
 Helpers live in `app/web/safety.py`. Use them for any new export, redirect or stored markup.
+
+### D-084 One student list; tick who's taking part; tournament tools hidden — Decided (29 Oct 2026, Ben)
+Ben found setup "jumbled and muddled": every "choose a class" dropdown listed seven demo classes, four of them "carnival groups", although debating is for the classroom (D-074).
+
+His model is simple. Students come and go, and different classes use the platform at different times. A student is entered once and stays; on the day, you tick who is taking part, or add a first-timer. Every activity works with any number of students. Year level sets difficulty, and groups often mix year levels.
+
+**Stage 1 (this change):**
+- **Year levels:** each student has an optional year level, `student.year_level`, 5 to 12 (migration 0010).
+- **People → Students:** everyone in one list, filtered by year level and name. You can add first-timers (into a default "Students" group, with a year level), change anyone's year level, and print sign-in cards for the students shown.
+- **Groups stay in the background.** They're still called classes in the code, and they decide which teachers see which students. The coordinator sees everyone; staff see their groups, so the security model (D-083) is unchanged. Activities don't depend on groups.
+- **Tournament and carnival tools are hidden** (`show_tournaments`, off by default). The coordinator can show them again at the bottom of the Debating page; nothing is deleted.
+- **Demo:** the demo groups mix year levels. Year levels come from their own random stream, so the rest of the demo data is identical.
+
+**Next:**
+- **Stage 2:** one "Start an activity" screen: UNAA (General Assembly), Evatt (Security Council), class debate, public speaking, or custom. Tick who's taking part (or add them), choose junior, middle or senior (suggested from their year levels), then go.
+- **Stage 3:** activities in progress listed with Resume, and a fresh "who's here today?".

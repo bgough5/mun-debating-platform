@@ -82,7 +82,7 @@ CONTEXT = [
     ("/debating", "Debating and public speaking", [
         "Class debate: type each team's speakers, set the times, and project the timer. Speaking round: a list of speakers, prepared or impromptu.",
         "Student preparation: open a class to see and score the cases, rebuttals and speeches students have written.",
-        "Tournaments and carnivals: draws, ballots, ladders and house points, as before.",
+        "Tournament and carnival tools (draws, ballots, ladders, house points) are hidden unless the coordinator switches them on at the bottom of this page.",
     ]),
     ("/people", "People", [
         "Classes, their codes and rosters (first names only), staff, and each student's pathway.",
