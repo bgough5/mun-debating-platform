@@ -1,6 +1,8 @@
 """People: classes, rosters, staff, pathways (Layer 3), and student join (D-003)."""
 from __future__ import annotations
 
+import re
+
 from fastapi import APIRouter, Depends, Request
 
 from app.db import one, rows, scalar
@@ -124,19 +126,43 @@ def students_list(request: Request, year: str = "", q: str = "", show: str = "",
                                                     "year": year, "q": q, "show": show, "back": back})
 
 
+# "Sam L, 9", "Sam L 9", "Sam Year 9", "Sam (Y9)": a year level typed at the end of a name line.
+_LINE_YEAR = re.compile(r"^(.*?)[\s,;(]+(?:year|yr|y)?\s*(\d{1,2})\)?\s*$", re.IGNORECASE)
+
+
+def split_year(line: str) -> tuple[str, str]:
+    m = _LINE_YEAR.match(line.strip())
+    return (m.group(1).strip(" ,;"), m.group(2)) if m else (line.strip(), "")
+
+
+def add_to_list(w, actor, lines: list[str], default_year) -> tuple[str, list[int]]:
+    """Add first-timers to the one list, each with a year level: typed on their line ("Sam L, 9") or the one chosen
+    for everyone. They go into the default group. Returns the message and the new students' ids, in order."""
+    cid = pool_class_id(w)
+    if not can_run_class(w.conn, actor, cid):
+        raise UserError("Only the coordinator (or a teacher given the Students group) can add students to the list.", 403)
+    fallback = year_level(default_year)
+    entries = []
+    for ln in (x for x in lines if x.strip()):
+        name, y = split_year(ln)
+        y = year_level(y) if y else fallback
+        if y is None:
+            raise UserError(f"Give {name or 'each student'} a year level: type it after the name (for example \"{name or 'Sam'}, 9\") "
+                            "or choose one year level for everyone.")
+        entries.append((name, y))
+    before = scalar(w.conn, "SELECT COALESCE(MAX(id), 0) FROM student")
+    msg = add_students(w, cid, [n for n, _ in entries])
+    new = [r["id"] for r in rows(w.conn, "SELECT id FROM student WHERE id > ? AND class_id = ? ORDER BY id", (before, cid))]
+    for sid, (_, y) in zip(new, entries):
+        w.update("student", sid, {"year_level": y}, f"class:{cid}")
+    return msg, new
+
+
 @router.post("/students")
 def students_add_to_list(request: Request, s=Depends(require_staff), form=Depends(form_data)):
-    """Add first-timers to the one list. They go into the default group; a year level applies to every name typed."""
-    y = year_level(form.get("year_level"))
+    """Add first-timers to the one list, each with a year level."""
     with request.app.state.db.write(request.state.actor) as w:
-        cid = pool_class_id(w)
-        if not can_run_class(w.conn, request.state.actor, cid):
-            raise UserError("Only the coordinator (or a teacher given the Students group) can add students to the list.", 403)
-        before = scalar(w.conn, "SELECT COALESCE(MAX(id), 0) FROM student")
-        msg = add_students(w, cid, (form.get("names") or "").splitlines())
-        if y is not None:
-            for r in rows(w.conn, "SELECT id FROM student WHERE id > ? AND class_id = ?", (before, cid)):
-                w.update("student", r["id"], {"year_level": y}, f"class:{cid}")
+        msg, _ = add_to_list(w, request.state.actor, (form.get("names") or "").splitlines(), form.get("year_level"))
     from app.web.safety import safe_path
     return redirect(safe_path(form.get("back"), "/people/students"), msg)
 

@@ -405,3 +405,17 @@ kbd { font-family: var(--mono); font-size: .85em; border: 1px solid var(--contro
 @media print { .cue-cards { grid-template-columns: 1fr 1fr; } .cue-card { min-height: 9cm; } }
 .projector button.link { color: var(--proj-accent); }
 [data-slot][hidden], [data-structure][hidden], [data-card][hidden], [data-show-in][hidden] { display: none; }
+
+/* ---------- Start an activity (D-084) ---------- */
+.start-form { display: grid; gap: 1rem; max-width: 60rem; }
+.start-form label.choice { display: flex; gap: .55rem; align-items: flex-start; font-weight: 400; padding: .35rem 0; }
+.start-form label.choice input { margin-top: .2rem; }
+.year-block { border-top: 1px solid var(--line); padding: .35rem 0 .25rem; }
+.year-block:first-of-type { border-top: 0; }
+.year-head { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin: .2rem 0; }
+.year-head button { min-height: 2rem; padding: .2rem .8rem; }
+.first-timers { margin-top: .6rem; }
+.find-row { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: end; margin-bottom: .4rem; }
+.find-row .hint { flex-basis: 100%; margin: 0; }
+.year-block[hidden], .checks label[hidden], .find-row[hidden], .find-row .hint[hidden] { display: none; }
+.first-timers[open] { display: grid; gap: .6rem; max-width: 640px; }

@@ -34,12 +34,12 @@
 {% if students %}<p><a href="/people/cards?year={{ year|urlencode }}&amp;q={{ q|urlencode }}">{{ icon("print") }} Print sign-in cards for the {{ students|length }} shown</a></p>{% endif %}
 
 <section class="card" aria-labelledby="h-add"><h2 id="h-add">{{ icon("add") }} Add students</h2>
-<p class="small">One per line: a first name, plus a last initial if two share a name (for example "Sam L"). Only first names are stored. Each student gets their own sign-in code.</p>
+<p class="small">One per line, with their year level after the name: for example "Sam L, 9" (add a last initial if two share a first name). Only first names are stored. Each student gets their own sign-in code.</p>
 <form method="post" action="/people/students" class="stack">{{ hidden_csrf(csrf) }}
   <input type="hidden" name="back" value="{{ back }}">
-  <div class="field"><label for="an">Names</label><textarea id="an" name="names" rows="4" required></textarea></div>
-  <div class="field"><label for="ay">Year level <span class="hint">for everyone in this list; change anyone's later</span></label>
-    <select id="ay" name="year_level"><option value="">Not set</option>{% for y in years %}<option value="{{ y }}">Year {{ y }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="an">Students</label><textarea id="an" name="names" rows="4" required placeholder="Sam L, 9"></textarea></div>
+  <div class="field"><label for="ay">Year level for anyone without one typed <span class="hint">change anyone's later in the list above</span></label>
+    <select id="ay" name="year_level"><option value="">Typed after each name</option>{% for y in years %}<option value="{{ y }}">Year {{ y }}</option>{% endfor %}</select></div>
   <button type="submit">Add</button>
 </form></section>
 {% endblock %}

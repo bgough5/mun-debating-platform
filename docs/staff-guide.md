@@ -10,9 +10,25 @@ For teachers helping with debating and Model UN. You don't need to know anything
 
 The laptop and every student laptop must be on the same school Wi-Fi. If students can't reach the address, see "If something goes wrong".
 
+## Starting an activity
+
+On the Dashboard, choose **Start an activity**:
+
+1. **What you're running:** UNAA or Evatt Model UN, a class debate, public speaking, or your own format.
+2. **Who's taking part today:** tick them, or use **Tick all** for a year level. **Find a student** searches by name and **Show** narrows the list to one year level; anyone already ticked stays ticked. Students stay on the list once entered. For first-timers, open **First time here?**, type one per line with their year level after the name (for example "Sam L, 9") and press **Add and tick them**.
+3. **Difficulty:** junior, middle or senior, or let it suggest one from the year levels of the students ticked. It sets speech times and which motions and impromptu topics come up.
+4. Press **Start**.
+
+Any number of students works:
+- **Model UN** shares the countries out. Countries without a student are voted by the engine.
+- **Debates:** more than eight students are split into several debates on the same motion.
+- **Public speaking** takes everyone ticked.
+
+Everything is saved as you go. Open it again later from Model UN (Chair) or Debating. Year levels are set or changed under **People → Students**.
+
 ## Students signing in
 
-1. Print **sign-in cards** from the class page (**People → your class**): one card per student, with their own address and a six-character code. The code already knows the student's name; there is no list of names to pick from.
+1. Print **sign-in cards** from **People → Students** (all students, or one year level): one card per student, with their own address and a six-character code. The code already knows the student's name; there is no list of names to pick from.
 2. A student opens the address on their card, or goes to `/join` and types their code. They're in, as themselves, on any school laptop. Signing in on another laptop signs them out of the first one.
 3. A student who's away simply doesn't sign in. Nothing waits for them: in a vote, the engine casts their country's vote, labelled computed, and if they arrive in time their own vote replaces it.
 4. Lost card, or a code seen by someone else? On the class page, **Show** reveals a student's code; **Manage → New code** gives them a new one and stops the old one.
