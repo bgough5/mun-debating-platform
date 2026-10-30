@@ -141,6 +141,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(core_router)
     from app.modules.core.start import router as start_router
     app.include_router(start_router)
+    from app.modules.core.resume import router as resume_router
+    app.include_router(resume_router)
     from app.modules.core.wizard import router as wizard_router
     from app.modules.core.help import router as help_router
     app.include_router(wizard_router)
@@ -152,6 +154,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     if settings.module_on("people"):
         from app.modules.people.routes import router as people_router
         from app.modules.people.student_routes import router as student_router
+        from app.modules.people.groups import router as groups_router
+        app.include_router(groups_router)
         app.include_router(people_router)
         app.include_router(student_router)
     if settings.module_on("mun"):

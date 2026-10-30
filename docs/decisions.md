@@ -357,5 +357,28 @@ His model is simple. Students come and go, and different classes use the platfor
   - **Your own format** is a speaking round that opens straight on its full settings page.
 - **Linking and access:** ticked students are linked to their speaking slots by id, not by typed name, so a group can mix students from any group. Staff can tick only students in their own groups, and the activity belongs to a group they can run.
 
-**Next:**
-- **Stage 3:** activities in progress listed with Resume, and a fresh "who's here today?".
+**Stage 3 (30 Oct 2026): In progress and Resume** (`app/modules/core/resume.py`):
+- The Dashboard lists unfinished debates, speaking rounds and Model UN sessions this person can run, most recently used first. Each has **Resume** (asks who's here first) and **Open** (goes straight in).
+- **Who's here today?** uses the same tick list as Start, ticked with last time's students. On Continue:
+  - **Speaking round:** anyone who has spoken, is speaking, or has been scored keeps their place. Students who are away leave the rest of the order, new students go on the end, and the current step stays on the next speaker who is here.
+  - **Debate:** an away student's unspoken slot is freed, and new students fill free slots in speaking order. Anyone who doesn't fit is named in the message.
+  - **Model UN:** newcomers are given a country. Away students keep theirs, and their country is voted by the engine until they sign in (D-079).
+- **Who can resume:** only the people who can open the activity. A finished run must be reopened first, and a closed session can't be resumed.
+
+**Next:** saved groups, D-085.
+
+### D-085 Saved groups; old class-style groups become "Teacher access" — Decided (30 Oct 2026, Ben)
+Ben: "there also should be groups that get saved, ie i create a debating juniors group, which i can name ... a tab for both groups, and individual students, while still cutting out the confusing manner of the groups from previous builds".
+
+- **A saved group** (`student_group`, `student_group_member`, migration 0011) is a name plus a list of students. A student can be in any number of groups, which the old classes (one per student) couldn't do.
+  - Groups are shared among staff, so anyone can tick one. Only the person who made it, or the coordinator, can rename, change or delete it.
+  - Each person sees and ticks only the members they could see anyway. When an owner edits, members they can't see are left alone.
+  - Membership goes when a student is erased (`erase_student`).
+- **People has tabs:** Students, Groups, Teacher access, and Staff (coordinator only). `/people` is a short overview.
+- **The old class-style groups are now "Teacher access"** (`/people/access`). The code still calls them classes, and they only decide which teacher sees which students. They're off the People page and the Dashboard; the Dashboard shows saved groups instead.
+- **Start an activity and Who's here today?:**
+  - a row of **Tick ‹group›** buttons; these are server-side, so they work without JavaScript and keep everything else on the form;
+  - **Save the ticked students as a group**;
+  - `/start?group=<id>` opens with a group ticked, from a group's page or the Dashboard.
+- **Sign-in cards** can be printed for a group (`/people/cards?group=<id>`).
+- **Not changed:** the getting-started wizard still creates a class. MUN committees and debating runs still belong to a class behind the scenes, which decides who may run them.

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, hidden_csrf %}
+{% block content %}
+{{ breadcrumb([("Dashboard", "/"), ("Who's here today?", None)]) }}
+<h1>{{ icon("people") }} Who's here today?</h1>
+<p class="lede">{{ t.label }}: <strong>{{ t.title }}</strong>. Everything from last time is saved. Last time's students are ticked: untick anyone who's away, tick anyone joining.</p>
+
+<form method="post" action="/start/resume/{{ t.what }}/{{ t.id }}" class="start-form">{{ hidden_csrf(csrf) }}
+  <fieldset><legend>Taking part today <span class="hint" data-tick-count>{{ ticked|length }} ticked</span></legend>
+{% include "core/_pick_students.html" %}
+  </fieldset>
+  {% if t.typed %}<p class="small">Also in this activity, typed by name rather than chosen from the list (they stay): {{ t.typed|join(", ") }}.</p>{% endif %}
+  <p class="small">{% if t.what == "session" %}Students who are away need nothing: until they sign in, their country is voted by the engine and labelled computed. New students are given a country.
+  {% elif t.run.kind == "speeches" %}Anyone who has already spoken keeps their place. Students who are away leave the rest of the order; new students go on the end.
+  {% else %}Speakers who have already spoken keep their slot. An away student's slot is freed, and new students fill free slots.{% endif %}</p>
+  <p><button type="submit" name="op" value="resume">{{ icon("play") }} Continue</button>
+    <a class="button secondary" href="{{ t.open }}">Open without changes</a></p>
+</form>
+{% endblock %}

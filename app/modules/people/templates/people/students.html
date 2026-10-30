@@ -3,6 +3,7 @@
 {% block content %}
 {{ breadcrumb([("People", "/people"), ("Students", None)]) }}
 <h1>{{ icon("people") }} Students</h1>
+{% set current = "students" %}{% include "people/_tabs.html" %}
 <p class="lede">Everyone who has been entered, in one list. Enter a student once and they stay here. For each activity you tick who's taking part that day.</p>
 
 <form method="get" action="/people/students" class="inline" role="search" aria-label="Filter students">

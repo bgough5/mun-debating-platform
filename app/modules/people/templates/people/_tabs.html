@@ -1,0 +1,4 @@
+{% from "_macros.html" import tabs %}
+{% set people_tabs = [("students", "Students", "/people/students"), ("groups", "Groups", "/people/groups"), ("access", "Teacher access", "/people/access")] %}
+{% if actor.is_coordinator %}{% set people_tabs = people_tabs + [("staff", "Staff", "/people/staff")] %}{% endif %}
+{{ tabs(people_tabs, current, "People") }}

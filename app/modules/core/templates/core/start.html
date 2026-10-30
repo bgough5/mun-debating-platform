@@ -15,32 +15,7 @@
   </fieldset>
 
   <fieldset><legend>2. Who's taking part today? <span class="hint" data-tick-count>{{ ticked|length }} ticked</span></legend>
-    {% if not groups %}{{ empty_state("No students entered yet.", "Type their names below and press Add: they stay on the list for next time.", None, None, "people") }}
-    {% else %}
-    <div class="find-row" data-find hidden>
-      <div class="field"><label for="find-name">Find a student</label><input id="find-name" type="search" data-find-name autocomplete="off"></div>
-      <div class="field"><label for="find-year">Show</label>
-        <select id="find-year" data-find-year><option value="">All year levels ({{ total }})</option>
-          {% for y, people in groups %}<option value="yr-{{ y or 'none' }}">{{ "Year %d"|format(y) if y else "Year not set" }} ({{ people|length }})</option>{% endfor %}</select></div>
-      <p class="hint" data-find-none hidden>No one matches. Check the spelling, or add them below if it's their first time.</p>
-    </div>
-    {% endif %}
-    {% for y, people in groups %}
-    <div class="year-block" role="group" aria-labelledby="yr-{{ y or 'none' }}" data-year="yr-{{ y or 'none' }}">
-      <p class="year-head"><strong id="yr-{{ y or 'none' }}">{{ "Year %d"|format(y) if y else "Year not set" }}</strong> <span class="muted">({{ people|length }})</span>
-        {% set yl = "Year %d"|format(y) if y else "year not set" %}
-        <button type="button" class="secondary small" data-tick-all>Tick all<span class="visually-hidden"> in {{ yl }}</span></button>
-        <button type="button" class="secondary small" data-tick-none>Untick all<span class="visually-hidden"> in {{ yl }}</span></button></p>
-      <div class="checks">{% for st in people %}<label><input type="checkbox" name="student_id" value="{{ st.id }}" {% if st.id in ticked %}checked{% endif %}> {{ st.name }}{% if st.also %} <span class="hint">({{ st.also }})</span>{% endif %}</label>{% endfor %}</div>
-    </div>
-    {% endfor %}
-    <details class="first-timers" {% if not groups %}open{% endif %}><summary>First time here? Add new students</summary>
-      <p class="small">One per line, with their year level after the name: for example "Sam L, 9" (add a last initial if two share a first name). They stay on the list for next time, and are ticked for today.</p>
-      <div class="field"><label for="nn">New students</label><textarea id="nn" name="new_names" rows="3" placeholder="Sam L, 9"></textarea></div>
-      <div class="field"><label for="ny">Year level for anyone without one typed</label>
-        <select id="ny" name="new_year_level"><option value="">Typed after each name</option>{% for y in years %}<option value="{{ y }}">Year {{ y }}</option>{% endfor %}</select></div>
-      <button type="submit" name="op" value="add" class="secondary" formnovalidate>{{ icon("add") }} Add and tick them</button>
-    </details>
+{% include "core/_pick_students.html" %}
   </fieldset>
 
   <fieldset><legend>3. Difficulty</legend>

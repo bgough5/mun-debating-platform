@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, hidden_csrf %}
+{% block content %}
+{{ breadcrumb([("People", "/people"), ("Groups", "/people/groups"), (g.name, None)]) }}
+<h1>{{ g.name }}</h1>
+<p class="lede">{{ g.n }} student{{ '' if g.n == 1 else 's' }}. Made by {{ g.owner }}.</p>
+<p>{% if g.n %}<a class="button" href="/start?group={{ g.id }}">{{ icon("play") }} Start an activity with this group</a>
+  <a class="button secondary" href="/people/cards?group={{ g.id }}">{{ icon("print") }} Print sign-in cards</a>{% endif %}</p>
+
+{% if g.mine %}
+<form method="post" action="/people/groups/{{ g.id }}" class="start-form">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="gn">Group name</label><input id="gn" type="text" name="group_name" maxlength="60" value="{{ g.name }}" required></div>
+  <fieldset><legend>Students in the group <span class="hint" data-tick-count>{{ ticked|length }} ticked</span></legend>
+{% include "core/_pick_students.html" %}
+  </fieldset>
+  <p><button type="submit" name="op" value="save">Save changes</button></p>
+</form>
+<form method="post" action="/people/groups/{{ g.id }}" class="inline">{{ hidden_csrf(csrf) }}
+  <button type="submit" name="op" value="delete" class="secondary" data-confirm="Delete the group “{{ g.name }}”? The students stay on the list.">{{ icon("delete") }} Delete this group</button>
+</form>
+{% else %}
+<ul class="cols">{% for y, people in groups %}{% for st in people if st.id in g.members %}<li>{{ st.name }}{% if y %} <span class="muted">(Year {{ y }})</span>{% endif %}</li>{% endfor %}{% endfor %}</ul>
+<p class="small">Only {{ "the coordinator" if not g.staff_id else g.owner ~ " or the coordinator" }} can change this group. You can tick it when you start or resume an activity.</p>
+{% endif %}
+{% endblock %}

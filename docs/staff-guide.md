@@ -24,7 +24,21 @@ Any number of students works:
 - **Debates:** more than eight students are split into several debates on the same motion.
 - **Public speaking** takes everyone ticked.
 
-Everything is saved as you go. Open it again later from Model UN (Chair) or Debating. Year levels are set or changed under **People → Students**.
+Everything is saved as you go. Next time, find it on the Dashboard under **In progress**:
+- **Resume** asks who's here today. Last time's students are ticked: untick anyone away and tick anyone joining, then press **Continue**.
+  - **Speaking round:** anyone who has spoken keeps their place. Students who are away leave the rest of the order, and new students go on the end.
+  - **Debate:** an away student's slot is freed for someone new.
+  - **Model UN:** newcomers get a country. Students who are away need nothing.
+- **Open** goes straight in with nothing changed.
+
+Year levels are set or changed under **People → Students**.
+
+**Saved groups** (People → Groups): name the students you often run together, for example "Debating Jr BGO", and tick them. A student can be in several groups.
+- On **Start an activity** or **Who's here today?**, press **Tick Debating Jr BGO** to tick the whole group, then untick anyone who's away.
+- You can also tick students and use **Save the ticked students as a group**.
+- Anyone can use a group; only the person who made it, or the coordinator, can change it.
+
+**Teacher access** (People → Teacher access) decides which students each teacher sees. You only need it when a teacher should see some students and not others.
 
 ## Students signing in
 

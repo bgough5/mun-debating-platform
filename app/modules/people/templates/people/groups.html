@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, hidden_csrf, empty_state %}
+{% block content %}
+{{ breadcrumb([("People", "/people"), ("Groups", None)]) }}
+<h1>{{ icon("people") }} Groups</h1>
+{% set current = "groups" %}{% include "people/_tabs.html" %}
+<p class="lede">Save the students you often run together, for example "Debating Jr BGO", and tick the whole group in one go when you start or resume an activity. A student can be in any number of groups.</p>
+
+{% if saved %}
+<div class="table-wrap"><table>
+  <caption>{{ saved|length }} saved group{{ '' if saved|length == 1 else 's' }}</caption>
+  <thead><tr><th scope="col">Group</th><th scope="col" class="num">Students</th><th scope="col">Made by</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+  <tbody>{% for g in saved %}<tr><td><a href="/people/groups/{{ g.id }}">{{ g.name }}</a></td><td class="num">{{ g.n }}</td><td>{{ g.owner }}</td>
+    <td>{% if g.n %}<a class="button secondary" href="/start?group={{ g.id }}">{{ icon("play") }} Start an activity<span class="visually-hidden"> with {{ g.name }}</span></a>{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% else %}{{ empty_state("No saved groups yet.", "Name a group below and tick its students.", None, None, "people") }}{% endif %}
+
+<section class="card" aria-labelledby="h-newg"><h2 id="h-newg">{{ icon("add") }} New group</h2>
+<form method="post" action="/people/groups" class="start-form">{{ hidden_csrf(csrf) }}
+  <div class="field"><label for="ng">Group name</label><input id="ng" type="text" name="group_name" maxlength="60" value="{{ group_name }}" placeholder="Debating Jr BGO" required></div>
+  <fieldset><legend>Students in the group <span class="hint" data-tick-count>{{ ticked|length }} ticked</span></legend>
+{% include "core/_pick_students.html" %}
+  </fieldset>
+  <p><button type="submit" name="op" value="create">Save group</button></p>
+</form></section>
+{% endblock %}

@@ -49,20 +49,29 @@ def needs_initial(conn, class_id: int, first: str, exclude_id: int | None = None
                              "AND id IS NOT ?", (class_id, first, exclude_id)))
 
 
-@router.get("")
-def people_home(request: Request, s=Depends(require_staff)):
+@router.get("/access")
+def teacher_access(request: Request, s=Depends(require_staff)):
     with request.app.state.db.read() as conn:
         ids = staff_class_ids(conn, s.actor)
         classes = rows(conn, "SELECT c.*, (SELECT COUNT(*) FROM student st WHERE st.class_id = c.id AND st.deleted_at IS NULL "
                              "AND st.active = 1) AS n FROM class c WHERE c.deleted_at IS NULL ORDER BY c.archived_at IS NOT NULL, c.year DESC, c.name")
         if ids is not None:
             classes = [c for c in classes if c["id"] in ids]
-    return render(request, "people/home.html", {"title": "People", "classes": classes})
+    return render(request, "people/access.html", {"title": "Teacher access", "classes": classes})
+
+
+@router.get("")
+def people_home(request: Request, s=Depends(require_staff)):
+    from app.modules.people.groups import saved_groups
+    with request.app.state.db.read() as conn:
+        n_students = len(visible_students(conn, s.actor))
+        n_groups = len(saved_groups(conn, s.actor))
+    return render(request, "people/home.html", {"title": "People", "n_students": n_students, "n_groups": n_groups})
 
 
 @router.get("/classes")
 def classes_redirect(request: Request, s=Depends(require_staff)):
-    return redirect("/people")
+    return redirect("/people/access")
 
 
 # ---------- one student list (D-084): everyone entered once, filtered by year level ----------
@@ -168,19 +177,24 @@ def students_add_to_list(request: Request, s=Depends(require_staff), form=Depend
 
 
 @router.get("/cards")
-def cards_for_list(request: Request, year: str = "", q: str = "", s=Depends(require_staff)):
-    """Sign-in cards for the students the Students page is showing (one year level, or everyone)."""
+def cards_for_list(request: Request, year: str = "", q: str = "", group: int | None = None, s=Depends(require_staff)):
+    """Sign-in cards for the students the Students page is showing (one year level, or everyone), or a saved group."""
     from app.modules.people.codes import shown
     from app.web.net import student_base_url
+    crumb = ("Students", "/people/students")
     with request.app.state.db.read() as conn:
         students = visible_students(conn, s.actor, year, q)
+        label = f"Year {year}" if year and year != "none" else "Students"
+        if group:
+            from app.modules.people.groups import get_group
+            g = get_group(conn, s.actor, group)
+            students = [st for st in students if st["id"] in g["members"]]
+            label, crumb = g["name"], (g["name"], f"/people/groups/{g['id']}")
     for st in students:
         st["code"] = shown(st["login_code"])
     base = student_base_url(request)
-    label = f"Year {year}" if year and year != "none" else "Students"
     return render(request, "people/join_cards.html", {"title": f"Sign-in cards: {label}", "label": label, "base": base,
-                                                      "addr": _bare(base), "students": students,
-                                                      "crumb": ("Students", "/people/students")})
+                                                      "addr": _bare(base), "students": students, "crumb": crumb})
 
 
 def create_class(w, name: str, year: int | None) -> tuple[int, str]:
