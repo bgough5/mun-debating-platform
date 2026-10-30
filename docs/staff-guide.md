@@ -121,6 +121,17 @@ Topics, templates and likely arguments are all editable under Admin (Debating gr
 
 **Practice in class (any number of students):** Debating → **Practice**. Tick who's here and the platform splits them into debates: 1 student gets solo speech practice with a timer, 2 debate one-on-one, 3 adds a student adjudicator, and bigger groups get full rooms with student adjudicators so no one sits out.
 
+## Speeches, cue cards and debate teams (students)
+
+Under **Prep and practise**, students can:
+- **Write a speech:** with a structure, or "Write it your way" (one box: paste or type the whole speech).
+- **Write out their speech for a debate,** at the bottom of their debate case.
+- **Make cue cards** from either: **dot points** (their own sentences shortened, never new words) or the **full speech**. They can edit any card, then print four to an A4 landscape page with cut lines and card numbers, in normal or large text.
+
+Their writing saves itself every 30 seconds and when they leave the page. The page opens with "Carry on where you left off", so next club or next class they pick up straight away.
+
+**Debate teams:** students on the same side of a class debate see each other's arguments and speeches (read-only), with a flag on arguments that look alike, so they can split the points before the debate. The other side can't see them.
+
 ## Students' own pages
 
 Students see **Me**: their delegation, tasks, live session, debates and their pathway milestones; **Prep and practise** holds their debate cases, speeches, practice and their scores from class debates and speaking rounds. Teachers record milestones under **People → student**.

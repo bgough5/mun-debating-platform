@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb, tabs, empty_state %}
+{% block content %}
+{{ breadcrumb([("Prep and practise", "/me/prep"), (back_label, back), ("Cue cards", None)]) }}
+<h1>{{ icon("print") }} {{ title }}</h1>
+<p class="lede">Your speech as cards to print, cut out and hold. Choose dot points (a few words to jog your memory) or the full speech. Change anything before you print: these are your words.</p>
+{{ tabs([("dots", "Dot points", "?mode=dots"), ("full", "Full speech", "?mode=full")], mode, "Kind of cue card") }}
+
+{% if stale %}<div class="info-box" role="status">{{ icon("warning") }} Your speech has changed since you edited these cards. Keep your edited cards, or make them fresh from the speech as it is now.
+  <form method="post" action="/me/cards/{{ kind }}/{{ sid }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="mode" value="{{ mode }}">
+    <button type="submit" name="op" value="rebuild" class="secondary">Make them fresh</button></form></div>{% endif %}
+
+{% if not cards %}
+{{ empty_state("No cards yet: the speech is empty.", "Write your speech first, then come back.", back, "Back to the speech", "speech") }}
+{% else %}
+<p class="row no-print">
+  <a class="button" href="/me/cards/{{ kind }}/{{ sid }}/print?mode={{ mode }}" hx-boost="false">{{ icon("print") }} Print {{ cards|length }} card{{ '' if cards|length == 1 else 's' }}</a>
+  <a class="button secondary" href="/me/cards/{{ kind }}/{{ sid }}/print?mode={{ mode }}&amp;size=large" hx-boost="false">{{ icon("print") }} Print with large text</a>
+  <span class="small muted">{{ "Your edited cards." if edited else "Made from your speech: edit them below if you like." }}</span></p>
+{% endif %}
+
+<form method="post" action="/me/cards/{{ kind }}/{{ sid }}" class="card-editor">{{ hidden_csrf(csrf) }}<input type="hidden" name="mode" value="{{ mode }}">
+  {% for c in cards %}
+  <fieldset class="cue-edit"><legend>Card {{ loop.index }}</legend>
+    <div class="field"><label for="h{{ loop.index0 }}">Heading <span class="hint">optional</span></label><input id="h{{ loop.index0 }}" type="text" name="h_{{ loop.index0 }}" value="{{ c.heading }}" maxlength="120"></div>
+    <div class="field"><label for="b{{ loop.index0 }}">{{ "Dot points, one per line" if mode == 'dots' else "Words on the card" }}</label>
+      <textarea id="b{{ loop.index0 }}" name="b_{{ loop.index0 }}" rows="{{ 5 if mode == 'dots' else 6 }}" maxlength="1500">{{ c.body }}</textarea></div>
+  </fieldset>
+  {% endfor %}
+  <fieldset class="cue-edit"><legend>New card <span class="hint">optional</span></legend>
+    <div class="field"><label for="hnew">Heading</label><input id="hnew" type="text" name="h_{{ cards|length }}" maxlength="120"></div>
+    <div class="field"><label for="bnew">{{ "Dot points, one per line" if mode == 'dots' else "Words on the card" }}</label><textarea id="bnew" name="b_{{ cards|length }}" rows="3" maxlength="1500"></textarea></div>
+  </fieldset>
+  <p class="small">To remove a card, clear its heading and words, then save.</p>
+  <p class="row"><button type="submit" name="op" value="save">Save cards</button>
+    {% if edited and not stale %}<button type="submit" name="op" value="rebuild" class="secondary" data-confirm="Throw away your edits and make the cards fresh from your speech?">Make them fresh from my speech</button>{% endif %}</p>
+</form>
+<p class="small muted">Dot points are your own sentences, shortened: the platform cuts filler such as "Firstly," and keeps the first few words. It never adds words of its own.</p>
+{% endblock %}

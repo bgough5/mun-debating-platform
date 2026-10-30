@@ -194,6 +194,50 @@
   document.addEventListener("input", function (e) {
     if (e.target && e.target.hasAttribute("data-find-name")) findStudents(e.target.closest("form"));
   });
+  // Autosave (D-087): a form marked data-autosave saves itself every 30 s while it has unsaved changes, and when the
+  // page is hidden or left, so a lunchtime's writing survives a closed lid. The server answers 204 to autosave=1.
+  var AUTOSAVE_MS = 30000;
+  function autosave(form, leaving) {
+    if (!form.__dirty || form.__saving) return;
+    var status = form.querySelector("[data-autosave-status]");
+    var data = new FormData(form);
+    data.append("autosave", "1");
+    form.__saving = true;
+    form.__dirty = false;
+    fetch(form.getAttribute("action"), { method: "POST", body: data, credentials: "same-origin", keepalive: !!leaving })
+      .then(function (r) {
+        if (!r.ok) throw new Error(r.status);
+        if (status) status.textContent = "Saved automatically at " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) + ".";
+      })
+      .catch(function () {
+        form.__dirty = true;
+        if (status) status.textContent = "Not saved yet: press Save.";
+      })
+      .then(function () { form.__saving = false; });
+  }
+  document.addEventListener("input", function (e) {
+    var form = e.target && e.target.closest && e.target.closest("form[data-autosave]");
+    if (form) form.__dirty = true;
+  });
+  document.addEventListener("submit", function (e) {
+    if (e.target && e.target.matches && e.target.matches("form[data-autosave]")) e.target.__dirty = false;
+  }, true);
+  window.socAutosaveNow = function () {
+    document.querySelectorAll("form[data-autosave]").forEach(function (f) { autosave(f, false); });
+  };
+  setInterval(window.socAutosaveNow, AUTOSAVE_MS);
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") document.querySelectorAll("form[data-autosave]").forEach(function (f) { autosave(f, true); });
+  });
+  window.addEventListener("pagehide", function () {
+    document.querySelectorAll("form[data-autosave]").forEach(function (f) { autosave(f, true); });
+  });
+  document.addEventListener("htmx:beforeRequest", function (e) {
+    // A boosted link swaps the page without a pagehide: save first (not when the form itself is being submitted).
+    var src = e.detail && e.detail.elt;
+    document.querySelectorAll("form[data-autosave]").forEach(function (f) { if (src !== f && !f.contains(src)) autosave(f, true); });
+  });
+
   function showFind() { document.querySelectorAll("[data-find]").forEach(function (b) { b.hidden = false; }); }
   showFind();
   document.addEventListener("htmx:load", showFind);         // boosted navigation swaps the page in

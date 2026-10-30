@@ -383,6 +383,34 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 - **Sign-in cards** can be printed for a group (`/people/cards?group=<id>`).
 - **Not changed:** the getting-started wizard still creates a class. MUN committees and debating runs still belong to a class behind the scenes, which decides who may run them.
 
+
+### D-087 Cue cards from any speech; speeches that save themselves; debate teammates read each other's work — Decided (30 Oct 2026, Ben)
+Ben asked for something that "will automatically take a written speech, and format it into printable" cue cards, "whether that is dot point or full speech form, with option for both". He also wants a student who does this every lunchtime to save the speech, have it backed up and open it again next club, and he wants it usable in class too. Students in the same debate team should see each other's speech and an overview of their arguments, "to avoid double ups, while being unable to change it".
+
+His answers (30 Oct): usable in class too; a team is the same side of a class debate; dot points are made automatically and then editable; students sharing a Model UN country read each other's drafts (D-086).
+
+- **Cue cards** (`app/modules/debating/cuecards.py`, `/me/cards/<speech|case|mun>/<id>`):
+  - **Sources:** prepared speeches, debate cases (the written speech, or the arguments and rebuttals until one is written) and Model UN drafts.
+  - **Dot points:** each sentence becomes a point: leading filler ("Firstly,", "I believe that") is dropped and it's cut to 9 words. A test checks that no point contains a word the student didn't write.
+  - **Full speech:** sentences are packed into cards of up to 55 words, never split mid-sentence.
+  - **Editing:** students can edit any card. Edits are kept per kind of card (`cue_card_set`, migration 0012). The page says when the speech has changed since then, and offers to make the cards fresh.
+- **Printing:** four cards to an A4 landscape page, with dashed cut lines, "3 / 8" numbering, and normal or large text.
+  - A card that wouldn't fit is split at print time (`fit_for_print`).
+  - Measured on 30 Oct with print styles in Chromium: across 1–13 paragraphs, both kinds of card and both text sizes, pages always equalled cards ÷ 4 rounded up, every page was A4 landscape, and no card overflowed.
+- **"Write it your way"** (`free` speech template): one box for a whole speech, pasted or typed. A blank line starts a new card.
+- **Debate cases have a written-out speech** (`prep_case.speech_text`), with its own cue cards.
+- **Saving:**
+  - Speech and case pages save themselves every 30 seconds while there are changes, and when the page is hidden or left (`form[data-autosave]` in `app.js`; the server answers 204 to `autosave=1`).
+  - The page shows "Saved automatically at …".
+  - Prep and practise opens with "Carry on where you left off".
+  - Everything is in the database and in the daily backup (`docs/backup-restore.md`).
+- **Debate teams** (`app/modules/debating/team.py`, `/me/team/<run>`):
+  - A team is the students on the same side of a class debate. Each sees the team's speakers in order, with each speaker's team line, arguments, rebuttals and speech, read-only.
+  - The other side's work isn't shown. Students outside the debate get 403. Every edit route still checks the case is the student's own.
+  - Arguments from different speakers that share a third or more of their key words are flagged "These might overlap". The page labels this a rough word match, not a judgement.
+- **Usable in class:** any student can use all of this (`require_student`, nothing club-only).
+- **Privacy:** cue cards are the student's writing, so `erase_student` deletes them.
+
 ### D-086 Several students on one country; everything a student does is signed "Ben G, Australia" — Decided (30 Oct 2026, Ben)
 Ben: multiple students on one country should each "access everything about their country and all tabs", and messages, speeches "or otherwise" should note the names, for example "Ben G, Australia : Jarryd R, Australia", across the whole page. Some countries have one delegate and others up to four. Numbers needn't be even, and nothing should break if they aren't.
 

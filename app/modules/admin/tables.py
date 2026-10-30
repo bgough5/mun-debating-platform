@@ -181,7 +181,7 @@ EXPORT_ONLY = [
     "debate_event", "team", "team_member", "adjudicator", "room", "debate_round", "pairing", "pairing_adjudicator",
     "ballot", "ballot_score", "house_points_entry", "event_document", "practice_speech",
     "class_run", "class_run_speaker", "prep_case", "prep_point", "prep_speech",
-    "student_group", "student_group_member",
+    "student_group", "student_group_member", "cue_card_set",
 ]
 # Columns never exported or shown.
 SECRET_COLUMNS = {"pass_hash", "token_hash", "csrf", "login_code"}

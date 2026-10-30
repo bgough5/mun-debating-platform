@@ -129,9 +129,20 @@ def _scores(form, rub: dict | None, prefix: str) -> dict:
     return out
 
 
+SPEECH_MAX = 8000
+
+
 def save_header(w: Writer, case: dict, form) -> None:
-    w.update("prep_case", case["id"], {"definition": (form.get("definition") or "").strip()[:PART_MAX],
-                                       "team_line": (form.get("team_line") or "").strip()[:300], "updated_at": now_iso()})
+    """The team line and definition, or the written-out speech (D-087): each form sends only its own fields."""
+    changes = {"updated_at": now_iso()}
+    if "team_line" in form or "definition" in form:
+        changes.update({"definition": (form.get("definition") or "").strip()[:PART_MAX], "team_line": (form.get("team_line") or "").strip()[:300]})
+    if "speech_text" in form:
+        text = (form.get("speech_text") or "").replace("\r\n", "\n").strip()
+        if len(text) > SPEECH_MAX:
+            raise UserError(f"Keep the speech under {SPEECH_MAX:,} characters.")
+        changes["speech_text"] = text
+    w.update("prep_case", case["id"], changes)
 
 
 def save_point(w: Writer, case: dict, form) -> int:
@@ -265,8 +276,9 @@ def save_speech(w: Writer, sp: dict, form) -> None:
     sections = {}
     for sec in view["sections"]:
         v = (form.get(f"sec_{sec['key']}") or "").strip()
-        if len(v) > 4000:
-            raise UserError(f"{sec['label']} is too long (over 4,000 characters).")
+        limit = SPEECH_MAX if len(view["sections"]) == 1 else 4000       # "Write it your way" is one box for the whole speech
+        if len(v) > limit:
+            raise UserError(f"{sec['label']} is too long (over {limit:,} characters).")
         sections[sec["key"]] = v
     try:
         target = max(30, min(int(form.get("target_seconds") or sp["target_seconds"]), 900))

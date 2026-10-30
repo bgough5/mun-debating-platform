@@ -5,6 +5,17 @@
 <h1>{{ icon("practice") }} Prep and practise</h1>
 <p class="lede">Build a debate case, rebut the other side, write a speech, and practise speaking against the clock. Everything here is your own work: the platform gives you structures and prompts, never the words.</p>
 
+{% if last %}{% set kind, item = last %}
+<section class="card accent" aria-labelledby="h-carry"><h2 id="h-carry">{{ icon("history") }} Carry on where you left off</h2>
+  <p>{% if kind == 'speech' %}Your speech <strong>{{ item.title }}</strong>{% else %}Your {{ item.side_label|lower }} case: <strong>{{ item.motion }}</strong>{% endif %}, last saved {{ item.updated_at|when }}.</p>
+  <p><a class="button" href="{{ '/me/prep/speeches/' ~ item.id if kind == 'speech' else '/me/prep/cases/' ~ item.id }}">{{ icon("next") }} Open it</a></p>
+  <p class="small muted">Everything you write is saved on the platform as you go and backed up every day, so it's here next club or next class.</p></section>
+{% endif %}
+{% if teams %}
+<section class="card" aria-labelledby="h-teams"><h2 id="h-teams">{{ icon("people") }} Your debate teams</h2>
+  <ul class="plain">{% for t in teams %}<li><a href="/me/team/{{ t.id }}">{{ t.side_name }}: {{ t.motion or t.title }}</a> <span class="small muted">· {{ t.mates }} teammate{{ '' if t.mates == 1 else 's' }}{% if t.status == 'finished' %} · finished{% endif %}</span></li>{% endfor %}</ul>
+  <p class="small">See your teammates' arguments and speeches (read-only) so you don't double up.</p></section>
+{% endif %}
 <div class="grid">
 <section class="card" aria-labelledby="h-speak"><h2 id="h-speak">{{ icon("timer") }} Speaking practice</h2>
   <ul class="plain">
