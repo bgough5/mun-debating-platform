@@ -26,7 +26,7 @@
 </section>
 <section id="p-speech" role="tabpanel" aria-labelledby="tab-speech" data-panel="speech" {% if tab != 'speech' %}hidden{% endif %}>
   <h2>{{ icon("speech") }} My speech</h2>
-  <p class="small">Your own words, for you only: the program never writes them and nobody else sees them. About 130 words is a minute out loud.</p>
+  <p class="small">Your own words: the program never writes them. Students holding the same country can read your drafts but not change them; nobody else sees them. About 130 words is a minute out loud.</p>
   {% if mine %}
   {% for d in my_drafts %}
   <details {% if loop.first %}open{% endif %}><summary>{{ d.title }} <span class="small muted">({{ speech_kinds[d.kind] }}, {{ d.body.split()|length }} words)</span></summary>
@@ -44,6 +44,12 @@
       <div class="field"><label for="nt">Title</label><input id="nt" type="text" name="title" maxlength="80" placeholder="e.g. Moderated caucus on finance"></div>
       <div class="field"><label for="nb">Draft</label><textarea id="nb" name="body" rows="7" maxlength="6000"></textarea></div>
       <button type="submit">Save draft</button></form></details>
+  {% if team_drafts %}
+  <h3>{{ icon("people") }} Your co-delegates' drafts</h3>
+  <p class="small">Others holding {{ mine.country or mine.name }} can read each other's drafts, so you don't say the same thing twice. Only the writer can change a draft.</p>
+  {% for d in team_drafts %}<details><summary>{{ d.by }}: {{ d.title }} <span class="small muted">({{ speech_kinds[d.kind] if speech_kinds is defined else d.kind }}, {{ d.body.split()|length }} words)</span></summary>
+    <div class="readonly-text">{{ d.body }}</div></details>{% endfor %}
+  {% endif %}
   {% else %}<p class="muted">Join a delegation to keep speech drafts.</p>{% endif %}
 </section>
 {% endblock %}

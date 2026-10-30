@@ -26,7 +26,7 @@ def tab_of(request: Request) -> str:
 def _mine(conn, actor, committee_id: int) -> dict | None:
     if actor is None or actor.kind != "student":
         return None
-    return one(conn, "SELECT d.*, c.name FROM delegation d JOIN delegation_member dm ON dm.delegation_id = d.id "
+    return one(conn, "SELECT d.*, c.name, c.name AS country FROM delegation d JOIN delegation_member dm ON dm.delegation_id = d.id "
                      "JOIN country c ON c.iso3 = d.iso3 WHERE dm.student_id = ? AND d.committee_id = ? "
                      "AND dm.deleted_at IS NULL AND d.deleted_at IS NULL", (actor.id, committee_id))
 
@@ -66,6 +66,7 @@ def student_tabs_context(conn, request: Request, sid: int) -> dict:
     ctx["point_kinds"] = F.POINT_KINDS
     ctx["ff"] = F.ff_summary(conn, request.state.actor.id, s["committee_id"]) if mine else []
     ctx["my_drafts"] = F.drafts(conn, request.state.actor.id, s["committee_id"]) if mine else []
+    ctx["team_drafts"] = F.team_drafts(conn, request.state.actor.id, s["committee_id"]) if mine else []
     ctx["speech_kinds"] = F.SPEECH_KINDS
     return ctx
 
@@ -155,10 +156,12 @@ def prepare(request: Request, cid: int, sess=Depends(require_student)):
                              "JOIN paragraph_version v ON v.id = p.current_version_id WHERE r.committee_id = ? AND r.deleted_at IS NULL "
                              "AND p.deleted_at IS NULL ORDER BY r.id, p.kind = 'operative', p.position", (cid,))
         drafts = F.drafts(conn, request.state.actor.id, cid)
+        team_drafts = F.team_drafts(conn, request.state.actor.id, cid)
         live = scalar(conn, "SELECT id FROM live_session WHERE committee_id = ? AND state != 'closed' ORDER BY id DESC LIMIT 1", (cid,))
     opening = next((d for d in drafts if d["kind"] == "opening"), None)
     return render(request, "floor/prepare.html", {"title": f"Prepare: {com['name']}", "com": com, "mine": mine, "brief": brief,
                                                   "clauses": clauses, "drafts": drafts, "opening": opening, "live": live,
+                                                  "team_drafts": team_drafts,
                                                   "words": F.words, "seconds": F.speaking_seconds})
 
 

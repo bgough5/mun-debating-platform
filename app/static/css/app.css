@@ -422,3 +422,4 @@ kbd { font-family: var(--mono); font-size: .85em; border: 1px solid var(--contro
 .saved-row { display: flex; flex-wrap: wrap; gap: .4rem .5rem; align-items: center; margin-bottom: .6rem; }
 .saved-row button { min-height: 2rem; padding: .2rem .8rem; }
 ul.cols { columns: 14rem auto; column-gap: 1.5rem; }
+.readonly-text { white-space: pre-wrap; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: .6rem .8rem; max-width: 46rem; }

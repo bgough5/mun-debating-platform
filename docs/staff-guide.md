@@ -53,6 +53,12 @@ At most 25 students can be in one live session. Everything also works with fewer
 
 **Set up (coordinator or class teacher):** MUN → conference → committee. Add delegations (countries) and **Allocate** students to them. Countries without a student are still voted, by the prediction engine, and labelled "computed".
 
+**Several students on one country** is fine, in any numbers (one on France, four on Australia):
+- Each of them has every tab.
+- Everything they do is signed with their name and country, for example "Ben G, Australia": messages, points, motions, the speakers list, amendments and signatures.
+- They can read each other's speech drafts but not change them.
+- A country still has **one vote**: any of its students can cast or change it, and everyone sees who cast it.
+
 **Resolution workspace:** each paragraph has one editor at a time. Choose **Edit** to take a paragraph; others see who is editing. Anyone else proposes a change as an **amendment**, which the class supports or the chair puts to a vote. **History** shows every version and can restore one. **Undo** (top of the page) undoes your last action.
 
 **Whip count and prediction:** the committee's **Evidence** page records what each country has said, with its source. **Prediction** shows the chance the resolution passes, the countries most likely to swing it, and **Create lobbying tasks** to turn the swing list into lobbying tasks. Predictions are estimates: the page shows how uncertain each country is, and "unknown" where there's no evidence.

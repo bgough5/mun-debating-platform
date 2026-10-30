@@ -119,7 +119,7 @@ def add_speaker(w: Writer, sid: int, delegation_id: int, student_id: int | None 
         raise UserError(f"{d['iso3']} is already waiting on the speakers list.")
     pos = (scalar(w.conn, "SELECT MAX(position) FROM speakers_list_entry WHERE session_id = ?", (sid,)) or 0) + 1
     return w.insert("speakers_list_entry", {"session_id": sid, "list_kind": list_kind, "delegation_id": delegation_id,
-                                            "student_id": student_id, "position": pos, "added_by": w.actor.label,
+                                            "student_id": student_id, "position": pos, "added_by": actor_label(w.conn, w.actor, delegation_id),
                                             "added_at": now_iso(), "amendment_id": amendment_id, "side": side}, ch(sid))
 
 
@@ -137,9 +137,17 @@ def waiting(conn, sid: int, s: dict | None = None, every_list: bool = False) -> 
          "JOIN delegation d ON d.id = e.delegation_id JOIN country c ON c.iso3 = d.iso3 "
          "LEFT JOIN student st ON st.id = e.student_id WHERE e.session_id = ? AND e.status = 'waiting' ")
     if every_list:
-        return rows(conn, q + "ORDER BY e.position", (sid,))
+        return _speaker_labels(rows(conn, q + "ORDER BY e.position", (sid,)))
     kind, amendment = current_list(s or get_session(conn, sid))
-    return rows(conn, q + "AND e.list_kind = ? AND e.amendment_id IS ? ORDER BY e.position", (sid, kind, amendment))
+    return _speaker_labels(rows(conn, q + "AND e.list_kind = ? AND e.amendment_id IS ? ORDER BY e.position", (sid, kind, amendment)))
+
+
+def _speaker_labels(entries: list[dict]) -> list[dict]:
+    """e["by"]: "Ben G, Australia" when a student put the country on the list, else the country (D-086)."""
+    from app.modules.mun.who import label
+    for e in entries:
+        e["by"] = label(display_name(e["first_name"], e["last_initial"]) if e.get("first_name") else "", e["country"])
+    return entries
 
 
 def move_speaker(w: Writer, entry_id: int, direction: str) -> None:
@@ -300,12 +308,19 @@ def propose_motion(w: Writer, sid: int, procedure_motion_id: int, proposer_deleg
 
 def motions(conn, sid: int, open_only: bool = True) -> list[dict]:
     """Pending motions in order of precedence (most disruptive first), then order proposed (D-012)."""
-    q = ("SELECT m.*, pm.name, pm.code, pm.precedence, pm.needs_second, pm.voting_rule_id, d.iso3 AS proposer, d2.iso3 AS seconder "
+    q = ("SELECT m.*, pm.name, pm.code, pm.precedence, pm.needs_second, pm.voting_rule_id, d.iso3 AS proposer, d2.iso3 AS seconder, "
+         "c.name AS proposer_country, c2.name AS seconder_country "
          "FROM motion m JOIN procedure_motion pm ON pm.id = m.procedure_motion_id LEFT JOIN delegation d ON d.id = m.proposer_delegation_id "
-         "LEFT JOIN delegation d2 ON d2.id = m.seconder_delegation_id WHERE m.session_id = ?")
+         "LEFT JOIN country c ON c.iso3 = d.iso3 LEFT JOIN delegation d2 ON d2.id = m.seconder_delegation_id "
+         "LEFT JOIN country c2 ON c2.iso3 = d2.iso3 WHERE m.session_id = ?")
     if open_only:
         q += " AND m.status IN ('proposed','voting')"
-    return rows(conn, q + " ORDER BY m.status = 'voting' DESC, pm.precedence DESC, m.id", (sid,))
+    out = rows(conn, q + " ORDER BY m.status = 'voting' DESC, pm.precedence DESC, m.id", (sid,))
+    # Which student proposed and seconded, from the change log (D-086).
+    from app.modules.mun.who import name_rows
+    name_rows(conn, out, "proposer_country", entity="motion", out_key="proposer_by")
+    name_rows(conn, out, "seconder_country", entity="motion", out_key="seconder_by", actions=("seconded",))
+    return out
 
 
 def second_motion(w: Writer, motion_id: int, delegation_id: int) -> None:
@@ -450,16 +465,17 @@ def cast_vote(w: Writer, division_id: int, delegation_id: int, vote: str) -> Non
     existing = one(w.conn, "SELECT * FROM division_vote WHERE division_id = ? AND iso3 = ?", (division_id, d["iso3"]))
     if existing and existing["computed"] and existing["cast_by"] != "engine: away":
         raise UserError("That delegation is voted by the engine (no student holds it).")
+    by = actor_label(w.conn, w.actor, delegation_id)
     if existing and existing["computed"]:
         # The student arrived after the vote opened: their own vote replaces the engine's.
-        w.update("division_vote", existing["id"], {"vote": vote, "computed": 0, "cast_by": w.actor.label, "cast_at": now_iso()},
+        w.update("division_vote", existing["id"], {"vote": vote, "computed": 0, "cast_by": by, "cast_at": now_iso()},
                  ch(dv["session_id"]), action="vote_cast")
     elif existing:
-        w.update("division_vote", existing["id"], {"vote": vote, "cast_by": w.actor.label, "cast_at": now_iso()},
+        w.update("division_vote", existing["id"], {"vote": vote, "cast_by": by, "cast_at": now_iso()},
                  ch(dv["session_id"]), action="vote_changed")
     else:
         w.insert("division_vote", {"division_id": division_id, "iso3": d["iso3"], "delegation_id": delegation_id, "vote": vote,
-                                   "cast_by": w.actor.label, "cast_at": now_iso()}, ch(dv["session_id"]))
+                                   "cast_by": by, "cast_at": now_iso()}, ch(dv["session_id"]))
 
 
 def division_state(conn, division_id: int) -> dict:
@@ -469,7 +485,8 @@ def division_state(conn, division_id: int) -> dict:
         raise UserError("That division doesn't exist.", 404)
     votes = {v["iso3"]: v for v in rows(conn, "SELECT * FROM division_vote WHERE division_id = ?", (division_id,))}
     vs = voters(conn, dv, dv["committee_id"])
-    dv["voters"] = [{**d, "vote": votes.get(d["iso3"], {}).get("vote"), "computed": votes.get(d["iso3"], {}).get("computed", 0)} for d in vs]
+    dv["voters"] = [{**d, "vote": votes.get(d["iso3"], {}).get("vote"), "computed": votes.get(d["iso3"], {}).get("computed", 0),
+                     "cast_by": votes.get(d["iso3"], {}).get("cast_by", "")} for d in vs]
     dv["cast"] = sum(1 for v in dv["voters"] if v["vote"])
     dv["counts"] = {k: sum(1 for v in dv["voters"] if v["vote"] == k) for k in ("yes", "abstain", "no")}
     # Live veto warning (Security Council, D-068): a permanent member voting no blocks a substantive vote.
@@ -477,6 +494,15 @@ def division_state(conn, division_id: int) -> dict:
     holders = {x.strip().upper() for x in veto.split(",") if x.strip()}
     dv["veto_by"] = [v["name"] for v in dv["voters"] if v["iso3"] in holders and v["vote"] == "no"] if not dv["procedural"] else []
     return dv
+
+
+def actor_label(conn, actor, delegation_id: int) -> str:
+    """How an action is signed: "Ben G, Australia" for a student, the staff member's name otherwise (D-086)."""
+    if getattr(actor, "kind", "") != "student":
+        return actor.label
+    from app.modules.mun.who import label
+    c = one(conn, "SELECT c.name FROM delegation d JOIN country c ON c.iso3 = d.iso3 WHERE d.id = ?", (delegation_id,))
+    return label(actor.label, c["name"] if c else "")
 
 
 def scaled_rule(rule: VotingRule, voters_n: int, members: int) -> VotingRule:
@@ -555,9 +581,10 @@ def generate_minutes(conn, sid: int) -> str:
     for e in rows(conn, "SELECT e.*, d.iso3, c.name AS country, st.first_name, st.last_initial FROM speakers_list_entry e "
                         "JOIN delegation d ON d.id = e.delegation_id JOIN country c ON c.iso3 = d.iso3 "
                         "LEFT JOIN student st ON st.id = e.student_id WHERE e.session_id = ? AND e.spoke_at IS NOT NULL", (sid,)):
-        who = f" ({display_name(e['first_name'], e['last_initial'])})" if e["first_name"] else ""
+        from app.modules.mun.who import label
+        who = label(display_name(e["first_name"], e["last_initial"]) if e["first_name"] else "", e["country"])
         y = f"; yielded to {e['yielded_to']}" if e["yielded_to"] else ""
-        items.append((e["spoke_at"], f"{e['country']}{who} spoke{' in moderated caucus' if e['list_kind'] == 'moderated' else ''}{y}."))
+        items.append((e["spoke_at"], f"{who} spoke{' in moderated caucus' if e['list_kind'] == 'moderated' else ''}{y}."))
     for m in motions(conn, sid, open_only=False):
         detail = []
         if m["duration_s"]:
@@ -569,8 +596,8 @@ def generate_minutes(conn, sid: int) -> str:
         d = f" ({', '.join(detail)})" if detail else ""
         result = {"passed": "passed", "failed": "failed", "withdrawn": "was withdrawn", "ruled_out": "was ruled out of order",
                   "proposed": "was pending", "voting": "was being voted on"}[m["status"]]
-        items.append((m["created_at"], f"Motion: {m['name']}{d}, proposed by {m['proposer'] or 'the chair'}"
-                                       f"{', seconded by ' + m['seconder'] if m['seconder'] else ''}; {result}."))
+        items.append((m["created_at"], f"Motion: {m['name']}{d}, proposed by {m['proposer_by'] or 'the chair'}"
+                                       f"{', seconded by ' + m['seconder_by'] if m['seconder'] else ''}; {result}."))
     divisions = rows(conn, "SELECT dv.*, vr.name AS rule FROM division dv JOIN voting_rule vr ON vr.id = dv.rule_id "
                            "WHERE dv.session_id = ? AND dv.status = 'closed' ORDER BY dv.id", (sid,))
     for dv in divisions:

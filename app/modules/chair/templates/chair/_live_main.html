@@ -13,7 +13,7 @@
   <h2 id="h-now-do">{{ icon("info") }} What you can do now</h2>
   <p>{{ sim.student_prompt }}</p>
   {% if mine and sim.stage.code == 'roll_call' and s.state == 'open' %}
-    {% if my_roll and my_roll.status %}<p>{{ icon("ok") }} You answered: <strong>{{ {'present':'Present','present_and_voting':'Present and voting','absent':'Absent'}[my_roll.status] }}</strong>.</p>{% endif %}
+    {% if my_roll and my_roll.status %}<p>{{ icon("ok") }} {{ my_roll.answered_by or mine.country }} answered: <strong>{{ {'present':'Present','present_and_voting':'Present and voting','absent':'Absent'}[my_roll.status] }}</strong>.</p>{% endif %}
     <form method="post" action="/live/{{ s.id }}/roll" class="row">{{ hidden_csrf(csrf) }}
       <button type="submit" name="status" value="present" class="big">{{ icon("check") }} Present</button>
       <button type="submit" name="status" value="present_and_voting" class="big secondary">{{ icon("vote") }} Present and voting</button></form>
@@ -29,11 +29,11 @@
   {% if mine and sim.stage.code == 'debrief' and last_vote %}<p><a class="button" href="/live/{{ s.id }}/debrief/{{ last_vote.id }}">{{ icon("calibration") }} See your debrief: {{ last_vote.title }}</a></p>{% endif %}
 </section>
 {% if not mine %}<div class="notice">You aren't in a delegation in this committee yet. Ask your teacher.</div>{% else %}
-<p>You are <strong>{{ mine.iso3 }}</strong>{% if mine.role == 'head' %} (head of delegation){% endif %}.{% if draft %} Debating: <a href="/mun/resolutions/{{ draft.id }}">{{ draft.title }}</a>.{% endif %}</p>{% endif %}
+<p>You are <strong>{{ mine.country }}</strong>{% if mine.role == 'head' %} (head of delegation){% endif %}{% if team %}{% set names = team|map(attribute="name")|list %}, with {{ (names[:-1]|join(", ") ~ " and " ~ names[-1]) if names|length > 1 else names[0] }}{% endif %}.{% if draft %} Debating: <a href="/mun/resolutions/{{ draft.id }}">{{ draft.title }}</a>.{% endif %}</p>{% endif %}
 {% if floor_amendment %}
 <section class="card" aria-labelledby="h-fa" data-announce="{{ 'Amendment on the floor: ' ~ floor_amendment.kind_label }}" data-announce-key="floor-amendment">
   <h2 id="h-fa">{{ icon("amendment") }} On the floor: amendment {{ floor_amendment.id }}</h2>
-  <p><strong>{{ floor_amendment.kind_label }}</strong>, proposed by {{ floor_amendment.sponsor_name or 'the chair' }}.</p>
+  <p><strong>{{ floor_amendment.kind_label }}</strong>, proposed by {{ floor_amendment.sponsor_by or 'the chair' }}.</p>
   <p class="paragraph diff">{{ floor_amendment.diff }}</p>
   {% if mine and s.state == 'open' and not division %}
     {% if my_side %}<p>{{ icon("ok") }} You're on the list to speak <strong>{{ my_side }}</strong> it.</p>
@@ -47,6 +47,7 @@
   <section class="card" aria-labelledby="h-now" data-announce="{{ 'Now speaking: ' ~ current.country if current else 'No one has the floor' }}" data-announce-key="speaker">
     <h2 id="h-now">{{ icon("speakers") }} Now speaking</h2>
     <p class="bigstat">{{ current.country if current else '—' }}</p>
+    {% if current and current.first_name %}<p class="small">{{ current.by }}</p>{% endif %}
     {% if current and current.side %}<p class="small">Speaking {{ current.side }} the amendment</p>{% endif %}
     {% for t in timers %}{{ timer(t) }}{% endfor %}
   </section>
@@ -55,7 +56,7 @@
     {% if my_place %}<p data-announce="{{ 'You are number ' ~ my_place ~ ' on the speakers list' }}" data-announce-key="place">You are <strong>number {{ my_place }}</strong> on the list{% if my_place <= 2 %}: get ready{% endif %}.</p>
       <form method="post" action="/live/{{ s.id }}/withdraw">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Take me off the list</button></form>
     {% elif mine and s.state == 'open' and not floor_amendment and s.mode != 'unmoderated' and sim.stage.code != 'voting_procedure' %}<form method="post" action="/live/{{ s.id }}/speak">{{ hidden_csrf(csrf) }}<button type="submit" class="big">Add me to the speakers list</button></form>{% endif %}
-    <ol class="speakers">{% for e in queue[:8] %}<li>{{ e.country }}{% if e.side %} <span class="badge {{ 'st-yes' if e.side == 'for' else 'st-no' }}">{{ e.side }}</span>{% endif %}</li>{% else %}<li class="muted">Empty</li>{% endfor %}</ol>
+    <ol class="speakers">{% for e in queue[:8] %}<li>{{ e.by }}{% if e.side %} <span class="badge {{ 'st-yes' if e.side == 'for' else 'st-no' }}">{{ e.side }}</span>{% endif %}</li>{% else %}<li class="muted">Empty</li>{% endfor %}</ol>
   </section>
 </div>
 {% if division %}
@@ -64,7 +65,7 @@
   {% if mine %}
     {% if my_vote and my_vote.computed %}<p>Your delegation is voted by the engine.</p>
     {% else %}
-    <p>{% if my_vote and my_vote.vote %}Your delegation voted <strong>{{ my_vote.vote }}</strong>. You can change it until voting closes.{% else %}Your delegation hasn't voted.{% endif %}{% if not division.procedural and my_roll and my_roll.status == 'present_and_voting' %} You answered “present and voting”, so you can't abstain.{% endif %}</p>
+    <p>{% if my_vote and my_vote.vote %}{{ mine.country }} voted <strong>{{ my_vote.vote }}</strong>{% if my_vote.cast_by %} (cast by {{ my_vote.cast_by }}){% endif %}. Anyone holding {{ mine.country }} can change it until voting closes: one vote per country.{% else %}{{ mine.country }} hasn't voted. One vote per country: agree it with {{ "your co-delegates" if team else "yourself" }} first.{% endif %}{% if not division.procedural and my_roll and my_roll.status == 'present_and_voting' %} You answered “present and voting”, so you can't abstain.{% endif %}</p>
     <form method="post" action="/live/{{ s.id }}/vote" class="row">{{ hidden_csrf(csrf) }}
       <button type="submit" name="vote" value="yes" class="big">{{ icon("yes") }} Yes</button>
       {% if not division.procedural and not (my_roll and my_roll.status == 'present_and_voting') %}<button type="submit" name="vote" value="abstain" class="big secondary">{{ icon("abstain") }} Abstain</button>{% endif %}
@@ -85,7 +86,7 @@
 {% if division and division.procedural %}
 <div class="card accent"><h3>{{ icon("vote") }} Vote now: {{ division.title }}</h3>
   {% if mine and not (my_vote and my_vote.computed) %}
-  <p>{% if my_vote and my_vote.vote %}You voted <strong>{{ my_vote.vote }}</strong>.{% else %}Procedural votes are yes or no.{% endif %}</p>
+  <p>{% if my_vote and my_vote.vote %}{{ mine.country }} voted <strong>{{ my_vote.vote }}</strong>{% if my_vote.cast_by %} (cast by {{ my_vote.cast_by }}){% endif %}.{% else %}Procedural votes are yes or no.{% endif %}</p>
   <form method="post" action="/live/{{ s.id }}/vote" class="row">{{ hidden_csrf(csrf) }}
     <button type="submit" name="vote" value="yes" class="big">{{ icon("yes") }} Yes</button>
     <button type="submit" name="vote" value="no" class="big secondary">{{ icon("no") }} No</button></form>{% endif %}
@@ -93,7 +94,7 @@
 {% endif %}
 <h3>On the floor</h3>
 {% for m in motions %}<div class="card"><p><strong>{{ m.name }}</strong>{% if m.topic %}: {{ m.topic }}{% endif %}{% if m.duration_s %} · {{ (m.duration_s // 60) }} min{% endif %}{% if m.speaking_time_s %} · {{ m.speaking_time_s }} s speeches{% endif %}
-  <br><span class="small">Proposed by {{ m.proposer or 'the chair' }}{% if m.seconder %}, seconded by {{ m.seconder }}{% elif m.needs_second %}, needs a second{% endif %}{% if m.status == 'voting' %} · being voted on{% endif %}</span></p>
+  <br><span class="small">Proposed by {{ m.proposer_by or 'the chair' }}{% if m.seconder %}, seconded by {{ m.seconder_by }}{% elif m.needs_second %}, needs a second{% endif %}{% if m.status == 'voting' %} · being voted on{% endif %}</span></p>
   {% if mine and s.state == 'open' and m.status == 'proposed' and m.needs_second and not m.seconder and m.proposer != mine.iso3 %}
   <form method="post" action="/live/{{ s.id }}/second/{{ m.id }}" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Second it<span class="visually-hidden"> ({{ m.name }})</span></button></form>{% endif %}</div>
 {% else %}{{ empty_state("No motions on the floor.", "Propose one below, then raise your placard.", icon_name="motion") }}{% endfor %}
@@ -117,7 +118,7 @@
 <section id="p-points" role="tabpanel" aria-labelledby="tab-points" data-panel="points" {% if tab != 'points' %}hidden{% endif %}>
 <h2>{{ icon("point") }} Points</h2>
 <p class="small">Raise your placard and say the point. Logging it here makes sure the chair sees it. Only a point of personal privilege (for example, you can't hear) may interrupt a speaker.</p>
-{% for p in my_points %}<div class="card"><p>{{ icon("info") }} Your {{ p.label|lower }} is waiting{% if p.note %}: “{{ p.note }}”{% endif %}.</p>
+{% for p in my_points %}<div class="card"><p>{{ icon("info") }} {{ "Your" if p.student_id == actor.id else p.who ~ "'s" }} {{ p.label|lower }} is waiting{% if p.note %}: “{{ p.note }}”{% endif %}.</p>
   <form method="post" action="/live/{{ s.id }}/points/{{ p.id }}/withdraw" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Withdraw it</button></form></div>{% endfor %}
 {% if mine and s.state == 'open' and not my_points %}
 <form method="post" action="/live/{{ s.id }}/points" class="stack">{{ hidden_csrf(csrf) }}
@@ -127,7 +128,7 @@
   <button type="submit">Raise the point</button></form>
 {% endif %}
 <h3>Waiting for the chair</h3>
-<ul>{% for p in open_points %}<li>{{ p.label }}: {{ p.country }}</li>{% else %}<li class="muted">None</li>{% endfor %}</ul>
+<ul>{% for p in open_points %}<li>{{ p.label }}: {{ p.by }}</li>{% else %}<li class="muted">None</li>{% endfor %}</ul>
 </section>
 
 {# ---------- Amendments ---------- #}
@@ -136,7 +137,7 @@
 <p>{{ board_counts.ready }} ready for the floor · {{ board_counts.submitted }} collecting signatures · {{ board_counts.adopted }} adopted · {{ board_counts.rejected }} rejected.</p>
 <p><a class="button" href="/mun/committees/{{ s.committee_id }}/amendments">{{ icon("tracked") }} Open the amendment board</a></p>
 <p class="small">Every submitted amendment is shown there as tracked changes. Draft your own, sign others' so they can reach the floor, and suggest edits.</p>
-{% for a in board[:6] %}<div class="card"><p><strong>{{ a.kind_label }}</strong> · {{ a.state_label }}{% if a.sponsor_name %} · {{ a.sponsor_name }}{% endif %}</p><p class="paragraph diff">{{ a.diff }}</p></div>{% endfor %}
+{% for a in board[:6] %}<div class="card"><p><strong>{{ a.kind_label }}</strong> · {{ a.state_label }}{% if a.sponsor_by %} · {{ a.sponsor_by }}{% endif %}</p><p class="paragraph diff">{{ a.diff }}</p></div>{% endfor %}
 </section>
 
 {# ---------- Friends and foes ---------- #}

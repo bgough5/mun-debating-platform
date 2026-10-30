@@ -29,13 +29,19 @@
   {% else %}<p class="muted">No draft resolution yet.</p>{% endif %}
 </section></li>
 <li><section aria-labelledby="h-open"><h2 id="h-open">{{ icon("speech") }} Your opening statement</h2>
-  <p class="small">You'll say this out loud from the floor. Write it in your own words: the program never writes it for you, and nobody else sees this draft. A good opening statement says your country's position, what it wants in the resolution, and who it hopes to work with.</p>
+  <p class="small">You'll say this out loud from the floor. Write it in your own words: the program never writes it for you. Students holding the same country can read it but not change it; nobody else sees it. A good opening statement says your country's position, what it wants in the resolution, and who it hopes to work with.</p>
   <form method="post" action="/me/committees/{{ com.id }}/speeches" class="stack">{{ hidden_csrf(csrf) }}
     <input type="hidden" name="kind" value="opening"><input type="hidden" name="title" value="Opening statement"><input type="hidden" name="next" value="/me/committees/{{ com.id }}/prepare">
     <div class="field"><label for="ob">Opening statement</label><textarea id="ob" name="body" rows="10" maxlength="6000">{{ opening.body if opening else '' }}</textarea>
       {% if opening %}<p class="hint">{{ words(opening.body) }} words: about {{ seconds(opening.body) }} seconds out loud.</p>{% endif %}</div>
     <button type="submit">Save</button></form>
   {% if drafts|length > (1 if opening else 0) %}<p class="small">Other drafts: {% for d in drafts if d.kind != 'opening' %}{{ d.title }}{% if not loop.last %}, {% endif %}{% endfor %}. Edit them in the live session's My speech tab.</p>{% endif %}
+  {% if team_drafts %}
+  <h3>{{ icon("people") }} Your co-delegates' drafts</h3>
+  <p class="small">Others holding {{ mine.country or mine.name }} can read each other's drafts, so you don't say the same thing twice. Only the writer can change a draft.</p>
+  {% for d in team_drafts %}<details><summary>{{ d.by }}: {{ d.title }} <span class="small muted">({{ speech_kinds[d.kind] if speech_kinds is defined else d.kind }}, {{ d.body.split()|length }} words)</span></summary>
+    <div class="readonly-text">{{ d.body }}</div></details>{% endfor %}
+  {% endif %}
 </section></li>
 </ol>
 {% endif %}

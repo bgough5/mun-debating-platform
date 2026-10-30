@@ -5,7 +5,7 @@
 <p>{{ {'formal':'Formal debate','moderated':'Moderated caucus','unmoderated':'Unmoderated caucus','voting':'Voting procedure'}[s.mode] }}{% if s.mode_topic %}: {{ s.mode_topic }}{% endif %}{% if s.state != 'open' %} — session {{ s.state }}{% endif %}</p>
 {% if floor_amendment %}<div class="card"><h2>{{ icon("amendment") }} On the floor: amendment {{ floor_amendment.id }}</h2>
   <p style="font-size:1.4rem"><strong>{{ floor_amendment.kind_label }}</strong></p><p class="paragraph diff" style="font-size:1.5rem">{{ floor_amendment.diff }}</p></div>{% endif %}
-{% if motions %}<div class="card"><h2>{{ icon("motion") }} Motions on the floor</h2><ol style="font-size:1.4rem">{% for m in motions %}<li>{{ m.name }}{% if m.topic %}: {{ m.topic }}{% endif %}{% if m.duration_s %} · {{ m.duration_s // 60 }} min{% endif %}{% if m.proposer %} ({{ m.proposer }}){% endif %}</li>{% endfor %}</ol></div>{% endif %}
+{% if motions %}<div class="card"><h2>{{ icon("motion") }} Motions on the floor</h2><ol style="font-size:1.4rem">{% for m in motions %}<li>{{ m.name }}{% if m.topic %}: {{ m.topic }}{% endif %}{% if m.duration_s %} · {{ m.duration_s // 60 }} min{% endif %}{% if m.proposer %} ({{ m.proposer_by }}){% endif %}</li>{% endfor %}</ol></div>{% endif %}
 <div class="grid">
   <div class="card"><h2>{{ icon("speakers") }} Now speaking</h2><p class="bigstat" style="font-size:3rem">{{ current.country if current else '—' }}</p>
     {% for t in timers %}{{ timer(t) }}{% endfor %}</div>

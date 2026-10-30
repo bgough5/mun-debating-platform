@@ -36,7 +36,9 @@ def test_saving_far_down_a_page_keeps_your_place(browser, live):
     box.click()
     box.type("Most animals in zoos aren't endangered at all")
     pg.locator("details[open] button:has-text('Save my rebuttal')").last.click()
-    pg.wait_for_function("document.querySelector('.flash, .toast')")
+    # Wait for this save's own confirmation: an earlier flash on the page ("Case started") can't stand in for it,
+    # which raced on a slow laptop (30 Oct 2026).
+    pg.wait_for_selector(".toast:has-text('Saved'), .flash:has-text('Saved')")
     time.sleep(0.4)
     y1 = pg.evaluate("scrollY")
     assert abs(y1 - y0) < 400, (y0, y1)                     # still where you were, not back at the top

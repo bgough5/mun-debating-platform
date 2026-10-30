@@ -5,7 +5,7 @@
 <tbody>
 {% for m in msgs %}<tr>
   <td><time datetime="{{ m.created_at }}">{{ m.created_at|when }}</time></td>
-  <td>{{ m.from_country }}{% if m.who %} ({{ m.who }}){% endif %}</td><td>{{ m.to_country }}</td>
+  <td>{{ m.by }}</td><td>{{ m.to_country }}</td>
   <td>{% if m.hidden_by %}<s>{{ m.body }}</s> <span class="small muted">hidden by {{ m.hidden_by }}</span>{% else %}{{ m.body }}{% endif %}</td>
   <td><form method="post" action="/chair/{{ s.id }}/messages/{{ m.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="{{ 'show' if m.hidden_by else 'hide' }}"><button type="submit" class="link">{{ 'Show' if m.hidden_by else 'Hide' }}<span class="visually-hidden"> message {{ m.id }}</span></button></form></td>
 </tr>{% else %}<tr><td colspan="5">{{ empty_state("No messages yet.", "Messages between delegations appear here as they are sent.", icon_name="message") }}</td></tr>{% endfor %}

@@ -26,6 +26,7 @@ from markupsafe import Markup
 
 from app.db import Writer, one, rows, scalar
 from app.errors import UserError
+from app.modules.mun.who import label as who_label
 from app.util import display_name, now, now_iso
 
 UNMOD_MAX_S = 600                    # an unmoderated caucus is at most 10 minutes per motion (Ben, D-068)
@@ -103,8 +104,10 @@ def _amendment(conn, aid: int) -> dict:
 
 
 def _supports(conn, aid: int) -> list[dict]:
-    return rows(conn, "SELECT s.*, d.iso3, c.name FROM amendment_support s JOIN delegation d ON d.id = s.delegation_id "
-                      "JOIN country c ON c.iso3 = d.iso3 WHERE s.amendment_id = ? AND s.deleted_at IS NULL ORDER BY s.seq", (aid,))
+    from app.modules.mun.who import name_rows
+    return name_rows(conn, rows(conn, "SELECT s.*, d.iso3, c.name FROM amendment_support s JOIN delegation d ON d.id = s.delegation_id "
+                                      "JOIN country c ON c.iso3 = d.iso3 WHERE s.amendment_id = ? AND s.deleted_at IS NULL ORDER BY s.seq",
+                                (aid,)), "name", entity="amendment_support")
 
 
 def sponsors_of(conn, aid: int) -> set[int]:
@@ -149,6 +152,9 @@ def amendment_view(conn, aid: int, floor_id: int | None = None, needed: int | No
         diff = Markup(f"<ins>{html.escape(a['proposed_text'])}</ins>")
     sugg = rows(conn, "SELECT g.*, c.name AS country, d.iso3 FROM amendment_suggestion g JOIN delegation d ON d.id = g.delegation_id "
                       "JOIN country c ON c.iso3 = d.iso3 WHERE g.amendment_id = ? ORDER BY g.id", (aid,))
+    from app.modules.mun.who import name_rows
+    name_rows(conn, sugg, "country", student_key="student_id")
+    name_rows(conn, [a], "sponsor_name", entity="amendment", out_key="sponsor_by")
     for g in sugg:
         g["diff"] = diff_html(a["proposed_text"], g["proposed_text"])
     return {**a, "supports": sup, "signed": signed, "needed": needed, "state": code, "state_label": label, "diff": diff,
@@ -366,6 +372,7 @@ def points(conn, sid: int, open_only: bool = True, limit: int = 30) -> list[dict
     for p in out:
         p["label"] = POINT_KINDS[p["kind"]]
         p["who"] = display_name(p["first_name"], p["last_initial"]) if p["first_name"] else ""
+        p["by"] = who_label(p["who"], p["country"])
     return out
 
 
@@ -418,6 +425,7 @@ _MSG_SELECT = ("SELECT m.*, fc.name AS from_country, fd.iso3 AS from_iso3, tc.na
 
 def _who(m: dict) -> dict:
     m["who"] = display_name(m["first_name"], m["last_initial"]) if m["first_name"] else ""
+    m["by"] = who_label(m["who"], m["from_country"])
     return m
 
 
@@ -431,7 +439,22 @@ def all_messages(conn, sid: int, limit: int = 300) -> list[dict]:
     return [_who(m) for m in rows(conn, _MSG_SELECT + f"WHERE m.session_id = ? ORDER BY m.id DESC LIMIT {int(limit)}", (sid,))]
 
 
-# ---------------- speech drafts (the student's own words; private) ----------------
+# ---------------- speech drafts (the student's own words; only they can change them) ----------------
+
+def team_drafts(conn, student_id: int, committee_id: int) -> list[dict]:
+    """Drafts by the other students holding the same country in this committee, to read but not change (D-086)."""
+    out = rows(conn, "SELECT sd.*, st.first_name, st.last_initial, c.name AS country FROM speech_draft sd "
+                     "JOIN student st ON st.id = sd.student_id "
+                     "JOIN delegation_member mine ON mine.student_id = ? AND mine.deleted_at IS NULL "
+                     "JOIN delegation d ON d.id = mine.delegation_id AND d.committee_id = sd.committee_id AND d.deleted_at IS NULL "
+                     "JOIN delegation_member them ON them.delegation_id = d.id AND them.student_id = sd.student_id AND them.deleted_at IS NULL "
+                     "JOIN country c ON c.iso3 = d.iso3 "
+                     "WHERE sd.committee_id = ? AND sd.student_id != ? AND sd.deleted_at IS NULL AND st.deleted_at IS NULL "
+                     "ORDER BY st.first_name, sd.kind = 'opening' DESC, sd.updated_at DESC", (student_id, committee_id, student_id))
+    for d in out:
+        d["by"] = who_label(display_name(d["first_name"], d["last_initial"]), d["country"])
+    return out
+
 
 def drafts(conn, student_id: int, committee_id: int) -> list[dict]:
     return rows(conn, "SELECT * FROM speech_draft WHERE student_id = ? AND committee_id = ? AND deleted_at IS NULL "

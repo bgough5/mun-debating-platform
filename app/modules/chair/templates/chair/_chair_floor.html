@@ -3,13 +3,13 @@
 {% if open_points %}
 <div class="card accent" aria-labelledby="h-points" data-announce="{{ open_points|length ~ ' point(s) waiting' }}" data-announce-key="points">
   <h3 id="h-points">{{ icon("point") }} Points waiting ({{ open_points|length }})</h3>
-  <ul class="plain">{% for p in open_points %}<li><strong>{{ p.label }}</strong>: {{ p.country }}{% if p.who %} ({{ p.who }}){% endif %}{% if p.note %}: “{{ p.note }}”{% endif %}
+  <ul class="plain">{% for p in open_points %}<li><strong>{{ p.label }}</strong>: {{ p.by }}{% if p.note %}: “{{ p.note }}”{% endif %}
     {% for st, lbl in ([('granted','Grant'),('declined','Decline')] if p.kind == 'reply' else [('answered','Answered'),('declined','Decline')]) %}
     <form method="post" action="/chair/{{ s.id }}/points/{{ p.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="status" value="{{ st }}"><button type="submit" class="{{ '' if loop.first else 'secondary' }}">{{ lbl }}<span class="visually-hidden"> {{ p.label }} from {{ p.country }}</span></button></form>{% endfor %}</li>{% endfor %}</ul>
 </div>
 {% endif %}
 <div class="card" data-announce="{{ 'Now speaking: ' ~ current.country if current else 'No one has the floor' }}" data-announce-key="speaker">
-  <p>Now speaking: <strong>{% if current %}{{ current.country }}{% if current.first_name %} ({{ current.first_name }}{% if current.last_initial %} {{ current.last_initial }}.{% endif %}){% endif %}{% else %}no one{% endif %}</strong></p>
+  <p>Now speaking: <strong>{% if current %}{{ current.by }}{% else %}no one{% endif %}</strong></p>
   <div class="row">
     <form method="post" action="/chair/{{ s.id }}/next">{{ hidden_csrf(csrf) }}<button type="submit">{{ icon("next") }} Next speaker</button></form>
     {% if current %}{% for to in ['chair','questions','another delegate'] %}
@@ -20,7 +20,7 @@
 {% for t in timers %}{{ timer(t, true, s.id, csrf) }}{% endfor %}
 <h3>{{ icon("speakers") }} {% if floor_amendment %}Speakers on amendment {{ floor_amendment.id }}{% elif s.mode == 'moderated' %}Moderated caucus list{% else %}Speakers list{% endif %} ({{ queue|length }})</h3>
 <ol class="speakers">
-{% for e in queue %}<li>{{ e.country }}{% if e.first_name %} ({{ e.first_name }}){% endif %}{% if e.side %} <span class="badge {{ 'st-yes' if e.side == 'for' else 'st-no' }}">{{ e.side }}</span>{% endif %}
+{% for e in queue %}<li>{{ e.by }}{% if e.side %} <span class="badge {{ 'st-yes' if e.side == 'for' else 'st-no' }}">{{ e.side }}</span>{% endif %}
   {% for a, lbl in [('up','Move up'),('down','Move down'),('remove','Remove')] %}
   <form method="post" action="/chair/{{ s.id }}/entries/{{ e.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="{{ a }}"><button type="submit" class="link">{{ lbl }}<span class="visually-hidden"> {{ e.country }}</span></button></form>
   {% endfor %}</li>
