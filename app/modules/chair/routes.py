@@ -115,8 +115,11 @@ def session_view(conn, sid: int, actor=None) -> dict:
                    (actor.id, view["s"]["committee_id"]))
     my_place = next((i for i, q in enumerate(view["queue"], 1) if mine and q["delegation_id"] == mine["id"]), None)
     my_vote = None
+    caster, can_vote = None, False
     if view["division"] and mine:
         my_vote = next((v for v in view["division"]["voters"] if v["id"] == mine["id"]), None)
+        caster = C.vote_caster(conn, sid, mine["id"])
+        can_vote = C.may_cast(conn, sid, mine["id"], actor.id)
     my_roll = next((r for r in view["roll"] if mine and r["id"] == mine["id"]), None)
     my_whip = SIM.my_whip(conn, view["whip_round"]["id"], actor.id) if (view["whip_round"] and actor is not None
                                                                         and actor.kind == "student") else []
@@ -127,7 +130,7 @@ def session_view(conn, sid: int, actor=None) -> dict:
     # Everyone else holding this country (a country can have one student or several, D-086).
     from app.modules.mun.who import co_delegates
     team = [t for t in co_delegates(conn, mine["id"]) if t["id"] != actor.id] if mine else []
-    view.update(mine=mine, team=team, my_place=my_place, my_vote=my_vote, my_roll=my_roll, my_whip=my_whip, my_points=my_points, my_side=my_side)
+    view.update(mine=mine, team=team, caster=caster, can_vote=can_vote, my_place=my_place, my_vote=my_vote, my_roll=my_roll, my_whip=my_whip, my_points=my_points, my_side=my_side)
     return view
 
 
@@ -478,6 +481,10 @@ def live_vote(request: Request, sid: int, sess=Depends(require_student), form=De
     def act(w, f, mine, s):
         if not s["current_division_id"]:
             raise UserError("There is no vote open right now.")
+        if not C.may_cast(w.conn, sid, mine["id"], request.state.actor.id):
+            h = C.vote_caster(w.conn, sid, mine["id"])
+            raise UserError(f"{h['name']} is head of delegation and casts your country's vote. Tell them what you think: "
+                            "your own predictions and friends and foes are still yours.", 403)
         C.cast_vote(w, s["current_division_id"], mine["id"], f.get("vote"))
     return _student_action(request, sid, form, act, "Vote recorded. You can change it until voting closes.")
 

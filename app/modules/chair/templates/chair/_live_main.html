@@ -65,12 +65,14 @@
   {% if mine %}
     {% if my_vote and my_vote.computed %}<p>Your delegation is voted by the engine.</p>
     {% else %}
-    <p>{% if my_vote and my_vote.vote %}{{ mine.country }} voted <strong>{{ my_vote.vote }}</strong>{% if my_vote.cast_by %} (cast by {{ my_vote.cast_by }}){% endif %}. Anyone holding {{ mine.country }} can change it until voting closes: one vote per country.{% else %}{{ mine.country }} hasn't voted. One vote per country: agree it with {{ "your co-delegates" if team else "yourself" }} first.{% endif %}{% if not division.procedural and my_roll and my_roll.status == 'present_and_voting' %} You answered “present and voting”, so you can't abstain.{% endif %}</p>
+    <p>{% if my_vote and my_vote.vote %}{{ mine.country }} voted <strong>{{ my_vote.vote }}</strong>{% if my_vote.cast_by %} (cast by {{ my_vote.cast_by }}){% endif %}. {{ "You" if can_vote else (caster.name if caster else "Anyone holding " ~ mine.country) }} can change it until voting closes: one vote per country.{% else %}{{ mine.country }} hasn't voted. One vote per country{% if caster %}, cast by the head of delegation{% endif %}{% if team %}: agree it together first{% endif %}.{% endif %}{% if not division.procedural and my_roll and my_roll.status == 'present_and_voting' %} You answered “present and voting”, so you can't abstain.{% endif %}</p>
+    {% if not can_vote %}<p class="info-box">{{ icon("info") }} {{ caster.name }} is head of delegation and casts {{ mine.country }}'s vote. Tell them what you think.</p>
+    {% else %}{% if caster and caster.id != actor.id %}<p class="small">{{ caster.name }} (head of delegation) isn't here, so you can cast {{ mine.country }}'s vote.</p>{% endif %}
     <form method="post" action="/live/{{ s.id }}/vote" class="row">{{ hidden_csrf(csrf) }}
       <button type="submit" name="vote" value="yes" class="big">{{ icon("yes") }} Yes</button>
       {% if not division.procedural and not (my_roll and my_roll.status == 'present_and_voting') %}<button type="submit" name="vote" value="abstain" class="big secondary">{{ icon("abstain") }} Abstain</button>{% endif %}
       <button type="submit" name="vote" value="no" class="big secondary">{{ icon("no") }} No</button>
-    </form>{% endif %}
+    </form>{% endif %}{% endif %}
   {% endif %}
   <p class="small">{{ division.cast }} of {{ division.voters|length }} have voted.</p>
   {% if division.veto_by %}<p class="error-box" role="status">{{ icon("warning") }} <strong>Veto:</strong> {{ division.veto_by|join(', ') }} {{ 'has' if division.veto_by|length == 1 else 'have' }} voted no. A permanent member's no blocks this vote unless they change it.</p>{% endif %}
@@ -86,10 +88,11 @@
 {% if division and division.procedural %}
 <div class="card accent"><h3>{{ icon("vote") }} Vote now: {{ division.title }}</h3>
   {% if mine and not (my_vote and my_vote.computed) %}
+  {% if not can_vote %}<p>{{ caster.name }} (head of delegation) casts {{ mine.country }}'s vote.</p>{% endif %}
   <p>{% if my_vote and my_vote.vote %}{{ mine.country }} voted <strong>{{ my_vote.vote }}</strong>{% if my_vote.cast_by %} (cast by {{ my_vote.cast_by }}){% endif %}.{% else %}Procedural votes are yes or no.{% endif %}</p>
-  <form method="post" action="/live/{{ s.id }}/vote" class="row">{{ hidden_csrf(csrf) }}
+  {% if can_vote %}<form method="post" action="/live/{{ s.id }}/vote" class="row">{{ hidden_csrf(csrf) }}
     <button type="submit" name="vote" value="yes" class="big">{{ icon("yes") }} Yes</button>
-    <button type="submit" name="vote" value="no" class="big secondary">{{ icon("no") }} No</button></form>{% endif %}
+    <button type="submit" name="vote" value="no" class="big secondary">{{ icon("no") }} No</button></form>{% endif %}{% endif %}
   <p class="small">{{ division.cast }} of {{ division.voters|length }} have voted.</p></div>
 {% endif %}
 <h3>On the floor</h3>

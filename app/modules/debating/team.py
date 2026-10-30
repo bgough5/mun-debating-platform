@@ -71,20 +71,25 @@ def team_view(conn, student_id: int, run_id: int) -> dict:
     if not me:
         raise UserError("You aren't speaking in that debate, so its team page isn't yours to open.", 403)
     side = me["side"]
+    return {**side_view(conn, run, side, student_id), "run": run}
+
+
+def side_view(conn, run: dict, side: str, student_id: int | None = None) -> dict:
+    """One side's speakers in order, each with their case for this motion, and arguments that look alike."""
     from app.modules.debating import prep as P
     members = []
     for sp in rows(conn, "SELECT s.*, st.first_name, st.last_initial FROM class_run_speaker s LEFT JOIN student st ON st.id = s.student_id "
-                         "WHERE s.run_id = ? AND s.side = ? AND s.deleted_at IS NULL ORDER BY s.position", (run_id, side)):
+                         "WHERE s.run_id = ? AND s.side = ? AND s.deleted_at IS NULL ORDER BY s.position", (run["id"], side)):
         m = {"position": sp["position"], "role": f"{ORDINAL.get(sp['position'], str(sp['position']))} speaker",
              "name": display_name(sp["first_name"], sp["last_initial"]) if sp["first_name"] else (sp["name"] or "Not chosen yet"),
-             "student_id": sp["student_id"], "me": sp["student_id"] == student_id, "case": None, "arguments": [], "rebuttals": []}
+             "student_id": sp["student_id"], "me": student_id is not None and sp["student_id"] == student_id, "case": None,
+             "arguments": [], "rebuttals": []}
         case = _case_of(conn, sp["student_id"], run["motion"], side) if sp["student_id"] else None
         if case:
             v = P.case_view(conn, case)
             m["case"] = case
             m["arguments"] = [{"claim": p["parts_d"].get("claim", ""), "parts": p["parts_d"]} for p in v["arguments"]]
-            m["rebuttals"] = [p["parts_d"].get("they_say", "") for p in v["custom"]] + \
-                             [a["argument"] for a in v["opposition"] if a.get("rebuttal")]
+            m["rebuttals"] = [p["parts_d"].get("they_say", "") for p in v["custom"]] +                              [a["argument"] for a in v["opposition"] if a.get("rebuttal")]
             m["words"] = P.words(case["speech_text"])
         members.append(m)
     # Arguments from different speakers that share many key words: worth a conversation, not proof of a double-up.
@@ -98,5 +103,5 @@ def team_view(conn, student_id: int, run_id: int) -> dict:
                     if similarity(tx, ty) >= OVERLAP:
                         overlaps.append({"a": a["name"], "a_claim": x["claim"], "b": b["name"], "b_claim": y["claim"]})
     mine = next((m for m in members if m["me"]), None)
-    return {"run": run, "side": side, "side_name": run[f"{side}_name"], "members": members, "overlaps": overlaps,
-            "my_case": mine["case"] if mine else None}
+    return {"side": side, "side_name": run[f"{side}_name"], "members": members, "overlaps": overlaps,
+            "my_case": mine["case"] if mine else None, "comment": run.get(f"team_comment_{side}") or ""}

@@ -170,6 +170,19 @@ def cards_print(request: Request, kind: str, sid: int, mode: str = "dots", size:
                                                           "large": size == "large", "modes": K.MODES})
 
 
+@router.get("/me/cards/{kind}/{sid}/rehearse")
+def cards_rehearse(request: Request, kind: str, sid: int, mode: str = "dots", sess=Depends(require_student)):
+    """Rehearse from the cue cards themselves, one card at a time against the clock (D-088)."""
+    from app.modules.debating import cuecards as K
+    with request.app.state.db.read() as conn:
+        ctx = K.cards_for(conn, request.state.actor, kind, sid, mode)
+        target = K.target_seconds(conn, kind, sid, ctx["sections"])
+    for c in ctx["cards"]:
+        c["paras"] = c["body"].split("\n\n")
+    return render(request, "debating/cards_rehearse.html", {**ctx, "speech_title": ctx["title"], "target": target,
+                                                             "title": f"Rehearse: {ctx['title']}"})
+
+
 @router.post("/me/prep/speeches/{speech_id}/delete")
 def speech_delete(request: Request, speech_id: int, sess=Depends(require_student)):
     with request.app.state.db.write(request.state.actor) as w:
@@ -190,12 +203,55 @@ def _check_class(conn, actor, class_id: int) -> dict:
     return c
 
 
-@router.get("/debating/prep")
-def class_prep(request: Request, class_id: int, sess=Depends(require_staff)):
+@router.get("/debating/runs/{run_id}/teams")
+def run_teams(request: Request, run_id: int, sess=Depends(require_staff)):
+    """Both sides' preparation for a class debate, with a comment to each team (D-088)."""
+    from app.modules.debating import team as T
     with request.app.state.db.read() as conn:
-        cls = _check_class(conn, request.state.actor, class_id)
-        students = P.class_overview(conn, class_id)
-    return render(request, "debating/prep_class.html", {"title": f"Student preparation: {cls['name']}", "cls": cls, "students": students})
+        run = R.get_run(conn, request.state.actor, run_id)
+        if run["kind"] != "debate":
+            raise UserError("Teams are for class debates.", 404)
+        teams = [T.side_view(conn, run, side) for side in ("aff", "neg")]
+    return render(request, "debating/run_teams.html", {"title": f"Teams' preparation: {run['title']}", "run": run, "teams": teams})
+
+
+@router.post("/debating/runs/{run_id}/teams")
+def run_teams_comment(request: Request, run_id: int, sess=Depends(require_staff), form=Depends(form_data)):
+    side = form.get("side")
+    if side not in ("aff", "neg"):
+        raise UserError("Choose a team.")
+    comment = (form.get("comment") or "").strip()
+    if len(comment) > 2000:
+        raise UserError("Keep the comment under 2,000 characters.")
+    with request.app.state.db.write(request.state.actor) as w:
+        run = R.get_run(w.conn, request.state.actor, run_id)
+        w.update("class_run", run["id"], {f"team_comment_{side}": comment}, R.ch(run["id"]), action="team_comment")
+    return redirect(f"/debating/runs/{run_id}/teams", "Comment saved. The team sees it on their team page.")
+
+
+@router.get("/debating/prep")
+def class_prep(request: Request, class_id: int | None = None, who: str = "", sess=Depends(require_staff)):
+    """Preparation for a saved group, a year level, everyone this person can see, or (as before) a class (D-088)."""
+    from app.modules.people.routes import visible_students
+    actor = request.state.actor
+    with request.app.state.db.read() as conn:
+        if class_id is not None:
+            cls = _check_class(conn, actor, class_id)
+            return render(request, "debating/prep_class.html", {"title": f"Student preparation: {cls['name']}", "cls": cls,
+                                                                "students": P.class_overview(conn, class_id)})
+        kind, _, value = who.partition(":")
+        if kind == "group" and value.isdigit():
+            from app.modules.people.groups import get_group
+            g = get_group(conn, actor, int(value))
+            students, label = [st for st in visible_students(conn, actor) if st["id"] in g["members"]], g["name"]
+        elif kind == "year" and value.isdigit():
+            students, label = visible_students(conn, actor, year=value), f"Year {value}"
+        elif kind == "all":
+            students, label = visible_students(conn, actor), "Everyone"
+        else:
+            return redirect("/debating#h-prep", "Choose a group or a year level to see their preparation.")
+        rows_ = P.overview(conn, [{"id": st["id"], "first_name": st["first_name"], "last_initial": st["last_initial"]} for st in students])
+    return render(request, "debating/prep_class.html", {"title": f"Student preparation: {label}", "cls": None, "students": rows_})
 
 
 def _owner(conn, student_id: int) -> dict:

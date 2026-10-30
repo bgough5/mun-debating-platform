@@ -5,6 +5,7 @@
 <h1>{{ icon("people") }} {{ title }}</h1>
 <p class="lede"><strong>Motion:</strong> {{ run.motion or run.title }}. Your teammates' cases and speeches, so you can split the arguments and not double up. You can read theirs; only each speaker can change their own.</p>
 
+{% if comment %}<p class="info-box"><strong>Your teacher:</strong> {{ comment }}</p>{% endif %}
 <section aria-labelledby="h-over"><h2 id="h-over">Who's running what</h2>
 <div class="table-wrap"><table><caption class="visually-hidden">Each speaker's arguments</caption>
 <thead><tr><th scope="col">Speaker</th><th scope="col">Team line</th><th scope="col">Arguments</th><th scope="col">Speech</th></tr></thead><tbody>

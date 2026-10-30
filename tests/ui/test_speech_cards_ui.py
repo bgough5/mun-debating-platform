@@ -34,3 +34,12 @@ def test_speech_autosaves_and_becomes_cue_cards(page, live):
     page.wait_for_selector(".pc")
     assert page.locator(".pc").count() >= 1 and "1 /" in page.inner_text(".pc-top")
     assert not axe(page, "cue_cards_print")
+    # Rehearse from the cards: the arrow keys (or a clicker) move card to card.
+    page.goto(page.url.split("/print")[0].replace("/print", "") + "/rehearse?mode=dots")
+    page.wait_for_selector("[data-card-pos]")
+    assert page.inner_text("[data-card-pos]").startswith("Card 1 of")
+    if page.locator("[data-card]").count() > 1:
+        page.locator("body").click(position={"x": 5, "y": 300})
+        page.keyboard.press("ArrowRight")
+        assert page.inner_text("[data-card-pos]").startswith("Card 2 of")
+    assert not axe(page, "cue_cards_rehearse")

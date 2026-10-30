@@ -496,6 +496,26 @@ def division_state(conn, division_id: int) -> dict:
     return dv
 
 
+def vote_caster(conn, sid: int, delegation_id: int) -> dict | None:
+    """Who casts a country's vote (D-088): the head of delegation. If the head isn't here (not seen in the session in
+    the last two minutes), any student of that country who is here may cast it, so an absence never blocks a vote.
+    None means anyone holding the country may vote (no head is named)."""
+    head = one(conn, "SELECT st.id, st.first_name, st.last_initial FROM delegation_member dm JOIN student st ON st.id = dm.student_id "
+                     "WHERE dm.delegation_id = ? AND dm.role = 'head' AND dm.deleted_at IS NULL ORDER BY dm.id LIMIT 1", (delegation_id,))
+    if not head:
+        return None
+    here = one(conn, "SELECT 1 FROM session_participant WHERE session_id = ? AND student_id = ? AND last_seen > ?",
+               (sid, head["id"], now() - PARTICIPANT_TTL_S))
+    head["name"] = display_name(head["first_name"], head["last_initial"])
+    head["here"] = bool(here)
+    return head
+
+
+def may_cast(conn, sid: int, delegation_id: int, student_id: int) -> bool:
+    h = vote_caster(conn, sid, delegation_id)
+    return h is None or not h["here"] or h["id"] == student_id
+
+
 def actor_label(conn, actor, delegation_id: int) -> str:
     """How an action is signed: "Ben G, Australia" for a student, the staff member's name otherwise (D-086)."""
     if getattr(actor, "kind", "") != "student":

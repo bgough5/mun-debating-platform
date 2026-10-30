@@ -57,7 +57,7 @@ At most 25 students can be in one live session. Everything also works with fewer
 - Each of them has every tab.
 - Everything they do is signed with their name and country, for example "Ben G, Australia": messages, points, motions, the speakers list, amendments and signatures.
 - They can read each other's speech drafts but not change them.
-- A country still has **one vote**: any of its students can cast or change it, and everyone sees who cast it.
+- A country still has **one vote**, cast by the **head of delegation** (set on the committee page). If the head is away, a co-delegate who is here can cast it. Whip-count predictions and friends and foes stay individual, so everyone practises.
 
 **Resolution workspace:** each paragraph has one editor at a time. Choose **Edit** to take a paragraph; others see who is editing. Anyone else proposes a change as an **amendment**, which the class supports or the chair puts to a vote. **History** shows every version and can restore one. **Undo** (top of the page) undoes your last action.
 
@@ -130,7 +130,11 @@ Under **Prep and practise**, students can:
 
 Their writing saves itself every 30 seconds and when they leave the page. The page opens with "Carry on where you left off", so next club or next class they pick up straight away.
 
-**Debate teams:** students on the same side of a class debate see each other's arguments and speeches (read-only), with a flag on arguments that look alike, so they can split the points before the debate. The other side can't see them.
+**Debate teams:** students on the same side of a class debate see each other's arguments and speeches (read-only), with a flag on arguments that look alike, so they can split the points before the debate. The other side can't see them. On the debate's page, **Teams' preparation** shows both sides to you, with a comment box for each team; each team sees only its own comment.
+
+**Rehearsing:** from their cue cards, students press **Rehearse with these cards**: one card at a time, a timer and bells, and the arrow keys or a clicker to move on.
+
+**Student preparation** (Debating page): choose a saved group, a year level or everyone to see each student's cases, speeches, how much of their speech is written and when they last saved.
 
 ## Students' own pages
 

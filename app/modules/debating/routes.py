@@ -63,7 +63,24 @@ def debating_home(request: Request, sess=Depends(require_staff)):
         runs = runs_for(conn, sess.actor)
     return render(request, "debating/home.html", {"title": "Debating and public speaking", "events": events, "formats": formats,
                                                   "rubrics": rubrics, "classes": classes, "totals": totals, "runs": runs,
+                                                  **_prep_choices(request),
                                                   "show_tournaments": bool(request.app.state.settings.get("show_tournaments"))})
+
+
+def _prep_choices(request: Request) -> dict:
+    """Saved groups and year levels for "Student preparation" (D-088)."""
+    try:
+        from app.modules.people.groups import saved_groups
+        from app.modules.people.routes import visible_students
+    except ImportError:
+        return {"saved_groups": [], "year_counts": []}
+    with request.app.state.db.read() as conn:
+        groups = saved_groups(conn, request.state.actor)
+        counts: dict = {}
+        for st in visible_students(conn, request.state.actor):
+            if st["year_level"]:
+                counts[st["year_level"]] = counts.get(st["year_level"], 0) + 1
+    return {"saved_groups": groups, "year_counts": sorted(counts.items())}
 
 
 @router.post("/debating/tournaments")

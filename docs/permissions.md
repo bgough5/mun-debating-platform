@@ -25,10 +25,10 @@ student may open a resolution only in their own class's committee, and a ballot 
 |---|---|
 | Public | 24 |
 | Signed in (any role, checked per item) | 29 |
-| Students only | 49 |
-| Staff and coordinator | 111 |
+| Students only | 50 |
+| Staff and coordinator | 113 |
 | Coordinator only | 39 |
-| **Total** | **252** |
+| **Total** | **255** |
 
 ## Coordinator only
 
@@ -150,6 +150,8 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/debating/runs/{run_id}/f` |
 | GET | `/debating/runs/{run_id}/results` |
 | POST | `/debating/runs/{run_id}/results` |
+| GET | `/debating/runs/{run_id}/teams` |
+| POST | `/debating/runs/{run_id}/teams` |
 | GET | `/help/staff` |
 | GET | `/intel` |
 | POST | `/intel/ai/estimate` |
@@ -218,6 +220,7 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/me/cards/{kind}/{sid}` |
 | POST | `/me/cards/{kind}/{sid}` |
 | GET | `/me/cards/{kind}/{sid}/print` |
+| GET | `/me/cards/{kind}/{sid}/rehearse` |
 | GET | `/me/committees/{cid}/friends-foes` |
 | POST | `/me/committees/{cid}/friends-foes` |
 | GET | `/me/committees/{cid}/prepare` |
