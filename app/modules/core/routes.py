@@ -46,8 +46,14 @@ def home(request: Request):
         if ids is not None:
             committees = [c for c in committees if c["class_id"] in ids]
         tasks_open = scalar(conn, "SELECT COUNT(*) FROM task WHERE status != 'done' AND deleted_at IS NULL")
+        from app.modules.core.resume import in_progress
+        st = request.app.state.settings
+        going = [x for x in in_progress(conn, sess.actor)
+                 if st.module_on("debating" if x["kind"] != "mun" else "chair")]
+        from app.modules.people.groups import saved_groups
+        saved = saved_groups(conn, sess.actor)
     return render(request, "core/dashboard.html", {"title": "Dashboard", "classes": classes, "committees": committees,
-                                                   "tasks_open": tasks_open})
+                                                   "tasks_open": tasks_open, "going": going, "saved": saved})
 
 
 @router.get("/setup")

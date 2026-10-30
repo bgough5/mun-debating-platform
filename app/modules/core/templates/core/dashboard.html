@@ -7,10 +7,18 @@
 {% if modules.debating or (modules.mun and modules.chair) %}<section class="card accent" aria-labelledby="h-go"><h2 id="h-go">{{ icon("play") }} Start an activity</h2>
 <p>UNAA or Evatt Model UN, a class debate, public speaking or your own format: tick who's here today, choose a difficulty and go.</p>
 <p><a class="button" href="/start">{{ icon("play") }} Start an activity</a></p></section>{% endif %}
+{% if going %}<section class="card" aria-labelledby="h-going"><h2 id="h-going">{{ icon("history") }} In progress</h2>
+<p class="small">Everything is saved as you go. <strong>Resume</strong> asks who's here today first; <strong>Open</strong> goes straight in.</p>
+<div class="table-wrap"><table><caption class="visually-hidden">Activities in progress</caption>
+  <thead><tr><th scope="col">Activity</th><th scope="col">Kind</th><th scope="col">Where it's up to</th><th scope="col">Students</th><th scope="col">Last used</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+  <tbody>{% for x in going %}<tr><td>{{ x.title }}</td><td>{{ x.label }}</td><td>{{ x.where }}</td><td>{{ x.people }}</td><td>{{ x.used[:10] }}</td>
+    <td><a class="button" href="{{ x.resume }}">Resume<span class="visually-hidden"> {{ x.title }}</span></a>
+        <a class="button secondary" href="{{ x.open }}">Open<span class="visually-hidden"> {{ x.title }}</span></a></td></tr>{% endfor %}</tbody>
+</table></div></section>{% endif %}
 <div class="grid">
-  <section class="card" aria-labelledby="h-c"><h2 id="h-c">{{ icon("class") }} Classes</h2>
-    {% if classes %}<ul>{% for c in classes %}<li><a href="/people/classes/{{ c.id }}">{{ c.name }}</a></li>{% endfor %}</ul>
-    {% else %}{{ empty_state("No classes yet.", "Start with the getting-started guide." if actor.is_coordinator else "Ask the coordinator to add you to a class.", "/welcome" if actor.is_coordinator else None, "Getting started" if actor.is_coordinator else None, "class") }}{% endif %}</section>
+  <section class="card" aria-labelledby="h-c"><h2 id="h-c">{{ icon("class") }} Saved groups</h2>
+    {% if saved %}<ul>{% for g in saved if g.n %}<li><a href="/people/groups/{{ g.id }}">{{ g.name }}</a> <span class="muted">· {{ g.n }}</span> · <a href="/start?group={{ g.id }}">Start an activity<span class="visually-hidden"> with {{ g.name }}</span></a></li>{% endfor %}</ul>
+    {% else %}{{ empty_state("No saved groups yet.", 'Save the students you often run together, such as "Debating Jr BGO".', "/people/groups" if modules.people else None, "Groups" if modules.people else None, "class") }}{% endif %}</section>
   <section class="card" aria-labelledby="h-m"><h2 id="h-m">{{ icon("committee") }} Model UN committees</h2>
     {% if committees %}<ul>{% for c in committees %}<li><a href="/mun/committees/{{ c.id }}">{{ c.name }}</a> <span class="muted">· {{ c.conference }}</span></li>{% endfor %}</ul>
     {% else %}{{ empty_state("No committees yet.", "Set up a conference and committee for your class.", "/mun", "Model UN", "committee") }}{% endif %}

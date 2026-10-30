@@ -85,7 +85,8 @@ CONTEXT = [
         "Tournament and carnival tools (draws, ballots, ladders, house points) are hidden unless the coordinator switches them on at the bottom of this page.",
     ]),
     ("/people", "People", [
-        "Students: everyone entered, in one list with year levels (first names only). Groups only decide which teachers see whom.",
+        "Students: everyone entered, in one list with year levels (first names only). Groups: saved lists such as \"Debating Jr BGO\", ticked in one go when you start or resume an activity.",
+        "Teacher access decides which students each teacher sees. You only need it when a teacher should see some students and not others.",
         "Print sign-in cards from the Students page: each card has one student's own code. A student who's away simply doesn't sign in.",
         "Lost card or shared code? Open the student under Manage and give them a new code; the old one stops working.",
     ]),
@@ -94,7 +95,7 @@ CONTEXT = [
         "Tick who's here today. Students stay on the list once entered; add first-timers under \"First time here?\" and they are ticked for you.",
         "Any number works. Model UN shares the countries out (a country with no student is voted by the engine and labelled computed); more than eight debaters are split into several debates; public speaking takes everyone ticked.",
         "Difficulty changes speech times and the motions and impromptu topics offered. Suggested picks it from the year levels of the students ticked.",
-        "Everything is saved as you go. Open the activity again later from Model UN or Debating.",
+        "Everything is saved as you go. Next time, use Resume under In progress on the Dashboard: it asks who's here, with last time's students ticked.",
     ]),
     ("/intel", "Intelligence", [
         "UN voting data can't be imported until its licence is confirmed here. Synthetic test data is for the demo only.",

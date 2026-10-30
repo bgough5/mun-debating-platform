@@ -32,7 +32,9 @@ see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun
 - **Start an activity (D-084):** one screen for UNAA or Evatt Model UN, a class debate, public speaking or your own
   format. Tick who's here today from one student list (or add first-timers), choose junior, middle or senior
   (suggested from year levels), and go; any number of students.
-- **People:** one student list with year levels, groups (which teachers see whom), staff, student pathways and milestones.
+- **People:** one student list with year levels, saved groups (for example "Debating Jr BGO", ticked in one go; D-085),
+  teacher access (which teachers see whom), staff, student pathways and milestones. The Dashboard lists activities in
+  progress with Resume, which asks who's here today.
 - **Intelligence:** licence-gated UN voting-history import (locked: licences not confirmed, D-051), voting-history
   priors, backtests against baselines, and AI features behind a provider interface that is offline by default (D-053).
 - **Hardening:** permissions audit, backups and restore, retention purge and student erasure, accessibility checks.

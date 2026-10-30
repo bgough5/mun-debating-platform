@@ -419,3 +419,6 @@ kbd { font-family: var(--mono); font-size: .85em; border: 1px solid var(--contro
 .find-row .hint { flex-basis: 100%; margin: 0; }
 .year-block[hidden], .checks label[hidden], .find-row[hidden], .find-row .hint[hidden] { display: none; }
 .first-timers[open] { display: grid; gap: .6rem; max-width: 640px; }
+.saved-row { display: flex; flex-wrap: wrap; gap: .4rem .5rem; align-items: center; margin-bottom: .6rem; }
+.saved-row button { min-height: 2rem; padding: .2rem .8rem; }
+ul.cols { columns: 14rem auto; column-gap: 1.5rem; }

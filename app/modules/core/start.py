@@ -66,9 +66,10 @@ def level_summary(level: str) -> str:
             f"motions and impromptu topics for {v['label'].lower()} level")
 
 
-def _context(conn, request, ticked: set[int], form: dict | None = None) -> dict:
+def picker(conn, actor) -> dict:
+    """The student tick list: everyone this person may see, grouped by year level (core/_pick_students.html)."""
     from app.modules.people.routes import YEARS, visible_students
-    students = visible_students(conn, request.state.actor)
+    students = visible_students(conn, actor)
     seen: dict = {}
     for st in students:
         seen[st["name"]] = seen.get(st["name"], 0) + 1
@@ -77,28 +78,41 @@ def _context(conn, request, ticked: set[int], form: dict | None = None) -> dict:
     by_year: dict = {}
     for st in students:
         by_year.setdefault(st["year_level"], []).append(st)
-    groups = [(y, by_year[y]) for y in sorted((k for k in by_year if k), reverse=False)] + \
-             ([(None, by_year[None])] if None in by_year else [])
+    groups = [(y, by_year[y]) for y in sorted(k for k in by_year if k)] + ([(None, by_year[None])] if None in by_year else [])
+    return {"groups": groups, "total": len(students), "years": YEARS}
+
+
+def _context(conn, request, ticked: set[int], form: dict | None = None) -> dict:
     motions = rows(conn, "SELECT id, motion, level FROM motion_bank WHERE deleted_at IS NULL ORDER BY level, motion")
     form = form or {}
-    return {"title": "Start an activity", "kinds": available_kinds(request.app.state.settings), "levels": LEVELS, "summaries": {k: level_summary(k) for k in LEVELS},
-            "groups": groups, "ticked": ticked, "years": YEARS, "motions": motions, "total": len(students),
+    from app.modules.people.groups import saved_groups
+    return {"title": "Start an activity", "saved": saved_groups(conn, request.state.actor), "offer_save": True, "kinds": available_kinds(request.app.state.settings), "levels": LEVELS, "summaries": {k: level_summary(k) for k in LEVELS},
+            **picker(conn, request.state.actor), "ticked": ticked, "motions": motions,
             "kind": form.get("kind") or "", "level": form.get("level") or "suggested",
             "motion_id": form.get("motion_id") or "", "topic_mode": form.get("topic_mode") or "prepared"}
 
 
 @router.get("/start")
-def start_page(request: Request, s=Depends(require_staff)):
+def start_page(request: Request, group: int | None = None, s=Depends(require_staff)):
     with request.app.state.db.read() as conn:
-        ctx = _context(conn, request, set())
+        ticked: set[int] = set()
+        if group and request.app.state.settings.module_on("people"):
+            from app.modules.people.groups import get_group
+            ticked = set(get_group(conn, request.state.actor, group)["members"])
+        ctx = _context(conn, request, ticked)
     return render(request, "core/start.html", ctx)
 
 
 @router.post("/start")
 def start_submit(request: Request, s=Depends(require_staff), form=Depends(form_data)):
     ticked = {int(x) for x in form.getlist("student_id") if str(x).isdigit()}
-    if form.get("op") == "add":
-        return _add_first_timers(request, form, ticked)
+    from app.modules.people.groups import picker_op
+    done = picker_op(request.app.state.db, request.state.actor, form, ticked)
+    if done is not None:                     # first-timers added, a saved group ticked or saved: show the form again
+        with request.app.state.db.read() as conn:
+            ctx = _context(conn, request, done[0], form)
+        ctx["flash"] = done[1]
+        return render(request, "core/start.html", ctx)
     kind = form.get("kind")
     if kind not in available_kinds(request.app.state.settings):
         raise UserError("Choose what you're running first: UNAA, Evatt, a class debate, public speaking or your own format.")
@@ -114,17 +128,6 @@ def start_submit(request: Request, s=Depends(require_staff), form=Depends(form_d
         url, msg = create_activity(w, request.state.actor, kind, chosen, level, form)
     from app.web.http import redirect
     return redirect(url, msg)
-
-
-def _add_first_timers(request: Request, form, ticked: set[int]):
-    """Add first-timers to the one list without losing who's already ticked, and tick them too."""
-    from app.modules.people.routes import add_to_list
-    with request.app.state.db.write(request.state.actor) as w:
-        msg, new = add_to_list(w, request.state.actor, (form.get("new_names") or "").splitlines(), form.get("new_year_level"))
-    with request.app.state.db.read() as conn:
-        ctx = _context(conn, request, ticked | set(new), form)
-    ctx["flash"] = msg + " They're ticked below."
-    return render(request, "core/start.html", ctx)
 
 
 # ---------- creating each kind ----------
