@@ -16,6 +16,18 @@
     </ul>
     <form method="post" action="/admin/undo">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">{{ icon("undo") }} Undo my last change</button></form>
   </section>
+  <section class="card" aria-labelledby="h-fx">
+    <h2 id="h-fx">{{ icon("settings") }} Sound and motion</h2>
+    <p class="small">The gavel, stage chimes, division bell and breaking-news sting, and the title cards, vote reveal and placards on the projector. Every sound also shows as a caption.</p>
+    <form method="post" action="/admin/effects" class="stack">{{ hidden_csrf(csrf) }}
+      <fieldset><legend>Where sounds play</legend>
+        {% for v, label in [("projector", "On the projector only (recommended)"), ("chair", "On the projector and the chair's laptop"), ("everywhere", "On every screen, students' too"), ("off", "Nowhere")] %}
+        <label class="checks"><input type="radio" name="fx_sound" value="{{ v }}" {% if settings.get('fx_sound', 'projector') == v %}checked{% endif %}> {{ label }}</label><br>{% endfor %}</fieldset>
+      <label class="checks"><input type="checkbox" name="fx_motion" value="1" {% if settings.get('fx_motion', True) %}checked{% endif %}> Animate the title cards, vote reveal and placards (a computer set to reduce motion never animates)</label>
+      <p class="row"><button type="submit">Save</button>
+        <button type="button" class="secondary" data-fx-test="gavel">{{ icon("play") }} Try the gavel</button></p>
+    </form>
+  </section>
   <section class="card" aria-labelledby="h-ref">
     <h2 id="h-ref">Reference tables</h2>
     <table>

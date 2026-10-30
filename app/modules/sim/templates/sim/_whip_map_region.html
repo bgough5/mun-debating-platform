@@ -1,0 +1,5 @@
+{% from "_macros.html" import empty_state %}
+<span hidden data-view-seq="{{ view_seq }}"></span>
+{% include "chair/_fx.html" %}
+{% if wm %}<h2>{{ wm.round.title }}</h2>{% include "sim/_whip_map.html" %}
+{% else %}{{ empty_state("No whip count yet.", "Start one from the chair's guide at voting procedure: each student predicts how other countries will vote.", "/chair/" ~ s.id, "Back to the chair", "whip") }}{% endif %}

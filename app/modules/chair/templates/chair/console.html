@@ -2,6 +2,13 @@
 {% from "_macros.html" import hidden_csrf %}
 {% block content %}
 <h1>{{ icon("chair") }} Chair: {{ s.committee }}</h1>
+<div class="gavel-bar" data-fx-room="chair">
+  <form method="post" action="/chair/{{ s.id }}/gavel" class="inline">{{ hidden_csrf(csrf) }}
+    <button type="submit" name="knocks" value="2" class="gavel-button">{{ icon("chair") }} Gavel</button>
+    <button type="submit" name="knocks" value="1" class="secondary">One tap</button></form>
+  <a class="button secondary" href="/chair/{{ s.id }}/whip-map">{{ icon("whip") }} Whip map</a>
+  <span class="small muted">Sounds on the projector{% if settings.get('fx_sound', 'projector') in ('chair', 'everywhere') %} and here{% endif %} (Admin → Sound and motion).</span>
+</div>
 <section class="card accent" aria-labelledby="h-guide"><h2 id="h-guide">{{ icon("stage") }} Guide: what happens next</h2>
 <div id="guide" data-live-channel="session:{{ s.id }}" hx-get="/chair/{{ s.id }}/guide" hx-trigger="live-update" hx-swap="innerHTML">
 {% include "sim/_chair_guide.html" %}
@@ -28,6 +35,18 @@
       <div id="motions" data-live-channel="session:{{ s.id }}" hx-get="/chair/{{ s.id }}/f/motions" hx-trigger="live-update" hx-swap="innerHTML">
         {% include "chair/_chair_motions.html" %}
       </div>
+    </section>
+    <section class="card news-card" aria-labelledby="h-news"><h2 id="h-news">{{ icon("warning") }} Breaking news</h2>
+      <p class="small">Sends a full-screen news flash to the projector and every student's screen, with the news sting.</p>
+      {% if news_next %}<form method="post" action="/chair/{{ s.id }}/news" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="script_id" value="{{ news_next.id }}">
+        <p><strong>Next scripted update</strong> ({{ news_left }} left in this fictional scenario): “{{ news_next.headline }}”</p>
+        <button type="submit">{{ icon("next") }} Send it</button></form>{% endif %}
+      <details><summary>Write your own update</summary>
+        <form method="post" action="/chair/{{ s.id }}/news" class="stack">{{ hidden_csrf(csrf) }}
+          <div class="field"><label for="nh">Headline</label><input id="nh" type="text" name="headline" maxlength="140" required></div>
+          <div class="field"><label for="nb">Details (optional)</label><textarea id="nb" name="body" rows="3" maxlength="800"></textarea></div>
+          <button type="submit" class="secondary">Send update</button></form></details>
+      {% if news %}<p class="small">Sent: {% for n in news[:3] %}“{{ n.headline }}”{% if not loop.last %} · {% endif %}{% endfor %}</p>{% endif %}
     </section>
     <section class="card" aria-labelledby="h-tools"><h2 id="h-tools">Tools</h2>
       <form method="post" action="/chair/{{ s.id }}/timer" class="inline">{{ hidden_csrf(csrf) }}

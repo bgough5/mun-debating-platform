@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb %}
+{% block content %}
+{% if staff %}{{ breadcrumb([("Model UN", "/mun"), (com.name, "/mun/committees/" ~ com.id), ("World map", None)]) }}
+{% else %}{{ breadcrumb([("Me", "/me"), (com.name, "/me/committees/" ~ com.id ~ "/prepare"), ("World map", None)]) }}{% endif %}
+<h1>{{ icon("conference") }} {{ title }}</h1>
+<p class="lede">Every country in the room has a token on its home. Colour the board by the UN regional groups, or light up a bloc or an alliance to see who might stand together.</p>
+
+<form method="get" class="inline" aria-label="Colour the map by">
+  <div class="field"><label for="mv">Colour by</label>
+    <select id="mv" name="view">
+      <option value="region" {% if view == 'region' %}selected{% endif %}>UN regional groups</option>
+      {% for g in groups %}<option value="{{ g.code }}" {% if view == g.code %}selected{% endif %}>{{ g.name }}</option>{% endfor %}
+    </select></div>
+  <button type="submit" class="secondary">Show</button>
+</form>
+
+<div class="whip-map-wrap worldmap-wrap">
+  {% if view == 'region' %}<p class="wm-legend">{% for code, name in wmap.regions.items() %}<span><i class="reg-{{ code|lower }}"></i>{{ name }}</span>{% endfor %}</p>
+  {% else %}<p class="wm-legend"><span><i class="wm-member"></i>{{ chosen.name }}: {{ chosen.members|length }} member{{ '' if chosen.members|length == 1 else 's' }}</span><span><i class="wm-land"></i>Not a member</span></p>{% endif %}
+  {% set wm_label = "World map of " ~ com.name ~ (", coloured by the UN regional groups" if view == 'region' else ", " ~ chosen.name ~ " members highlighted") %}
+  {% include "mun/_worldmap.html" %}
+  <p class="small wm-note">★ permanent member of the Security Council. A token's second line is the student holding that country (“+1” when two share it), or “computed” when the engine plays it.</p>
+</div>
+{% if chosen %}<p class="small">{{ chosen.kind|capitalize }}. {% if chosen.verified %}Membership checked against the source.{% else %}Membership not yet checked against the <a href="{{ chosen.source }}" rel="noopener">source</a>: treat it as a starting point.{% endif %}{% if chosen.notes %} {{ chosen.notes }}{% endif %}</p>{% endif %}
+
+{% if mine %}
+<section class="card" aria-labelledby="h-mine"><h2 id="h-mine">{{ icon("friends") }} Your country's groupings</h2>
+  {% if my_groups %}<ul class="plain">{% for g in my_groups %}<li><strong>{{ g.name }}</strong> <span class="small muted">({{ g.kind }})</span>
+    {% if g.code != 'region' %} · <a href="?view={{ g.code }}">show on the map</a>{% endif %}
+    <br><span class="small">{% if g.allies %}Also in the room: {{ g.allies|join(", ") }}.{% else %}No one else in the room is in it.{% endif %}</span></li>{% endfor %}</ul>
+  <p class="small muted">Being in the same group doesn't mean voting the same way: check each country's position before you count on it.</p>
+  {% else %}<p>Your country isn't in any of the groupings listed here.</p>{% endif %}
+</section>
+{% endif %}
+
+<details><summary>About these groupings</summary>
+  <ul>{% for g in groups %}<li><strong>{{ g.name }}</strong> ({{ g.kind }}, {{ g.members|length }} countries){% if not g.verified %}: membership entered from memory, not yet checked against the source{% endif %}.</li>{% endfor %}</ul>
+  <p class="small">Edit them in Admin (Blocs, and Alliances on the map). Blocs also feed the prediction model; alliances are only shown on the map.</p>
+</details>
+{% endblock %}

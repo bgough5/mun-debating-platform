@@ -4,6 +4,8 @@
 {% set modes = {'formal':'Formal debate','moderated':'Moderated caucus','unmoderated':'Unmoderated caucus','voting':'Voting procedure'} %}
 {# The event the view was built from: live.js refreshes again if it has already heard of a newer one. #}
 <span hidden data-view-seq="{{ view_seq }}"></span>
+{% include "chair/_fx.html" %}
+{% if fx.news %}<div class="news-banner" role="status"><span class="news-tag">Breaking</span> <strong>{{ fx.news.headline }}</strong>{% if fx.news.body %} <span>{{ fx.news.body }}</span>{% endif %}{% if fx.news.label %} <em class="small">{{ fx.news.label }}</em>{% endif %}</div>{% endif %}
 {# ---------- Floor ---------- #}
 <section id="p-floor" role="tabpanel" aria-labelledby="tab-floor" data-panel="floor" {% if tab != 'floor' %}hidden{% endif %}>
 {% if s.state != 'open' %}<div class="notice" role="status">The session is {{ s.state }}.</div>{% endif %}
@@ -29,6 +31,21 @@
   {% if mine and sim.stage.code == 'debrief' and last_vote %}<p><a class="button" href="/live/{{ s.id }}/debrief/{{ last_vote.id }}">{{ icon("calibration") }} See your debrief: {{ last_vote.title }}</a></p>{% endif %}
 </section>
 {% if not mine %}<div class="notice">You aren't in a delegation in this committee yet. Ask your teacher.</div>{% else %}
+{% if s.state == 'open' %}
+<div class="placard-control">
+  {% if my_placard %}
+  <div class="placard-up" role="dialog" aria-modal="false" aria-labelledby="pl-country">
+    <div class="deed"><p class="deed-band" id="pl-country">{{ mine.country }}</p>
+      <p class="deed-iso">{{ mine.iso3 }}</p><p class="deed-name">{{ my_placard.name }}</p>
+      <p class="small">Your placard is up: the chair can see it. Wait to be recognised.</p>
+      <form method="post" action="/live/{{ s.id }}/placard">{{ hidden_csrf(csrf) }}<button type="submit" name="action" value="lower" class="big">Lower my placard</button></form></div>
+  </div>
+  {% else %}
+  <form method="post" action="/live/{{ s.id }}/placard" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" name="action" value="raise" class="big placard-button">{{ icon("point") }} Raise my placard</button></form>
+  <span class="small muted">To be recognised by the chair: for a motion, a point, or to speak.</span>
+  {% endif %}
+</div>
+{% endif %}
 <p>You are <strong>{{ mine.country }}</strong>{% if mine.role == 'head' %} (head of delegation){% endif %}{% if team %}{% set names = team|map(attribute="name")|list %}, with {{ (names[:-1]|join(", ") ~ " and " ~ names[-1]) if names|length > 1 else names[0] }}{% endif %}.{% if draft %} Debating: <a href="/mun/resolutions/{{ draft.id }}">{{ draft.title }}</a>.{% endif %}</p>{% endif %}
 {% if floor_amendment %}
 <section class="card" aria-labelledby="h-fa" data-announce="{{ 'Amendment on the floor: ' ~ floor_amendment.kind_label }}" data-announce-key="floor-amendment">

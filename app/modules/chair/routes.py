@@ -95,6 +95,14 @@ def _shared_view(conn, sid: int) -> dict:
     data["other_drafts"] = rows(conn, "SELECT id, title, status FROM resolution WHERE committee_id = ? AND deleted_at IS NULL AND id IS NOT ? "
                                       "AND status NOT IN ('passed', 'failed', 'withdrawn')", (s["committee_id"], (data["draft"] or {}).get("id")))
     data["unmod_max_min"] = F.UNMOD_MAX_S // 60
+    # The live room (D-089): raised placards, breaking news and the markers for sounds and title cards.
+    from app.modules.chair import room as ROOM
+    data["placards"] = ROOM.raised(conn, sid)
+    data["news"] = ROOM.news(conn, sid)
+    data["fx"] = ROOM.fx_state(conn, sid, data)
+    data["news_next"] = ROOM.next_script(conn, sid)
+    data["news_left"] = ROOM.script_left(conn, sid)
+    data["wm"] = SIM.whip_map(conn, sid)
     data["view_seq"] = seq
     with _VIEW_LOCK:
         if len(_VIEW_CACHE) > 64:
@@ -130,7 +138,8 @@ def session_view(conn, sid: int, actor=None) -> dict:
     # Everyone else holding this country (a country can have one student or several, D-086).
     from app.modules.mun.who import co_delegates
     team = [t for t in co_delegates(conn, mine["id"]) if t["id"] != actor.id] if mine else []
-    view.update(mine=mine, team=team, caster=caster, can_vote=can_vote, my_place=my_place, my_vote=my_vote, my_roll=my_roll, my_whip=my_whip, my_points=my_points, my_side=my_side)
+    my_placard = next((p for p in view.get("placards", []) if actor is not None and actor.kind == "student" and p["student_id"] == actor.id), None)
+    view.update(mine=mine, team=team, caster=caster, can_vote=can_vote, my_placard=my_placard, my_place=my_place, my_vote=my_vote, my_roll=my_roll, my_whip=my_whip, my_points=my_points, my_side=my_side)
     return view
 
 
@@ -197,6 +206,47 @@ def _chair_action(request: Request, sid: int, form, fn, msg: str = ""):
         _manage(w.conn, request, sid)
         out = fn(w, form)
     return redirect(f"/chair/{sid}", out if isinstance(out, str) else msg)
+
+
+# ---------- the live room (D-089): gavel, placards, breaking news ----------
+
+@router.post("/chair/{sid}/gavel")
+def chair_gavel(request: Request, sid: int, sess=Depends(require_staff), form=Depends(form_data)):
+    from app.modules.chair import room as ROOM
+    return _chair_action(request, sid, form, lambda w, f: ROOM.gavel(w, sid, form_int(f.get("knocks"), 2)), "Gavel.")
+
+
+@router.post("/chair/{sid}/placards")
+def chair_placards(request: Request, sid: int, sess=Depends(require_staff), form=Depends(form_data)):
+    from app.modules.chair import room as ROOM
+
+    def act(w, f):
+        action, pid = f.get("action"), form_int(f.get("placard_id"))
+        if action == "lower_all":
+            return f"Lowered {ROOM.lower_all(w, sid)} placard(s)."
+        p = one(w.conn, "SELECT * FROM placard WHERE id = ? AND session_id = ? AND lowered_at IS NULL", (pid or 0, sid))
+        if not p:
+            return "That placard is already down."
+        if action == "recognise":
+            try:
+                C.add_speaker(w, sid, p["delegation_id"], p["student_id"])
+                msg = "Recognised: added to the speakers list."
+            except UserError as e:
+                msg = f"Recognised. {e}"
+            ROOM.lower_placard(w, sid, p["id"], "chair: recognised")
+            return msg
+        if action == "lower":
+            ROOM.lower_placard(w, sid, p["id"], "chair")
+            return "Placard lowered."
+        raise UserError("Unknown action.")
+    return _chair_action(request, sid, form, act)
+
+
+@router.post("/chair/{sid}/news")
+def chair_news(request: Request, sid: int, sess=Depends(require_staff), form=Depends(form_data)):
+    from app.modules.chair import room as ROOM
+    return _chair_action(request, sid, form, lambda w, f: ROOM.send_news(w, sid, form_int(f.get("script_id")), f.get("headline") or "",
+                                                                         f.get("body") or ""), "Breaking news sent to every screen.")
 
 
 @router.post("/chair/{sid}/speakers")
@@ -458,6 +508,18 @@ def _student_action(request: Request, sid: int, form, fn, msg: str):
             raise UserError("You aren't in a delegation in this committee yet. Ask your teacher.", 403)
         fn(w, form, mine, s)
     return redirect(f"/live/{sid}", msg)
+
+
+@router.post("/live/{sid}/placard")
+def live_placard(request: Request, sid: int, sess=Depends(require_student), form=Depends(form_data)):
+    from app.modules.chair import room as ROOM
+
+    def act(w, f, mine, s):
+        if f.get("action") == "lower":
+            ROOM.lower_mine(w, sid, request.state.actor.id)
+        else:
+            ROOM.raise_placard(w, sid, mine["id"], request.state.actor.id)
+    return _student_action(request, sid, form, act, "Done." if form.get("action") == "lower" else "Placard up: wait for the chair.")
 
 
 @router.post("/live/{sid}/speak")

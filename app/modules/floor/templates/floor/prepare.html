@@ -25,7 +25,7 @@
   {% if clauses %}
   {% for c in clauses %}{% if loop.first or c.title != loop.previtem.title %}<h3>{{ c.title }}</h3>{% endif %}
   <p class="paragraph"><span class="small muted">{{ 'Operative' if c.kind == 'operative' else 'Preambular' }} {{ c.position }}.</span> {{ c.text }}</p>{% endfor %}
-  <p><a href="/me/committees/{{ com.id }}/friends-foes">{{ icon("friends") }} Friends and foes for each operative clause</a> · <a href="/mun/committees/{{ com.id }}/amendments">{{ icon("tracked") }} Amendments</a></p>
+  <p><a href="/me/committees/{{ com.id }}/friends-foes">{{ icon("friends") }} Friends and foes for each operative clause</a> · <a href="/mun/committees/{{ com.id }}/map">{{ icon("conference") }} World map: who's with whom</a> · <a href="/mun/committees/{{ com.id }}/amendments">{{ icon("tracked") }} Amendments</a></p>
   {% else %}<p class="muted">No draft resolution yet.</p>{% endif %}
 </section></li>
 <li><section aria-labelledby="h-open"><h2 id="h-open">{{ icon("speech") }} Your opening statement</h2>

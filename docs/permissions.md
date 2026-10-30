@@ -24,11 +24,11 @@ student may open a resolution only in their own class's committee, and a ballot 
 | Role required | Routes |
 |---|---|
 | Public | 24 |
-| Signed in (any role, checked per item) | 29 |
-| Students only | 50 |
-| Staff and coordinator | 113 |
-| Coordinator only | 39 |
-| **Total** | **255** |
+| Signed in (any role, checked per item) | 30 |
+| Students only | 51 |
+| Staff and coordinator | 118 |
+| Coordinator only | 40 |
+| **Total** | **263** |
 
 ## Coordinator only
 
@@ -42,6 +42,7 @@ student may open a resolution only in their own class's committee, and a ballot 
 | POST | `/admin/data/reset-demo` |
 | POST | `/admin/data/restore` |
 | POST | `/admin/data/switch` |
+| POST | `/admin/effects` |
 | POST | `/admin/history/{seq}/restore` |
 | POST | `/admin/import/{name}` |
 | GET | `/admin/log` |
@@ -93,6 +94,7 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/chair/{sid}/f/messages` |
 | GET | `/chair/{sid}/f/{part}` |
 | POST | `/chair/{sid}/floor` |
+| POST | `/chair/{sid}/gavel` |
 | GET | `/chair/{sid}/guide` |
 | GET | `/chair/{sid}/messages` |
 | POST | `/chair/{sid}/messages/{mid}` |
@@ -102,7 +104,9 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/chair/{sid}/minutes/print` |
 | POST | `/chair/{sid}/motions` |
 | POST | `/chair/{sid}/motions/{mid}` |
+| POST | `/chair/{sid}/news` |
 | POST | `/chair/{sid}/next` |
+| POST | `/chair/{sid}/placards` |
 | POST | `/chair/{sid}/points/{pid}` |
 | POST | `/chair/{sid}/roll` |
 | POST | `/chair/{sid}/speakers` |
@@ -112,6 +116,8 @@ student may open a resolution only in their own class's committee, and a ballot 
 | POST | `/chair/{sid}/timer` |
 | POST | `/chair/{sid}/timers/{tid}` |
 | POST | `/chair/{sid}/whip` |
+| GET | `/chair/{sid}/whip-map` |
+| GET | `/chair/{sid}/whip-map/f` |
 | POST | `/chair/{sid}/whip/{rid}` |
 | POST | `/chair/{sid}/yield` |
 | GET | `/debating` |
@@ -202,6 +208,7 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/live/{sid}/f/messages` |
 | POST | `/live/{sid}/messages` |
 | POST | `/live/{sid}/motion` |
+| POST | `/live/{sid}/placard` |
 | POST | `/live/{sid}/points` |
 | POST | `/live/{sid}/points/{pid}/withdraw` |
 | POST | `/live/{sid}/roll` |
@@ -261,6 +268,7 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/mun/committees/{committee_id}` |
 | GET | `/mun/committees/{committee_id}/evidence` |
 | POST | `/mun/committees/{committee_id}/evidence` |
+| GET | `/mun/committees/{committee_id}/map` |
 | POST | `/mun/committees/{committee_id}/resolutions` |
 | POST | `/mun/evidence/{evidence_id}/delete` |
 | POST | `/mun/paragraphs/{paragraph_id}` |

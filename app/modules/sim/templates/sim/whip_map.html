@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb %}
+{% block content %}
+{{ breadcrumb([("Chair", "/chair"), (s.committee, "/chair/" ~ s.id), ("Whip map", None)]) }}
+<h1>{{ icon("whip") }} {{ title }}</h1>
+<p class="lede">The class's whip count on the world map: a token on each country in the room. While predictions come in, the tokens show only how many calls each country has (never which way, so no one is steered). Once voting opens, the countries take the class's call; once it closes, the real vote, with each token ringed green where the class called it right and red where it missed. The projector shows the same map.</p>
+<div id="whip-map" data-live-channel="session:{{ s.id }}" hx-get="/chair/{{ s.id }}/whip-map/f" hx-trigger="live-update" hx-swap="innerHTML">
+{% include "sim/_whip_map_region.html" %}
+</div>
+<p id="live-status" class="small muted">Connecting…</p>
+{% endblock %}

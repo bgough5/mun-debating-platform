@@ -586,3 +586,58 @@ def call_vote(w: Writer, p: dict, p_pass_before: float) -> dict:
     w.conn.execute("UPDATE sim_practice SET stage = 'voted', result_json = ? WHERE id = ?", (json.dumps(result), p["id"]))
     w.log("sim_practice", p["id"], "voted", None, {"passed": out.passed})
     return result
+
+
+# ---------------- whip-count map (D-089) ----------------
+
+def whip_map(conn, sid: int, reveal_only: bool = False) -> dict | None:
+    """The class's whip count on the world map (D-089, D-090). Three phases:
+    - "open": predictions are coming in; tokens show how many calls each country has, never which way (so the
+      projector can't steer anyone's guess);
+    - "locked": the vote is under way; countries show the class's most common prediction;
+    - "revealed": the vote has closed; countries show the actual vote, tokens ringed green (called it) or red.
+    Computed (engine) votes are marked *, as in the scores (D-061)."""
+    from app.modules.mun import worldmap as WMAP
+    r = one(conn, "SELECT * FROM whip_round WHERE session_id = ? AND status != 'cancelled' ORDER BY id DESC LIMIT 1", (sid,))
+    if not r:
+        return None
+    dv = one(conn, "SELECT * FROM division WHERE id = ?", (r["division_id"],)) if r["division_id"] else None
+    phase = "open" if r["status"] == "open" else ("revealed" if dv and dv["status"] == "closed" else "locked")
+    if reveal_only and phase != "revealed":
+        return None
+    s = one(conn, "SELECT committee_id FROM live_session WHERE id = ?", (sid,))
+    dels = _delegations(conn, s["committee_id"])
+    counts: dict = {}
+    for p in rows(conn, "SELECT delegation_id, vote FROM whip_prediction WHERE round_id = ? AND vote IS NOT NULL", (r["id"],)):
+        counts.setdefault(p["delegation_id"], {"yes": 0, "abstain": 0, "no": 0})[p["vote"]] += 1
+    actual = {v["delegation_id"]: v for v in rows(conn, "SELECT * FROM division_vote WHERE division_id = ?", (dv["id"],))} if dv else {}
+    names = {"yes": "Yes", "no": "No", "abstain": "Abstain"}
+    tiles, right, judged, values, labels = [], 0, 0, {}, {}
+    for d in dels:
+        c = counts.get(d["id"], {"yes": 0, "abstain": 0, "no": 0})
+        n = sum(c.values())
+        predicted = max(("yes", "abstain", "no"), key=lambda k: (c[k], k == "abstain")) if n else None
+        a = actual.get(d["id"])
+        vote = a["vote"] if a and a["vote"] in VOTES else None
+        correct = (predicted == vote) if (phase == "revealed" and predicted and vote) else None
+        if correct is not None:
+            judged += 1
+            right += int(correct)
+        if phase == "open":
+            labels[d["iso3"]] = f"{n} call{'' if n == 1 else 's'}" if n else ""
+        elif phase == "locked" and predicted:
+            values[d["iso3"]], labels[d["iso3"]] = predicted, names[predicted]
+        elif phase == "revealed" and vote:
+            values[d["iso3"]] = vote
+            labels[d["iso3"]] = names[vote] + ("*" if a["computed"] else "")
+        tiles.append({"iso3": d["iso3"], "name": d["name"], "n": n, "counts": c, "predicted": predicted, "actual": vote,
+                      "computed": bool(a and a["computed"]), "students": d["students"], "correct": correct})
+    wmap = WMAP.board(conn, [d["iso3"] for d in dels], mode="vote", values=values, labels=labels)
+    judged_by = {t["iso3"]: t["correct"] for t in tiles}
+    for t in wmap["tokens"]:
+        if judged_by.get(t["iso3"]) is True:
+            t["cls"] += " wm-right"
+        elif judged_by.get(t["iso3"]) is False:
+            t["cls"] += " wm-wrong"
+    return {"round": r, "phase": phase, "tiles": sorted(tiles, key=lambda t: t["name"]), "wmap": wmap, "right": right,
+            "judged": judged, "predicted_n": sum(1 for t in tiles if t["n"])}

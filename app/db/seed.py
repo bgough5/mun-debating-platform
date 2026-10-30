@@ -180,6 +180,22 @@ def seed_content_updates(conn: sqlite3.Connection) -> None:
         for rub in json.loads((SEED_DIR / "rubrics.json").read_text(encoding="utf-8")):
             if not conn.execute("SELECT 1 FROM rubric WHERE code = ?", (rub["code"],)).fetchone():
                 _insert_rubric(conn, rub)
+    if _table_exists(conn, "alignment"):
+        # Real-world alliances for the map (D-090), added by code, so an edited membership list stays.
+        for a in json.loads((SEED_DIR / "alignments.json").read_text(encoding="utf-8")):
+            if not conn.execute("SELECT 1 FROM alignment WHERE code = ?", (a["code"],)).fetchone():
+                cur = conn.execute("INSERT INTO alignment (code, name, kind, source, notes) VALUES (?,?,?,?,?)",
+                                   (a["code"], a["name"], a["kind"], a["source"], a["notes"]))
+                for iso in a["members"]:
+                    if conn.execute("SELECT 1 FROM country WHERE iso3 = ?", (iso,)).fetchone():
+                        conn.execute("INSERT INTO alignment_member (alignment_id, iso3) VALUES (?,?)", (cur.lastrowid, iso))
+    if _table_exists(conn, "crisis_script"):
+        # Scripted breaking news for fictional crises (D-089), added for a topic that has none, so edits stay.
+        have = {t for (t,) in conn.execute("SELECT DISTINCT topic_code FROM crisis_script")}
+        for t in json.loads((SEED_DIR / "crisis_scripts.json").read_text(encoding="utf-8")):
+            if t["topic_code"] not in have:
+                conn.execute("INSERT INTO crisis_script (topic_code, position, headline, body) VALUES (?,?,?,?)",
+                             (t["topic_code"], t["position"], t["headline"], t["body"]))
     if _table_exists(conn, "speech_template"):
         for t in json.loads((SEED_DIR / "speech_templates.json").read_text(encoding="utf-8")):
             if not conn.execute("SELECT 1 FROM speech_template WHERE code = ?", (t["code"],)).fetchone():

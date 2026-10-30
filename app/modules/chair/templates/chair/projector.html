@@ -4,7 +4,8 @@
 {% block header %}{% endblock %}
 {% block footer %}{% endblock %}
 {% block content %}
-<div class="proj-brand"><img src="/static/soc_crest.png" alt="">South Oakleigh College · Debating &amp; Model UN</div>
+<div class="proj-brand" data-fx-room="projector"><img src="/static/soc_crest.png" alt="">South Oakleigh College · Debating &amp; Model UN
+  <button type="button" class="fx-unlock" data-fx-unlock hidden>{{ icon("play") }} Turn on sound</button></div>
 <div id="projector-main" data-live-channel="session:{{ s.id }}" hx-get="/projector/{{ token }}/f" hx-trigger="live-update" hx-swap="innerHTML">
 {% include "chair/_projector_main.html" %}
 </div>

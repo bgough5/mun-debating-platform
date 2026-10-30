@@ -1,0 +1,38 @@
+[
+ {
+  "topic_code": "SC_VELORIA",
+  "position": 1,
+  "headline": "Ceasefire collapses in the eastern provinces",
+  "body": "Fighting has resumed near the river town of Marrow Ford after a two-day pause. Both sides blame the other for the first shot. Aid agencies have suspended convoys."
+ },
+ {
+  "topic_code": "SC_VELORIA",
+  "position": 2,
+  "headline": "Aid convoy stopped at a checkpoint",
+  "body": "A twelve-truck food and medicine convoy has been held at a checkpoint for nine hours. Local officials say paperwork is incomplete; aid workers say the delay is deliberate."
+ },
+ {
+  "topic_code": "SC_VELORIA",
+  "position": 3,
+  "headline": "Regional mediators offer talks in a neutral capital",
+  "body": "The regional organisation proposes face-to-face talks within ten days, on condition that the Council does not impose new sanctions meanwhile."
+ },
+ {
+  "topic_code": "SC_VELORIA",
+  "position": 4,
+  "headline": "Reports of weapons crossing the northern border",
+  "body": "Satellite images published by an independent research group appear to show armoured vehicles crossing into Veloria. The images have not been verified."
+ },
+ {
+  "topic_code": "SC_VELORIA",
+  "position": 5,
+  "headline": "Refugee numbers double in a week",
+  "body": "Neighbouring states report that more than 80,000 people have crossed from Veloria in seven days. One neighbour has asked the Council for emergency funding."
+ },
+ {
+  "topic_code": "SC_VELORIA",
+  "position": 6,
+  "headline": "Both sides agree to a 72-hour humanitarian pause",
+  "body": "The parties will hold fire for three days to let aid through, if the Council guarantees independent monitors. The offer expires at midnight."
+ }
+]

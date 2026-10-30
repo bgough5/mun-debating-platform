@@ -1,3 +1,4 @@
 <p class="lede" data-announce="{{ 'Session ' ~ s.state ~ ', ' ~ s.mode }}" data-announce-key="status">
   Session <strong>{{ s.state }}</strong> · {{ {'formal':'Formal debate','moderated':'Moderated caucus','unmoderated':'Unmoderated caucus','voting':'Voting procedure'}[s.mode] }}{% if s.mode_topic %}: {{ s.mode_topic }}{% endif %}
   · Speaking time {{ s.speaking_time_s }} s · {{ participants }} of {{ cap }} student places in use</p>
+{% include "chair/_fx.html" %}

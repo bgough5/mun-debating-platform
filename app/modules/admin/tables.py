@@ -53,6 +53,16 @@ REFERENCE = [
     Table("bloc_member", "Bloc memberships", (
         C("bloc_id", "Bloc", "ref", ref="bloc:id:name", required=True), C("iso3", "Country", "ref", ref="country:iso3:name", required=True),
         C("from_date", "From"), C("to_date", "To"), C("source", "Source")), natural_key=("bloc_id", "iso3"), order_by="bloc_id, iso3"),
+    Table("alignment", "Alliances on the map", (
+        C("code", "Code", required=True), C("name", "Name", required=True), C("kind", "Kind", hint="e.g. Military alliance"),
+        C("source", "Source", hint="Where the membership list comes from"), C("verified", "Membership checked against source", "bool"),
+        C("notes", "Notes", "textarea")), natural_key=("code",), order_by="code"),
+    Table("alignment_member", "Alliance memberships", (
+        C("alignment_id", "Alliance", "ref", ref="alignment:id:name", required=True),
+        C("iso3", "Country", "ref", ref="country:iso3:name", required=True)), natural_key=("alignment_id", "iso3"), order_by="alignment_id, iso3"),
+    Table("crisis_script", "Breaking news scripts", (
+        C("topic_code", "Topic code", required=True, hint="The committee's topic, e.g. SC_VELORIA"), C("position", "Order", "int"),
+        C("headline", "Headline", required=True), C("body", "Details", "textarea")), natural_key=("topic_code", "position"), order_by="topic_code, position"),
     Table("voting_rule", "Voting rules", (
         C("code", "Code", required=True), C("name", "Name", required=True),
         C("threshold_num", "Threshold numerator", "int"), C("threshold_den", "Threshold denominator", "int"),
@@ -181,7 +191,7 @@ EXPORT_ONLY = [
     "debate_event", "team", "team_member", "adjudicator", "room", "debate_round", "pairing", "pairing_adjudicator",
     "ballot", "ballot_score", "house_points_entry", "event_document", "practice_speech",
     "class_run", "class_run_speaker", "prep_case", "prep_point", "prep_speech",
-    "student_group", "student_group_member", "cue_card_set",
+    "student_group", "student_group_member", "cue_card_set", "placard", "crisis_update",
 ]
 # Columns never exported or shown.
 SECRET_COLUMNS = {"pass_hash", "token_hash", "csrf", "login_code"}
