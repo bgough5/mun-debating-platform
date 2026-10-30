@@ -329,8 +329,16 @@ def practice_material(conn, student_id: int, level: str | None = None) -> dict:
 def class_overview(conn, class_id: int) -> list[dict]:
     students = rows(conn, "SELECT id, first_name, last_initial FROM student WHERE class_id = ? AND deleted_at IS NULL AND active = 1 "
                           "ORDER BY first_name, last_initial", (class_id,))
+    return overview(conn, students)
+
+
+def overview(conn, students: list[dict]) -> list[dict]:
+    """Each student's cases (with how much of the speech is written), speeches, practice and when they last saved."""
     for s in students:
         s["cases"] = cases_for(conn, s["id"])
         s["speeches"] = speeches_for(conn, s["id"])
         s["practice"] = one(conn, "SELECT COUNT(*) AS n FROM practice_speech WHERE student_id = ? AND deleted_at IS NULL", (s["id"],))["n"]
+        for c in s["cases"]:
+            c["speech_words"] = words(c["speech_text"])
+        s["last_saved"] = max([x["updated_at"] for x in s["cases"] + s["speeches"]], default=None)
     return students

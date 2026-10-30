@@ -13,10 +13,12 @@
     <a class="button" href="/debating/runs/new?kind=speeches">New speaking round</a></section>
   <section class="card" aria-labelledby="h-prep"><h2 id="h-prep">{{ icon("task") }} Student preparation</h2>
     <p>Cases, rebuttals, speech drafts and practice speeches your students have written, to score and comment on.</p>
-    {% if classes %}<form method="get" action="/debating/prep" class="inline"><div class="field"><label for="pc">Class</label>
-      <select id="pc" name="class_id">{% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div>
-      <button type="submit" class="secondary">Open</button></form>
-    {% else %}<p class="small muted">No classes assigned to you yet.</p>{% endif %}</section>
+    <form method="get" action="/debating/prep" class="inline"><div class="field"><label for="pc">Show</label>
+      <select id="pc" name="who">
+        {% if saved_groups %}<optgroup label="Saved groups">{% for g in saved_groups if g.n %}<option value="group:{{ g.id }}">{{ g.name }} ({{ g.n }})</option>{% endfor %}</optgroup>{% endif %}
+        {% if year_counts %}<optgroup label="Year levels">{% for y, n in year_counts %}<option value="year:{{ y }}">Year {{ y }} ({{ n }})</option>{% endfor %}</optgroup>{% endif %}
+        <option value="all">Everyone</option></select></div>
+      <button type="submit" class="secondary">Open</button></form></section>
 </div>
 
 <section aria-labelledby="h-runs"><h2 id="h-runs">{{ icon("history") }} Recent class debates and speaking rounds</h2>

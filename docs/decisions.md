@@ -384,6 +384,25 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 - **Not changed:** the getting-started wizard still creates a class. MUN committees and debating runs still belong to a class behind the scenes, which decides who may run them.
 
 
+
+### D-088 Rehearse from cue cards; teacher comments on debate teams; prep overview by group; the head of delegation casts the vote — Decided (30 Oct 2026, Ben)
+Ben said yes to rehearsing from the cards, teacher comments on the team overview, and a prep overview. On shared countries: "the head delegate can decide the final vote, but all other mini games, like predicting votes can be individual so that everyone can learn."
+
+- **Rehearse from cue cards** (`/me/cards/<kind>/<id>/rehearse`):
+  - The student's own cards, one at a time, against a target time, using the existing timer, bells, arrow keys and clicker support.
+  - The target is the speech's own target time. For a case or a Model UN draft, it's the speech's length at 130 words a minute, rounded up to the next half minute (at least a minute).
+- **Teacher comments on debate teams** (`/debating/runs/<id>/teams`, migration 0013 `class_run.team_comment_aff` / `_neg`):
+  - Both sides' cases and speeches, with the overlap flag and a comment box for each team.
+  - Each team sees only its own comment, on its team page.
+  - Only staff who can open the run can see the page or comment.
+- **Prep overview by saved group, year level or everyone** (`/debating/prep?who=group:<id>|year:<n>|all`; `class_id` still works). It now also shows how much of each case's speech is written and when the student last saved.
+- **The head of delegation casts the country's vote** (`chair.service.vote_caster` / `may_cast`):
+  - Co-delegates see who casts it, and posting a vote returns 403 with that explanation.
+  - If the head hasn't been seen in the session for two minutes, any co-delegate who is here can cast it, so an absence never blocks a vote (as D-079).
+  - A country with no head named is voted by any of its students, as before.
+- **Already individual:** whip-count predictions and their scores, and friends and foes. A test now checks this for co-delegates.
+- **Whip count with few students:** each student predicts up to five other countries, spread to cover as many as possible. Every country without a student is voted by the engine, labelled computed, and scored separately from students' real votes (D-061), so it works with five students or one.
+
 ### D-087 Cue cards from any speech; speeches that save themselves; debate teammates read each other's work — Decided (30 Oct 2026, Ben)
 Ben asked for something that "will automatically take a written speech, and format it into printable" cue cards, "whether that is dot point or full speech form, with option for both". He also wants a student who does this every lunchtime to save the speech, have it backed up and open it again next club, and he wants it usable in class too. Students in the same debate team should see each other's speech and an overview of their arguments, "to avoid double ups, while being unable to change it".
 

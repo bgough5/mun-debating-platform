@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, hidden_csrf %}
+{% block content %}
+{{ breadcrumb([("Debating", "/debating"), (run.title, "/debating/runs/" ~ run.id), ("Teams' preparation", None)]) }}
+<h1>{{ icon("people") }} {{ title }}</h1>
+<p class="lede"><strong>Motion:</strong> {{ run.motion or '—' }}. Each side's cases and speeches, as their teammates see them. Leave each team a comment: it shows on their team page.</p>
+<div class="grid">
+{% for t in teams %}
+<section class="card" aria-labelledby="h-{{ t.side }}"><h2 id="h-{{ t.side }}">{{ t.side_name }}</h2>
+  <div class="table-wrap"><table><caption class="visually-hidden">{{ t.side_name }} speakers</caption>
+  <thead><tr><th scope="col">Speaker</th><th scope="col">Arguments</th><th scope="col">Speech</th></tr></thead><tbody>
+  {% for m in t.members %}<tr><td><strong>{{ m.role }}</strong><br>{% if m.case %}<a href="/debating/prep/cases/{{ m.case.id }}">{{ m.name }}</a>{% else %}{{ m.name }}{% endif %}</td>
+    <td>{% if m.arguments %}<ol>{% for a in m.arguments %}<li>{{ a.claim or 'Claim not written yet' }}</li>{% endfor %}</ol>{% elif m.student_id %}<span class="muted">{{ "No arguments yet" if m.case else "No case yet" }}</span>{% else %}—{% endif %}</td>
+    <td>{% if m.case and m.words %}{{ m.words }} words{% else %}<span class="muted">Not written</span>{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% if t.overlaps %}<p class="small">{{ icon("warning") }} {{ t.overlaps|length }} pair{{ '' if t.overlaps|length == 1 else 's' }} of arguments look alike (a rough word match):
+    {% for o in t.overlaps %}{{ o.a }} and {{ o.b }}{% if not loop.last %}; {% endif %}{% endfor %}.</p>{% endif %}
+  <form method="post" action="/debating/runs/{{ run.id }}/teams" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="side" value="{{ t.side }}">
+    <div class="field"><label for="tc-{{ t.side }}">Comment to the {{ t.side_name }} team</label>
+      <textarea id="tc-{{ t.side }}" name="comment" rows="4" maxlength="2000">{{ t.comment }}</textarea></div>
+    <button type="submit">Save comment<span class="visually-hidden"> to the {{ t.side_name }} team</span></button></form>
+</section>
+{% endfor %}
+</div>
+{% endblock %}

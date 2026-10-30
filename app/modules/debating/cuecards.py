@@ -225,3 +225,16 @@ def fit_for_print(cards: list[dict], mode: str, large: bool) -> list[dict]:
         for i, p in enumerate(parts):
             out.append({"heading": c["heading"] if i == 0 else (f"{c['heading']} (continued)" if c["heading"] else ""), "body": p})
     return out
+
+
+def target_seconds(conn, kind: str, sid: int, sections: list[tuple[str, str]]) -> int:
+    """The time to rehearse against: a prepared speech's own target, otherwise the speech's length at a steady pace,
+    rounded up to the next half minute (at least one minute)."""
+    from app.db import scalar
+    from app.modules.debating.prep import WPM
+    if kind == "speech":
+        t = scalar(conn, "SELECT target_seconds FROM prep_speech WHERE id = ?", (sid,))
+        if t:
+            return int(t)
+    words = sum(len((text or "").split()) for _, text in sections)
+    return max(60, -(-round(words / WPM * 60) // 30) * 30)

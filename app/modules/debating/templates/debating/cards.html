@@ -16,6 +16,7 @@
 <p class="row no-print">
   <a class="button" href="/me/cards/{{ kind }}/{{ sid }}/print?mode={{ mode }}" hx-boost="false">{{ icon("print") }} Print {{ cards|length }} card{{ '' if cards|length == 1 else 's' }}</a>
   <a class="button secondary" href="/me/cards/{{ kind }}/{{ sid }}/print?mode={{ mode }}&amp;size=large" hx-boost="false">{{ icon("print") }} Print with large text</a>
+  <a class="button secondary" href="/me/cards/{{ kind }}/{{ sid }}/rehearse?mode={{ mode }}">{{ icon("play") }} Rehearse with these cards</a>
   <span class="small muted">{{ "Your edited cards." if edited else "Made from your speech: edit them below if you like." }}</span></p>
 {% endif %}
 

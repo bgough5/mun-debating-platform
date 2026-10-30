@@ -94,17 +94,55 @@ def test_points_speakers_and_motions_name_the_student(app, coord, room):
     assert f"Proposed by {by(room, m_by, four)}" in mate.get(f"/live/{sid}?tab=motions").text
 
 
-def test_one_vote_per_country_any_holder_can_cast_it_and_it_says_who(app, room):
+def test_the_head_of_delegation_casts_the_vote_unless_away(app, room):
+    """D-088: the head decides the country's vote. If the head isn't here, a co-delegate who is can cast it."""
     sid, five = room["sid"], room["countries"][3]
     with app.state.db.write(SYSTEM) as w:
         did = C.open_division(w, sid, "Procedural test", "motion", None, procedural=True)
-    a, b, watcher = room["people"][five["id"]][3], room["people"][five["id"]][4], room["people"][five["id"]][0]
-    join_as(app, a).post(f"/live/{sid}/vote", {"vote": "yes"})
-    assert f"voted <strong>yes</strong> (cast by {by(room, a, five)})" in join_as(app, watcher).get(f"/live/{sid}").text
-    join_as(app, b).post(f"/live/{sid}/vote", {"vote": "no"})
-    assert f"voted <strong>no</strong> (cast by {by(room, b, five)})" in join_as(app, watcher).get(f"/live/{sid}").text
+    head, a, b = room["people"][five["id"]][0], room["people"][five["id"]][3], room["people"][five["id"]][4]
+    h = join_as(app, head)
+    page = h.get(f"/live/{sid}").text                                         # the head is here now
+    assert 'name="vote" value="yes"' in page
+    mate = join_as(app, a)
+    page = mate.get(f"/live/{sid}").text
+    assert f"{room['names'][head]} is head of delegation and casts {five['name']}'s vote" in page
+    assert 'name="vote" value="yes"' not in page
+    r = mate.post(f"/live/{sid}/vote", {"vote": "yes"})
+    assert r.status_code == 403 and "is head of delegation" in r.text
+    h.post(f"/live/{sid}/vote", {"vote": "yes"})
+    assert f"voted <strong>yes</strong> (cast by {by(room, head, five)})" in mate.get(f"/live/{sid}").text
+    # The head leaves: after two minutes unseen, a co-delegate who is here can change the vote.
+    with app.state.db.write(SYSTEM) as w:
+        w.conn.execute("UPDATE session_participant SET last_seen = last_seen - 600 WHERE session_id = ? AND student_id = ?", (sid, head))
+    other = join_as(app, b)
+    assert "isn't here, so you can cast" in other.get(f"/live/{sid}").text
+    other.post(f"/live/{sid}/vote", {"vote": "no"})
     votes = db_rows(app, "SELECT * FROM division_vote WHERE division_id = ? AND iso3 = ?", (did, five["iso3"]))
-    assert len(votes) == 1 and votes[0]["vote"] == "no"
+    assert len(votes) == 1 and votes[0]["vote"] == "no" and votes[0]["cast_by"] == by(room, b, five)
+
+
+def test_a_country_without_a_head_is_voted_by_any_holder(app, room):
+    sid, two = room["sid"], room["countries"][1]
+    with app.state.db.write(SYSTEM) as w:
+        w.conn.execute("UPDATE delegation_member SET role = 'delegate' WHERE delegation_id = ?", (two["id"],))
+        did = C.open_division(w, sid, "Procedural test", "motion", None, procedural=True)
+    for st, vote in zip(room["people"][two["id"]], ("yes", "no")):
+        join_as(app, st).post(f"/live/{sid}/vote", {"vote": vote})
+    v = db_one(app, "SELECT * FROM division_vote WHERE division_id = ? AND iso3 = ?", (did, two["iso3"]))
+    assert v["vote"] == "no"
+
+
+def test_whip_predictions_stay_individual_for_co_delegates(app, room):
+    """Everyone on a country gets their own whip-count predictions and score (D-061), not one per country."""
+    from app.modules.sim import service as SIM
+    sid, four = room["sid"], room["countries"][2]
+    with app.state.db.write(SYSTEM) as w:
+        s = C.get_session(w.conn, sid)
+        res = db_one(app, "SELECT id FROM resolution WHERE committee_id = ? LIMIT 1", (room["com"],))
+        rid = SIM.start_whip(w, s, "resolution", res["id"], "Whole resolution", per_student=3)
+    per = {st: db_one(app, "SELECT COUNT(*) AS n FROM whip_prediction WHERE round_id = ? AND student_id = ?", (rid, st))["n"]
+           for st in room["people"][four["id"]]}
+    assert all(n == 3 for n in per.values()) and len(per) == 4
 
 
 def test_co_delegates_read_each_others_drafts_but_cannot_change_them(app, room):
