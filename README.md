@@ -33,7 +33,10 @@ see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun
   format. Tick who's here today from one student list (or add first-timers), choose junior, middle or senior
   (suggested from year levels), and go; any number of students.
 - **People:** one student list with year levels, saved groups (for example "Debating Jr BGO", ticked in one go; D-085),
-  teacher access (which teachers see whom), staff, student pathways and milestones. The Dashboard lists activities in
+  teacher access (which teachers see whom), staff, student pathways and milestones.
+- **Speeches and cue cards (D-087):** any speech (prepared, free-form, a debate case, a Model UN draft) as editable
+  cue cards, dot points or full, printed four to an A4 page; speeches save themselves; debate teammates read each
+  other's arguments and speeches, with a flag on likely double-ups. The Dashboard lists activities in
   progress with Resume, which asks who's here today.
 - **Intelligence:** licence-gated UN voting-history import (locked: licences not confirmed, D-051), voting-history
   priors, backtests against baselines, and AI features behind a provider interface that is offline by default (D-053).

@@ -41,7 +41,8 @@ CONTEXT = [
     ("/me/prep", "Prep and practise", [
         "Debate case: pick a motion and a side, write a team line and your arguments in four parts (claim, reasoning, example, impact).",
         "Rebuttal: the other side's likely arguments are listed. Answer each in four steps: they say, but, because, so.",
-        "Speeches: choose a structure, write each part in your own words, then rehearse with the timer or print cue cards.",
+        "Speeches: choose a structure (or write it your way), then rehearse with the timer or make cue cards: dot points or the full speech, editable, four to a printed page.",
+        "Your writing saves itself as you go. In a class debate, Your team shows your teammates' arguments and speeches (read-only) so you don't double up.",
         "Your teacher can score your work and comment. The structure check only counts which parts you've written.",
     ]),
     ("/me/practice", "Practising a speech", [

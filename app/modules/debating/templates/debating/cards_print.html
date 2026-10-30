@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb %}
+{# Four cards to an A4 landscape page. Links to this page load it in full (hx-boost="false") so this rule applies. #}
+{% block head %}<style>@page { size: A4 landscape; margin: 7mm; }</style>{% endblock %}
+{% block content %}
+{{ breadcrumb([("Prep and practise", "/me/prep"), (back_label, back), ("Cue cards", "/me/cards/" ~ kind ~ "/" ~ sid ~ "?mode=" ~ mode), ("Print", None)]) }}
+<h1 class="no-print">{{ icon("print") }} {{ title }}</h1>
+<p class="no-print lede">{{ cards|length }} card{{ '' if cards|length == 1 else 's' }}, four to an A4 page (landscape). Cut along the dashed lines. Numbered so you can put them back in order if you drop them.
+  <button type="button" data-print>{{ icon("print") }} Print</button>
+  <a href="?mode={{ mode }}&amp;size={{ 'normal' if large else 'large' }}" hx-boost="false">{{ "Normal text" if large else "Large text" }}</a></p>
+<div class="print-cards{% if large %} large{% endif %}">
+{% for sheet in cards|batch(4) %}{% set first = loop.index0 * 4 %}
+<div class="pc-sheet">
+{% for c in sheet %}
+<section class="pc" aria-label="Card {{ first + loop.index }} of {{ cards|length }}">
+  <p class="pc-top"><span>{{ speech_title[:60] }}</span><span>{{ first + loop.index }} / {{ cards|length }}</span></p>
+  {% if c.heading %}<h2 class="pc-head">{{ c.heading }}</h2>{% endif %}
+  {% if mode == 'dots' %}<ul class="pc-dots">{% for line in c.body.splitlines() if line.strip() %}<li>{{ line.strip().lstrip('-•* ') }}</li>{% endfor %}</ul>
+  {% else %}{% for para in c.paras if para.strip() %}<p class="pc-text">{{ para.strip() }}</p>{% endfor %}{% endif %}
+</section>
+{% endfor %}
+</div>
+{% endfor %}
+</div>
+{% endblock %}

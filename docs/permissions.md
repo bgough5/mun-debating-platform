@@ -25,10 +25,10 @@ student may open a resolution only in their own class's committee, and a ballot 
 |---|---|
 | Public | 24 |
 | Signed in (any role, checked per item) | 29 |
-| Students only | 45 |
+| Students only | 49 |
 | Staff and coordinator | 111 |
 | Coordinator only | 39 |
-| **Total** | **248** |
+| **Total** | **252** |
 
 ## Coordinator only
 
@@ -215,6 +215,9 @@ student may open a resolution only in their own class's committee, and a ballot 
 | POST | `/me/ai-practice` |
 | GET | `/me/ai-practice/{aid}` |
 | POST | `/me/ai-practice/{aid}` |
+| GET | `/me/cards/{kind}/{sid}` |
+| POST | `/me/cards/{kind}/{sid}` |
+| GET | `/me/cards/{kind}/{sid}/print` |
 | GET | `/me/committees/{cid}/friends-foes` |
 | POST | `/me/committees/{cid}/friends-foes` |
 | GET | `/me/committees/{cid}/prepare` |
@@ -239,6 +242,7 @@ student may open a resolution only in their own class's committee, and a ballot 
 | POST | `/me/sim` |
 | GET | `/me/sim/{pid}` |
 | POST | `/me/sim/{pid}` |
+| GET | `/me/team/{run_id}` |
 
 ## Signed in (any role, checked per item)
 

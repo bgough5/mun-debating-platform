@@ -314,7 +314,7 @@ details.code-reveal > summary { font-weight: 400; }
 .print-only { display: none; }
 .letterhead { display: none; }
 @media print {
-  header.site, footer.site, nav, .no-print, .demo-banner, button, form, .toasts, dialog { display: none !important; }
+  header.site, footer.site, nav, .no-print, .demo-banner, button, form, .toasts, dialog, a.skip { display: none !important; }
   body { background: var(--white); font-size: 11pt; }
   main { max-width: none; padding: 0; }
   .card { border: none; padding: 0; }
@@ -423,3 +423,30 @@ kbd { font-family: var(--mono); font-size: .85em; border: 1px solid var(--contro
 .saved-row button { min-height: 2rem; padding: .2rem .8rem; }
 ul.cols { columns: 14rem auto; column-gap: 1.5rem; }
 .readonly-text { white-space: pre-wrap; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: .6rem .8rem; max-width: 46rem; }
+
+/* ---------- cue cards (D-087): edit on screen, print four to an A4 landscape page with cut lines ---------- */
+.card-editor { display: grid; gap: .8rem; max-width: 46rem; }
+.cue-edit { display: grid; gap: .5rem; }
+.pc-sheet { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(24rem, 100%), 1fr)); gap: 0; }
+.pc { border: 1.5px dashed var(--control); padding: 5mm 6mm; min-height: 9cm; display: flex; flex-direction: column; break-inside: avoid; background: var(--white); }
+.pc-top { display: flex; justify-content: space-between; gap: 1rem; font-size: .8rem; color: var(--muted); margin: 0 0 .3rem; }
+.pc-head { font-size: 1.15rem; margin: 0 0 .4rem; }
+.pc-dots { margin: 0; padding-left: 1.2rem; font-size: 1.15rem; line-height: 1.45; }
+.pc-dots li { margin-bottom: .35rem; }
+.pc-text { font-size: 1.05rem; line-height: 1.5; margin: 0 0 .5rem; }
+.print-cards.large .pc-dots { font-size: 1.5rem; }
+.print-cards.large .pc-text { font-size: 1.35rem; }
+.print-cards.large .pc-head { font-size: 1.4rem; }
+@media print {
+  .pc-sheet { grid-template-columns: 1fr 1fr; grid-auto-rows: 94mm; break-after: page; }
+  .pc-sheet:last-child { break-after: auto; }
+  body:has(.print-cards) .letterhead, body:has(.print-cards) .breadcrumb { display: none !important; }
+  .pc { box-sizing: border-box; height: 94mm; min-height: 0; overflow: hidden; }       /* two rows fit a 196 mm page with room to spare */
+  .pc-dots { font-size: 15pt; }
+  .pc-text { font-size: 13pt; }
+  .print-cards.large .pc-dots { font-size: 20pt; }
+  .print-cards.large .pc-text { font-size: 17pt; }
+}
+.readonly-parts { margin: .4rem 0 .6rem; }
+.readonly-parts dt { font-weight: 700; margin-top: .3rem; }
+.readonly-parts dd { margin: 0 0 .2rem; }

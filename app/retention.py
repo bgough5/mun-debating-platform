@@ -138,6 +138,9 @@ def erase_student(w, student_id: int) -> dict:
     take("class_run_speaker", "student_id = ?", (student_id,))
     conn.execute("UPDATE class_run_speaker SET name = ?, comment = '', topic = '' WHERE student_id = ?", (ERASED, student_id))
     conn.execute("DELETE FROM device_session WHERE student_id = ?", (student_id,))
+    # Cue cards (D-087) are the student's own words.
+    counts["cue_card_set"] = len(take("cue_card_set", "student_id = ?", (student_id,)))
+    conn.execute("DELETE FROM cue_card_set WHERE student_id = ?", (student_id,))
     # Saved groups (D-085): membership is only a shortcut for ticking, so it goes.
     counts["student_group_member"] = len(take("student_group_member", "student_id = ?", (student_id,)))
     conn.execute("DELETE FROM student_group_member WHERE student_id = ?", (student_id,))

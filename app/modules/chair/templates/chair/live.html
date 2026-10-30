@@ -35,7 +35,8 @@
       <div class="field"><label for="dt{{ d.id }}">Title</label><input id="dt{{ d.id }}" type="text" name="title" value="{{ d.title }}" maxlength="80"></div>
       <div class="field"><label for="db{{ d.id }}">Draft</label><textarea id="db{{ d.id }}" name="body" rows="9" maxlength="6000">{{ d.body }}</textarea></div>
       <div class="row"><button type="submit">Save</button><button type="submit" name="delete" value="1" class="secondary">Delete</button></div>
-    </form></details>
+    </form>
+    <p class="small"><a href="/me/cards/mun/{{ d.id }}?mode=dots">{{ icon("print") }} Cue cards: dot points<span class="visually-hidden"> for {{ d.title }}</span></a> · <a href="/me/cards/mun/{{ d.id }}?mode=full">full speech<span class="visually-hidden"> for {{ d.title }}</span></a></p></details>
   {% endfor %}
   <details {% if not my_drafts %}open{% endif %}><summary>{{ icon("add") }} New draft</summary>
     <form method="post" action="/me/committees/{{ s.committee_id }}/speeches" class="stack">{{ hidden_csrf(csrf) }}

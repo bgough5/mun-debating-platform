@@ -63,7 +63,7 @@ def test_every_motion_has_three_likely_arguments_a_side_and_the_new_content_is_s
     assert len(counts) >= 120 and all(c["aff"] == 3 and c["neg"] == 3 for c in counts)
     assert db_one(app, "SELECT COUNT(*) AS n FROM impromptu_topic")["n"] >= 100
     kinds = {t["code"]: t["kind"] for t in db_rows(app, "SELECT code, kind FROM speech_template")}
-    assert sum(k == "impromptu" for k in kinds.values()) == 4 and sum(k == "prepared" for k in kinds.values()) == 4
+    assert sum(k == "impromptu" for k in kinds.values()) == 4 and sum(k == "prepared" for k in kinds.values()) == 5     # + "Write it your way" (D-087)
     for code in ("argument_written", "rebuttal_written"):
         assert db_one(app, "SELECT COUNT(*) AS n FROM rubric_criterion rc JOIN rubric r ON r.id = rc.rubric_id WHERE r.code = ?", (code,))["n"] == 4
 
@@ -155,7 +155,7 @@ def test_impromptu_topics_are_drawn_when_each_turn_starts_and_hidden_before(coor
     first = topics()[0]
     assert first and topics()[1:] == ["", ""]
     proj = coord.get(f"/debating/present/{run['projector_token']}").text
-    assert first.replace("'", "&#39;") in proj
+    assert first in proj                                     # the test client un-escapes pages, so compare plain text
     _act(coord, run["id"], "next")                          # speech
     _act(coord, run["id"], "next")                          # second speaker thinks
     assert topics()[1] and topics()[1] != first and topics()[2] == ""
@@ -246,7 +246,7 @@ def test_a_case_shows_the_other_sides_likely_arguments_to_rebut(app):
     c, case, mid = _case(app, students[0], "aff")
     page = c.get(f"/me/prep/cases/{case['id']}").text
     for a in db_rows(app, "SELECT argument, side FROM motion_argument WHERE motion_id = ?", (mid,)):
-        shown = a["argument"].replace("'", "&#39;") in page
+        shown = a["argument"] in page                        # plain text: the test client un-escapes pages
         assert shown == (a["side"] == "neg"), a          # the Negative's arguments, not the student's own side's
     assert "not the only arguments and not evidence" in page
 

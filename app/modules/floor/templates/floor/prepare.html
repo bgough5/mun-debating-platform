@@ -35,6 +35,7 @@
     <div class="field"><label for="ob">Opening statement</label><textarea id="ob" name="body" rows="10" maxlength="6000">{{ opening.body if opening else '' }}</textarea>
       {% if opening %}<p class="hint">{{ words(opening.body) }} words: about {{ seconds(opening.body) }} seconds out loud.</p>{% endif %}</div>
     <button type="submit">Save</button></form>
+  {% if opening and opening.body %}<p class="small"><a href="/me/cards/mun/{{ opening.id }}?mode=dots">{{ icon("print") }} Cue cards: dot points</a> · <a href="/me/cards/mun/{{ opening.id }}?mode=full">full speech</a></p>{% endif %}
   {% if drafts|length > (1 if opening else 0) %}<p class="small">Other drafts: {% for d in drafts if d.kind != 'opening' %}{{ d.title }}{% if not loop.last %}, {% endif %}{% endfor %}. Edit them in the live session's My speech tab.</p>{% endif %}
   {% if team_drafts %}
   <h3>{{ icon("people") }} Your co-delegates' drafts</h3>

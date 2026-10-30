@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, empty_state %}
+{% block content %}
+{{ breadcrumb([("Prep and practise", "/me/prep"), ("Your team", None)]) }}
+<h1>{{ icon("people") }} {{ title }}</h1>
+<p class="lede"><strong>Motion:</strong> {{ run.motion or run.title }}. Your teammates' cases and speeches, so you can split the arguments and not double up. You can read theirs; only each speaker can change their own.</p>
+
+<section aria-labelledby="h-over"><h2 id="h-over">Who's running what</h2>
+<div class="table-wrap"><table><caption class="visually-hidden">Each speaker's arguments</caption>
+<thead><tr><th scope="col">Speaker</th><th scope="col">Team line</th><th scope="col">Arguments</th><th scope="col">Speech</th></tr></thead><tbody>
+{% for m in members %}<tr><td><strong>{{ m.role }}</strong><br>{{ m.name }}{% if m.me %} (you){% endif %}</td>
+  <td>{{ m.case.team_line if m.case and m.case.team_line else '—' }}</td>
+  <td>{% if m.arguments %}<ol>{% for a in m.arguments %}<li>{{ a.claim or 'Claim not written yet' }}</li>{% endfor %}</ol>
+      {% elif m.case %}<span class="muted">No arguments yet</span>{% elif m.student_id %}<span class="muted">No case on this motion yet</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+  <td>{% if m.case and m.words %}{{ m.words }} words{% else %}<span class="muted">Not written yet</span>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>
+{% if overlaps %}<div class="info-box" role="status"><h3 class="h4">{{ icon("warning") }} These might overlap</h3>
+  <ul>{% for o in overlaps %}<li><strong>{{ o.a }}</strong>: “{{ o.a_claim }}” and <strong>{{ o.b }}</strong>: “{{ o.b_claim }}”</li>{% endfor %}</ul>
+  <p class="small">A rough word match, not a judgement: talk to each other and decide who runs which point.</p></div>
+{% elif members|selectattr("arguments")|list|length > 1 %}<p class="small">{{ icon("ok") }} No arguments look alike on a word match. Still check with each other.</p>{% endif %}
+</section>
+
+{% for m in members if m.case %}
+<section class="card" aria-labelledby="hm{{ loop.index }}"><h2 id="hm{{ loop.index }}" class="h3">{{ m.role }}: {{ m.name }}{% if m.me %} (you){% endif %}</h2>
+  {% if m.me %}<p><a class="button secondary" href="/me/prep/cases/{{ m.case.id }}">Edit your case</a></p>{% endif %}
+  {% if m.case.team_line %}<p><strong>Team line:</strong> {{ m.case.team_line }}</p>{% endif %}
+  {% for a in m.arguments %}<details><summary>Argument {{ loop.index }}: {{ a.claim or 'claim not written yet' }}</summary>
+    <dl class="readonly-parts">{% for k, label in [("reason", "Reasoning"), ("evidence", "Example or evidence"), ("impact", "Impact")] if a.parts.get(k) %}<dt>{{ label }}</dt><dd>{{ a.parts.get(k) }}</dd>{% endfor %}</dl></details>{% endfor %}
+  {% if m.rebuttals %}<p class="small"><strong>Rebutting:</strong> {{ m.rebuttals|select|join("; ") }}</p>{% endif %}
+  {% if m.case.speech_text %}<details><summary>Speech ({{ m.words }} words)</summary><div class="readonly-text">{{ m.case.speech_text }}</div></details>{% endif %}
+</section>
+{% endfor %}
+{% if not my_case %}{{ empty_state("You haven't started your case for this motion yet.", "Start one from Prep and practise: choose this motion and your side.", "/me/prep", "Prep and practise", "debate") }}{% endif %}
+{% endblock %}

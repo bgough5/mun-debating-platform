@@ -1,64 +1,278 @@
 [
-  {"code": "prep", "name": "PREP: point, reason, example, point", "kind": "impromptu", "position": 1,
-   "blurb": "The quickest structure for any impromptu topic.",
-   "sections": [
-     {"key": "point", "label": "Point", "prompt": "Say your main idea in one sentence."},
-     {"key": "reason", "label": "Reason", "prompt": "Why do you think that? Give one clear reason."},
-     {"key": "example", "label": "Example", "prompt": "A story, an experience or a real case that shows it."},
-     {"key": "point2", "label": "Point again", "prompt": "Come back to your point, in new words, and finish."}]},
-  {"code": "ppf", "name": "Past, present, future", "kind": "impromptu", "position": 2,
-   "blurb": "Good for topics about change, places, objects and ideas.",
-   "sections": [
-     {"key": "past", "label": "Past", "prompt": "How was it before? A memory or a piece of history."},
-     {"key": "present", "label": "Present", "prompt": "How is it now? What has changed?"},
-     {"key": "future", "label": "Future", "prompt": "Where is it going, or where should it go? End here."}]},
-  {"code": "pcs", "name": "Problem, cause, solution", "kind": "impromptu", "position": 3,
-   "blurb": "Good for scenarios and anything you would change or fix.",
-   "sections": [
-     {"key": "problem", "label": "Problem", "prompt": "What's wrong? Make the audience feel it."},
-     {"key": "cause", "label": "Cause", "prompt": "Why does it happen?"},
-     {"key": "solution", "label": "Solution", "prompt": "What should we do, and why will it work?"}]},
-  {"code": "three", "name": "Three angles: me, us, the world", "kind": "impromptu", "position": 4,
-   "blurb": "Good for single words and objects: zoom out in three steps.",
-   "sections": [
-     {"key": "me", "label": "Me", "prompt": "What does it mean to you? A personal moment."},
-     {"key": "us", "label": "Us", "prompt": "What does it mean for your school, family or community?"},
-     {"key": "world", "label": "The world", "prompt": "What does it mean for everyone? Finish with a big idea."}]},
-  {"code": "persuasive", "name": "Persuasive speech", "kind": "prepared", "position": 10,
-   "blurb": "Convince your audience to believe or do something.",
-   "sections": [
-     {"key": "hook", "label": "Hook", "prompt": "Grab attention: a question, a surprising fact you can source, or a short story."},
-     {"key": "position", "label": "Your position", "prompt": "Say exactly what you want the audience to believe, in one sentence."},
-     {"key": "point1", "label": "First reason", "prompt": "Your strongest reason, with an example or evidence."},
-     {"key": "point2", "label": "Second reason", "prompt": "Another reason, with an example or evidence."},
-     {"key": "point3", "label": "Third reason", "prompt": "A third reason, or a deeper look at why it matters."},
-     {"key": "counter", "label": "The other side", "prompt": "The best argument against you, and your answer to it."},
-     {"key": "call", "label": "Call to action", "prompt": "What should the audience do now? End strongly."}]},
-  {"code": "informative", "name": "Informative speech", "kind": "prepared", "position": 11,
-   "blurb": "Teach your audience about something you know well.",
-   "sections": [
-     {"key": "hook", "label": "Hook", "prompt": "Why should they care? Start with something they'll remember."},
-     {"key": "preview", "label": "Preview", "prompt": "Tell them the two or three things they'll learn."},
-     {"key": "point1", "label": "First idea", "prompt": "Explain it simply, with an example."},
-     {"key": "point2", "label": "Second idea", "prompt": "Build on the first, with an example."},
-     {"key": "point3", "label": "Third idea", "prompt": "The most interesting part, saved for last."},
-     {"key": "summary", "label": "Summary", "prompt": "Remind them of the main ideas in a sentence or two."},
-     {"key": "close", "label": "Close", "prompt": "Leave them with a thought or a question."}]},
-  {"code": "story", "name": "Personal story", "kind": "prepared", "position": 12,
-   "blurb": "Tell a true story from your life that teaches something.",
-   "sections": [
-     {"key": "hook", "label": "Opening moment", "prompt": "Start in the middle of the action: where were you, what was happening?"},
-     {"key": "situation", "label": "The situation", "prompt": "Give just enough background for the audience to follow."},
-     {"key": "challenge", "label": "The challenge", "prompt": "What went wrong, or what was hard?"},
-     {"key": "turn", "label": "The turning point", "prompt": "What changed? What did you decide or realise?"},
-     {"key": "lesson", "label": "The lesson", "prompt": "What did you learn, and why does it matter to the audience?"},
-     {"key": "close", "label": "Close", "prompt": "Link back to your opening moment."}]},
-  {"code": "tribute", "name": "Tribute or thank-you speech", "kind": "prepared", "position": 13,
-   "blurb": "Honour a person, a group or an occasion.",
-   "sections": [
-     {"key": "welcome", "label": "Welcome", "prompt": "Who are you, and why are you speaking today?"},
-     {"key": "who", "label": "Who we honour", "prompt": "Introduce the person or group."},
-     {"key": "qualities", "label": "What makes them special", "prompt": "Two or three qualities, each with a short story or example."},
-     {"key": "impact", "label": "Their impact", "prompt": "What difference have they made to others?"},
-     {"key": "thanks", "label": "Thanks and close", "prompt": "Say thank you directly, and finish with a warm line."}]}
+ {
+  "code": "prep",
+  "name": "PREP: point, reason, example, point",
+  "kind": "impromptu",
+  "position": 1,
+  "blurb": "The quickest structure for any impromptu topic.",
+  "sections": [
+   {
+    "key": "point",
+    "label": "Point",
+    "prompt": "Say your main idea in one sentence."
+   },
+   {
+    "key": "reason",
+    "label": "Reason",
+    "prompt": "Why do you think that? Give one clear reason."
+   },
+   {
+    "key": "example",
+    "label": "Example",
+    "prompt": "A story, an experience or a real case that shows it."
+   },
+   {
+    "key": "point2",
+    "label": "Point again",
+    "prompt": "Come back to your point, in new words, and finish."
+   }
+  ]
+ },
+ {
+  "code": "ppf",
+  "name": "Past, present, future",
+  "kind": "impromptu",
+  "position": 2,
+  "blurb": "Good for topics about change, places, objects and ideas.",
+  "sections": [
+   {
+    "key": "past",
+    "label": "Past",
+    "prompt": "How was it before? A memory or a piece of history."
+   },
+   {
+    "key": "present",
+    "label": "Present",
+    "prompt": "How is it now? What has changed?"
+   },
+   {
+    "key": "future",
+    "label": "Future",
+    "prompt": "Where is it going, or where should it go? End here."
+   }
+  ]
+ },
+ {
+  "code": "pcs",
+  "name": "Problem, cause, solution",
+  "kind": "impromptu",
+  "position": 3,
+  "blurb": "Good for scenarios and anything you would change or fix.",
+  "sections": [
+   {
+    "key": "problem",
+    "label": "Problem",
+    "prompt": "What's wrong? Make the audience feel it."
+   },
+   {
+    "key": "cause",
+    "label": "Cause",
+    "prompt": "Why does it happen?"
+   },
+   {
+    "key": "solution",
+    "label": "Solution",
+    "prompt": "What should we do, and why will it work?"
+   }
+  ]
+ },
+ {
+  "code": "three",
+  "name": "Three angles: me, us, the world",
+  "kind": "impromptu",
+  "position": 4,
+  "blurb": "Good for single words and objects: zoom out in three steps.",
+  "sections": [
+   {
+    "key": "me",
+    "label": "Me",
+    "prompt": "What does it mean to you? A personal moment."
+   },
+   {
+    "key": "us",
+    "label": "Us",
+    "prompt": "What does it mean for your school, family or community?"
+   },
+   {
+    "key": "world",
+    "label": "The world",
+    "prompt": "What does it mean for everyone? Finish with a big idea."
+   }
+  ]
+ },
+ {
+  "code": "persuasive",
+  "name": "Persuasive speech",
+  "kind": "prepared",
+  "position": 10,
+  "blurb": "Convince your audience to believe or do something.",
+  "sections": [
+   {
+    "key": "hook",
+    "label": "Hook",
+    "prompt": "Grab attention: a question, a surprising fact you can source, or a short story."
+   },
+   {
+    "key": "position",
+    "label": "Your position",
+    "prompt": "Say exactly what you want the audience to believe, in one sentence."
+   },
+   {
+    "key": "point1",
+    "label": "First reason",
+    "prompt": "Your strongest reason, with an example or evidence."
+   },
+   {
+    "key": "point2",
+    "label": "Second reason",
+    "prompt": "Another reason, with an example or evidence."
+   },
+   {
+    "key": "point3",
+    "label": "Third reason",
+    "prompt": "A third reason, or a deeper look at why it matters."
+   },
+   {
+    "key": "counter",
+    "label": "The other side",
+    "prompt": "The best argument against you, and your answer to it."
+   },
+   {
+    "key": "call",
+    "label": "Call to action",
+    "prompt": "What should the audience do now? End strongly."
+   }
+  ]
+ },
+ {
+  "code": "informative",
+  "name": "Informative speech",
+  "kind": "prepared",
+  "position": 11,
+  "blurb": "Teach your audience about something you know well.",
+  "sections": [
+   {
+    "key": "hook",
+    "label": "Hook",
+    "prompt": "Why should they care? Start with something they'll remember."
+   },
+   {
+    "key": "preview",
+    "label": "Preview",
+    "prompt": "Tell them the two or three things they'll learn."
+   },
+   {
+    "key": "point1",
+    "label": "First idea",
+    "prompt": "Explain it simply, with an example."
+   },
+   {
+    "key": "point2",
+    "label": "Second idea",
+    "prompt": "Build on the first, with an example."
+   },
+   {
+    "key": "point3",
+    "label": "Third idea",
+    "prompt": "The most interesting part, saved for last."
+   },
+   {
+    "key": "summary",
+    "label": "Summary",
+    "prompt": "Remind them of the main ideas in a sentence or two."
+   },
+   {
+    "key": "close",
+    "label": "Close",
+    "prompt": "Leave them with a thought or a question."
+   }
+  ]
+ },
+ {
+  "code": "story",
+  "name": "Personal story",
+  "kind": "prepared",
+  "position": 12,
+  "blurb": "Tell a true story from your life that teaches something.",
+  "sections": [
+   {
+    "key": "hook",
+    "label": "Opening moment",
+    "prompt": "Start in the middle of the action: where were you, what was happening?"
+   },
+   {
+    "key": "situation",
+    "label": "The situation",
+    "prompt": "Give just enough background for the audience to follow."
+   },
+   {
+    "key": "challenge",
+    "label": "The challenge",
+    "prompt": "What went wrong, or what was hard?"
+   },
+   {
+    "key": "turn",
+    "label": "The turning point",
+    "prompt": "What changed? What did you decide or realise?"
+   },
+   {
+    "key": "lesson",
+    "label": "The lesson",
+    "prompt": "What did you learn, and why does it matter to the audience?"
+   },
+   {
+    "key": "close",
+    "label": "Close",
+    "prompt": "Link back to your opening moment."
+   }
+  ]
+ },
+ {
+  "code": "tribute",
+  "name": "Tribute or thank-you speech",
+  "kind": "prepared",
+  "position": 13,
+  "blurb": "Honour a person, a group or an occasion.",
+  "sections": [
+   {
+    "key": "welcome",
+    "label": "Welcome",
+    "prompt": "Who are you, and why are you speaking today?"
+   },
+   {
+    "key": "who",
+    "label": "Who we honour",
+    "prompt": "Introduce the person or group."
+   },
+   {
+    "key": "qualities",
+    "label": "What makes them special",
+    "prompt": "Two or three qualities, each with a short story or example."
+   },
+   {
+    "key": "impact",
+    "label": "Their impact",
+    "prompt": "What difference have they made to others?"
+   },
+   {
+    "key": "thanks",
+    "label": "Thanks and close",
+    "prompt": "Say thank you directly, and finish with a warm line."
+   }
+  ]
+ },
+ {
+  "code": "free",
+  "name": "Write it your way",
+  "kind": "prepared",
+  "position": 14,
+  "blurb": "One box for the whole speech, in paragraphs. Paste in a speech you've already written, or write it here.",
+  "sections": [
+   {
+    "key": "speech",
+    "label": "Your speech",
+    "prompt": "Leave a blank line between paragraphs: each paragraph starts a new cue card."
+   }
+  ]
+ }
 ]
