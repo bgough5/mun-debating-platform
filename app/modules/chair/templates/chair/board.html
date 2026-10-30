@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ st.session.committee }}</title>
+<link rel="icon" href="/static/soc_crest.png">
+<link rel="stylesheet" href="/static/css/app.css">
+<link rel="stylesheet" href="/static/css/board.css">
+<script src="/static/js/effects.js" defer></script>
+<script src="/static/js/board.js" defer></script>
+</head>
+{# The board (D-092): the war-room table for the projector on the extended screen. A page of its own: no site header,
+   menus or footer. board.js keeps it live from /projector/<token>/state.json and plays every change. #}
+<body class="board-body" data-token="{{ token }}" data-sid="{{ sid }}"
+      data-fx-sound="{{ settings.get('fx_sound', 'projector') }}" data-fx-motion="{{ 'on' if settings.get('fx_motion', True) else 'off' }}">
+<a class="skip" href="#main">Skip to the board</a>
+<div id="b-say" class="visually-hidden" role="status" aria-live="polite"></div>
+<div id="b-stage" class="b-stage" data-fx-room="projector">
+  <header class="b-top">
+    <svg class="b-emblem" viewBox="0 0 120 120" aria-hidden="true"><g transform="translate(60 62)">
+      <g class="b-laurel">{% for i in range(9) %}<ellipse cx="0" cy="-46" rx="5" ry="11" transform="rotate({{ -150 + i * 15 }}) translate(0 0)"/><ellipse cx="0" cy="-46" rx="5" ry="11" transform="rotate({{ 150 - i * 15 }})"/>{% endfor %}</g>
+      <circle class="b-globe" r="34"/><path class="b-globe-line" d="M-34 0H34M0-34V34M-24-24C-8-12 8-12 24-24M-24 24C-8 12 8 12 24 24M0-34C-16-16-16 16 0 34M0-34C16-16 16 16 0 34"/>
+    </g></svg>
+    <div class="b-titles">
+      <p class="b-kicker">Model United Nations · South Oakleigh College</p>
+      <h1 class="b-committee" id="b-committee">{{ st.session.committee }}</h1>
+      <p class="b-agenda" id="b-agenda">{% if st.session.agenda %}Agenda: {{ st.session.agenda }}{% endif %}</p>
+    </div>
+    <ol class="b-track" id="b-track" aria-label="Stages">
+      {% for x in st.stage.all %}<li data-code="{{ x.code }}" class="{{ 'done' if loop.index0 < st.stage.index else ('now' if loop.index0 == st.stage.index else '') }}"><span class="b-medal">{{ loop.index }}</span><span class="b-medal-name">{{ x.name }}</span></li>{% endfor %}
+    </ol>
+  </header>
+
+  <main class="b-table" id="main" tabindex="-1">
+    <div class="b-board" id="b-board">
+      <div class="b-mode" id="b-mode"></div>
+      <svg class="b-map" id="b-map" viewBox="0 0 {{ wmap.width }} {{ wmap.height }}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="The world, with a token on every country in the room">
+        <defs>
+          <radialGradient id="b-sea" cx="50%" cy="45%" r="75%"><stop offset="0%" class="b-sea-1"/><stop offset="100%" class="b-sea-2"/></radialGradient>
+          <filter id="b-raise" x="-5%" y="-5%" width="110%" height="115%"><feDropShadow dx="0" dy="1.4" stdDeviation="1" flood-opacity=".5"/></filter>
+          <filter id="b-tok" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="2" stdDeviation="1.4" flood-opacity=".55"/></filter>
+          <filter id="b-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4"/></filter>
+        </defs>
+        <rect class="b-sea" x="-2000" y="-2000" width="5000" height="5000" fill="url(#b-sea)"/>
+        {% for lat in [60, 30, 0, -30] %}<line class="b-grid" x1="-2000" x2="3000" y1="{{ ((84 - lat) / 142 * wmap.height)|round(1) }}" y2="{{ ((84 - lat) / 142 * wmap.height)|round(1) }}"/>{% endfor %}
+        <g filter="url(#b-raise)" id="b-lands">
+          {% for c in wmap.land %}<path class="b-land{% if 'wm-in' in c.cls %} b-in{% endif %}" data-iso="{{ c.iso3 }}" d="{{ c.d }}"/>{% endfor %}
+          {% for c in wmap.dots %}<circle class="b-land b-dot" data-iso="{{ c.iso3 }}" cx="{{ c.x }}" cy="{{ c.y }}" r="2.4"/>{% endfor %}
+        </g>
+        <g id="b-leaders">{% for t in wmap.tokens if t.leader %}<line class="b-leader" x1="{{ t.hx }}" y1="{{ t.hy }}" x2="{{ t.x }}" y2="{{ t.y }}"/>{% endfor %}</g>
+        <g id="b-tokens">
+          {% for t in wmap.tokens %}
+          <g class="b-token" data-iso="{{ t.iso3 }}" data-box="{{ t.box }}" data-x="{{ t.x }}" data-y="{{ t.y }}" transform="translate({{ (t.x - wmap.token_w / 2)|round(1) }} {{ (t.y - wmap.token_h / 2)|round(1) }})" filter="url(#b-tok)">
+            <g class="b-tok-in">
+              <circle class="b-halo" cx="{{ wmap.token_w / 2 }}" cy="{{ wmap.token_h / 2 }}" r="30" filter="url(#b-glow)"/>
+              <rect class="b-face" width="{{ wmap.token_w }}" height="{{ wmap.token_h }}" rx="4"/>
+              <rect class="b-band" width="{{ wmap.token_w }}" height="4.5" rx="2"/>
+              <text class="b-code" x="{{ wmap.token_w / 2 }}" y="13.5" text-anchor="middle">{{ t.iso3 }}{% if t.p5 %} ★{% endif %}</text>
+              <text class="b-line" x="{{ wmap.token_w / 2 }}" y="22.5" text-anchor="middle"></text>
+              <g class="b-placard" transform="translate({{ wmap.token_w - 6 }} -14)"><rect class="b-placard-stick" x="2.3" y="6" width="1.4" height="12"/><rect class="b-placard-card" x="-6" y="-4" width="16" height="11" rx="1.5"/><text class="b-placard-text" x="2" y="4.5" text-anchor="middle">{{ t.iso3 }}</text></g>
+              <circle class="b-chip" cx="{{ wmap.token_w }}" cy="0" r="5.5"/>
+            </g>
+          </g>
+          {% endfor %}
+        </g>
+        <g id="b-seal-wrap"></g>
+      </svg>
+      <p class="b-credit">Map: Natural Earth (public domain), simplified for the board.</p>
+    </div>
+
+    <aside class="b-rail" id="b-rail" aria-label="What is happening now"></aside>
+  </main>
+
+  <footer class="b-bottom">
+    <div class="b-speaker" id="b-speaker" hidden>
+      <svg class="b-dial" viewBox="0 0 100 100" aria-hidden="true"><circle class="b-dial-face" cx="50" cy="50" r="44"/><circle class="b-dial-arc" id="b-dial-arc" cx="50" cy="50" r="38" pathLength="100"/><circle class="b-dial-pin" cx="50" cy="50" r="4"/></svg>
+      <div class="b-speaker-text"><p class="b-speaker-tag">Now speaking</p><p class="b-speaker-name" id="b-speaker-name"></p><p class="b-speaker-side" id="b-speaker-side"></p></div>
+      <p class="b-time" id="b-time" role="timer" aria-label="Time remaining"></p>
+    </div>
+    <div class="b-ticker" id="b-ticker" hidden><span class="b-ticker-tag">Breaking</span><span class="b-ticker-text" id="b-ticker-text"></span></div>
+  </footer>
+  <div class="b-overlay" id="b-overlay"></div>
+  <button type="button" class="b-sound" data-fx-unlock hidden>Turn on sound</button>
+  <p class="b-live" id="b-live">Connecting…</p>
+</div>
+<script id="b-initial" type="application/json">{{ st|tojson }}</script>
+</body>
+</html>

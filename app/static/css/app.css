@@ -20,6 +20,7 @@
   --felt: #1E5C3A; --felt-dk: #143F28; --wood: #5C3A1E; --parchment: #F7F0DC; --parchment-dk: #E9DDBA; --stamp: #A4231B; --brass: #C9A227;
   --sea: #1F4E5A; --sea-lt: #2B6473; --land: #E4D6AE; --map-yes: #6FAF7E; --map-no: #C9675E; --map-abstain: #B8B2A2;
   --reg-afr: #D9A441; --reg-apg: #C97B5A; --reg-eeg: #8E9CC9; --reg-grulac: #7DB37A; --reg-weog: #6FA3B8;
+  --walnut-dk: #24160B; --walnut: #3E2814; --un-blue: #1F4E79; --un-blue-lt: #5B8FCB; --lit: #F4D77A;
   --serif: Cinzel, Georgia, "Times New Roman", serif;
   --sans: "Open Sans", Calibri, "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
   --mono: Consolas, "Cascadia Mono", "Courier New", monospace;
@@ -626,3 +627,5 @@ body:not([data-fx-motion="off"]) .worldmap-wrap.animate .wm-token-in { animation
 .fx-layer .fx-new { font-family: var(--mono); font-size: 1.4rem; line-height: 1.5; margin: .6rem 0 0; color: var(--ink); min-height: 1.5em;
   border-left: 6px solid var(--green); padding-left: .8rem; background: var(--ok-bg); }
 @media (prefers-reduced-motion: reduce) { .fx-lower { animation: none !important; } }
+.board-open { background: var(--un-blue); border-color: var(--un-blue); font-family: var(--serif); letter-spacing: .04em; box-shadow: 0 4px 0 var(--walnut-dk); }
+.board-open:hover { background: var(--walnut); border-color: var(--walnut); }

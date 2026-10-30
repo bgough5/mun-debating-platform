@@ -46,6 +46,8 @@ TOKENS = {
     "sea": "#1F4E5A", "sea-lt": "#2B6473", "land": "#E4D6AE",
     "map-yes": "#6FAF7E", "map-no": "#C9675E", "map-abstain": "#B8B2A2",
     "reg-afr": "#D9A441", "reg-apg": "#C97B5A", "reg-eeg": "#8E9CC9", "reg-grulac": "#7DB37A", "reg-weog": "#6FA3B8",
+    # The board (D-092): a walnut war-room table; UN blue for the institution (banners, the stage track).
+    "walnut-dk": "#24160B", "walnut": "#3E2814", "un-blue": "#1F4E79", "un-blue-lt": "#5B8FCB", "lit": "#F4D77A",
 }
 
 TEXT, LARGE, UI = 4.5, 3.0, 3.0
@@ -81,6 +83,9 @@ PAIRS = [
     ("ink", "parchment-dk", TEXT, "text on worn parchment"), ("stamp", "parchment", TEXT, "red stamp and headline on parchment"),
     ("white", "stamp", TEXT, "breaking news band"), ("maroon", "parchment", TEXT, "maroon headings on parchment"),
     ("green", "parchment", TEXT, "'yes' on parchment"), ("brass", "felt-dk", UI, "brass trim on dark felt (non-text)"),
+    ("white", "un-blue", TEXT, "board banners"), ("parchment", "walnut-dk", TEXT, "text on the board's table"),
+    ("parchment", "walnut", TEXT, "text on the board's rails"), ("ink", "lit", TEXT, "text on a lit country token"),
+    ("brass", "walnut-dk", UI, "brass trim on the table (non-text)"),
 ]
 
 

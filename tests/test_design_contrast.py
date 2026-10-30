@@ -36,3 +36,12 @@ def test_no_raw_colours_outside_tokens():
     body = re.sub(r":root\s*\{.*?\}", "", CSS, count=1, flags=re.S)
     raw = sorted(set(re.findall(r"#[0-9A-Fa-f]{6}\b|#[0-9A-Fa-f]{3}\b", body)))
     assert raw == []
+
+
+def test_the_board_uses_only_tokens():
+    """The board (D-092) has its own stylesheet; it takes every colour from the same tokens."""
+    board = (Path(__file__).resolve().parents[1] / "app" / "static" / "css" / "board.css").read_text(encoding="utf-8")
+    assert re.findall(r"#[0-9A-Fa-f]{6}\b|#[0-9A-Fa-f]{3}\b", board) == []
+    used = set(re.findall(r"var\(--([a-z0-9-]+)", board)) - {"w"}          # --w is a bar width, set by board.js
+    defined = set(re.findall(r"--([a-z0-9-]+):", CSS))
+    assert used <= defined, used - defined

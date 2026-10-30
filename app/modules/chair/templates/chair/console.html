@@ -3,6 +3,7 @@
 {% block content %}
 <h1>{{ icon("chair") }} Chair: {{ s.committee }}</h1>
 <div class="gavel-bar" data-fx-room="chair">
+  <button type="button" class="board-open" data-board-open="/projector/{{ s.projector_token }}">{{ icon("projector") }} Open the board</button>
   <form method="post" action="/chair/{{ s.id }}/gavel" class="inline">{{ hidden_csrf(csrf) }}
     <button type="submit" name="knocks" value="2" class="gavel-button">{{ icon("chair") }} Gavel</button>
     <button type="submit" name="knocks" value="1" class="secondary">One tap</button></form>
@@ -65,7 +66,7 @@
           <div class="field"><label for="ape">Extra time (%)</label><input id="ape" type="number" name="extra_percent" min="0" max="200" value="50" style="width:5rem"></div>
           <button type="submit" class="secondary">Save</button></form>
       </details>{% endif %}
-      <p><a href="/projector/{{ s.projector_token }}" target="_blank" rel="noopener">Open the projector view</a> <span class="small muted">(no sign-in; share the link only on the projector)</span></p>
+      <p><a href="/projector/{{ s.projector_token }}" target="_blank" rel="noopener">Open the board</a> in a new window, then drag it to the projector screen and press F11 for full screen. <a href="/projector/{{ s.projector_token }}/plain" target="_blank" rel="noopener">Plain view</a> if the projector struggles. <span class="small muted">(No sign-in: show the link only on the projector.)</span></p>
       <p><a href="/chair/{{ s.id }}/minutes">Minutes</a> · <a href="/mun/committees/{{ s.committee_id }}">Committee and resolutions</a>
         · <a href="/mun/committees/{{ s.committee_id }}/amendments">Amendment board</a> · <a href="/chair/{{ s.id }}/messages">Delegate messages</a></p>
       <div class="row">

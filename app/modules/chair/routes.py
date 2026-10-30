@@ -572,12 +572,40 @@ def live_second(request: Request, sid: int, mid: int, sess=Depends(require_stude
 
 # ---------- projector (no sign-in; the link carries an unguessable token) ----------
 
+def _projector_sid(conn, token: str) -> int:
+    sid = scalar(conn, "SELECT id FROM live_session WHERE projector_token = ?", (token,))
+    if not sid:
+        raise UserError("That projector link isn't valid. Copy it again from the chair screen.", 404)
+    return sid
+
+
 @router.get("/projector/{token}")
 def projector(request: Request, token: str):
+    """The board (D-092): the war-room table for the second screen, a page of its own."""
+    from app.modules.chair import board as B
     with request.app.state.db.read() as conn:
-        sid = scalar(conn, "SELECT id FROM live_session WHERE projector_token = ?", (token,))
-        if not sid:
-            raise UserError("That projector link isn't valid. Copy it again from the chair screen.", 404)
+        sid = _projector_sid(conn, token)
+        st = B.state(conn, sid)
+        s = C.get_session(conn, sid)
+        wmap = B.static_board(conn, s["committee_id"])
+    return render(request, "chair/board.html", {"title": f"{st['session']['committee']}: the board", "token": token, "st": st,
+                                                "wmap": wmap, "sid": sid})
+
+
+@router.get("/projector/{token}/state.json")
+def projector_state(request: Request, token: str):
+    from fastapi.responses import JSONResponse
+    from app.modules.chair import board as B
+    with request.app.state.db.read() as conn:
+        st = B.state(conn, _projector_sid(conn, token))
+    return JSONResponse(st, headers={"Cache-Control": "no-store"})
+
+
+@router.get("/projector/{token}/plain")
+def projector_plain(request: Request, token: str):
+    """The plain projector page, kept as a fallback for a screen that struggles with the board."""
+    with request.app.state.db.read() as conn:
+        sid = _projector_sid(conn, token)
         ctx = session_view(conn, sid)
     return render(request, "chair/projector.html", {"title": f"{ctx['s']['committee']} — live", "token": token, **ctx})
 

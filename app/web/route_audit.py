@@ -31,6 +31,8 @@ PUBLIC = {
     "/s/{code}": "Students: your own sign-in link from your card; needs a valid personal code (throttled)",
     "/projector/{token}": "Projector view of a live session; needs the session's unguessable token",
     "/projector/{token}/f": "Projector view fragment; needs the token",
+    "/projector/{token}/state.json": "The board's live state (D-092): what the projector shows anyway; needs the token",
+    "/projector/{token}/plain": "The plain projector page, the board's fallback; needs the token",
     "/debating/projector/{token}": "Projector view of a debating event; needs the event's unguessable token",
     "/debating/projector/{token}/f": "Projector fragment; needs the token",
     "/debating/present/{token}": "Projector view of a class debate or speaking round; needs the run's unguessable token",

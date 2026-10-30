@@ -238,6 +238,15 @@
     document.querySelectorAll("form[data-autosave]").forEach(function (f) { if (src !== f && !f.contains(src)) autosave(f, true); });
   });
 
+  // The board (D-092) opens in its own window for the extended screen: drag it across and press F11.
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-board-open]");
+    if (!b) return;
+    e.preventDefault();
+    var w = window.open(b.getAttribute("data-board-open"), "soc-board", "popup=yes,width=1280,height=720");
+    if (w) w.focus(); else location.href = b.getAttribute("data-board-open");
+  });
+
   function showFind() { document.querySelectorAll("[data-find]").forEach(function (b) { b.hidden = false; }); }
   showFind();
   document.addEventListener("htmx:load", showFind);         // boosted navigation swaps the page in
