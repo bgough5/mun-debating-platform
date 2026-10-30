@@ -385,6 +385,57 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 
 
 
+
+
+### D-090 A real world map in the board-game look, with real alignments — Decided (30 Oct 2026, Ben)
+Ben approved downloading a real world map, to be drawn in the board-game look, and asked that "real world alliances etc are given or allignment shown somehow". He also asked that none of it "take away from the core idea or core functionality".
+
+- **Map data:**
+  - Natural Earth 1:50m country borders, v5.1.2. They're public domain, downloaded from github.com/nvkelso/natural-earth-vector on 30 Oct 2026.
+  - `tools/build_worldmap.py` projects them (Natural Earth projection), simplifies them and writes `app/modules/mun/worldmap.json`: 206 countries in 113 KB. The download isn't kept in the repo.
+  - The 15 countries too small to draw at this scale (Monaco, Tuvalu, Bahrain and others) are dots at their real positions (`tilemap.LATLON`).
+  - The map's credit says borders are simplified and aren't a statement on any dispute.
+- **The look:** parchment land raised on a deep-sea table, walnut borders, a brass frame and a compass rose. Each country in the room has a game token pinned to it: its code, a star for the five permanent members, and a second line. Tokens in crowded regions are pushed apart, with a leader line home.
+  - Placement is tested never to overlap, and is cached per set of countries: a General Assembly takes 78 ms once, then 0.03 ms.
+- **Whip-count map:** now on the real map, with the same three phases as D-089 (calls only, then the class's call, then the real vote with green or red rings).
+- **Committee world map** (`/mun/committees/<id>/map`, for staff and the committee's students):
+  - Colour by the five UN regional groups (as board territories), or light up any bloc or alliance.
+  - Students see "Your country's groupings": each group their country is in, and which countries in the room share it. It's labelled a starting point, not a vote prediction.
+- **Real alignments:**
+  - The model's blocs (EU, Arab Group, AOSIS, LDC) are listed, plus five alliances kept for the map only in a new table (`alignment`, migration 0015): NATO (32), the African Union (every African UN member), ASEAN (11, with Timor-Leste), the G20 (19 countries) and BRICS (10 full members).
+  - They're entered from memory and labelled "not yet checked against the source", with the source linked. They're editable in Admin (Alliances on the map).
+  - They're kept out of `bloc` on purpose: blocs feed the prediction model's correlation, its bloc-swing analysis and the "votes with its bloc majority" calibration baseline, and adding NATO or the AU there would have changed predictions. A test checks that they never appear among the blocs.
+- **Breaking news scripts** are editable in Admin too (D-089).
+
+### D-089 The live room: gavel, sounds, title cards, vote reveal, whip map, placards, breaking news — Decided (30 Oct 2026, Ben)
+Ben chose these from a list of ideas: a gavel sound; sounds between stages; a title card when the stage changes; the vote reveal; the whip-count map; students raising a placard; and breaking news for Evatt. He wanted it to "feel really cool", borrowing the simple, smooth, real look of 1995 board games such as the old Monopoly CD-ROM.
+
+- **The look:**
+  - Felt, walnut, parchment and brass, with a red stamp. These are new design tokens, all checked for contrast (`app/web/design.py`).
+  - Cards drop in, placards flip, and the stamp lands. Everything is plain CSS and SVG, with no images to licence.
+- **Sounds** (`app/static/js/effects.js`): gavel, stage chime, division bell, breaking-news sting, stamp, placard.
+  - All are made in the browser with the Web Audio API, so there are no recordings to licence.
+  - Every sound shows a caption on screen, for example "[Gavel]".
+- **Admin → Sound and motion:**
+  - Where sounds play: the projector only (default), the projector and the chair's laptop, every screen, or nowhere. This avoids 25 laptops sounding at once, so I added it, though Ben didn't pick it from the list.
+  - Whether things move. A computer set to reduce motion never animates.
+- **When effects play:** they're triggered by state the server already has, carried in `[data-fx]` markers (`chair/_fx.html`, `app/modules/chair/room.py`). A change seen while a page is open plays once; opening or reloading a page plays nothing.
+- **Gavel:** a Gavel button (two knocks) and a single tap on the chair console. The gavel also sounds when the session opens or closes, and when a vote's result lands.
+- **Title cards (projector):** a full-screen card when the stage changes ("Opening statements", with what students do now) and when a division opens.
+- **Vote reveal (projector):** each country's placard flips in roll-call order, the tally bars fill, then PASSED or FAILED is stamped with the gavel.
+- **Whip-count map** (`app/modules/mun/tilemap.py`, `SIM.whip_map`; projector and `/chair/<id>/whip-map`):
+  - Every country is a board tile placed by its approximate centre. A real map would need data downloaded with Ben's OK.
+  - While predictions come in, tiles show only how many predictions each country has, never which way, so the projector can't steer anyone's guess.
+  - During the vote, tiles show the class's most common prediction. After the vote, they show the actual vote, with ✓ or ✗ and "the class read 9 of 14 correctly".
+  - Countries voted by the engine are marked *.
+- **Placards** (migration 0014 `placard`):
+  - A student presses Raise my placard, and their screen becomes a full-size title-deed card with their country, its code and their name.
+  - The chair sees "Placards up" in order, and can Recognise (adds them to the speakers list and lowers the placard), Lower, or Lower all. The projector shows the placards that are up.
+- **Breaking news** (`crisis_script`, `crisis_update`):
+  - The chair sends the next scripted update for the fictional Veloria crisis (six, seeded), or writes their own.
+  - It plays a full-screen news flash with the sting on the projector and every student's screen, and leaves a ticker on the projector and a banner on students' pages.
+  - Scripted updates say "Fictional scenario update: these events are invented for practice." The chair's own say "From the chair." A General Assembly has no script, but can take the chair's own updates.
+
 ### D-088 Rehearse from cue cards; teacher comments on debate teams; prep overview by group; the head of delegation casts the vote — Decided (30 Oct 2026, Ben)
 Ben said yes to rehearsing from the cards, teacher comments on the team overview, and a prep overview. On shared countries: "the head delegate can decide the final vote, but all other mini games, like predicting votes can be individual so that everyone can learn."
 

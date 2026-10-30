@@ -31,6 +31,9 @@ DEFAULTS: dict = {
     "stale_evidence_days": 180,
     # Debating is for the classroom (D-074): tournament and carnival tools are hidden unless switched on (D-084).
     "show_tournaments": False,
+    # Live-room effects (D-089): where sounds play (projector | chair | everywhere | off) and whether things move.
+    "fx_sound": "projector",
+    "fx_motion": True,
 }
 
 

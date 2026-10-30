@@ -97,6 +97,18 @@ def admin_home(request: Request):
                                                "backup_age": last_backup_age_s(s, s.dataset)})
 
 
+@router.post("/effects")
+def effects_settings(request: Request, form=Depends(form_data)):
+    """Where live-room sounds play and whether effects move (D-089)."""
+    sound = form.get("fx_sound")
+    if sound not in ("projector", "chair", "everywhere", "off"):
+        raise UserError("Choose where sounds play.")
+    s = request.app.state.settings
+    s.set("fx_sound", sound)
+    s.set("fx_motion", form.get("fx_motion") == "1")
+    return redirect("/admin", "Sound and motion saved.")
+
+
 @router.get("/t/{name}")
 def table_list(request: Request, name: str, q: str = "", show: str = ""):
     t = _table(name)

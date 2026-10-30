@@ -12,9 +12,10 @@
 <script src="/static/js/app.js" defer></script>
 <script src="/static/js/live.js" defer></script>
 <script src="/static/js/speaking.js" defer></script>
+<script src="/static/js/effects.js" defer></script>
 {% block head %}{% endblock %}
 </head>
-<body hx-boost="true" hx-headers='{"X-CSRF-Token": "{{ csrf }}"}' class="{% block bodyclass %}{% endblock %}" {% block bodyattrs %}{% endblock %}>
+<body hx-boost="true" hx-headers='{"X-CSRF-Token": "{{ csrf }}"}' class="{% block bodyclass %}{% endblock %}" data-fx-sound="{{ settings.get('fx_sound', 'projector') }}" data-fx-motion="{{ 'on' if settings.get('fx_motion', True) else 'off' }}" {% block bodyattrs %}{% endblock %}>
 <div id="live-announcer" class="visually-hidden" role="status" aria-live="polite"></div>
 <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 <a class="skip" href="#main">Skip to main content</a>

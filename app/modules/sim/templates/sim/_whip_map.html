@@ -1,0 +1,13 @@
+{# The whip-count map (D-089, D-090) on the real world map in the board-game look. #}
+{% set labels = {"yes": "Yes", "no": "No", "abstain": "Abstain"} %}
+<div class="whip-map-wrap worldmap-wrap" data-fx-map="{{ wm.round.id }}:{{ wm.phase }}">
+  <p class="whip-map-key">{% if wm.phase == "open" %}<strong>Predictions coming in:</strong> {{ wm.predicted_n }} of {{ wm.tiles|length }} countries have been called. Which way stays hidden until the vote.
+  {% elif wm.phase == "locked" %}<strong>The class's prediction</strong> for each country. Voting is under way.
+  {% else %}<strong>The vote</strong> against the class's prediction: the class read {{ wm.right }} of {{ wm.judged }} correctly.{% endif %}
+  <span class="small">* computed: no student holds the country, so the engine voted. ★ permanent member of the Security Council.</span></p>
+  {% if wm.phase != "open" %}<p class="wm-legend"><span><i class="wm-yes"></i>Yes</span><span><i class="wm-no"></i>No</span><span><i class="wm-abstain"></i>Abstain</span>
+    {% if wm.phase == "revealed" %}<span>Green ring: the class called it</span><span>Red ring: missed</span>{% endif %}</p>{% endif %}
+  {% set wmap = wm.wmap %}{% set wm_label = "Whip-count map: " ~ wm.round.title %}
+  {% include "mun/_worldmap.html" %}
+  <ul class="visually-hidden">{% for t in wm.tiles %}<li>{{ t.name }}{% if wm.phase == "open" %}: {{ t.n }} predictions{% elif wm.phase == "locked" and t.predicted %}: the class predicts {{ labels[t.predicted] }}{% elif wm.phase == "revealed" and t.actual %}: voted {{ labels[t.actual] }}{% if t.computed %} (computed){% endif %}{% if t.correct is true %}, predicted correctly{% elif t.correct is false %}, the class predicted {{ labels[t.predicted] }}{% endif %}{% endif %}</li>{% endfor %}</ul>
+</div>

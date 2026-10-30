@@ -63,6 +63,15 @@ At most 25 students can be in one live session. Everything also works with fewer
 
 **Whip count and prediction:** the committee's **Evidence** page records what each country has said, with its source. **Prediction** shows the chance the resolution passes, the countries most likely to swing it, and **Create lobbying tasks** to turn the swing list into lobbying tasks. Predictions are estimates: the page shows how uncertain each country is, and "unknown" where there's no evidence.
 
+**The live room:** on the chair console:
+- **Gavel** knocks twice, and **One tap** once.
+- **Placards up** lists students who have raised their placard: **Recognise** puts them on the speakers list.
+- **Breaking news** sends a news flash to every screen. Evatt's fictional Veloria crisis has six scripted updates, or you can write your own.
+
+The projector shows a title card at each stage, a vote reveal with the PASSED or FAILED stamp, and the **whip map** (also under Whip map on the console): the class's predictions and the real vote on a world map.
+
+**World map** (committee page, and students' prepare page): the committee's countries on a world map, coloured by the UN regional groups, or with a bloc or alliance (EU, NATO, African Union, ASEAN, G20, BRICS and more) lit up. Students see which groups their country is in and who else in the room shares them. The memberships were entered from memory and are marked unchecked until someone checks them in Admin. To hear sounds, click **Turn on sound** on the projector once; browsers need a click before playing sound. Admin → **Sound and motion** sets where sounds play (the projector only, by default) and whether things move.
+
 **Running a live session (chair):** Chair → **Open a session** for the committee. The chair console has:
 - **Speakers list:** add delegations, **Next speaker**, **Yield**. Students can add themselves from their own screen.
 - **Timers:** start, pause, extend. A student who needs more time can be given an adjustment (WCAG 2.2.1); it applies only to them.

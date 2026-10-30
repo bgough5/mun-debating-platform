@@ -7,6 +7,7 @@
 {% if mine %}<div class="ok-box">You are in the <strong>{{ mine.iso3 }}</strong> delegation.</div>{% endif %}
 <div class="row no-print">
   <a class="button secondary" href="/mun/committees/{{ com.id }}/evidence">Evidence</a>
+  <a class="button secondary" href="/mun/committees/{{ com.id }}/map">{{ icon("conference") }} World map</a>
   {% if modules.chair and access == 'manage' %}<a class="button secondary" href="/chair/committee/{{ com.id }}">Run a live session</a>{% endif %}
 </div>
 

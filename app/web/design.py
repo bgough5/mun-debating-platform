@@ -38,6 +38,14 @@ TOKENS = {
     # Speech timer bells as colour (D-075; the design system's on-screen timer colours). Ink text on each, and the
     # words always say which phase it is, so colour is never the only signal.
     "time-go": "#3FB36A", "time-warn": "#F2B705", "time-over": "#EF5A4F",
+    # Table-top game look for the live room (D-089): felt and walnut behind parchment cards, a red stamp, brass trim.
+    "felt": "#1E5C3A", "felt-dk": "#143F28", "wood": "#5C3A1E", "parchment": "#F7F0DC", "parchment-dk": "#E9DDBA",
+    "stamp": "#A4231B", "brass": "#C9A227",
+    # The world map (D-090): sea, land, vote fills and the five UN regional groups as board territories. Fills only;
+    # every label sits on a parchment or white token, never on these colours.
+    "sea": "#1F4E5A", "sea-lt": "#2B6473", "land": "#E4D6AE",
+    "map-yes": "#6FAF7E", "map-no": "#C9675E", "map-abstain": "#B8B2A2",
+    "reg-afr": "#D9A441", "reg-apg": "#C97B5A", "reg-eeg": "#8E9CC9", "reg-grulac": "#7DB37A", "reg-weog": "#6FA3B8",
 }
 
 TEXT, LARGE, UI = 4.5, 3.0, 3.0
@@ -68,6 +76,11 @@ PAIRS = [
     ("proj-line", "proj-bg", 1.0, "projector dividers (decorative)"),
     ("ink", "time-go", TEXT, "speech timer: speaking"), ("ink", "time-warn", TEXT, "speech timer: warning bell"),
     ("ink", "time-over", TEXT, "speech timer: past time"),
+    ("white", "felt", TEXT, "text on the felt table (title cards, reveal)"), ("white", "felt-dk", TEXT, "text on dark felt"),
+    ("white", "wood", TEXT, "text on the walnut frame"), ("ink", "parchment", TEXT, "text on parchment cards"),
+    ("ink", "parchment-dk", TEXT, "text on worn parchment"), ("stamp", "parchment", TEXT, "red stamp and headline on parchment"),
+    ("white", "stamp", TEXT, "breaking news band"), ("maroon", "parchment", TEXT, "maroon headings on parchment"),
+    ("green", "parchment", TEXT, "'yes' on parchment"), ("brass", "felt-dk", UI, "brass trim on dark felt (non-text)"),
 ]
 
 

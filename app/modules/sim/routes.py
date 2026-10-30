@@ -33,6 +33,23 @@ def chair_guide(request: Request, sid: int, sess=Depends(require_staff)):
     return render(request, "sim/_chair_guide.html", ctx)
 
 
+@router.get("/chair/{sid}/whip-map")
+def chair_whip_map(request: Request, sid: int, sess=Depends(require_staff)):
+    """The class's whip count on a world tile map (D-089), updating live."""
+    with request.app.state.db.read() as conn:
+        s = _manage(conn, request, sid)
+        ctx = session_view(conn, sid)
+    return render(request, "sim/whip_map.html", {"title": f"Whip map: {ctx['s']['committee']}", **ctx})
+
+
+@router.get("/chair/{sid}/whip-map/f")
+def chair_whip_map_fragment(request: Request, sid: int, sess=Depends(require_staff)):
+    with request.app.state.db.read() as conn:
+        _manage(conn, request, sid)
+        ctx = session_view(conn, sid)
+    return render(request, "sim/_whip_map_region.html", ctx)
+
+
 @router.post("/chair/{sid}/stage")
 def chair_stage(request: Request, sid: int, sess=Depends(require_staff), form=Depends(form_data)):
     def act(w, s):

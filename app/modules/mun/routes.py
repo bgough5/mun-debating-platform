@@ -175,6 +175,50 @@ def committee_view(request: Request, committee_id: int, s=Depends(require_any)):
         "access": access, "mine": mine, "tasks": tasks})
 
 
+@router.get("/committees/{committee_id}/map")
+def committee_map(request: Request, committee_id: int, view: str = "region", s=Depends(require_any)):
+    """The committee on the world map (D-090): regional groups as territories, or any bloc or alliance lit up, with
+    a token on each country in the room. Students see which groupings their own country shares with whom."""
+    from app.modules.mun import worldmap as WMAP
+    with request.app.state.db.read() as conn:
+        _access(conn, request, committee_id)
+        com = one(conn, "SELECT cm.*, cf.name AS conference FROM committee cm JOIN conference cf ON cf.id = cm.conference_id "
+                        "WHERE cm.id = ?", (committee_id,))
+        dels = rows(conn, "SELECT d.id, d.iso3, c.name FROM delegation d JOIN country c ON c.iso3 = d.iso3 "
+                          "WHERE d.committee_id = ? AND d.deleted_at IS NULL ORDER BY c.name", (committee_id,))
+        holders: dict = {}
+        for m in rows(conn, "SELECT dm.delegation_id, st.first_name, st.last_initial FROM delegation_member dm "
+                            "JOIN student st ON st.id = dm.student_id JOIN delegation d ON d.id = dm.delegation_id "
+                            "WHERE d.committee_id = ? AND dm.deleted_at IS NULL ORDER BY dm.role = 'head' DESC, st.first_name",
+                      (committee_id,)):
+            holders.setdefault(m["delegation_id"], []).append(display_name(m["first_name"], m["last_initial"]))
+        groups = WMAP.groupings(conn)
+        chosen = next((g for g in groups if g["code"] == view), None)
+        codes = [d["iso3"] for d in dels]
+        labels = {d["iso3"]: (holders[d["id"]][0] + (f" +{len(holders[d['id']]) - 1}" if len(holders[d["id"]]) > 1 else ""))
+                  if d["id"] in holders else "computed" for d in dels}
+        if chosen:
+            wmap = WMAP.board(conn, codes, mode="bloc", labels=labels, highlight=chosen["members"])
+        else:
+            view = "region"
+            wmap = WMAP.board(conn, codes, mode="region", labels=labels)
+        mine = _my_delegation(conn, request.state.actor, committee_id)
+        my_groups = []
+        if mine:
+            region = scalar(conn, "SELECT region FROM country WHERE iso3 = ?", (mine["iso3"],))
+            in_room = {d["iso3"]: d["name"] for d in dels if d["iso3"] != mine["iso3"]}
+            if region in WMAP.REGIONS:
+                same = [n for iso, n in in_room.items() if scalar(conn, "SELECT region FROM country WHERE iso3 = ?", (iso,)) == region]
+                my_groups.append({"name": WMAP.REGIONS[region], "code": "region", "kind": "UN regional group", "allies": same, "verified": 0})
+            for g in groups:
+                if mine["iso3"] in g["members"]:
+                    my_groups.append({"name": g["name"], "code": g["code"], "kind": g["kind"], "verified": g["verified"],
+                                      "allies": [n for iso, n in in_room.items() if iso in g["members"]]})
+    return render(request, "mun/committee_map.html", {
+        "title": f"World map: {com['name']}", "com": com, "wmap": wmap, "groups": groups, "view": view, "chosen": chosen,
+        "mine": mine, "my_groups": my_groups, "dels": dels, "staff": request.state.actor.is_staff})
+
+
 @router.post("/committees/{committee_id}/delegations")
 def delegations_add(request: Request, committee_id: int, s=Depends(require_staff), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:

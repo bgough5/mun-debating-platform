@@ -8,6 +8,14 @@
     <form method="post" action="/chair/{{ s.id }}/points/{{ p.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="status" value="{{ st }}"><button type="submit" class="{{ '' if loop.first else 'secondary' }}">{{ lbl }}<span class="visually-hidden"> {{ p.label }} from {{ p.country }}</span></button></form>{% endfor %}</li>{% endfor %}</ul>
 </div>
 {% endif %}
+{% if placards %}<div class="card placards-card" data-announce="{{ placards|length ~ ' placards up' }}" data-announce-key="placards">
+  <h3 class="h4">{{ icon("point") }} Placards up ({{ placards|length }})</h3>
+  <ol class="plain">{% for p in placards %}<li><strong>{{ p.by }}</strong>
+    <form method="post" action="/chair/{{ s.id }}/placards" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="placard_id" value="{{ p.id }}">
+      <button type="submit" name="action" value="recognise" class="link">Recognise<span class="visually-hidden"> {{ p.by }}</span></button>
+      <button type="submit" name="action" value="lower" class="link">Lower<span class="visually-hidden"> {{ p.by }}'s placard</span></button></form></li>{% endfor %}</ol>
+  <form method="post" action="/chair/{{ s.id }}/placards" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" name="action" value="lower_all" class="secondary">Lower all placards</button></form>
+  <p class="small muted">Recognise adds them to the speakers list and lowers their placard.</p></div>{% endif %}
 <div class="card" data-announce="{{ 'Now speaking: ' ~ current.country if current else 'No one has the floor' }}" data-announce-key="speaker">
   <p>Now speaking: <strong>{% if current %}{{ current.by }}{% else %}no one{% endif %}</strong></p>
   <div class="row">

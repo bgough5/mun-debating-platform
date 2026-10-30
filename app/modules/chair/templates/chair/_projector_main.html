@@ -1,5 +1,9 @@
 {% from "chair/_timer.html" import timer %}
 <span hidden data-view-seq="{{ view_seq }}"></span>
+{% include "chair/_fx.html" %}
+{% if fx.reveal %}<template id="fx-reveal" data-title="{{ fx.reveal.title }}" data-passed="{{ fx.reveal.passed or 0 }}" data-yes="{{ fx.reveal.yes }}" data-no="{{ fx.reveal.no }}" data-abstain="{{ fx.reveal.abstain }}" data-summary="{{ fx.reveal.summary }}">
+{% for v in fx.reveal.votes %}<i data-fx-vote="{{ v.vote }}" data-iso3="{{ v.iso3 }}" data-name="{{ v.name }}" data-label="{{ v.label }}"></i>{% endfor %}
+</template>{% endif %}
 <h1>{{ s.committee }}</h1>
 <p class="eyebrow" style="color:inherit">Stage {{ sim.stage_index + 1 }} of {{ sim.stages|length }}: {{ sim.stage.name }}{% if s.agenda %} · Agenda: {{ s.agenda }}{% endif %}</p>
 <p>{{ {'formal':'Formal debate','moderated':'Moderated caucus','unmoderated':'Unmoderated caucus','voting':'Voting procedure'}[s.mode] }}{% if s.mode_topic %}: {{ s.mode_topic }}{% endif %}{% if s.state != 'open' %} — session {{ s.state }}{% endif %}</p>
@@ -15,4 +19,7 @@
   <p class="bigstat">{{ division.cast }} of {{ division.voters|length }} voted</p>
   <p style="font-size:1.6rem">{{ icon("yes") }} {{ division.counts.yes }} yes · {{ icon("no") }} {{ division.counts.no }} no · {{ icon("abstain") }} {{ division.counts.abstain }} abstain</p>
   {% if division.veto_by %}<p style="font-size:1.6rem">{{ icon("warning") }} <strong>Veto:</strong> {{ division.veto_by|join(', ') }}</p>{% endif %}</div>{% endif %}
+{% if wm and (wm.phase != "revealed" or sim.stage.code in ("voting_procedure", "debrief")) %}<div class="card"><h2>{{ icon("whip") }} Whip count: {{ wm.round.title }}</h2>{% include "sim/_whip_map.html" %}</div>{% endif %}
+{% if placards %}<div class="card"><h2>{{ icon("point") }} Placards up</h2><div class="placard-row">{% for p in placards %}<span class="mini-placard"><strong>{{ p.country }}</strong><span>{{ p.name }}</span></span>{% endfor %}</div></div>{% endif %}
+{% if fx.news %}<div class="news-ticker" role="status"><span class="news-tag">Breaking</span><span class="news-head">{{ fx.news.headline }}</span>{% if fx.news.label %}<span class="news-label">{{ fx.news.label }}</span>{% endif %}</div>{% endif %}
 {% if recent %}<div class="card"><h2>Last result</h2><p style="font-size:1.6rem">{{ recent[0].title }}: {{ recent[0].summary }}</p></div>{% endif %}
