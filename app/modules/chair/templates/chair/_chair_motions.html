@@ -2,7 +2,7 @@
 {% for m in motions %}
 <div class="card">
   <p><strong>{{ m.name }}</strong>{% if m.topic %}: {{ m.topic }}{% endif %}{% if m.duration_s %} · {{ (m.duration_s/60)|round(1) }} min{% endif %}{% if m.speaking_time_s %} · {{ m.speaking_time_s }} s speeches{% endif %}
-    <br><span class="small">Proposed by {{ m.proposer or 'chair' }}{% if m.seconder %}, seconded by {{ m.seconder }}{% elif m.needs_second %}, <strong>needs a second</strong>{% endif %} · {{ m.status }}</span></p>
+    <br><span class="small">Proposed by {{ m.proposer_by or 'chair' }}{% if m.seconder %}, seconded by {{ m.seconder_by }}{% elif m.needs_second %}, <strong>needs a second</strong>{% endif %} · {{ m.status }}</span></p>
   {% if m.status == 'proposed' %}
   <div class="row">
     {% if m.needs_second and not m.seconder %}

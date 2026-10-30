@@ -5,7 +5,7 @@
   <p>{{ division.cast }} of {{ division.voters|length }} have voted: {{ division.counts.yes }} yes, {{ division.counts.no }} no, {{ division.counts.abstain }} abstaining.</p>
   {% if division.veto_by %}<p class="error-box" role="status">{{ icon("warning") }} <strong>Veto:</strong> {{ division.veto_by|join(', ') }} {{ 'has' if division.veto_by|length == 1 else 'have' }} voted no. A permanent member's no blocks this vote unless they change it.</p>{% endif %}
   <div class="table-wrap"><table><thead><tr><th scope="col">Delegation</th><th scope="col">Vote</th><th scope="col">Record for them</th></tr></thead><tbody>
-  {% for v in division.voters %}<tr><td>{{ v.name }}{% if v.computed %} <span class="label-computed">computed</span>{% endif %}</td>
+  {% for v in division.voters %}<tr><td>{{ v.name }}{% if v.computed %} <span class="label-computed">computed</span>{% elif v.cast_by %} <span class="small muted">cast by {{ v.cast_by }}</span>{% endif %}</td>
     <td>{% if v.vote %}{{ v.vote|stance }}{% else %}<span class="muted">not yet</span>{% endif %}</td>
     <td>{% if not v.computed %}{% for opt in (['yes','no'] if division.procedural else ['yes','abstain','no']) %}
       <form method="post" action="/chair/{{ s.id }}/divisions/{{ division.id }}" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="vote"><input type="hidden" name="delegation_id" value="{{ v.id }}"><input type="hidden" name="vote" value="{{ opt }}">

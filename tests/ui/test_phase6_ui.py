@@ -33,7 +33,7 @@ def test_guided_session_whip_and_debrief(browser, live):
     student.wait_for_selector("text=What you can do now")
     _no_bad(student, "p6_student_roll_call")
     student.click("button:has-text('Present and voting')")
-    student.wait_for_selector("text=You answered")
+    student.wait_for_selector("text=answered: Present and voting")     # "Ben G, Australia answered" (D-086)
     chair.click("button:has-text('Answer for delegations without a student')")
     chair.wait_for_selector("text=computed")
     # Stage changes reach the student without a reload.
@@ -56,7 +56,7 @@ def test_guided_session_whip_and_debrief(browser, live):
     chair.wait_for_selector("text=Close voting and announce")
     student.wait_for_selector("#h-vote", timeout=10000)
     student.click("#live-main button[name='vote'][value='yes']")
-    student.wait_for_selector("text=Your delegation voted")
+    student.wait_for_selector("text=(cast by")                          # "Australia voted yes (cast by Ben G, Australia)"
     chair.click("button:has-text('Close voting and announce')")
     chair.wait_for_selector("text=Result:")
     _jump(chair, "debrief")

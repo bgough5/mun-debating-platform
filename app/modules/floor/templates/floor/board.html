@@ -13,7 +13,7 @@
 <article class="card" id="a{{ a.id }}" aria-labelledby="ah{{ a.id }}">
   <h2 id="ah{{ a.id }}" class="h3">{{ a.id }}. {{ a.kind_label }} <span class="small muted">({{ a.resolution }})</span></h2>
   <p><span class="badge {{ {'adopted':'st-yes','rejected':'st-no','floor':'st-unk'}.get(a.state, 'st-abs') }}">{{ a.state_label }}</span>
-    {% if a.sponsor_name %} Sponsor: {{ a.sponsor_name }}{% endif %}{% if a.supports|selectattr('kind','equalto','signatory')|list %} · Signed by {{ a.supports|selectattr('kind','equalto','signatory')|map(attribute='iso3')|join(', ') }}{% endif %}</p>
+    {% if a.sponsor_by %} Sponsor: {{ a.sponsor_by }}{% endif %}{% if a.supports|selectattr('kind','equalto','signatory')|list %} · Signed by {{ a.supports|selectattr('kind','equalto','signatory')|map(attribute='by')|join('; ') }}{% endif %}</p>
   {% if a.stale %}<p class="small">{{ icon("warning") }} The clause has changed since this was written. The changes below compare with today's text.</p>{% endif %}
   <p class="paragraph diff">{{ a.diff }}</p>
   {% if a.rationale %}<p class="small"><strong>Why:</strong> {{ a.rationale }}</p>{% endif %}
@@ -28,7 +28,7 @@
   {% endif %}
   {% if a.state in ('submitted', 'ready') and mine and not is_sponsor %}
     {% if a.supports|selectattr('delegation_id','equalto',mine.id)|selectattr('kind','equalto','signatory')|list %}
-    <form method="post" action="/mun/amendments/{{ a.id }}/act" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="unsign"><button type="submit" class="secondary">Remove my signature</button></form>
+    <form method="post" action="/mun/amendments/{{ a.id }}/act" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="unsign"><button type="submit" class="secondary">Remove {{ mine.country }}'s signature</button></form>
     {% else %}
     <form method="post" action="/mun/amendments/{{ a.id }}/act" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="sign"><button type="submit" class="secondary">{{ icon("check") }} Sign it</button></form>
     {% endif %}
@@ -43,13 +43,13 @@
   {% if a.suggestions %}
   <h3 class="h4">Suggested edits</h3>
   <ul class="plain">{% for g in a.suggestions %}<li>
-    <p class="small"><strong>{{ g.country }}</strong> · {{ g.status }}{% if g.note %} · “{{ g.note }}”{% endif %}</p>
+    <p class="small"><strong>{{ g.by }}</strong> · {{ g.status }}{% if g.note %} · “{{ g.note }}”{% endif %}</p>
     <p class="paragraph diff">{{ g.diff }}</p>
     {% if g.status == 'pending' and (is_sponsor or staff) and a.state in ('submitted', 'ready') %}
     <form method="post" action="/mun/amendments/{{ a.id }}/act" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="suggestion_id" value="{{ g.id }}"><input type="hidden" name="action" value="accept"><button type="submit">Accept<span class="visually-hidden"> the suggestion from {{ g.country }}</span></button></form>
     <form method="post" action="/mun/amendments/{{ a.id }}/act" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="suggestion_id" value="{{ g.id }}"><input type="hidden" name="action" value="decline"><button type="submit" class="secondary">Decline<span class="visually-hidden"> the suggestion from {{ g.country }}</span></button></form>
     {% elif g.status == 'pending' and mine and g.delegation_id == mine.id %}
-    <form method="post" action="/mun/amendments/{{ a.id }}/act" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="suggestion_id" value="{{ g.id }}"><input type="hidden" name="action" value="withdraw_suggestion"><button type="submit" class="secondary">Withdraw my suggestion</button></form>
+    <form method="post" action="/mun/amendments/{{ a.id }}/act" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="suggestion_id" value="{{ g.id }}"><input type="hidden" name="action" value="withdraw_suggestion"><button type="submit" class="secondary">Withdraw {{ mine.country }}'s suggestion</button></form>
     {% endif %}</li>{% endfor %}</ul>
   {% endif %}
   {% if a.state in ('draft', 'submitted', 'ready') and (is_sponsor or staff) %}

@@ -382,3 +382,21 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
   - `/start?group=<id>` opens with a group ticked, from a group's page or the Dashboard.
 - **Sign-in cards** can be printed for a group (`/people/cards?group=<id>`).
 - **Not changed:** the getting-started wizard still creates a class. MUN committees and debating runs still belong to a class behind the scenes, which decides who may run them.
+
+### D-086 Several students on one country; everything a student does is signed "Ben G, Australia" — Decided (30 Oct 2026, Ben)
+Ben: multiple students on one country should each "access everything about their country and all tabs", and messages, speeches "or otherwise" should note the names, for example "Ben G, Australia : Jarryd R, Australia", across the whole page. Some countries have one delegate and others up to four. Numbers needn't be even, and nothing should break if they aren't.
+
+- **Several students per country already worked** (head of delegation and delegates, no limit, and nothing reserved for the head). This change makes it visible and tests it with countries holding 1, 2, 4 and 5 students (`tests/api/test_shared_country.py`).
+- **"Name, Country" everywhere a student acts:**
+  - messages ("You (Ben G, Australia)" for the sender);
+  - points, and the "… is waiting" note for a co-delegate's point;
+  - the speakers list and who is speaking now;
+  - motions (proposed by, seconded by), on the student page, the chair console, the projector and the minutes;
+  - votes ("Australia voted yes (cast by Jarryd R, Australia)") on the student page and the chair's division table;
+  - roll call ("Ben G, Australia answered");
+  - amendment sponsors, signatures and suggested edits.
+
+  It comes from `app/modules/mun/who.py`. Rows that store the student use that. Motions, amendments and signatures don't, so their author comes from the change log, which already records which account wrote each row; nothing new is stored. Votes, roll-call answers and speakers-list entries now store the signed label when a student acts.
+- **One vote per country, as in real Model UN.** Any student holding the country can cast it or change it until voting closes; the page says who cast it.
+- **The live page says who you share the country with:** "You are Australia, with Jarryd R and Sam K."
+- **Co-delegates' speech drafts:** students holding the same country can read each other's drafts (on the live My speech tab and the prepare page) but not change them. Ben chose this on 30 Oct. Other countries still can't see them.

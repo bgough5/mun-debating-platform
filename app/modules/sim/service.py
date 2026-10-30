@@ -116,8 +116,13 @@ def _delegations(conn, committee_id: int) -> list[dict]:
 
 def roll_state(conn, s: dict) -> list[dict]:
     answers = {r["delegation_id"]: r for r in rows(conn, "SELECT * FROM roll_call WHERE session_id = ?", (s["id"],))}
-    return [{**d, "status": answers.get(d["id"], {}).get("status"), "computed": answers.get(d["id"], {}).get("computed", 0)}
-            for d in _delegations(conn, s["committee_id"])]
+    return [{**d, "status": answers.get(d["id"], {}).get("status"), "computed": answers.get(d["id"], {}).get("computed", 0),
+             "answered_by": answers.get(d["id"], {}).get("answered_by", "")} for d in _delegations(conn, s["committee_id"])]
+
+
+def _signed(w, delegation_id: int) -> str:
+    from app.modules.chair.service import actor_label
+    return actor_label(w.conn, w.actor, delegation_id)
 
 
 def roll_present(conn, sid: int) -> int:
@@ -133,7 +138,7 @@ def answer_roll(w: Writer, s: dict, delegation_id: int, status: str, computed: b
     w.conn.execute("INSERT INTO roll_call (session_id, delegation_id, status, computed, answered_by, answered_at) VALUES (?,?,?,?,?,?) "
                    "ON CONFLICT (session_id, delegation_id) DO UPDATE SET status = excluded.status, computed = excluded.computed, "
                    "answered_by = excluded.answered_by, answered_at = excluded.answered_at",
-                   (s["id"], delegation_id, status, int(computed), w.actor.label, now_iso()))
+                   (s["id"], delegation_id, status, int(computed), _signed(w, delegation_id), now_iso()))
     w.log("roll_call", f"{s['id']}:{delegation_id}", "answered", None, {"status": status, "computed": computed}, ch(s["id"]))
 
 

@@ -48,6 +48,8 @@ def _shared_view(conn, sid: int) -> dict:
         current = one(conn, "SELECT e.*, d.iso3, c.name AS country, c.flag_svg, st.first_name, st.last_initial FROM speakers_list_entry e "
                             "JOIN delegation d ON d.id = e.delegation_id JOIN country c ON c.iso3 = d.iso3 "
                             "LEFT JOIN student st ON st.id = e.student_id WHERE e.id = ?", (s["current_entry_id"],))
+        if current:
+            current = C._speaker_labels([current])[0]
     data = {
         "s": s, "current": current, "queue": C.waiting(conn, sid, s),
         "timer_rows": rows(conn, "SELECT * FROM timer WHERE session_id = ? AND state != 'done' ORDER BY kind = 'speaker' DESC, id DESC", (sid,)),
@@ -107,7 +109,8 @@ def session_view(conn, sid: int, actor=None) -> dict:
     view["timers"] = [{**t, "remaining": C.remaining(t, t0), "server_now": t0} for t in view["timer_rows"]]
     mine = None
     if actor is not None and actor.kind == "student":
-        mine = one(conn, "SELECT d.*, dm.role FROM delegation d JOIN delegation_member dm ON dm.delegation_id = d.id "
+        mine = one(conn, "SELECT d.*, dm.role, c.name AS country FROM delegation d JOIN delegation_member dm ON dm.delegation_id = d.id "
+                         "JOIN country c ON c.iso3 = d.iso3 "
                          "WHERE dm.student_id = ? AND d.committee_id = ? AND dm.deleted_at IS NULL AND d.deleted_at IS NULL",
                    (actor.id, view["s"]["committee_id"]))
     my_place = next((i for i, q in enumerate(view["queue"], 1) if mine and q["delegation_id"] == mine["id"]), None)
@@ -121,7 +124,10 @@ def session_view(conn, sid: int, actor=None) -> dict:
     my_side = None
     if mine and view["floor_amendment"]:
         my_side = next((q["side"] for q in view["queue"] if q["delegation_id"] == mine["id"]), None)
-    view.update(mine=mine, my_place=my_place, my_vote=my_vote, my_roll=my_roll, my_whip=my_whip, my_points=my_points, my_side=my_side)
+    # Everyone else holding this country (a country can have one student or several, D-086).
+    from app.modules.mun.who import co_delegates
+    team = [t for t in co_delegates(conn, mine["id"]) if t["id"] != actor.id] if mine else []
+    view.update(mine=mine, team=team, my_place=my_place, my_vote=my_vote, my_roll=my_roll, my_whip=my_whip, my_points=my_points, my_side=my_side)
     return view
 
 
