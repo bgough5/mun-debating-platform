@@ -250,6 +250,50 @@
     }, 7000);
   }
 
+  // "Now speaking" (projector): a game card slides up along the bottom and away again. It never covers the timer.
+  function nowSpeaking(name, line) {
+    var old = document.querySelector(".fx-lower");
+    if (old) old.remove();
+    var card = el("div", "fx-lower" + (motionOn() ? " fx-moving" : ""));
+    card.setAttribute("role", "status");
+    card.appendChild(el("span", "fx-lower-tag", "Now speaking"));
+    card.appendChild(el("span", "fx-lower-name", name));
+    if (line) card.appendChild(el("span", "fx-lower-line", line));
+    body.appendChild(card);
+    play("flip");
+    setTimeout(function () { card.classList.add("fx-out"); setTimeout(function () { card.remove(); }, 400); }, 4200);
+  }
+
+  // "Amendment adopted" (projector): the old words struck through, the new words typed in, then the stamp.
+  function adopted(tpl) {
+    var before = tpl.getAttribute("data-before") || "", after = tpl.getAttribute("data-after") || "";
+    var friendly = tpl.getAttribute("data-friendly") === "1";
+    var typeMs = motionOn() ? Math.min(2600, Math.max(600, after.length * 22)) : 0;
+    moment(function (layer) {
+      var card = el("div", "fx-card fx-adopt");
+      card.appendChild(el("p", "fx-eyebrow", friendly ? "Friendly amendment" : "Amendment adopted"));
+      card.appendChild(el("h2", "fx-mid", tpl.getAttribute("data-label")));
+      if (before) { var del = el("p", "fx-old", before); card.appendChild(del); setTimeout(function () { del.classList.add("struck"); }, 500); }
+      var ins = el("p", "fx-new", "");
+      if (after) card.appendChild(ins);
+      var stamp = el("div", "fx-stamp fx-passed", "Adopted");
+      card.appendChild(stamp);
+      layer.appendChild(card);
+      var start = before ? 1300 : 500;
+      if (after && typeMs) {
+        var i = 0, step = typeMs / after.length;
+        setTimeout(function tick() {
+          i = Math.min(after.length, i + Math.max(1, Math.round(16 / step)));
+          ins.textContent = after.slice(0, i);
+          if (i < after.length) setTimeout(tick, 16);
+        }, start);
+      } else {
+        ins.textContent = after;
+      }
+      setTimeout(function () { stamp.classList.add("landed"); play("stamp"); setTimeout(function () { play("gavel", 1); }, 250); }, start + typeMs + 300);
+    }, 1300 + typeMs + 3200);
+  }
+
   // ---------- watch the live markers ----------
   var seen = {};
   function store(k, v) { try { sessionStorage.setItem("fx:" + k, v); } catch (e) { /* ignore */ } }
@@ -290,6 +334,15 @@
           if (/:revealed$/.test(map.getAttribute("data-fx-map"))) play("flip");
         }
       });
+      var spk = m.getAttribute("data-fx-speaker");
+      if (changed(k + ":speaker", spk) && spk && spk !== "none" && room) {
+        nowSpeaking(m.getAttribute("data-fx-speaker-name"), m.getAttribute("data-fx-speaker-line"));
+      }
+      var adopt = m.getAttribute("data-fx-adopted");
+      if (changed(k + ":adopted", adopt) && adopt && adopt !== "none") {
+        var at = document.getElementById("fx-adopt");
+        if (room && at) adopted(at); else play("gavel", 1);
+      }
       var pc = m.getAttribute("data-fx-placards");
       var before = seen[k + ":placards"];
       if (changed(k + ":placards", pc) && +pc > +(before || 0)) play("placard");

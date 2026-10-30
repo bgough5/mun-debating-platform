@@ -145,4 +145,34 @@ def fx_state(conn, sid: int, view: dict) -> dict:
     last = (view.get("recent") or [None])[0]
     return {"gavel": seq, "gavel_n": knocks, "result_id": last["id"] if last else None,
             "reveal": reveal(conn, last["id"]) if last else None, "news": (news(conn, sid, 1) or [None])[0],
-            "stage_line": (view.get("sim") or {}).get("student_prompt") or ""}
+            "stage_line": (view.get("sim") or {}).get("student_prompt") or "", "adopted": last_adopted(conn, sid)}
+
+
+def last_adopted(conn, sid: int) -> dict | None:
+    """The amendment most recently adopted in this session's committee, with the clause before and after (D-091),
+    for the projector's "Amendment adopted" moment. Only adoptions since the session opened count."""
+    s = one(conn, "SELECT committee_id, created_at FROM live_session WHERE id = ?", (sid,))
+    if not s:
+        return None
+    a = one(conn, "SELECT a.*, p.kind AS pkind, p.position, p.current_version_id, MAX(e.seq) AS seq FROM amendment a "
+                  "JOIN paragraph p ON p.id = a.paragraph_id JOIN resolution r ON r.id = p.resolution_id "
+                  "JOIN event_log e ON e.entity = 'amendment' AND e.entity_id = CAST(a.id AS TEXT) "
+                  "WHERE r.committee_id = ? AND a.status IN ('passed', 'friendly') AND e.at >= ? "
+                  "GROUP BY a.id ORDER BY seq DESC LIMIT 1", (s["committee_id"], s["created_at"]))
+    if not a:
+        return None
+    if a["kind"] == "replace":
+        before = scalar(conn, "SELECT pv0.text FROM paragraph_version pv JOIN paragraph_version pv0 ON pv0.id = pv.parent_version_id "
+                              "WHERE pv.paragraph_id = ? AND pv.author_label = ? ORDER BY pv.id DESC LIMIT 1",
+                        (a["paragraph_id"], f"Amendment {a['id']}")) or ""
+        after = a["proposed_text"]
+    elif a["kind"] == "delete":
+        before = scalar(conn, "SELECT text FROM paragraph_version WHERE id = ?", (a["current_version_id"],)) or ""
+        after = ""
+    else:
+        before, after = "", a["proposed_text"]
+    clause = "operative" if a["pkind"] == "operative" else "preambular"
+    label = {"replace": f"Change to {clause} clause {a['position']}", "delete": f"{clause.capitalize()} clause {a['position']} deleted",
+             "add": f"New clause after {clause} clause {a['position']}"}[a["kind"]]
+    return {"id": a["id"], "seq": a["seq"], "label": label, "before": before, "after": after,
+            "friendly": a["status"] == "friendly"}

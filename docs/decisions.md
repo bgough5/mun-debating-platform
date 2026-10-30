@@ -387,6 +387,14 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 
 
 
+
+### D-091 "Now speaking" and "Amendment adopted"; no board-game extras — Decided (30 Oct 2026, Ben)
+From the second list of ideas Ben chose 8 (a speaker card) and 9 (the amendment-adopted moment); 12 (the real map) was already built (D-090). He turned down the board-game extras (Chair's Card draws, dice for speaking order, title-deed cards, intro and credits): "all the extra board games ones will take away from core idea too much and make it trivial, rather than learning". The rule from now on is that effects only show the procedure more clearly; they never add game mechanics.
+
+- **"Now speaking"** (projector): when the Chair calls the next speaker, a card reading "Now speaking · Ken, Bahrain" slides up along the bottom for four seconds and goes. It never covers the timer. The speaker timer's own label now uses the same "Name, Country" form (D-086).
+- **"Amendment adopted"** (projector): when an amendment is adopted (by vote or as friendly), the clause is shown with its old words struck through and the new words typed in, then the ADOPTED stamp lands with one tap of the gavel. It's driven by the latest adoption since the session opened (`room.last_adopted`).
+- **Presentation:** the deck was updated on 30 Oct (version 20, 38 slides) with setup, shared countries, cue cards and teams, the live room, the whip map and the world map.
+
 ### D-090 A real world map in the board-game look, with real alignments — Decided (30 Oct 2026, Ben)
 Ben approved downloading a real world map, to be drawn in the board-game look, and asked that "real world alliances etc are given or allignment shown somehow". He also asked that none of it "take away from the core idea or core functionality".
 

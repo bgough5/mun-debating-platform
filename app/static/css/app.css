@@ -607,3 +607,22 @@ body:not([data-fx-motion="off"]) .worldmap-wrap.animate .wm-token-in { animation
 .wm-legend i.wm-yes { background: var(--map-yes); } .wm-legend i.wm-no { background: var(--map-no); } .wm-legend i.wm-abstain { background: var(--map-abstain); }
 .wm-legend i.wm-member { background: var(--brass); } .wm-legend i.wm-land { background: var(--land); }
 .worldmap-wrap .wm-note { color: var(--white); margin: .4rem 0 0; }
+/* "Now speaking" lower third and "Amendment adopted" (D-091) */
+.fx-lower { position: fixed; left: 50%; bottom: 1.6rem; z-index: 45; transform: translateX(-50%); display: flex; align-items: baseline; gap: 1rem;
+  background: var(--parchment); color: var(--ink); border: 4px solid var(--wood); border-radius: 10px; padding: .7rem 1.6rem;
+  box-shadow: inset 0 0 0 2px var(--brass), 0 10px 0 -2px var(--felt-dk), 0 18px 40px rgb(0 0 0 / 40%); max-width: 92vw; }
+.fx-lower.fx-moving { animation: fx-lower-in .5s cubic-bezier(.2, 1.3, .4, 1) both; }
+.fx-lower.fx-out { opacity: 0; transform: translateX(-50%) translateY(30px); transition: opacity .35s ease, transform .35s ease; }
+@keyframes fx-lower-in { from { transform: translateX(-50%) translateY(140%); } to { transform: translateX(-50%); } }
+.fx-lower-tag { font-family: var(--serif); font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--maroon); font-size: 1rem; }
+.fx-lower-name { font-family: var(--serif); font-weight: 700; font-size: clamp(1.6rem, 3vw, 2.4rem); }
+.fx-lower-line { color: var(--muted); font-size: 1.1rem; }
+.fx-adopt { width: min(92vw, 62rem); text-align: left; padding-bottom: 7rem; }
+.fx-adopt .fx-stamp { bottom: 1.2rem; }
+.fx-adopt .fx-eyebrow, .fx-adopt .fx-mid { text-align: center; }
+.fx-layer .fx-old { font-size: 1.4rem; line-height: 1.5; margin: .4rem 0; color: var(--muted); text-decoration: line-through 3px;
+  text-decoration-color: transparent; transition: text-decoration-color .7s ease; }
+.fx-layer .fx-old.struck, .fx-layer:not(.fx-moving) .fx-old { text-decoration-color: var(--stamp); }
+.fx-layer .fx-new { font-family: var(--mono); font-size: 1.4rem; line-height: 1.5; margin: .6rem 0 0; color: var(--ink); min-height: 1.5em;
+  border-left: 6px solid var(--green); padding-left: .8rem; background: var(--ok-bg); }
+@media (prefers-reduced-motion: reduce) { .fx-lower { animation: none !important; } }

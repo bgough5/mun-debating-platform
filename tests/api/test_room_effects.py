@@ -192,3 +192,30 @@ def test_whip_map_hides_the_direction_until_voting_then_reveals(app, coord):
     page = coord.get(f"/chair/{sid}/whip-map").text
     assert 'data-fx-map="%d:revealed"' % rid in page and "read" in page and "correctly" in page
     assert "<title>Whip map:" in page
+
+
+def test_now_speaking_and_amendment_adopted_markers(app, coord):
+    """D-091: the projector knows who was just called (for the "Now speaking" card) and the latest adopted
+    amendment, with the clause before and after (for the "Amendment adopted" moment)."""
+    sid, ids, tok = evatt(app, coord)
+    st = join_as(app, ids[0])
+    st.post(f"/live/{sid}/speak", {})
+    with app.state.db.write(SYSTEM) as w:
+        C.next_speaker(w, sid)
+    f = coord.get(f"/projector/{tok}/f").text
+    assert marker(f, "speaker") not in (None, "none") and ", " in marker(f, "speaker-name")
+    assert marker(f, "adopted") == "none"
+    com = db_one(app, "SELECT committee_id FROM live_session WHERE id = ?", (sid,))["committee_id"]
+    para = db_one(app, "SELECT p.id, v.text FROM paragraph p JOIN resolution r ON r.id = p.resolution_id JOIN paragraph_version v "
+                       "ON v.id = p.current_version_id WHERE r.committee_id = ? AND p.kind = 'operative' ORDER BY p.position LIMIT 1", (com,))
+    st.post(f"/mun/committees/{com}/amendments", {"paragraph_id": str(para["id"]), "kind": "replace",
+                                                 "proposed_text": "Demands an immediate ceasefire monitored by the region;", "rationale": ""})
+    aid = db_one(app, "SELECT id FROM amendment ORDER BY id DESC LIMIT 1")["id"]
+    st.post(f"/mun/amendments/{aid}/act", {"action": "submit"})
+    from app.modules.floor import service as F
+    with app.state.db.write(SYSTEM) as w:
+        F.accept_friendly(w, sid, aid)
+    f = coord.get(f"/projector/{tok}/f").text
+    assert marker(f, "adopted") not in (None, "none")
+    assert '<template id="fx-adopt"' in f and "Demands an immediate ceasefire monitored by the region" in f
+    assert para["text"][:40].replace("'", "&#39;") in f or para["text"][:40] in f

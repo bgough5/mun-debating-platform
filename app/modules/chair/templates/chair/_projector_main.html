@@ -1,6 +1,7 @@
 {% from "chair/_timer.html" import timer %}
 <span hidden data-view-seq="{{ view_seq }}"></span>
 {% include "chair/_fx.html" %}
+{% if fx.adopted %}<template id="fx-adopt" data-label="{{ fx.adopted.label }}" data-before="{{ fx.adopted.before }}" data-after="{{ fx.adopted.after }}" data-friendly="{{ 1 if fx.adopted.friendly else 0 }}"></template>{% endif %}
 {% if fx.reveal %}<template id="fx-reveal" data-title="{{ fx.reveal.title }}" data-passed="{{ fx.reveal.passed or 0 }}" data-yes="{{ fx.reveal.yes }}" data-no="{{ fx.reveal.no }}" data-abstain="{{ fx.reveal.abstain }}" data-summary="{{ fx.reveal.summary }}">
 {% for v in fx.reveal.votes %}<i data-fx-vote="{{ v.vote }}" data-iso3="{{ v.iso3 }}" data-name="{{ v.name }}" data-label="{{ v.label }}"></i>{% endfor %}
 </template>{% endif %}

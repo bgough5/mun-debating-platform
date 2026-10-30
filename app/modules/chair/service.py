@@ -191,7 +191,7 @@ def next_speaker(w: Writer, sid: int) -> int | None:
     w.update("live_session", sid, {"current_entry_id": nxt["id"]}, ch(sid), action="next_speaker")
     extra = _extra_percent(w.conn, nxt["student_id"])
     dur = s["speaking_time_s"] * (1 + extra / 100)
-    label = nxt["country"] + (f" ({display_name(nxt['first_name'], nxt['last_initial'])})" if nxt["first_name"] else "")
+    label = nxt["by"]                                         # "Ben G, Australia" (D-086)
     if nxt.get("side"):
         label += f" · {nxt['side']} the amendment"
     if extra:

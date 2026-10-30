@@ -6,4 +6,7 @@
   data-fx-result="{{ fx.result_id or 'none' }}"
   data-fx-news="{{ fx.news.id if fx.news else 'none' }}" data-fx-news-headline="{{ fx.news.headline if fx.news else '' }}"
   data-fx-news-body="{{ fx.news.body if fx.news else '' }}" data-fx-news-label="{{ fx.news.label if fx.news else '' }}"
-  data-fx-placards="{{ placards|length }}"></span>
+  data-fx-placards="{{ placards|length }}"
+  data-fx-speaker="{{ current.id if current else 'none' }}" data-fx-speaker-name="{{ current.by if current else '' }}"
+  data-fx-speaker-line="{{ ('Speaking ' ~ current.side ~ ' the amendment') if current and current.side else '' }}"
+  data-fx-adopted="{{ fx.adopted.seq if fx.adopted else 'none' }}"></span>

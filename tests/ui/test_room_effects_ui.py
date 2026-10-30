@@ -95,6 +95,35 @@ def test_projector_moments_and_the_students_placard(browser, live):
     shot(proj, "5_projector_with_placard_and_ticker")
     chair.reload()
     assert "Placards up (1)" in chair.inner_text("body")
+    # "Now speaking": the next speaker's card slides up on the projector (D-091).
+    with live.app.state.db.write(SYSTEM) as w:
+        dl = q(live, "SELECT dm.delegation_id FROM delegation_member dm JOIN delegation d ON d.id = dm.delegation_id "
+                     "JOIN live_session s ON s.committee_id = d.committee_id WHERE s.id = ? AND dm.student_id = ?", (sid, students[0]))[0]
+        C.add_speaker(w, sid, dl["delegation_id"], students[0])
+        C.next_speaker(w, sid)
+    proj.wait_for_selector(".fx-lower", timeout=10000)
+    assert "now speaking" in proj.inner_text(".fx-lower").lower() and ", " in proj.inner_text(".fx-lower-name")
+    proj.wait_for_timeout(600)
+    shot(proj, "8_now_speaking")
+    # "Amendment adopted": old words struck, new words typed, the stamp (D-091).
+    com_id = q(live, "SELECT committee_id FROM live_session WHERE id = ?", (sid,))[0]["committee_id"]
+    para = q(live, "SELECT p.id FROM paragraph p JOIN resolution r ON r.id = p.resolution_id WHERE r.committee_id = ? "
+                   "AND p.kind = 'operative' ORDER BY p.position LIMIT 1", (com_id,))[0]["id"]
+    from app.modules.floor import service as F
+    from app.modules.mun import service as M
+    with live.app.state.db.write(SYSTEM) as w:
+        aid = w.insert("amendment", {"paragraph_id": para, "base_version_id": q(live, "SELECT current_version_id FROM paragraph WHERE id = ?", (para,))[0]["current_version_id"],
+                                     "kind": "replace", "proposed_text": "Demands an immediate ceasefire, monitored by regional observers;",
+                                     "sponsor_delegation_id": dl["delegation_id"], "created_at": "2026-10-30T00:00:00+00:00",
+                                     "submitted_at": "2026-10-30T00:00:00+00:00"})
+    with live.app.state.db.write(SYSTEM) as w:
+        F.accept_friendly(w, sid, aid)
+    proj.wait_for_selector(".fx-layer .fx-adopt", timeout=10000)
+    proj.wait_for_selector(".fx-adopt .fx-stamp.landed", timeout=15000)
+    proj.wait_for_timeout(500)
+    assert "monitored by regional observers" in proj.inner_text(".fx-adopt .fx-new")
+    shot(proj, "9_amendment_adopted")
+    proj.click(".fx-skip")
     # The whip-count map: predictions, the vote, then the reveal on the chair's map page.
     with live.app.state.db.write(SYSTEM) as w:
         SIM.set_stage(w, sid, "voting_procedure")
