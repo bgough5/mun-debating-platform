@@ -12,61 +12,82 @@
 </head>
 {# The board (D-092): the war-room table for the projector on the extended screen. A page of its own: no site header,
    menus or footer. board.js keeps it live from /projector/<token>/state.json and plays every change. #}
+{% set tw, th = wmap.token_w, wmap.token_h %}
 <body class="board-body" data-token="{{ token }}" data-sid="{{ sid }}"
       data-fx-sound="{{ settings.get('fx_sound', 'projector') }}" data-fx-motion="{{ 'on' if settings.get('fx_motion', True) else 'off' }}">
 <a class="skip" href="#main">Skip to the board</a>
 <div id="b-say" class="visually-hidden" role="status" aria-live="polite"></div>
-<div id="b-stage" class="b-stage" data-fx-room="projector">
+<div id="b-stage" class="b-stage" data-fx-room="projector" data-stage="{{ st.stage.code }}">
+  <div class="b-lamp" aria-hidden="true"></div>
+  <div class="b-motes" aria-hidden="true">{% for i in range(14) %}<i></i>{% endfor %}</div>
+
   <header class="b-top">
-    <svg class="b-emblem" viewBox="0 0 120 120" aria-hidden="true"><g transform="translate(60 62)">
-      <g class="b-laurel">{% for i in range(9) %}<ellipse cx="0" cy="-46" rx="5" ry="11" transform="rotate({{ -150 + i * 15 }}) translate(0 0)"/><ellipse cx="0" cy="-46" rx="5" ry="11" transform="rotate({{ 150 - i * 15 }})"/>{% endfor %}</g>
-      <circle class="b-globe" r="34"/><path class="b-globe-line" d="M-34 0H34M0-34V34M-24-24C-8-12 8-12 24-24M-24 24C-8 12 8 12 24 24M0-34C-16-16-16 16 0 34M0-34C16-16 16 16 0 34"/>
-    </g></svg>
+    <div class="b-roundel" aria-hidden="true">
+      <svg class="b-emblem" viewBox="0 0 120 120"><g transform="translate(60 60)">
+        <g class="b-laurel">{% for i in range(9) %}<ellipse cx="0" cy="-45" rx="4.6" ry="10" transform="rotate({{ -150 + i * 15 }})"/><ellipse cx="0" cy="-45" rx="4.6" ry="10" transform="rotate({{ 150 - i * 15 }})"/>{% endfor %}</g>
+        <circle class="b-globe" r="32"/><path class="b-globe-line" d="M-32 0H32M0-32V32M-22-22C-8-11 8-11 22-22M-22 22C-8 11 8 11 22 22M0-32C-15-15-15 15 0 32M0-32C15-15 15 15 0 32"/>
+      </g></svg>
+    </div>
     <div class="b-titles">
-      <p class="b-kicker">Model United Nations · South Oakleigh College</p>
+      <p class="b-kicker">Model United Nations · South Oakleigh College{% if st.session.demo %} <span class="b-tag">Practice scenario</span>{% endif %}</p>
       <h1 class="b-committee" id="b-committee">{{ st.session.committee }}</h1>
-      <p class="b-agenda" id="b-agenda">{% if st.session.agenda %}Agenda: {{ st.session.agenda }}{% endif %}</p>
+      <p class="b-ribbon" id="b-ribbon" {% if not st.session.agenda %}hidden{% endif %}><span class="b-ribbon-text" id="b-agenda">{% if st.session.agenda %}Agenda: {{ st.session.agenda }}{% endif %}</span></p>
     </div>
     <ol class="b-track" id="b-track" aria-label="Stages">
-      {% for x in st.stage.all %}<li data-code="{{ x.code }}" class="{{ 'done' if loop.index0 < st.stage.index else ('now' if loop.index0 == st.stage.index else '') }}"><span class="b-medal">{{ loop.index }}</span><span class="b-medal-name">{{ x.name }}</span></li>{% endfor %}
+      {% for x in st.stage.all %}<li data-code="{{ x.code }}" class="{{ 'done' if loop.index0 < st.stage.index else ('now' if loop.index0 == st.stage.index else '') }}"><span class="b-coin"><span>{{ loop.index }}</span></span><span class="b-coin-name">{{ x.name }}</span></li>{% endfor %}
     </ol>
   </header>
 
   <main class="b-table" id="main" tabindex="-1">
-    <div class="b-board" id="b-board">
-      <div class="b-mode" id="b-mode"></div>
-      <svg class="b-map" id="b-map" viewBox="0 0 {{ wmap.width }} {{ wmap.height }}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="The world, with a token on every country in the room">
-        <defs>
-          <radialGradient id="b-sea" cx="50%" cy="45%" r="75%"><stop offset="0%" class="b-sea-1"/><stop offset="100%" class="b-sea-2"/></radialGradient>
-          <filter id="b-raise" x="-5%" y="-5%" width="110%" height="115%"><feDropShadow dx="0" dy="1.4" stdDeviation="1" flood-opacity=".5"/></filter>
-          <filter id="b-tok" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="2" stdDeviation="1.4" flood-opacity=".55"/></filter>
-          <filter id="b-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4"/></filter>
-        </defs>
-        <rect class="b-sea" x="-2000" y="-2000" width="5000" height="5000" fill="url(#b-sea)"/>
-        {% for lat in [60, 30, 0, -30] %}<line class="b-grid" x1="-2000" x2="3000" y1="{{ ((84 - lat) / 142 * wmap.height)|round(1) }}" y2="{{ ((84 - lat) / 142 * wmap.height)|round(1) }}"/>{% endfor %}
-        <g filter="url(#b-raise)" id="b-lands">
-          {% for c in wmap.land %}<path class="b-land{% if 'wm-in' in c.cls %} b-in{% endif %}" data-iso="{{ c.iso3 }}" d="{{ c.d }}"/>{% endfor %}
-          {% for c in wmap.dots %}<circle class="b-land b-dot" data-iso="{{ c.iso3 }}" cx="{{ c.x }}" cy="{{ c.y }}" r="2.4"/>{% endfor %}
-        </g>
-        <g id="b-leaders">{% for t in wmap.tokens if t.leader %}<line class="b-leader" x1="{{ t.hx }}" y1="{{ t.hy }}" x2="{{ t.x }}" y2="{{ t.y }}"/>{% endfor %}</g>
-        <g id="b-tokens">
-          {% for t in wmap.tokens %}
-          <g class="b-token" data-iso="{{ t.iso3 }}" data-box="{{ t.box }}" data-x="{{ t.x }}" data-y="{{ t.y }}" transform="translate({{ (t.x - wmap.token_w / 2)|round(1) }} {{ (t.y - wmap.token_h / 2)|round(1) }})" filter="url(#b-tok)">
-            <g class="b-tok-in">
-              <circle class="b-halo" cx="{{ wmap.token_w / 2 }}" cy="{{ wmap.token_h / 2 }}" r="30" filter="url(#b-glow)"/>
-              <rect class="b-face" width="{{ wmap.token_w }}" height="{{ wmap.token_h }}" rx="4"/>
-              <rect class="b-band" width="{{ wmap.token_w }}" height="4.5" rx="2"/>
-              <text class="b-code" x="{{ wmap.token_w / 2 }}" y="13.5" text-anchor="middle">{{ t.iso3 }}{% if t.p5 %} ★{% endif %}</text>
-              <text class="b-line" x="{{ wmap.token_w / 2 }}" y="22.5" text-anchor="middle"></text>
-              <g class="b-placard" transform="translate({{ wmap.token_w - 6 }} -14)"><rect class="b-placard-stick" x="2.3" y="6" width="1.4" height="12"/><rect class="b-placard-card" x="-6" y="-4" width="16" height="11" rx="1.5"/><text class="b-placard-text" x="2" y="4.5" text-anchor="middle">{{ t.iso3 }}</text></g>
-              <circle class="b-chip" cx="{{ wmap.token_w }}" cy="0" r="5.5"/>
-            </g>
+    <div class="b-frame">
+      <div class="b-board" id="b-board">
+        <svg class="b-map" id="b-map" viewBox="0 0 {{ wmap.width }} {{ wmap.height }}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="The world, with a token on every country in the room">
+          <defs>
+            <radialGradient id="b-sea" cx="50%" cy="45%" r="75%"><stop offset="0%" class="b-sea-1"/><stop offset="100%" class="b-sea-2"/></radialGradient>
+            <pattern id="b-waves" width="26" height="14" patternUnits="userSpaceOnUse"><path class="b-wave" d="M1 9q3.5-3 7 0t7 0"/></pattern>
+            <pattern id="b-hatch" width="3.2" height="3.2" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect class="b-hatch-bg" width="3.2" height="3.2"/><rect class="b-hatch-line" width="1.1" height="3.2"/></pattern>
+            <filter id="b-raise" x="-5%" y="-5%" width="110%" height="115%"><feDropShadow dx="0" dy="1.4" stdDeviation="1" flood-opacity=".5"/></filter>
+            <filter id="b-tok" x="-30%" y="-40%" width="160%" height="190%"><feDropShadow dx=".8" dy="2.2" stdDeviation="1.2" flood-opacity=".6"/></filter>
+            <filter id="b-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4"/></filter>
+          </defs>
+          <rect class="b-sea" x="-2000" y="-2000" width="5000" height="5000" fill="url(#b-sea)"/>
+          <rect class="b-sea-waves" x="-2000" y="-2000" width="5000" height="5000" fill="url(#b-waves)"/>
+          {% for lat in [60, 30, 0, -30] %}<line class="b-grid" x1="-2000" x2="3000" y1="{{ ((84 - lat) / 142 * wmap.height)|round(1) }}" y2="{{ ((84 - lat) / 142 * wmap.height)|round(1) }}"/>{% endfor %}
+          <g filter="url(#b-raise)" id="b-lands">
+            {% for c in wmap.land %}<path class="b-land{% if 'wm-in' in c.cls %} b-in{% endif %}" data-iso="{{ c.iso3 }}" d="{{ c.d }}"/>{% endfor %}
+            {% for c in wmap.dots %}<circle class="b-land b-dot" data-iso="{{ c.iso3 }}" cx="{{ c.x }}" cy="{{ c.y }}" r="2.4"/>{% endfor %}
           </g>
-          {% endfor %}
-        </g>
-        <g id="b-seal-wrap"></g>
-      </svg>
-      <p class="b-credit">Map: Natural Earth (public domain), simplified for the board.</p>
+          <g id="b-leaders">{% for t in wmap.tokens if t.leader %}<line class="b-leader" x1="{{ t.hx }}" y1="{{ t.hy }}" x2="{{ t.x }}" y2="{{ t.y }}"/>{% endfor %}</g>
+          <g id="b-tokens">
+            {% for t in wmap.tokens %}
+            <g class="b-token" data-iso="{{ t.iso3 }}" data-box="{{ t.box }}" data-x="{{ t.x }}" data-y="{{ t.y }}" transform="translate({{ t.x }} {{ t.y }}) translate({{ -tw / 2 }} {{ -th / 2 }})" filter="url(#b-tok)">
+              <g class="b-tok-in">
+                <circle class="b-halo" cx="{{ tw / 2 }}" cy="{{ th / 2 }}" r="30" filter="url(#b-glow)"/>
+                <rect class="b-face" width="{{ tw }}" height="{{ th }}" rx=".8"/>
+                <rect class="b-band" x="1.5" y="1.5" width="{{ tw - 3 }}" height="10"/>
+                <rect class="b-rule" x="1.5" y="1.5" width="{{ tw - 3 }}" height="{{ th - 3 }}"/>
+                <path class="b-bevel" d="M.6 {{ th - 0.6 }}H{{ tw - 0.6 }}V.6"/>
+                <text class="b-code" x="{{ tw / 2 }}" y="9.4" text-anchor="middle">{{ t.iso3 }}{% if t.p5 %} ★{% endif %}</text>
+                <text class="b-line" x="{{ tw / 2 }}" y="20.4" text-anchor="middle"></text>
+                <g class="b-placard" transform="translate({{ tw - 4 }} -4)"><g class="b-placard-in"><rect class="b-placard-stick" x="-.9" y="-6" width="1.8" height="14"/><rect class="b-placard-card" x="-12" y="-21" width="24" height="15"/><text class="b-placard-text" x="0" y="-10.6" text-anchor="middle">{{ t.iso3 }}</text></g></g>
+                <g class="b-veto" transform="translate({{ tw / 2 }} {{ th - 5 }}) rotate(-8)"><g class="b-veto-in"><rect x="-17" y="-5.5" width="34" height="11"/><text y="3" text-anchor="middle">VETO</text></g></g>
+                <g class="b-chip-wrap"><circle class="b-chip" cx="{{ tw }}" cy="0" r="5.6"/><circle class="b-chip-ring" cx="{{ tw }}" cy="0" r="3.6"/></g>
+              </g>
+            </g>
+            {% endfor %}
+          </g>
+        </svg>
+        <div class="b-spot" id="b-spot" aria-hidden="true"></div>
+        <svg class="b-compass" viewBox="-60 -60 120 120" aria-hidden="true">
+          <circle class="b-compass-ring" r="52"/><circle class="b-compass-ring2" r="44"/>
+          {% for a in range(0, 360, 30) %}<line class="b-compass-tick" y1="-52" y2="-46" transform="rotate({{ a }})"/>{% endfor %}
+          <g class="b-compass-star"><path class="b-cs-a" d="M0-40L7-7 0 0Z M0 40L-7 7 0 0Z M40 0L7 7 0 0Z M-40 0L-7-7 0 0Z"/><path class="b-cs-b" d="M0-40L-7-7 0 0Z M0 40L7 7 0 0Z M40 0L7-7 0 0Z M-40 0L-7 7 0 0Z"/></g>
+          <text class="b-compass-n" y="-30" text-anchor="middle">N</text><circle class="b-compass-pin" r="3"/>
+        </svg>
+        <div class="b-cornerseal" id="b-cornerseal" hidden aria-hidden="true"></div>
+      </div>
+      <i class="b-corner tl" aria-hidden="true"></i><i class="b-corner tr" aria-hidden="true"></i><i class="b-corner bl" aria-hidden="true"></i><i class="b-corner br" aria-hidden="true"></i>
+      <p class="b-plaque">Map: Natural Earth (public domain)</p>
     </div>
 
     <aside class="b-rail" id="b-rail" aria-label="What is happening now"></aside>
@@ -74,7 +95,12 @@
 
   <footer class="b-bottom">
     <div class="b-speaker" id="b-speaker" hidden>
-      <svg class="b-dial" viewBox="0 0 100 100" aria-hidden="true"><circle class="b-dial-face" cx="50" cy="50" r="44"/><circle class="b-dial-arc" id="b-dial-arc" cx="50" cy="50" r="38" pathLength="100"/><circle class="b-dial-pin" cx="50" cy="50" r="4"/></svg>
+      <svg class="b-dial" viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="b-dial-bezel" cx="50" cy="50" r="48"/><circle class="b-dial-face" cx="50" cy="50" r="42"/>
+        <circle class="b-dial-arc" id="b-dial-arc" cx="50" cy="50" r="36" pathLength="100"/>
+        {% for a in range(0, 360, 30) %}<line class="b-dial-tick" x1="50" y1="11" x2="50" y2="17" transform="rotate({{ a }} 50 50)"/>{% endfor %}
+        <g id="b-dial-hand" class="b-dial-hand"><path d="M50 50L48 46 50 16 52 46Z"/></g><circle class="b-dial-pin" cx="50" cy="50" r="4.5"/>
+      </svg>
       <div class="b-speaker-text"><p class="b-speaker-tag">Now speaking</p><p class="b-speaker-name" id="b-speaker-name"></p><p class="b-speaker-side" id="b-speaker-side"></p></div>
       <p class="b-time" id="b-time" role="timer" aria-label="Time remaining"></p>
     </div>

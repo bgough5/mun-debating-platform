@@ -77,7 +77,7 @@ The projector shows a title card at each stage, a vote reveal with the PASSED or
 - **Timers:** start, pause, extend. A student who needs more time can be given an adjustment (WCAG 2.2.1); it applies only to them.
 - **Motions:** record a motion, a second, then pass it "with no objection" or put it to a vote.
 - **Votes (divisions):** open a vote on a paragraph, amendment or the whole resolution. Students vote on their own devices; computed countries vote automatically. Close the vote to see the result under the committee's voting rules (Security Council vetoes included).
-- **Projector:** the "Projector" link opens a view for the big screen with the speakers list, timer and results only.
+- **The board (projector):** press **Open the board** on the chair console. It opens in a new window: drag it to the projector screen (with the display extended, not mirrored) and press F11. The board follows everything you do on the console by itself; you never touch it during the lesson. It plays each stage change (a scroll, or the doors closing for voting), lights countries as they answer the roll, follows the speaker on the map, drops each vote onto the map and stamps the result with a wax seal. Click **Turn on sound** on the board once. If the projector computer struggles, use **Plain view** (a link under Tools), or turn motion off in Admin → Sound and motion.
 - **Minutes:** generated from what happened; edit, print or download as Word.
 
 **The committee flow (D-068).** A session has six stages: roll call, agenda, opening statements, **the floor**, voting procedure and debrief. The guide at the top of the chair console shows what to say at each one. The debate happens out loud; the platform records it and puts it on every screen.

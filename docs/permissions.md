@@ -23,12 +23,12 @@ student may open a resolution only in their own class's committee, and a ballot 
 
 | Role required | Routes |
 |---|---|
-| Public | 24 |
+| Public | 26 |
 | Signed in (any role, checked per item) | 30 |
 | Students only | 51 |
 | Staff and coordinator | 118 |
 | Coordinator only | 40 |
-| **Total** | **263** |
+| **Total** | **265** |
 
 ## Coordinator only
 
@@ -313,6 +313,8 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/privacy` | Privacy notice |
 | GET | `/projector/{token}` | Projector view of a live session; needs the session's unguessable token |
 | GET | `/projector/{token}/f` | Projector view fragment; needs the token |
+| GET | `/projector/{token}/plain` | The plain projector page, the board's fallback; needs the token |
+| GET | `/projector/{token}/state.json` | The board's live state (D-092): what the projector shows anyway; needs the token |
 | GET | `/s/{code}` | Students: your own sign-in link from your card; needs a valid personal code (throttled) |
 | GET | `/setup` | First-run passphrase setup; refuses once a passphrase exists |
 | POST | `/setup` | First-run passphrase setup; refuses once a passphrase exists |

@@ -5,13 +5,14 @@
 <div>
   <p class="eyebrow">Stage {{ sim.stage_index + 1 }} of {{ sim.stages|length }}</p>
   <h3>{{ icon("stage") }} {{ sim.stage.name }}</h3>
-  <p class="small muted">What to say:</p>
-  <blockquote class="script">{{ sim.script }}</blockquote>
-  <p><strong>What happens next:</strong> {{ sim.chair_next }}</p>
   <div class="row">
-    {% if sim.prev_stage %}<form method="post" action="/chair/{{ s.id }}/stage">{{ hidden_csrf(csrf) }}<input type="hidden" name="stage" value="{{ sim.prev_stage.code }}"><button type="submit" class="secondary">Back to {{ sim.prev_stage.name }}</button></form>{% endif %}
     {% if sim.next_stage %}<form method="post" action="/chair/{{ s.id }}/stage">{{ hidden_csrf(csrf) }}<input type="hidden" name="stage" value="{{ sim.next_stage.code }}"><button type="submit">{{ icon("next") }} Next: {{ sim.next_stage.name }}</button></form>{% endif %}
+    {% if sim.prev_stage %}<form method="post" action="/chair/{{ s.id }}/stage">{{ hidden_csrf(csrf) }}<input type="hidden" name="stage" value="{{ sim.prev_stage.code }}"><button type="submit" class="secondary">Back to {{ sim.prev_stage.name }}</button></form>{% endif %}
   </div>
+  {# The controls come first so the console fits one screen; the script folds away once read (D-092). #}
+  <details class="script-box" open><summary>What to say</summary>
+  <blockquote class="script">{{ sim.script }}</blockquote></details>
+  <p><strong>What happens next:</strong> {{ sim.chair_next }}</p>
   <details><summary>Jump to a stage</summary>
     <form method="post" action="/chair/{{ s.id }}/stage" class="inline">{{ hidden_csrf(csrf) }}
       <div class="field"><label for="jump">Stage</label><select id="jump" name="stage">{% for st in sim.stages %}<option value="{{ st.code }}" {% if st.code == sim.stage.code %}selected{% endif %}>{{ st.position }}. {{ st.name }}</option>{% endfor %}</select></div>

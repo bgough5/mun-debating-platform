@@ -50,6 +50,9 @@ see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun
   foes sheet for each operative clause; a prepare page holds the country brief and the opening statement. Security
   Council votes warn on a veto as it happens. Whip counts are scored against the votes actually cast; the debrief
   shows pivotal votes and delegate profiles; practice for 1–3 students against a computed chamber.
+- **The board (D-092):** a projector view in its own window, driven by the teacher's console: a retro war-room
+  table with the world map, stage transitions (a scroll, the voting doors), the camera following the speaker, votes
+  dropped onto the map with vetoes stamped, and a wax seal for the result. **Plain view** remains for weak projectors.
 - **Onboarding and help:** a getting-started wizard, printable sign-in cards (each student's code and the address)
   and a classroom poster, a Help dialog on every page, a glossary, a student quick-start and the staff guide inside the app.
 

@@ -20,9 +20,10 @@
   --felt: #1E5C3A; --felt-dk: #143F28; --wood: #5C3A1E; --parchment: #F7F0DC; --parchment-dk: #E9DDBA; --stamp: #A4231B; --brass: #C9A227;
   --sea: #1F4E5A; --sea-lt: #2B6473; --land: #E4D6AE; --map-yes: #6FAF7E; --map-no: #C9675E; --map-abstain: #B8B2A2;
   --reg-afr: #D9A441; --reg-apg: #C97B5A; --reg-eeg: #8E9CC9; --reg-grulac: #7DB37A; --reg-weog: #6FA3B8;
-  --walnut-dk: #24160B; --walnut: #3E2814; --un-blue: #1F4E79; --un-blue-lt: #5B8FCB; --lit: #F4D77A;
+  --walnut-dk: #24160B; --walnut: #3E2814; --un-blue: #1F4E79; --un-blue-lt: #5B8FCB; --lit: #F4D77A; --un-blue-dk: #12324F; --brass-dk: #7A5C0E;
   --serif: Cinzel, Georgia, "Times New Roman", serif;
   --sans: "Open Sans", Calibri, "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  --book: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
   --mono: Consolas, "Cascadia Mono", "Courier New", monospace;
   --radius: 4px;
   --pill: 100px;
@@ -259,6 +260,7 @@ details > summary:hover { color: var(--maroon-dk); }
   .brand .product { font-size: 1rem; }
 }
 .script { font-size: 1.08rem; border-left: 4px solid var(--gold); background: var(--warn-bg); padding: .8rem 1.1rem; }
+.script-box { margin: .6rem 0; } .script-box > summary { font-size: .92rem; color: var(--muted); }
 
 /* ---------- live session and projector ---------- */
 .timer { font-size: 3rem; font-variant-numeric: tabular-nums; font-weight: 700; font-family: var(--serif); margin: .2rem 0; line-height: 1.05; }

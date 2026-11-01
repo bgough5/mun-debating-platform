@@ -11,14 +11,16 @@
 {% if s.state != 'open' %}<div class="notice" role="status">The session is {{ s.state }}.</div>{% endif %}
 {{ tracker(sim) }}
 <section class="card accent" aria-labelledby="h-now-do" data-announce="{{ 'Stage: ' ~ sim.stage.name }}" data-announce-key="stage">
-  <p class="eyebrow">Now: {{ sim.stage.name }}{% if sim.stage.code == 'floor' %} · {{ modes[s.mode] }}{% if s.mode_topic %}: {{ s.mode_topic }}{% endif %}{% endif %}{% if s.agenda %} · Agenda: {{ s.agenda }}{% endif %}</p>
+  <p class="eyebrow">Now: {{ sim.stage.name }}{% if sim.stage.code == 'floor' %} · {{ modes[s.mode] }}{% if s.mode_topic and s.mode in ('moderated', 'unmoderated') %}: {{ s.mode_topic }}{% endif %}{% endif %}{% if s.agenda %} · Agenda: {{ s.agenda }}{% endif %}</p>
   <h2 id="h-now-do">{{ icon("info") }} What you can do now</h2>
   <p>{{ sim.student_prompt }}</p>
   {% if mine and sim.stage.code == 'roll_call' and s.state == 'open' %}
-    {% if my_roll and my_roll.status %}<p>{{ icon("ok") }} {{ my_roll.answered_by or mine.country }} answered: <strong>{{ {'present':'Present','present_and_voting':'Present and voting','absent':'Absent'}[my_roll.status] }}</strong>.</p>{% endif %}
-    <form method="post" action="/live/{{ s.id }}/roll" class="row">{{ hidden_csrf(csrf) }}
+    {% set roll_form %}<form method="post" action="/live/{{ s.id }}/roll" class="row">{{ hidden_csrf(csrf) }}
       <button type="submit" name="status" value="present" class="big">{{ icon("check") }} Present</button>
-      <button type="submit" name="status" value="present_and_voting" class="big secondary">{{ icon("vote") }} Present and voting</button></form>
+      <button type="submit" name="status" value="present_and_voting" class="big secondary">{{ icon("vote") }} Present and voting</button></form>{% endset %}
+    {% if my_roll and my_roll.status %}<p>{{ icon("ok") }} {{ my_roll.answered_by or mine.country }} answered: <strong>{{ {'present':'Present','present_and_voting':'Present and voting','absent':'Absent'}[my_roll.status] }}</strong>.</p>
+    <details><summary>Change the answer</summary>{{ roll_form }}</details>
+    {% else %}{{ roll_form }}{% endif %}
   {% endif %}
   {% if my_whip %}
     <h3>{{ icon("whip") }} Whip count: {{ whip_round.title }}</h3>
@@ -30,8 +32,27 @@
   {% endif %}
   {% if mine and sim.stage.code == 'debrief' and last_vote %}<p><a class="button" href="/live/{{ s.id }}/debrief/{{ last_vote.id }}">{{ icon("calibration") }} See your debrief: {{ last_vote.title }}</a></p>{% endif %}
 </section>
+{% if division %}
+<section class="card" aria-labelledby="h-vote" data-announce="Voting is open: {{ division.title }}" data-announce-key="division-open">
+  <h2 id="h-vote">{{ icon("vote") }} Vote: {{ division.title }}</h2>
+  {% if mine %}
+    {% if my_vote and my_vote.computed %}<p>Your delegation is voted by the engine.</p>
+    {% else %}
+    <p>{% if my_vote and my_vote.vote %}{{ mine.country }} voted <strong>{{ my_vote.vote }}</strong>{% if my_vote.cast_by %} (cast by {{ my_vote.cast_by }}){% endif %}. {{ "You" if can_vote else (caster.name if caster else "Anyone holding " ~ mine.country) }} can change it until voting closes: one vote per country.{% else %}{{ mine.country }} hasn't voted. One vote per country{% if caster %}, cast by the head of delegation{% endif %}{% if team %}: agree it together first{% endif %}.{% endif %}{% if not division.procedural and my_roll and my_roll.status == 'present_and_voting' %} You answered “present and voting”, so you can't abstain.{% endif %}</p>
+    {% if not can_vote %}<p class="info-box">{{ icon("info") }} {{ caster.name }} is head of delegation and casts {{ mine.country }}'s vote. Tell them what you think.</p>
+    {% else %}{% if caster and caster.id != actor.id %}<p class="small">{{ caster.name }} (head of delegation) isn't here, so you can cast {{ mine.country }}'s vote.</p>{% endif %}
+    <form method="post" action="/live/{{ s.id }}/vote" class="row">{{ hidden_csrf(csrf) }}
+      <button type="submit" name="vote" value="yes" class="big">{{ icon("yes") }} Yes</button>
+      {% if not division.procedural and not (my_roll and my_roll.status == 'present_and_voting') %}<button type="submit" name="vote" value="abstain" class="big secondary">{{ icon("abstain") }} Abstain</button>{% endif %}
+      <button type="submit" name="vote" value="no" class="big secondary">{{ icon("no") }} No</button>
+    </form>{% endif %}{% endif %}
+  {% endif %}
+  <p class="small">{{ division.cast }} of {{ division.voters|length }} have voted.</p>
+  {% if division.veto_by %}<p class="error-box" role="status">{{ icon("warning") }} <strong>Veto:</strong> {{ division.veto_by|join(', ') }} {{ 'has' if division.veto_by|length == 1 else 'have' }} voted no. A permanent member's no blocks this vote unless they change it.</p>{% endif %}
+</section>
+{% endif %}
 {% if not mine %}<div class="notice">You aren't in a delegation in this committee yet. Ask your teacher.</div>{% else %}
-{% if s.state == 'open' %}
+{% if s.state == 'open' and sim.stage.code in ('agenda', 'opening_speeches', 'floor') %}
 <div class="placard-control">
   {% if my_placard %}
   <div class="placard-up" role="dialog" aria-modal="false" aria-labelledby="pl-country">
@@ -76,25 +97,6 @@
     <ol class="speakers">{% for e in queue[:8] %}<li>{{ e.by }}{% if e.side %} <span class="badge {{ 'st-yes' if e.side == 'for' else 'st-no' }}">{{ e.side }}</span>{% endif %}</li>{% else %}<li class="muted">Empty</li>{% endfor %}</ol>
   </section>
 </div>
-{% if division %}
-<section class="card" aria-labelledby="h-vote" data-announce="Voting is open: {{ division.title }}" data-announce-key="division-open">
-  <h2 id="h-vote">{{ icon("vote") }} Vote: {{ division.title }}</h2>
-  {% if mine %}
-    {% if my_vote and my_vote.computed %}<p>Your delegation is voted by the engine.</p>
-    {% else %}
-    <p>{% if my_vote and my_vote.vote %}{{ mine.country }} voted <strong>{{ my_vote.vote }}</strong>{% if my_vote.cast_by %} (cast by {{ my_vote.cast_by }}){% endif %}. {{ "You" if can_vote else (caster.name if caster else "Anyone holding " ~ mine.country) }} can change it until voting closes: one vote per country.{% else %}{{ mine.country }} hasn't voted. One vote per country{% if caster %}, cast by the head of delegation{% endif %}{% if team %}: agree it together first{% endif %}.{% endif %}{% if not division.procedural and my_roll and my_roll.status == 'present_and_voting' %} You answered “present and voting”, so you can't abstain.{% endif %}</p>
-    {% if not can_vote %}<p class="info-box">{{ icon("info") }} {{ caster.name }} is head of delegation and casts {{ mine.country }}'s vote. Tell them what you think.</p>
-    {% else %}{% if caster and caster.id != actor.id %}<p class="small">{{ caster.name }} (head of delegation) isn't here, so you can cast {{ mine.country }}'s vote.</p>{% endif %}
-    <form method="post" action="/live/{{ s.id }}/vote" class="row">{{ hidden_csrf(csrf) }}
-      <button type="submit" name="vote" value="yes" class="big">{{ icon("yes") }} Yes</button>
-      {% if not division.procedural and not (my_roll and my_roll.status == 'present_and_voting') %}<button type="submit" name="vote" value="abstain" class="big secondary">{{ icon("abstain") }} Abstain</button>{% endif %}
-      <button type="submit" name="vote" value="no" class="big secondary">{{ icon("no") }} No</button>
-    </form>{% endif %}{% endif %}
-  {% endif %}
-  <p class="small">{{ division.cast }} of {{ division.voters|length }} have voted.</p>
-  {% if division.veto_by %}<p class="error-box" role="status">{{ icon("warning") }} <strong>Veto:</strong> {{ division.veto_by|join(', ') }} {{ 'has' if division.veto_by|length == 1 else 'have' }} voted no. A permanent member's no blocks this vote unless they change it.</p>{% endif %}
-</section>
-{% endif %}
 {% if recent %}<section aria-labelledby="h-res"><h2 id="h-res">{{ icon("ladder") }} Results</h2><ul>{% for d in recent %}<li data-announce="{{ d.title ~ ': ' ~ d.summary }}" data-announce-key="result-{{ loop.index }}">{{ d.title }}: {{ d.summary }}</li>{% endfor %}</ul></section>{% endif %}
 </section>
 

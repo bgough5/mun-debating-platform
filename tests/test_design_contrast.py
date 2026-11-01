@@ -42,6 +42,7 @@ def test_the_board_uses_only_tokens():
     """The board (D-092) has its own stylesheet; it takes every colour from the same tokens."""
     board = (Path(__file__).resolve().parents[1] / "app" / "static" / "css" / "board.css").read_text(encoding="utf-8")
     assert re.findall(r"#[0-9A-Fa-f]{6}\b|#[0-9A-Fa-f]{3}\b", board) == []
-    used = set(re.findall(r"var\(--([a-z0-9-]+)", board)) - {"w"}          # --w is a bar width, set by board.js
+    # Set by board.js, not colours: a tally bar's width, the scroll's height, the spotlight's centre and radius.
+    used = set(re.findall(r"var\(--([a-z0-9-]+)", board)) - {"w", "h", "sx", "sy", "sr"}
     defined = set(re.findall(r"--([a-z0-9-]+):", CSS))
     assert used <= defined, used - defined

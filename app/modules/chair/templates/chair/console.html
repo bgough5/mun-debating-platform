@@ -20,16 +20,18 @@
 <p id="live-status" class="small muted">Connecting…</p>
 <div class="cols-2">
   <div>
-    <section aria-labelledby="h-floor"><h2 id="h-floor">Floor</h2>
+    {# In voting procedure the vote comes first; otherwise the floor (D-092). #}
+    {% set floor_part %}<section aria-labelledby="h-floor"><h2 id="h-floor">Floor</h2>
       <div id="floor" data-live-channel="session:{{ s.id }}" hx-get="/chair/{{ s.id }}/f/floor" hx-trigger="live-update" hx-swap="innerHTML">
         {% include "chair/_chair_floor.html" %}
       </div>
-    </section>
-    <section aria-labelledby="h-div"><h2 id="h-div">{{ icon("vote") }} Voting</h2>
+    </section>{% endset %}
+    {% set vote_part %}<section aria-labelledby="h-div"><h2 id="h-div">{{ icon("vote") }} Voting</h2>
       <div id="division" data-live-channel="session:{{ s.id }}" hx-get="/chair/{{ s.id }}/f/division" hx-trigger="live-update" hx-swap="innerHTML">
         {% include "chair/_chair_division.html" %}
       </div>
-    </section>
+    </section>{% endset %}
+    {% if sim.stage.code == 'voting_procedure' %}{{ vote_part }}{{ floor_part }}{% else %}{{ floor_part }}{{ vote_part }}{% endif %}
   </div>
   <div>
     <section aria-labelledby="h-mot"><h2 id="h-mot">{{ icon("motion") }} Motions</h2>

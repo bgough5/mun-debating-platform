@@ -15,4 +15,10 @@
         {% for r in resolutions %}<option value="resolution:{{ r.id }}">Resolution: {{ r.title }}</option>{% endfor %}</select></div>
       <div class="field"><label for="wn">Delegations per student</label><input id="wn" type="number" name="per_student" min="1" max="15" value="5" style="width:6rem"></div>
       <button type="submit">{{ icon("whip") }} Start the whip count</button></form>
-  {% else %}<p class="small">Voting is open below.</p>{% endif %}
+  {% else %}
+  <div class="card accent" data-announce="{{ 'Voting: ' ~ division.cast ~ ' of ' ~ division.voters|length ~ ' have voted' }}" data-announce-key="guide-division">
+    <p><strong>{{ icon("vote") }} Voting is open: {{ division.title }}</strong></p>
+    <p>{{ division.cast }} of {{ division.voters|length }} have voted: {{ division.counts.yes }} yes, {{ division.counts.no }} no, {{ division.counts.abstain }} abstaining.{% if division.veto_by %} <strong>Veto:</strong> {{ division.veto_by|join(', ') }}.{% endif %}</p>
+    <div class="row"><form method="post" action="/chair/{{ s.id }}/divisions/{{ division.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="close"><button type="submit">Close voting and announce</button></form>
+      <a class="button secondary" href="#h-div">Every delegation's vote</a></div>
+  </div>{% endif %}

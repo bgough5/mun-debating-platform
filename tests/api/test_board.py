@@ -3,6 +3,7 @@ import json
 import re
 
 from app.db import SYSTEM
+from app.errors import UserError
 from app.modules.chair import service as C
 from app.modules.sim import service as SIM
 from tests.api.helpers import join_as
@@ -86,3 +87,54 @@ def test_the_board_holds_no_student_codes(app, coord):
     for r in db_rows(app, "SELECT login_code FROM student WHERE id IN (%s)" % ",".join(map(str, ids))):
         assert r["login_code"] not in body
     assert "login_code" not in body and "pass_hash" not in body
+
+
+def test_rework_after_the_stage_review(app, coord):
+    """Fixes from Ben's stage-by-stage review (D-092): names instead of 'computed', '(demo)' as a tag, a caucus topic
+    that doesn't outlive the caucus, vetoes marked on the result, and the student and teacher screens putting the vote
+    first."""
+    sid, ids, tok = evatt(app, coord)
+    c = Client(app, base_url="http://testserver").__enter__()
+    st = c.get(f"/projector/{tok}/state.json").json()
+    assert "(demo)" not in st["session"]["committee"].lower() and st["session"]["demo"] is True
+    assert all(x["short"] and len(x["short"]) <= 15 for x in st["countries"])
+    assert {"RUS": "Russia", "GBR": "UK"}.items() <= {x["iso3"]: x["short"] for x in st["countries"]}.items()
+    a = join_as(app, ids[0])
+    page = a.get(f"/live/{sid}").text
+    assert "Raise my placard" not in page                                            # no placards at roll call
+    a.post(f"/live/{sid}/roll", {"status": "present"})
+    assert "Change the answer" in a.get(f"/live/{sid}").text
+    with app.state.db.write(SYSTEM) as w:
+        SIM.set_stage(w, sid, "floor")
+        w.update("live_session", sid, {"mode": "moderated", "mode_topic": "Water"}, C.ch(sid), action="mode")
+    assert "Raise my placard" in a.get(f"/live/{sid}").text
+    assert c.get(f"/projector/{tok}/state.json").json()["session"]["mode_topic"] == "Water"
+    com = db_one(app, "SELECT committee_id FROM live_session WHERE id = ?", (sid,))["committee_id"]
+    res = db_one(app, "SELECT id FROM resolution WHERE committee_id = ? LIMIT 1", (com,))["id"]
+    with app.state.db.write(SYSTEM) as w:
+        SIM.set_stage(w, sid, "voting_procedure")
+        w.update("live_session", sid, {"mode": "voting"}, C.ch(sid), action="mode")
+        did = C.open_division(w, sid, "The whole resolution", "resolution", res)
+    st = c.get(f"/projector/{tok}/state.json").json()
+    assert st["session"]["mode_topic"] == ""                                         # the caucus is over
+    assert "Water" not in coord.get(f"/chair/{sid}/f/status").text
+    page = a.get(f"/live/{sid}").text
+    assert "Raise my placard" not in page and page.index('id="h-vote"') < page.index('id="h-now"')
+    console = coord.get(f"/chair/{sid}").text
+    assert "Close voting and announce" in console.split('id="h-floor"')[0]          # the vote's control is in the guide
+    assert console.index('id="h-div"') < console.index('id="h-floor"')
+    dels = {d["iso3"]: d["id"] for d in db_rows(app, "SELECT id, iso3 FROM delegation WHERE committee_id = ?", (com,))}
+    for iso, d in dels.items():                                                       # countries with no student are the engine's
+        try:
+            with app.state.db.write(SYSTEM) as w:
+                C.cast_vote(w, did, d, "no" if iso == "FRA" else "yes")
+        except UserError:
+            pass
+    st = c.get(f"/projector/{tok}/state.json").json()
+    p5 = {"CHN", "FRA", "GBR", "RUS", "USA"}
+    vetoes = sorted(i for i, v in st["division"]["votes"].items() if i in p5 and v == "no")
+    assert vetoes and st["division"]["veto"] == vetoes
+    with app.state.db.write(SYSTEM) as w:
+        C.close_division(w, did)
+    st = c.get(f"/projector/{tok}/state.json").json()
+    assert st["result"]["veto"] == vetoes and st["result"]["passed"] is False

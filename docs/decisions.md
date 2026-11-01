@@ -388,6 +388,38 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 
 
 
+### D-092 The board: a projector view of its own, in a retro war-room look — Decided (30 Oct and 2 Nov 2026, Ben)
+Ben: three views, "student view same as before, teacher view (on their screen only) projector view (extended screen connected like a second monitor would be that is controlled by teacher view)". Whip count only, no debate board. The look: "that old video game feel (monopoly, risk) while still referring to the importance and gravity of a UN". He chose a war-room table, the camera gliding to the speaker, and a debrief showing "the class results, but also how each different country ended up voting, shown visually on the map". After reviewing every stage in screenshots (2 Nov) he asked for the rework list to be fixed, the spacing tidied (the banner looked "a little funky"), nothing rounded or modern ("lavish, well crafted, rich"), and animations between the parts.
+
+- **Separate page.** **Open the board** on the chair console opens `/projector/<token>` in a new window for the second screen. It has no app header, menus or footer (`chair/board.html`, `board.css`, `board.js`). It reads `/projector/<token>/state.json` (`app/modules/chair/board.py`) whenever the session changes and animates the difference. Opening or reloading it plays nothing. The old projector page is still there as **Plain view** (`/projector/<token>/plain`) for weak projectors.
+- **The look.** It is laid out on a fixed 1920×1080 canvas scaled to the screen. The table is walnut under a slowly drifting lamp. The banner is UN blue with a brass roundel emblem, the agenda on a parchment ribbon, and brass stage coins. The map is an engraved world (wave hatching, compass rose) in a carved frame with brass corners and a plaque for the map credit. Countries are title-deed tokens. The rail holds parchment documents and brass plates; the speaker gets a brass clock with a hand. Corners are square and edges bevelled; only coins, seals and dials are round. Fonts are Cinzel and Palatino (a system font). Colours are tokens only; `brass-dk` and `un-blue-dk` were added with contrast pairs.
+- **Moving between stages.**
+  - Most stages: the stage coin flies from the banner to the middle, spinning, over rays of light, and a parchment scroll unrolls between wooden rollers. The scroll shows the stage name, the students' prompt and the stage number in wax. Then the coin flies home, a light sweeps the board and the rail's cards are dealt in.
+  - Voting procedure: the chamber doors close with a gavel ("The doors are closed"), then open again.
+  - Roll call: the tokens are dealt onto the map.
+- **Each stage.**
+  - **Roll call:** countries light gold as they answer and are ticked off in ink in a ledger ("P & V" means present and voting, explained under the ledger).
+  - **Agenda:** the agenda ribbon unfurls.
+  - **Opening statements and the floor:** the camera glides to the speaker and the room darkens around them. Tokens keep their size on screen when zoomed in (at most 1.5 times), so they no longer crowd or clip. The floor's mode (moderated caucus and its topic) is a brass plate in the rail, not a banner over the map. Placards rise over the tokens, now big enough to see.
+  - **Voting:** a ringing bell plate; each vote drops a chip onto its token; abstentions are hatched, so they don't look like unvoted land. Vetoes are stamped on the permanent member's token. The result sweeps across the map, the wax seal lands, then settles in the corner of the map and stays while that result is the news.
+  - **Debrief:** each country's vote stays on the map with the vetoes. The rail says what happened in words, for example "10 in favour, but vetoed by France and Russian Federation". The news strip and the speaker's spotlight are cleared.
+- **Fixes from the review.**
+  - The committee's "(demo)" is a "Practice scenario" tag, so the name fits.
+  - Countries nobody plays show their short name, not "computed".
+  - A caucus topic is shown only during a caucus (console status line, student page and board).
+  - The whip card says "locked in" once the vote is open.
+  - The speakers list on the floor is the moderated caucus list during a moderated caucus; that is intended.
+- **Teacher console.**
+  - The Next and Back buttons sit above the script, which folds away.
+  - During voting procedure the open vote's tally and **Close voting and announce** are in the guide, and the voting table comes before the floor, so the vote's controls are on the first screen.
+  - It is not yet a no-scroll panel for every stage.
+- **Student page.**
+  - The vote card comes straight after "What you can do now".
+  - The placard button shows only while people may speak (agenda, opening statements, the floor).
+  - After answering the roll, the buttons fold into "Change the answer".
+- **Motion.** Admin → Sound and motion "off", or the computer's reduced-motion setting, stops every animation, including the lamp and the dust.
+- **Tests:** `tests/api/test_board.py` (state, the page, the review fixes, vetoes) and `tests/ui/test_board_ui.py` (the board plays a whole session in a browser, with axe).
+
 ### D-091 "Now speaking" and "Amendment adopted"; no board-game extras — Decided (30 Oct 2026, Ben)
 From the second list of ideas Ben chose 8 (a speaker card) and 9 (the amendment-adopted moment); 12 (the real map) was already built (D-090). He turned down the board-game extras (Chair's Card draws, dice for speaking order, title-deed cards, intro and credits): "all the extra board games ones will take away from core idea too much and make it trivial, rather than learning". The rule from now on is that effects only show the procedure more clearly; they never add game mechanics.
 

@@ -19,6 +19,19 @@ from app.util import display_name, now
 STAGE_SHORT = {"roll_call": "Roll call", "agenda": "Agenda", "opening_speeches": "Openings", "floor": "The floor",
                "voting_procedure": "Voting", "debrief": "Debrief"}
 NUM = re.compile(r"-?\d+(?:\.\d+)?")
+# Short names for a token's second line, where the full name wouldn't fit.
+SHORT = {"ARE": "UAE", "ATG": "Antigua", "BIH": "Bosnia", "BRN": "Brunei", "CAF": "C. African Rep.", "CIV": "Côte d'Ivoire",
+         "COD": "DR Congo", "DOM": "Dominican Rep.", "GBR": "UK", "GNQ": "Eq. Guinea", "KNA": "St Kitts", "KOR": "South Korea",
+         "LAO": "Laos", "MDA": "Moldova", "MHL": "Marshall Is.", "MKD": "N. Macedonia", "PNG": "Papua N.G.", "PRK": "North Korea",
+         "PSE": "Palestine", "RUS": "Russia", "SLB": "Solomon Is.", "STP": "São Tomé", "TTO": "Trinidad", "TZA": "Tanzania",
+         "USA": "USA", "VCT": "St Vincent"}
+DEMO = re.compile(r"\s*\(demo\)\s*$", re.I)
+
+
+def short_name(iso3: str, name: str) -> str:
+    if iso3 in SHORT:
+        return SHORT[iso3]
+    return name if len(name) <= 13 else name[:12].rstrip() + "…"
 
 
 @functools.lru_cache(maxsize=1)
@@ -54,6 +67,21 @@ def _votes(conn, division_id: int) -> dict:
             for v in rows(conn, "SELECT iso3, vote, computed FROM division_vote WHERE division_id = ?", (division_id,))}
 
 
+def _veto(conn, division_id: int, votes: dict) -> list:
+    """Permanent members whose no blocked a substantive vote (as in chair.service's live warning)."""
+    d = one(conn, "SELECT dv.procedural, vr.veto_iso3 FROM division dv JOIN voting_rule vr ON vr.id = dv.rule_id WHERE dv.id = ?",
+            (division_id,))
+    if not d or d["procedural"]:
+        return []
+    holders = {x.strip().upper() for x in (d["veto_iso3"] or "").split(",") if x.strip()}
+    return sorted(iso for iso, v in votes.items() if iso in holders and v["vote"] == "no")
+
+
+def committee_title(name: str) -> tuple[str, bool]:
+    """The committee's name for the board, and whether it is a practice (demo) scenario, shown as a tag instead."""
+    return DEMO.sub("", name), bool(DEMO.search(name))
+
+
 def state(conn, sid: int) -> dict:
     """The session as the board sees it. Names are first names and initials, as on every projector page."""
     from app.modules.chair.routes import session_view
@@ -67,8 +95,9 @@ def state(conn, sid: int) -> dict:
                   (s["committee_id"],)):
         members.setdefault(m["iso3"], []).append(display_name(m["first_name"], m["last_initial"]))
     roll = {r["iso3"]: r["status"] for r in v["roll"]}
-    countries = [{"iso3": d["iso3"], "name": d["name"], "students": members.get(d["iso3"], []), "roll": roll.get(d["iso3"])}
-                 for d in v["dels"]]
+    p5 = {r["iso3"] for r in rows(conn, "SELECT iso3 FROM country WHERE p5 = 1")}
+    countries = [{"iso3": d["iso3"], "name": d["name"], "short": short_name(d["iso3"], d["name"]), "p5": d["iso3"] in p5,
+                  "students": members.get(d["iso3"], []), "roll": roll.get(d["iso3"])} for d in v["dels"]]
     t0 = now()
     timers = [{"id": t["id"], "kind": t["kind"], "label": t["label"], "state": t["state"], "total": t["duration_s"] + t["extended_s"],
                "remaining": round(t["remaining"], 2)} for t in v["timers"]]
@@ -85,13 +114,21 @@ def state(conn, sid: int) -> dict:
     debrief = None
     if v["last_vote"]:
         lv = v["last_vote"]
+        dvotes = _votes(conn, lv["id"])
         debrief = {"id": lv["id"], "title": lv["title"], "passed": bool(lv["passed"]), "summary": lv["summary"],
-                   "votes": _votes(conn, lv["id"])}
+                   "votes": dvotes, "veto": _veto(conn, lv["id"], dvotes)}
+    result = None
+    if last:
+        rvotes = _votes(conn, last["id"])
+        result = {"id": last["id"], "title": last["title"], "passed": bool(last["passed"]), "summary": last["summary"],
+                  "yes": last["yes"], "no": last["no"], "abstain": last["abstain"], "votes": rvotes, "veto": _veto(conn, last["id"], rvotes)}
+    title, demo = committee_title(s["committee"])
     fa = v["floor_amendment"]
     fx = v["fx"]
     return {
         "seq": v["view_seq"], "server_now": t0,
-        "session": {"id": s["id"], "committee": s["committee"], "state": s["state"], "mode": s["mode"], "mode_topic": s["mode_topic"] or "",
+        "session": {"id": s["id"], "committee": title, "demo": demo, "state": s["state"], "mode": s["mode"],
+                    "mode_topic": (s["mode_topic"] or "") if s["mode"] in ("moderated", "unmoderated") else "",
                     "agenda": s["agenda"] or "", "draft": (v["draft"] or {}).get("title", "")},
         "stage": {"code": sim["stage"]["code"], "name": sim["stage"]["name"], "index": sim["stage_index"],
                   "prompt": sim.get("student_prompt") or "",
@@ -106,9 +143,9 @@ def state(conn, sid: int) -> dict:
                      "status": m["status"], "minutes": (m["duration_s"] or 0) // 60} for m in v["motions"]],
         "division": {"id": div["id"], "title": div["title"], "procedural": bool(div["procedural"]), "cast": div["cast"],
                      "total": len(div["voters"]), "counts": div["counts"], "veto_by": div["veto_by"],
+                     "veto": [x["iso3"] for x in div["voters"] if x["name"] in div["veto_by"]],
                      "votes": {x["iso3"]: x["vote"] for x in div["voters"] if x["vote"]}} if div else None,
-        "result": {"id": last["id"], "title": last["title"], "passed": bool(last["passed"]), "summary": last["summary"],
-                   "yes": last["yes"], "no": last["no"], "abstain": last["abstain"], "votes": _votes(conn, last["id"])} if last else None,
+        "result": result,
         "whip": whip,
         "debrief": debrief,
         "placards": [{"iso3": p["iso3"], "by": p["by"]} for p in v["placards"]],

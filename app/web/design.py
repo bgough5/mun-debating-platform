@@ -48,6 +48,7 @@ TOKENS = {
     "reg-afr": "#D9A441", "reg-apg": "#C97B5A", "reg-eeg": "#8E9CC9", "reg-grulac": "#7DB37A", "reg-weog": "#6FA3B8",
     # The board (D-092): a walnut war-room table; UN blue for the institution (banners, the stage track).
     "walnut-dk": "#24160B", "walnut": "#3E2814", "un-blue": "#1F4E79", "un-blue-lt": "#5B8FCB", "lit": "#F4D77A",
+    "un-blue-dk": "#12324F", "brass-dk": "#7A5C0E",
 }
 
 TEXT, LARGE, UI = 4.5, 3.0, 3.0
@@ -86,6 +87,10 @@ PAIRS = [
     ("white", "un-blue", TEXT, "board banners"), ("parchment", "walnut-dk", TEXT, "text on the board's table"),
     ("parchment", "walnut", TEXT, "text on the board's rails"), ("ink", "lit", TEXT, "text on a lit country token"),
     ("brass", "walnut-dk", UI, "brass trim on the table (non-text)"),
+    ("walnut-dk", "brass", TEXT, "engraved lettering on brass plaques and stage coins"), ("walnut-dk", "lit", TEXT, "the current stage coin"),
+    ("lit", "un-blue-dk", TEXT, "gold lettering on the board's banner"), ("white", "un-blue-dk", TEXT, "the committee on the banner"),
+    ("parchment", "un-blue", TEXT, "stage names on the banner"), ("walnut-dk", "parchment", TEXT, "the agenda ribbon"),
+    ("white", "wood", TEXT, "an abstain band on a token"), ("parchment", "brass-dk", LARGE, "large lettering on dark brass"),
 ]
 
 
