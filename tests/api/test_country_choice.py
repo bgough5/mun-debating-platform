@@ -46,7 +46,7 @@ def test_students_choose_change_and_the_chair_closes(app, coord):
     assert "Choose your country" in page and "No one yet" in page and "/live/%d/country" % sid in page
     assert f"/live/{sid}" in a.get("/me").text
     console = coord.get(f"/chair/{sid}").text
-    assert "Countries: Students choose" in console and "Still without a country (6 of 6)" in console
+    assert "Countries: Students choose" in console and "Still without a country (6 of 6)" in console and ".." not in console.split("Still without")[1].split("</p>")[0]
     dels = {r["iso3"]: r["id"] for r in db_rows(app, "SELECT id, iso3 FROM delegation WHERE committee_id = ?", (com,))}
     a.post(f"/live/{sid}/country", {"delegation_id": str(dels["FRA"])})
     b.post(f"/live/{sid}/country", {"delegation_id": str(dels["FRA"])})
