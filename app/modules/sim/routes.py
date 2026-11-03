@@ -230,7 +230,7 @@ def practice_scenario(request: Request, sess=Depends(require_student), form=Depe
     """Play a scenario pack alone (D-097): the pack becomes this student's own committee, and a practice run starts on
     its first operative clause against the computed chamber."""
     from app.modules.mun import choice as CH
-    from app.modules.mun.packfile import install, load
+    from app.modules.mun.packfile import install, load, most_contested
     me = request.state.actor.id
     code = form.get("pack") or ""
     iso3 = (form.get(f"iso3_{code}") or form.get("iso3") or "").upper()
@@ -240,10 +240,12 @@ def practice_scenario(request: Request, sess=Depends(require_student), form=Depe
             raise UserError("Choose a country that sits on this committee.")
         info = install(w, code, None, name_suffix=" · solo", solo_student_id=me)
         CH.set_roster(w, info["committee_id"], [me])
-        first = one(w.conn, "SELECT p.id FROM paragraph p WHERE p.resolution_id = ? AND p.kind = 'operative' AND p.deleted_at IS NULL "
-                            "ORDER BY p.position LIMIT 1", (info["resolution_id"],))
-        pid = SIM.create_practice(w, me, info["committee_id"], first["id"], iso3)
-    return redirect(f"/me/sim/{pid}", f"{pack['title']}: you are {iso3}. Lobby the room, amend if you need to, then call the vote.")
+        ops = rows(w.conn, "SELECT p.id FROM paragraph p WHERE p.resolution_id = ? AND p.kind = 'operative' AND p.deleted_at IS NULL "
+                           "ORDER BY p.position", (info["resolution_id"],))
+        pid = SIM.create_practice(w, me, info["committee_id"], ops[most_contested(pack)]["id"], iso3)
+        country = scalar(w.conn, "SELECT name FROM country WHERE iso3 = ?", (iso3,)) or iso3
+    return redirect(f"/me/sim/{pid}", f"{pack['title']}: you are {country}. This is the clause the room agrees on least: lobby, "
+                                      "amend if you need to, then call the vote. Try the other clauses from Practice committee.")
 
 
 @router.post("/me/sim")

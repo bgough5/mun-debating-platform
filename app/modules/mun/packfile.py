@@ -184,6 +184,18 @@ def available() -> list[dict]:
     return out
 
 
+def most_contested(pack: dict) -> int:
+    """The operative clause (0-based) the countries agree on least: the lowest average support across its tags. A solo
+    run starts there, so the first vote is a real contest rather than one that passes untouched."""
+    positions = pack.get("positions") or {}
+
+    def support(cl):
+        vals = [pos[t] for pos in positions.values() for t in cl.get("tags") or [] if t in pos]
+        return sum(vals) / len(vals) if vals else 0.0
+    ops = pack["resolution"]["operative"]
+    return min(range(len(ops)), key=lambda i: (support(ops[i]), i))
+
+
 def install(w: Writer, code: str, class_id: int | None = None, name_suffix: str = "", solo_student_id: int | None = None) -> dict:
     """Make a committee from a pack, ready to open as a session or play alone."""
     from app.modules.mun import service
