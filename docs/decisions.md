@@ -388,6 +388,22 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 
 
 
+### D-095 "My country": a student's alignments and information, open at will — Decided (4 Nov 2026, Ben)
+Ben: students "should be able to togle up their countries alignments and information at will. it shouldn't just be seen once."
+
+- **A panel above the live tabs, on every tab.** "My country: France" opens and closes whenever the student likes, and stays as they left it on that laptop (`details[data-remember]` in `app.js`, stored in the browser only). It shows:
+  - the flag;
+  - the UN regional group;
+  - a permanent seat, with what that means ("a No from France is a veto");
+  - who the student shares the country with;
+  - every bloc and alliance the country belongs to, with the other countries in this room that share it;
+  - "possible partners here";
+  - links to the full country brief and the friends and foes sheet.
+- **Honesty.**
+  - Likely leanings come from the platform's model (the country's archetypes). They are labelled "estimate", with a note that they are not the country's stated position.
+  - Alignments carry the same "entered from memory, not yet checked" note as the map until someone checks them in Admin.
+- **Code:** `app/modules/mun/mycountry.py` (`card`), the panel in `chair/live.html`; tested in `tests/api/test_country_choice.py`.
+
 ### D-094 Students can choose their country when the Chair allows it — Decided (4 Nov 2026, Ben)
 Ben: "students should have the ability to pick which country they want to be if the chair allows it (or still be random or assigned by chair)".
 

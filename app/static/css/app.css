@@ -645,3 +645,12 @@ body:not([data-fx-motion="off"]) .worldmap-wrap.animate .wm-token-in { animation
 .country-choice .cc-meta { font-size: .86rem; color: var(--muted); }
 .country-choice .cc-who { font-size: .86rem; color: var(--ink); }
 .change-country > summary { cursor: pointer; font-weight: 600; }
+
+/* My country (D-095): a panel above the live tabs that opens and closes at will. */
+.my-country { padding: .6rem 1rem; }
+.my-country > summary { cursor: pointer; display: flex; align-items: center; gap: .55rem; flex-wrap: wrap; min-height: 44px; }
+.my-country > summary .flag { width: 32px; height: auto; border: 1px solid var(--line); }
+.my-country .mc-body { margin-top: .4rem; border-top: 1px solid var(--line); padding-top: .6rem; }
+.my-country h3 { margin-top: .2rem; }
+.mc-groups { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; }
+.mc-groups li { border-left: 4px solid var(--gold); padding: .15rem .6rem; }

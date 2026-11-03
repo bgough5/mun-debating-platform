@@ -1,8 +1,31 @@
 {% extends "base.html" %}
-{% from "_macros.html" import hidden_csrf %}
+{% from "_macros.html" import hidden_csrf, flag %}
 {% block content %}
 <h1>{{ s.committee }}</h1>
 <p id="live-status" class="small muted">Connecting…</p>
+{% if my_country %}{% set mc = my_country %}
+{# My country (D-095): open and close it whenever you like; it stays as you left it on this laptop. #}
+<details class="card my-country" id="my-country" data-remember="my-country">
+  <summary>{{ flag(mc.flag_svg, mc.name) }} <strong>My country: {{ mc.name }}</strong> <span class="small muted">alignments and information</span></summary>
+  <div class="mc-body">
+    <p>{{ mc.region_name or "No UN regional group recorded" }}{% if mc.p5 %} · ★ permanent member of the Security Council: a No from {{ mc.name }} is a veto{% endif %}{% if team %}{% set names = team|map(attribute="name")|list %} · you hold it with {{ (names[:-1]|join(", ") ~ " and " ~ names[-1]) if names|length > 1 else names[0] }}{% endif %}.</p>
+    <div class="cols-2">
+      <section aria-labelledby="h-mc-al"><h3 id="h-mc-al">{{ icon("friends") }} Alignments</h3>
+        {% if mc.groups %}<ul class="mc-groups">{% for g in mc.groups %}<li><strong>{{ g.name }}</strong>{% if g.kind %} <span class="small muted">{{ g.kind }}</span>{% endif %}<br>
+          <span class="small">{% if g.allies %}Also in this room: {{ g.allies|join(", ") }}{% else %}No other country in this room{% endif %}</span></li>{% endfor %}</ul>
+        {% if mc.unchecked %}<p class="small muted">These memberships were entered from memory and aren't checked yet.</p>{% endif %}
+        {% else %}<p class="muted">No blocs or alliances are recorded for {{ mc.name }}.</p>{% endif %}
+      </section>
+      <section aria-labelledby="h-mc-le"><h3 id="h-mc-le">{{ icon("info") }} Likely leanings <span class="badge">estimate</span></h3>
+        {% for l in mc.leanings %}<p><strong>{{ l.name }}</strong>: {{ l.blurb }}</p>{% else %}<p class="muted">No leanings recorded yet.</p>{% endfor %}
+        {% if mc.leanings %}<p class="small muted">A starting point from the platform's model, not {{ mc.name }}'s stated position. Check it in your research.</p>{% endif %}
+        {% if mc.shared %}<p><strong>Possible partners here:</strong> {{ mc.shared|join(", ") }} <span class="small muted">(share a grouping with you)</span></p>{% endif %}
+      </section>
+    </div>
+    <p><a href="/me/committees/{{ s.committee_id }}/prepare">{{ icon("task") }} Full country brief and evidence</a> · <a href="/me/committees/{{ s.committee_id }}/friends-foes">{{ icon("friends") }} Friends and foes</a></p>
+  </div>
+</details>
+{% endif %}
 {# Tabs (D-068). Each tab is also a link, so without JavaScript it simply loads that tab. #}
 <div class="tabs" role="tablist" aria-label="Committee tools" data-tabs>
 {% for key, label, ic in [('floor','Floor','speakers'),('motions','Motions and votes','motion'),('points','Points','point'),

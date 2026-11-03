@@ -517,6 +517,10 @@ def live_page(request: Request, sid: int, sess=Depends(require_student)):
         ctx["dels"] = rows(conn, "SELECT d.id, c.name FROM delegation d JOIN country c ON c.iso3 = d.iso3 WHERE d.committee_id = ? "
                                  "AND d.deleted_at IS NULL ORDER BY c.name", (ctx["s"]["committee_id"],))
         ctx["max_len"] = F.MESSAGE_MAX
+        # My country (D-095): the student's country, its alignments and leanings, one click away on every tab.
+        from app.modules.mun import mycountry
+        topic = one(conn, "SELECT topic_id FROM committee WHERE id = ?", (ctx["s"]["committee_id"],))
+        ctx["my_country"] = mycountry.card(conn, ctx["s"]["committee_id"], mine["iso3"], (topic or {}).get("topic_id")) if mine else None
     return render(request, "chair/live.html", {"title": f"Live: {ctx['s']['committee']}", **ctx})
 
 

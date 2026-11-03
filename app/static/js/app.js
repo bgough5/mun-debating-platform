@@ -21,6 +21,19 @@
     document.querySelectorAll(".menu-toggle[hidden]").forEach(function (b) { b.hidden = false; });
   }
   document.addEventListener("DOMContentLoaded", initMenu);
+
+  // Panels that remember whether they were left open, on this laptop (the student's "My country", D-095).
+  function rememberPanels() {
+    document.querySelectorAll("details[data-remember]").forEach(function (d) {
+      if (d._remember) return;
+      d._remember = true;
+      var key = "open:" + d.getAttribute("data-remember");
+      try { if (localStorage.getItem(key) === "1") d.open = true; } catch (err) { /* storage blocked */ }
+      d.addEventListener("toggle", function () { try { localStorage.setItem(key, d.open ? "1" : "0"); } catch (err) { /* ignore */ } });
+    });
+  }
+  document.addEventListener("DOMContentLoaded", rememberPanels);
+  document.addEventListener("htmx:load", rememberPanels);
   document.addEventListener("htmx:afterSettle", initMenu);
   document.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest(".menu-toggle");

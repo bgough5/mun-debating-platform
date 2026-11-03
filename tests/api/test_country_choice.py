@@ -103,3 +103,20 @@ def test_erasing_a_student_removes_them_from_the_list(app, coord):
     with app.state.db.write(SYSTEM) as w:
         erase_student(w, ids[0])
     assert not db_one(app, "SELECT 1 AS x FROM committee_roster WHERE student_id = ?", (ids[0],))
+
+
+def test_my_country_panel_is_on_every_tab(app, coord):
+    """D-095: a student's country, its alignments (with who else in the room shares them) and its likely leanings, in a
+    panel above the tabs that the student opens and closes at will."""
+    sid, com, ids = start(app, coord, "choose", n=2)
+    a = join_as(app, ids[0])
+    assert 'id="my-country"' not in a.get(f"/live/{sid}").text                    # no country yet: nothing to show
+    fra = db_one(app, "SELECT id FROM delegation WHERE committee_id = ? AND iso3 = 'FRA'", (com,))["id"]
+    a.post(f"/live/{sid}/country", {"delegation_id": str(fra)})
+    for tab in ("floor", "messages", "speech", "friends"):
+        page = a.get(f"/live/{sid}?tab={tab}").text
+        assert 'id="my-country"' in page and 'data-remember="my-country"' in page and "My country: France" in page
+    assert "permanent member" in page and "NATO" in page and "Also in this room:" in page
+    assert "United Kingdom" in page.split('id="my-country"')[1].split("</details>")[0]   # a NATO partner in this committee
+    assert "estimate" in page and "entered from memory" in page
+    assert f"/me/committees/{com}/prepare" in page
