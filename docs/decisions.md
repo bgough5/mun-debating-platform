@@ -388,6 +388,33 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 
 
 
+### D-096 Scoring: Model UN counts up from 0; debating marks are the teacher's — Decided (4 Nov 2026, Ben)
+Ben: "with debating it will all be manually inputted etc, and MUN should be starting at 0 and counting up". An agent assessed the options. Ben chose "automatic + my awards" for Model UN and "teacher-only + manual house points" for debating.
+
+- **Model UN contributions** (`app/modules/mun/points.py`). Every student starts each session at 0. Points are counted from the session's own records each time they are shown, so a correction corrects itself. They fall into four strands.
+  - **Points per action:**
+    - answering the roll +1;
+    - a speech given +2 (up to 3 a session);
+    - a point the Chair took +1 (up to 2);
+    - a motion the committee took up +1 (up to 2);
+    - seconding +1 (up to 2);
+    - a submitted amendment +2 (up to 2);
+    - signing an amendment +1 (up to 3);
+    - sponsoring an amendment that was adopted +2 (up to 2);
+    - each correct whip call on a student-cast vote +1 (up to 5).
+  - **Strands:** speaking, procedure, negotiation, reading the room.
+  - **The Chair adds +1 to +3** with a reason the student sees (Chair → Contributions; `mun_award`, migration 0017). Withdrawing an award removes it.
+  - **Who earns:** points go to the student who acted, so co-delegates are counted separately. The engine, absent students and casting the country's vote earn nothing.
+  - **Who sees what:** each student sees only their own ("Your contributions" on the live page). The Chair sees everyone. There is no leaderboard and nothing per student on the board (D-091).
+  - **The point values and caps** are a first setting, in `points.RULES`. Change them there.
+- **Debating.**
+  - Only staff running an event enter its ballots; a student adjudicator now gives their marks to the teacher.
+  - The ballot shows each speaker's total, each team's total and the margin as marks go in. This is display only; the server works them out again.
+  - House points are entered by hand on the results page. The "award from rules" buttons are gone, and the routes refuse them.
+  - Unchanged: the higher total wins (D-046); a winner is chosen only when totals are level.
+- **Privacy:** `mun_award` holds staff remarks about a student, so `erase_student` deletes them.
+- **Tests:** `tests/api/test_scoring.py`. The phase 3 tests were updated for teacher-only ballots and manual house points.
+
 ### D-095 "My country": a student's alignments and information, open at will — Decided (4 Nov 2026, Ben)
 Ben: students "should be able to togle up their countries alignments and information at will. it shouldn't just be seen once."
 

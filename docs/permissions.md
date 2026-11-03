@@ -25,10 +25,10 @@ student may open a resolution only in their own class's committee, and a ballot 
 |---|---|
 | Public | 26 |
 | Signed in (any role, checked per item) | 30 |
-| Students only | 51 |
-| Staff and coordinator | 118 |
+| Students only | 52 |
+| Staff and coordinator | 121 |
 | Coordinator only | 40 |
-| **Total** | **265** |
+| **Total** | **269** |
 
 ## Coordinator only
 
@@ -85,6 +85,9 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/chair/{sid}` |
 | POST | `/chair/{sid}/adjust` |
 | POST | `/chair/{sid}/agenda` |
+| GET | `/chair/{sid}/contributions` |
+| POST | `/chair/{sid}/contributions` |
+| POST | `/chair/{sid}/countries` |
 | GET | `/chair/{sid}/debrief/{did}` |
 | POST | `/chair/{sid}/debrief/{did}/fidelity` |
 | POST | `/chair/{sid}/divisions` |
@@ -203,6 +206,7 @@ student may open a resolution only in their own class's committee, and a ballot 
 | Method | Path |
 |---|---|
 | GET | `/live/{sid}` |
+| POST | `/live/{sid}/country` |
 | GET | `/live/{sid}/debrief/{did}` |
 | GET | `/live/{sid}/f` |
 | GET | `/live/{sid}/f/messages` |

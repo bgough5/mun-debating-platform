@@ -12,9 +12,8 @@
 {% else %}<tr><td colspan="7">No results yet.</td></tr>{% endfor %}</tbody></table></div></section>
 <section aria-labelledby="h-hp"><h2 id="h-hp">{{ icon("house") }} House points</h2>
 <ol>{% for h in totals %}<li><strong>{{ h.name }}</strong>: {{ h.points|num(1) }}</li>{% endfor %}</ol>
-<form method="post" action="/debating/events/{{ e.id }}/housepoints" class="inline no-print">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="all_rounds"><button type="submit" class="secondary">Award for all rounds</button></form>
-<form method="post" action="/debating/events/{{ e.id }}/housepoints" class="inline no-print">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="final"><button type="submit" class="secondary">Award final placings</button></form>
-<details class="no-print"><summary>Add or remove points by hand</summary>
+<details class="no-print" open><summary>Add or remove points</summary>
+<p class="small">House points are entered by hand, each with a reason; every entry stays in the record.</p>
 <form method="post" action="/debating/events/{{ e.id }}/housepoints" class="stack">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="manual">
   <div class="field"><label for="hh">House</label><select id="hh" name="house_id">{% for h in houses %}<option value="{{ h.id }}">{{ h.name }}</option>{% endfor %}</select></div>
   <div class="field"><label for="hpts">Points (negative to remove)</label><input id="hpts" type="number" name="points" step="0.5"></div>

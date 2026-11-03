@@ -107,6 +107,9 @@ def _shared_view(conn, sid: int) -> dict:
     from app.modules.mun import choice as CH
     data["countries"] = CH.view(conn, s["committee_id"])
     data["country_options"] = CH.options(conn, s["committee_id"]) if data["countries"]["open"] else []
+    # Contributions (D-096): every student from 0 up; each student's page shows only their own.
+    from app.modules.mun import points as PTS
+    data["points"] = PTS.tally(conn, sid)
     data["view_seq"] = seq
     with _VIEW_LOCK:
         if len(_VIEW_CACHE) > 64:
@@ -143,7 +146,12 @@ def session_view(conn, sid: int, actor=None) -> dict:
     from app.modules.mun.who import co_delegates
     team = [t for t in co_delegates(conn, mine["id"]) if t["id"] != actor.id] if mine else []
     my_placard = next((p for p in view.get("placards", []) if actor is not None and actor.kind == "student" and p["student_id"] == actor.id), None)
-    view.update(mine=mine, team=team, caster=caster, can_vote=can_vote, my_placard=my_placard, my_place=my_place, my_vote=my_vote, my_roll=my_roll, my_whip=my_whip, my_points=my_points, my_side=my_side)
+    from app.modules.mun import points as PTS
+    # Contributions (D-096): a seated student sees only their own, from 0.
+    my_contrib = None
+    if mine and actor is not None:
+        my_contrib = view["points"].get(actor.id) or {"total": 0, "strands": {k: 0 for k in PTS.STRANDS}, "earned": [], "awards": []}
+    view.update(my_contrib=my_contrib, strands=PTS.STRANDS, mine=mine, team=team, caster=caster, can_vote=can_vote, my_placard=my_placard, my_place=my_place, my_vote=my_vote, my_roll=my_roll, my_whip=my_whip, my_points=my_points, my_side=my_side)
     return view
 
 
@@ -210,6 +218,35 @@ def _chair_action(request: Request, sid: int, form, fn, msg: str = ""):
         _manage(w.conn, request, sid)
         out = fn(w, form)
     return redirect(f"/chair/{sid}", out if isinstance(out, str) else msg)
+
+
+# ---------- contributions (D-096) ----------
+
+@router.get("/chair/{sid}/contributions")
+def chair_contributions(request: Request, sid: int, sess=Depends(require_staff)):
+    from app.modules.mun import points as PTS
+    with request.app.state.db.read() as conn:
+        s = _manage(conn, request, sid)
+        people = PTS.board(conn, sid)
+        given = PTS.awards(conn, sid)
+    return render(request, "chair/contributions.html", {"title": f"Contributions: {s['committee']}", "s": s, "people": people,
+                                                        "given": given, "strands": PTS.STRANDS, "rules": PTS.RULES,
+                                                        "award_max": PTS.AWARD_MAX})
+
+
+@router.post("/chair/{sid}/contributions")
+def chair_contributions_post(request: Request, sid: int, sess=Depends(require_staff), form=Depends(form_data)):
+    from app.modules.mun import points as PTS
+    with request.app.state.db.write(request.state.actor) as w:
+        _manage(w.conn, request, sid)
+        if form.get("op") == "withdraw":
+            PTS.withdraw(w, sid, form_int(form.get("award_id")), C.ch(sid))
+            msg = "Award withdrawn."
+        else:
+            PTS.award(w, sid, form_int(form.get("student_id")), form.get("strand") or "", form_int(form.get("points")) or 0,
+                      form.get("reason") or "", C.ch(sid))
+            msg = "Points added. The student sees them with your reason."
+    return redirect(f"/chair/{sid}/contributions", msg)
 
 
 # ---------- country choice (D-094) ----------

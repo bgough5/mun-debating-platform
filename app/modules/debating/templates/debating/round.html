@@ -15,7 +15,6 @@
   <form method="post" action="/debating/rounds/{{ r.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="release"><input type="hidden" name="with_motion" value="1"><button type="submit" class="secondary">Release draw and motion</button></form>
   {% else %}
   {% if not r.motion_released %}<form method="post" action="/debating/rounds/{{ r.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="motion"><button type="submit">Release the motion</button></form>{% endif %}
-  <form method="post" action="/debating/rounds/{{ r.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="house_points"><button type="submit" class="secondary">Award house points for this round</button></form>
   {% if r.status == 'released' %}<form method="post" action="/debating/rounds/{{ r.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="close"><button type="submit" class="secondary">Close round</button></form>{% endif %}
   <form method="post" action="/debating/rounds/{{ r.id }}">{{ hidden_csrf(csrf) }}<input type="hidden" name="action" value="unrelease"><button type="submit" class="secondary">Back to draft</button></form>
   {% endif %}

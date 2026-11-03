@@ -12,7 +12,7 @@ from app.engine.draw import ROLES, plan_practice
 from app.errors import UserError
 from app.exports import csv_bytes, text_docx
 from app.modules.debating import service as S
-from app.modules.debating.access import adjudicates, debate_access
+from app.modules.debating.access import debate_access
 from app.util import display_name, now_iso
 from app.web.auth import require_any, require_coordinator, require_staff, require_student, staff_class_ids
 from app.web.http import form_data, form_float, form_int, redirect
@@ -264,7 +264,7 @@ def round_action(request: Request, round_id: int, sess=Depends(require_staff), f
                          form_int(form.get("team_b")))
             msg = "Teams swapped."
         elif action == "house_points":
-            msg = f"{S.award_house_points(w, e['id'], round_id=round_id)} house point entries added for this round."
+            raise UserError("House points are entered by hand on the results page (D-096).")
         else:
             raise UserError("Unknown action.")
     return redirect(f"/debating/rounds/{round_id}", msg)
@@ -278,9 +278,8 @@ def _ballot_context(conn, request, pairing_id: int):
     if not p or p["neg_team_id"] is None:
         raise UserError("That debate doesn't exist (or is a bye).", 404)
     access = debate_access(conn, request.state.actor, p["event_id"])
-    my_adj = adjudicates(conn, request.state.actor, pairing_id)
-    if access != "manage" and not my_adj:
-        raise UserError("Only the adjudicators of this debate (or staff) can enter its ballot.", 403)
+    if access != "manage":                     # every mark is a teacher's judgement (D-096)
+        raise UserError("Only staff running this event enter its ballots.", 403)
     e = S.get_event(conn, p["event_id"])
     teams = {}
     for side, tid in (("Affirmative", p["aff_team_id"]), ("Negative", p["neg_team_id"])):
@@ -299,7 +298,7 @@ def _ballot_context(conn, request, pairing_id: int):
                         "AND deleted_at IS NULL ORDER BY level", (e["rubric_id"],)):
         descriptors.setdefault(d["criterion_id"], []).append(d)
     return {"p": p, "e": e, "teams": teams, "panel": panel, "existing": existing, "crit": crit, "descriptors": descriptors,
-            "my_adj": my_adj, "access": access, "result": S.pairing_result(conn, pairing_id),
+            "my_adj": None, "access": access, "result": S.pairing_result(conn, pairing_id),
             "roles": ROLES.get(e["speakers_per_team"], []),
             "prompts": rows(conn, "SELECT * FROM feedback_prompt WHERE deleted_at IS NULL ORDER BY criterion = 'overall', criterion, position")}
 
@@ -315,7 +314,7 @@ def ballot_form(request: Request, pairing_id: int, sess=Depends(require_any)):
 def ballot_submit(request: Request, pairing_id: int, sess=Depends(require_any), form=Depends(form_data)):
     with request.app.state.db.write(request.state.actor) as w:
         ctx = _ballot_context(w.conn, request, pairing_id)
-        adj = ctx["my_adj"] if ctx["access"] != "manage" else form_int(form.get("adjudicator_id"))
+        adj = form_int(form.get("adjudicator_id"))
         if ctx["access"] == "manage" and adj and adj not in [a["id"] for a in ctx["panel"]]:
             raise UserError("That adjudicator isn't on this debate's panel.")
         scores, speakers, comments = {}, {}, {}
@@ -367,12 +366,8 @@ def house_points(request: Request, event_id: int, sess=Depends(require_staff), f
     action = form.get("action")
     with request.app.state.db.write(request.state.actor) as w:
         _event(w.conn, request, event_id)
-        if action == "final":
-            msg = f"{S.award_house_points(w, event_id, final=True)} final placing entries added."
-        elif action == "all_rounds":
-            n = sum(S.award_house_points(w, event_id, round_id=r["id"]) for r in
-                    rows(w.conn, "SELECT id FROM debate_round WHERE event_id = ? AND deleted_at IS NULL", (event_id,)))
-            msg = f"{n} entries added for debates not already counted."
+        if action in ("final", "all_rounds"):
+            raise UserError("House points are entered by hand on the results page (D-096).")
         elif action == "manual":
             pts = form_float(form.get("points"))
             hid = form_int(form.get("house_id"))

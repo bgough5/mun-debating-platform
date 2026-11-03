@@ -140,8 +140,8 @@ def test_house_points_reversible_and_attributed(coord, app):
     assert after == before - e["points"]
     rev = db_one(app, "SELECT * FROM house_points_entry WHERE reverses_id = ?", (e["id"],))
     assert rev["entered_by"] == "Coordinator" and "scoring error" in rev["reason"]
-    # awarding again doesn't double count
-    coord.post(f"/debating/events/{eid}/housepoints", {"action": "all_rounds"})
+    # house points are entered by hand now (D-096): the automatic award is refused and adds nothing
+    assert coord.post(f"/debating/events/{eid}/housepoints", {"action": "all_rounds"}).status_code >= 400
     assert db_one(app, "SELECT SUM(points) AS s FROM house_points_entry WHERE event_id = ? AND house_id = ?", (eid, e["house_id"]))["s"] == after
 
 
@@ -162,18 +162,14 @@ def test_practice_small_groups(coord, app):
     assert "solo speech practice" in r.text
 
 
-def test_student_adjudicator_enters_ballot_and_student_sees_own_scores(coord, app):
+def test_only_staff_enter_ballots_and_student_sees_own_scores(coord, app):
     ev = db_one(app, "SELECT * FROM debate_event WHERE name LIKE 'Year 8 class debates%'")
     adj = db_one(app, "SELECT a.*, pa.pairing_id FROM adjudicator a JOIN pairing_adjudicator pa ON pa.adjudicator_id = a.id "
                       "WHERE a.event_id = ? AND a.student_id IS NOT NULL LIMIT 1", (ev["id"],))
     if adj:
-        c = join_as(app, adj["student_id"])
-        assert c.get(f"/debating/pairings/{adj['pairing_id']}/ballot").status_code == 200
-        other = db_one(app, "SELECT p.id FROM pairing p JOIN debate_round r ON r.id = p.round_id WHERE r.event_id = ? AND p.id != ? "
-                            "AND p.neg_team_id IS NOT NULL AND p.id NOT IN (SELECT pairing_id FROM pairing_adjudicator WHERE adjudicator_id = ?) LIMIT 1",
-                       (ev["id"], adj["pairing_id"], adj["id"]))
-        if other:
-            assert c.get(f"/debating/pairings/{other['id']}/ballot").status_code == 403
+        c = join_as(app, adj["student_id"])                # every mark is a teacher's judgement (D-096): not even their own debate
+        assert c.get(f"/debating/pairings/{adj['pairing_id']}/ballot").status_code == 403
+        assert "give your marks to your teacher" in c.get("/me").text
     speaker = db_one(app, "SELECT bs.speaker_student_id FROM ballot_score bs WHERE bs.speaker_student_id IS NOT NULL LIMIT 1")["speaker_student_id"]
     c = join_as(app, speaker)
     page = c.get("/me").text

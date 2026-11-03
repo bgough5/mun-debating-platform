@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, empty_state %}
+{% block content %}
+<p><a href="/chair/{{ s.id }}">Back to the session</a></p>
+<h1>{{ title }}</h1>
+<p class="lede">Everyone starts the session at 0. Points are counted from what happens in the committee, with a cap on each kind so the loudest voice can't run away with it; add points by hand for what the records can't see. Each student sees only their own, with your reason.</p>
+<section class="card" aria-labelledby="h-award"><h2 id="h-award">{{ icon("add") }} Add points</h2>
+  {% if people %}
+  <form method="post" action="/chair/{{ s.id }}/contributions" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="op" value="award">
+    <div class="field"><label for="aw-st">Student</label><select id="aw-st" name="student_id">{% for p in people %}<option value="{{ p.id }}">{{ p.name }}, {{ p.country }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="aw-strand">Strand</label><select id="aw-strand" name="strand">{% for k, label in strands.items() %}<option value="{{ k }}">{{ label }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="aw-pts">Points</label><select id="aw-pts" name="points">{% for n in range(1, award_max + 1) %}<option value="{{ n }}">+{{ n }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="aw-why">Reason (the student sees it)</label><input id="aw-why" type="text" name="reason" maxlength="160" required placeholder="e.g. brought a quiet bloc into the amendment"></div>
+    <button type="submit">Add</button></form>
+  {% else %}{{ empty_state("No students have a country yet.", "Give out the countries first, then add points here.", icon_name="committee") }}{% endif %}
+</section>
+<section aria-labelledby="h-tally"><h2 id="h-tally">{{ icon("ladder") }} Everyone's contributions</h2>
+  {% if people %}
+  <div class="table-wrap"><table><caption class="visually-hidden">Contributions by student</caption>
+    <thead><tr><th scope="col">Student</th>{% for k, label in strands.items() %}<th scope="col">{{ label }}</th>{% endfor %}<th scope="col">Total</th></tr></thead><tbody>
+    {% for p in people %}<tr><td>{{ p.name }}, {{ p.country }}</td>{% for k in strands %}<td>{{ p.strands[k] }}</td>{% endfor %}<td><strong>{{ p.total }}</strong></td></tr>{% endfor %}
+  </tbody></table></div>
+  {% endif %}
+  <details><summary>How points are counted</summary>
+    <ul>{% for code, r in rules.items() %}<li>{{ r[1] }}: +{{ r[2] }} ({{ strands[r[0]] }}; counts up to {{ r[3] }} time{{ '' if r[3] == 1 else 's' }} a session)</li>{% endfor %}
+      <li>Your own awards: +1 to +{{ award_max }} with a reason.</li></ul>
+    <p class="small">Students who share a country are counted separately. Countries played by the engine, absent students and casting the country's vote earn nothing.</p></details>
+</section>
+{% if given %}<section aria-labelledby="h-given"><h2 id="h-given">Points you added</h2><ul>
+  {% for a in given %}<li>{{ a.first_name }}{% if a.last_initial %} {{ a.last_initial }}.{% endif %}: +{{ a.points }} {{ strands[a.strand] }}, “{{ a.reason }}”
+    <form method="post" action="/chair/{{ s.id }}/contributions" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="op" value="withdraw"><input type="hidden" name="award_id" value="{{ a.id }}"><button type="submit" class="link">Withdraw<span class="visually-hidden"> this award</span></button></form></li>{% endfor %}
+</ul></section>{% endif %}
+{% endblock %}

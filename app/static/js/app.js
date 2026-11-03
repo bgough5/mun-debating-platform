@@ -33,6 +33,36 @@
     });
   }
   document.addEventListener("DOMContentLoaded", rememberPanels);
+
+  // A debate ballot shows each speaker's total, each team's total and the margin as the marks go in (D-096).
+  // Display only: the server works the totals out again when the ballot is saved.
+  function ballotTotals(form) {
+    var speakers = {}, teams = {}, complete = true, names = {};
+    form.querySelectorAll("input[data-speaker]").forEach(function (i) {
+      var v = parseFloat(i.value), w = parseFloat(i.getAttribute("data-weight")) || 1, sp = i.getAttribute("data-speaker"), tm = i.getAttribute("data-team");
+      speakers[sp] = speakers[sp] || 0; teams[tm] = teams[tm] || 0;
+      if (isNaN(v)) { complete = false; return; }
+      speakers[sp] += v * w; teams[tm] += v * w;
+    });
+    function fmt(n) { return Math.round(n * 10) / 10; }
+    Object.keys(speakers).forEach(function (k) { var el = form.querySelector('[data-speaker-total="' + k + '"]'); if (el) el.textContent = fmt(speakers[k]); });
+    Object.keys(teams).forEach(function (k) { var el = form.querySelector('[data-team-total="' + k + '"]'); if (el) { el.textContent = fmt(teams[k]); names[k] = el.parentNode.textContent.split(" total")[0]; } });
+    var out = form.querySelector("[data-ballot-margin]"), ids = Object.keys(teams);
+    if (!out || ids.length !== 2) return;
+    if (!complete) { out.textContent = "Fill in every mark to see the margin."; return; }
+    var a = teams[ids[0]], b = teams[ids[1]];
+    out.textContent = a === b ? "The totals are level: choose the winner below." : (a > b ? names[ids[0]] : names[ids[1]]) + " ahead by " + fmt(Math.abs(a - b)) + ".";
+  }
+  function initBallots() {
+    document.querySelectorAll("form[data-ballot]").forEach(function (f) {
+      if (f._ballot) return;
+      f._ballot = true;
+      f.addEventListener("input", function () { ballotTotals(f); });
+      ballotTotals(f);
+    });
+  }
+  document.addEventListener("DOMContentLoaded", initBallots);
+  document.addEventListener("htmx:load", initBallots);
   document.addEventListener("htmx:load", rememberPanels);
   document.addEventListener("htmx:afterSettle", initMenu);
   document.addEventListener("click", function (e) {

@@ -8,6 +8,7 @@
     <button type="submit" name="knocks" value="2" class="gavel-button">{{ icon("chair") }} Gavel</button>
     <button type="submit" name="knocks" value="1" class="secondary">One tap</button></form>
   <a class="button secondary" href="/chair/{{ s.id }}/whip-map">{{ icon("whip") }} Whip map</a>
+  <a class="button secondary" href="/chair/{{ s.id }}/contributions">{{ icon("ladder") }} Contributions</a>
   <span class="small muted">Sounds on the projector{% if settings.get('fx_sound', 'projector') in ('chair', 'everywhere') %} and here{% endif %} (Admin → Sound and motion).</span>
 </div>
 <div id="countries" data-live-channel="session:{{ s.id }}" hx-get="/chair/{{ s.id }}/f/countries" hx-trigger="live-update" hx-swap="innerHTML">

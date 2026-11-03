@@ -98,6 +98,17 @@
     <ol class="speakers">{% for e in queue[:8] %}<li>{{ e.by }}{% if e.side %} <span class="badge {{ 'st-yes' if e.side == 'for' else 'st-no' }}">{{ e.side }}</span>{% endif %}</li>{% else %}<li class="muted">Empty</li>{% endfor %}</ol>
   </section>
 </div>
+{% if my_contrib %}{% set mp = my_contrib %}
+<section class="card contributions" aria-labelledby="h-contrib">
+  <h2 id="h-contrib">{{ icon("ladder") }} Your contributions: {{ mp.total }}</h2>
+  <p class="small muted">Everyone starts each session at 0. Points come from what you do in the committee; your teacher can add some too. Only you and your teacher see this.</p>
+  <ul class="strand-row">{% for k, label in strands.items() %}<li><span>{{ label }}</span> <strong>{{ mp.strands[k] }}</strong></li>{% endfor %}</ul>
+  {% if mp.earned or mp.awards %}<details><summary>What earned them</summary><ul>
+    {% for it in mp.earned %}<li>{{ it.label }}{% if it.times > 1 %} ×{{ it.times }}{% endif %}: +{{ it.points }} <span class="small muted">({{ it.strand }})</span></li>{% endfor %}
+    {% for a in mp.awards %}<li>From your teacher: “{{ a.reason }}” +{{ a.points }} <span class="small muted">({{ strands[a.strand] }})</span></li>{% endfor %}
+  </ul></details>{% else %}<p class="muted">Nothing yet: answer the roll, speak, raise a point or sign an amendment.</p>{% endif %}
+</section>
+{% endif %}
 {% if recent %}<section aria-labelledby="h-res"><h2 id="h-res">{{ icon("ladder") }} Results</h2><ul>{% for d in recent %}<li data-announce="{{ d.title ~ ': ' ~ d.summary }}" data-announce-key="result-{{ loop.index }}">{{ d.title }}: {{ d.summary }}</li>{% endfor %}</ul></section>{% endif %}
 </section>
 

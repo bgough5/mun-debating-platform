@@ -654,3 +654,10 @@ body:not([data-fx-motion="off"]) .worldmap-wrap.animate .wm-token-in { animation
 .my-country h3 { margin-top: .2rem; }
 .mc-groups { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; }
 .mc-groups li { border-left: 4px solid var(--gold); padding: .15rem .6rem; }
+
+/* Contributions (D-096): a student's own points, by strand. */
+.strand-row { list-style: none; margin: .4rem 0; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem; }
+.strand-row li { border: 1px solid var(--line); border-left: 4px solid var(--gold); padding: .25rem .7rem; background: var(--panel); }
+.strand-row strong { margin-left: .3rem; }
+.ballot-total { margin: .3rem 0 0; font-size: .95rem; color: var(--muted); }
+.ballot-total strong { color: var(--ink); }
