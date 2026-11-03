@@ -25,10 +25,10 @@ student may open a resolution only in their own class's committee, and a ballot 
 |---|---|
 | Public | 26 |
 | Signed in (any role, checked per item) | 30 |
-| Students only | 52 |
+| Students only | 53 |
 | Staff and coordinator | 121 |
 | Coordinator only | 40 |
-| **Total** | **269** |
+| **Total** | **270** |
 
 ## Coordinator only
 
@@ -254,6 +254,7 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/me/prep/speeches/{speech_id}/rehearse` |
 | GET | `/me/sim` |
 | POST | `/me/sim` |
+| POST | `/me/sim/scenario` |
 | GET | `/me/sim/{pid}` |
 | POST | `/me/sim/{pid}` |
 | GET | `/me/team/{run_id}` |

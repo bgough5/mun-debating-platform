@@ -131,31 +131,7 @@ UNVERIFIED = ("Invented for a practice scenario about a fictional country. This 
 
 
 def load_evatt_scenario(w: Writer, class_id: int | None = None) -> dict:
-    """An Evatt-style Security Council practice committee (15 members, SC voting rule with veto) on a fictional crisis."""
-    code, name = VELORIA_TOPIC
-    topic_id = scalar(w.conn, "SELECT id FROM topic WHERE code = ?", (code,))
-    if not topic_id:
-        topic_id = w.insert("topic", {"code": code, "name": name,
-                                      "notes": "Fictional demo scenario. Every country position is invented and labelled Unverified demo."})
-        for t, label in VELORIA_TAGS.items():
-            w.insert("tag", {"topic_id": topic_id, "code": t, "label": label})
-    ct = one(w.conn, "SELECT * FROM committee_type WHERE code = 'sc'")
-    conf = service.create_conference(w, "Evatt-style practice: the situation in Veloria (demo)", organiser="South Oakleigh College",
-                                     notes="Fictional scenario for practice. Council membership as remembered for 2026; check before use.")
-    com = service.create_committee(w, conf, "Security Council: the situation in Veloria (demo)", ct["id"], None, topic_id, class_id)
-    dels = dict(zip(SC_2026, service.add_delegations(w, com, SC_2026)))
-    res = service.create_resolution(w, com, "The situation in Veloria")
-    paras = []
-    for text, tags in VELORIA_PREAMBULAR:
-        paras.append(service.add_paragraph(w, res, "preambular", text, tags))
-    for text, tags in VELORIA_OPERATIVE:
-        paras.append(service.add_paragraph(w, res, "operative", text, tags))
-    n = 0
-    for iso, positions in VELORIA_POSITIONS.items():
-        cname = scalar(w.conn, "SELECT name FROM country WHERE iso3 = ?", (iso,)) or iso
-        for tag, pos in positions.items():
-            service.add_evidence(w, subject_kind="country", iso3=iso, target_kind="tag", tag_code=tag, topic_id=topic_id,
-                                 position=pos, strength="moderate", source_type="demo_unverified",
-                                 summary=UNVERIFIED.format(name=cname))
-            n += 1
-    return {"conference_id": conf, "committee_id": com, "resolution_id": res, "delegations": dels, "paragraphs": paras, "evidence": n}
+    """An Evatt-style Security Council practice committee (15 members, SC voting rule with veto) on a fictional crisis.
+    Since D-097 it is the pack app/db/seed/packs/veloria.json; the constants above are what that file was made from."""
+    from app.modules.mun.packfile import install
+    return install(w, "veloria", class_id)

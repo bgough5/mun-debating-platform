@@ -42,7 +42,7 @@ def home(request: Request):
         if ids is not None:
             classes = [c for c in classes if c["id"] in ids]
         committees = rows(conn, "SELECT cm.*, cf.name AS conference FROM committee cm JOIN conference cf ON cf.id = cm.conference_id "
-                                "WHERE cm.deleted_at IS NULL AND cf.deleted_at IS NULL ORDER BY cf.id DESC, cm.id")
+                                "WHERE cm.deleted_at IS NULL AND cf.deleted_at IS NULL AND cm.solo_student_id IS NULL ORDER BY cf.id DESC, cm.id")
         if ids is not None:
             committees = [c for c in committees if c["class_id"] in ids]
         tasks_open = scalar(conn, "SELECT COUNT(*) FROM task WHERE status != 'done' AND deleted_at IS NULL")

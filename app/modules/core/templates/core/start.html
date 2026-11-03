@@ -35,6 +35,9 @@
       {% for k, label in country_modes.items() %}<label><input type="radio" name="country_mode" value="{{ k }}" {% if country_mode == k %}checked{% endif %}> {{ label }}</label>{% endfor %}
     </div>
     <p class="hint">“Students choose”: each student picks a country on their screen until you close choosing; anyone who hasn't chosen is then seated at random. You can change this during the session.</p>
+    {% if packs %}<div class="field"><label for="pk">Model UN scenario <span class="hint">replaces the standard one for UNAA or Evatt</span></label>
+      <select id="pk" name="pack"><option value="">Standard (UNAA: climate finance; Evatt: Veloria)</option>
+        {% for p in packs %}<option value="{{ p.code }}" {% if pack == p.code %}selected{% endif %}>{{ p.title }} ({{ {'sc': 'Security Council', 'ga_plenary': 'General Assembly', 'ga_third': 'GA Third Committee'}[p.type] }}, {{ p.level }}{{ ', fictional' if p.fictional }})</option>{% endfor %}</select></div>{% endif %}
     {% endif %}
     {% if "debate" in kinds %}
     <div class="field"><label for="mo">Debate motion <span class="hint">class debate only</span></label>

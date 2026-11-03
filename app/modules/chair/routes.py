@@ -163,7 +163,8 @@ def chair_home(request: Request, sess=Depends(require_staff)):
         ids = staff_class_ids(conn, sess.actor)
         coms = rows(conn, "SELECT cm.*, cf.name AS conference, (SELECT id FROM live_session ls WHERE ls.committee_id = cm.id "
                           "AND ls.state != 'closed' ORDER BY id DESC LIMIT 1) AS open_session FROM committee cm "
-                          "JOIN conference cf ON cf.id = cm.conference_id WHERE cm.deleted_at IS NULL ORDER BY cf.id DESC, cm.id")
+                          "JOIN conference cf ON cf.id = cm.conference_id WHERE cm.deleted_at IS NULL AND cm.solo_student_id IS NULL "
+                          "ORDER BY cf.id DESC, cm.id")
         past = rows(conn, "SELECT ls.*, cm.name AS committee, cm.class_id FROM live_session ls JOIN committee cm ON cm.id = ls.committee_id "
                           "WHERE ls.state = 'closed' ORDER BY ls.id DESC LIMIT 20")
     if ids is not None:

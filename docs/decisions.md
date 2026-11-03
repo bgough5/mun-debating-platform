@@ -388,6 +388,24 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 
 
 
+### D-097 Play Model UN alone; scenario packs as data files anyone can write — Decided (4 Nov 2026, Ben)
+Ben: "let me know if there is a way to play the MUN game solo. If not make a way. furthering that, develop a template for new packs in the game, as i will end up delegating this to lesser models and other engines".
+
+- **Solo before this:** only partly possible. The Practice committee (one to three students against a computed chamber) needed a committee the teacher had already set up for the class. A full live session needs someone in the Chair.
+- **Solo now:** Practice committee → **Play a scenario on your own**. A student picks a pack and a country. The platform makes them their own committee from the pack (`committee.solo_student_id`, migration 0018; only that student can open it, through the roster of D-094). It then starts a practice run on the first operative clause, where every other country is played from its positions. From the same page the student can run the other clauses. Solo committees are left out of the teachers' committee lists.
+- **Packs are data:**
+  - One JSON file per scenario in `app/db/seed/packs/` (format 1). `app/modules/mun/packfile.py` validates, lists and installs them. A file starting with `_` is a template and is never offered.
+  - `veloria.json` (the D-063 Evatt demo) is the reference pack. `load_evatt_scenario` now installs it, with identical content.
+  - Teachers can pick any pack under Start an activity → Options → Model UN scenario.
+- **For delegated authors:** `docs/pack-authoring.md` covers the rules, every field, how to write good tags, clauses and positions, a ready-to-paste prompt for another model, and a teacher's check before a pack goes live. The blank template is `app/db/seed/packs/_template.json`. `python tools/validate_pack.py <file>` lists every problem in plain words, including leftover `REPLACE` placeholders. `tests/api/test_packs.py` installs every pack in the folder, so a broken pack fails the suite.
+- **Honesty rules the validator enforces:**
+  - A fictional crisis's positions are stored as "Unverified demo". A real topic's positions need a source link per country and are stored as estimates from that source (`ai_estimate`); without a source, a position must be left out.
+  - Breaking news is allowed only for fictional crises.
+  - No markup and no links in text.
+  - A Security Council has exactly 15 members including the five permanent members.
+  - Country codes must be ones the platform knows.
+- **What a person still checks** (the guide says so): no real people, no thinly veiled real conflict, sources match, language fits the year level.
+
 ### D-096 Scoring: Model UN counts up from 0; debating marks are the teacher's — Decided (4 Nov 2026, Ben)
 Ben: "with debating it will all be manually inputted etc, and MUN should be starting at 0 and counting up". An agent assessed the options. Ben chose "automatic + my awards" for Model UN and "teacher-only + manual house points" for debating.
 

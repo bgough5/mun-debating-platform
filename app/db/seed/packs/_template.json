@@ -1,0 +1,47 @@
+{
+ "format": 1,
+ "code": "replace_with_file_name",
+ "title": "REPLACE: short title, e.g. The water crisis in Tarsany",
+ "summary": "REPLACE: one or two sentences shown in the pack picker: what the committee decides and what makes it hard.",
+ "level": "middle",
+ "fictional": true,
+ "committee": {
+  "type": "sc",
+  "name": "REPLACE: Security Council: the water crisis in Tarsany (practice)",
+  "conference": "REPLACE: Practice: the water crisis in Tarsany",
+  "notes": "Fictional scenario for practice. Council membership as remembered; check before use."
+ },
+ "topic": {
+  "code": "SC_REPLACE",
+  "name": "REPLACE: The water crisis in Tarsany (fictional scenario)",
+  "notes": "Fictional scenario. Every country position is invented and labelled Unverified demo."
+ },
+ "tags": {
+  "replace_tag_one": "REPLACE: what a clause with this tag does, e.g. Calls for an immediate ceasefire",
+  "replace_tag_two": "REPLACE: Requires safe humanitarian access",
+  "replace_tag_three": "REPLACE: Imposes targeted sanctions on individuals",
+  "replace_tag_four": "REPLACE: Respects sovereignty and regional mediation"
+ },
+ "countries": ["CHN", "FRA", "GBR", "RUS", "USA", "DNK", "GRC", "PAK", "PAN", "SOM", "BHR", "COL", "COD", "LVA", "LBR"],
+ "resolution": {
+  "title": "REPLACE: The water crisis in Tarsany",
+  "preambular": [
+   {"text": "REPLACE: Reaffirming its commitment to the sovereignty and territorial integrity of Tarsany,", "tags": ["replace_tag_four"]},
+   {"text": "REPLACE: Expressing grave concern at the shortage of safe drinking water in the northern districts,", "tags": ["replace_tag_two"]}
+  ],
+  "operative": [
+   {"text": "REPLACE: Calls upon all parties to cease hostilities around the Aral dam immediately;", "tags": ["replace_tag_one"]},
+   {"text": "REPLACE: Demands safe, unimpeded access for humanitarian water deliveries to the northern districts;", "tags": ["replace_tag_two"]},
+   {"text": "REPLACE: Decides that all Member States shall freeze the assets of individuals obstructing water deliveries.", "tags": ["replace_tag_three"]}
+  ]
+ },
+ "positions": {
+  "USA": {"replace_tag_one": 2, "replace_tag_two": 2, "replace_tag_three": 1, "replace_tag_four": 0},
+  "CHN": {"replace_tag_one": 1, "replace_tag_two": 1, "replace_tag_three": -2, "replace_tag_four": 2}
+ },
+ "sources": {},
+ "news": [
+  {"headline": "REPLACE: Dam spillway damaged in overnight shelling", "body": "REPLACE: Two or three sentences of invented news that changes the debate, with no real places, people or events."}
+ ],
+ "author": "REPLACE: who wrote it (a name or a model), and the date"
+}

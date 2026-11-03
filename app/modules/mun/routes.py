@@ -93,7 +93,7 @@ def mun_home(request: Request, s=Depends(require_staff)):
     with request.app.state.db.read() as conn:
         confs = rows(conn, "SELECT * FROM conference WHERE deleted_at IS NULL ORDER BY id DESC")
         coms = rows(conn, "SELECT cm.*, vr.name AS rule FROM committee cm JOIN voting_rule vr ON vr.id = cm.voting_rule_id "
-                          "WHERE cm.deleted_at IS NULL ORDER BY cm.id")
+                          "WHERE cm.deleted_at IS NULL AND cm.solo_student_id IS NULL ORDER BY cm.id")
         ids = staff_class_ids(conn, s.actor)
     if ids is not None:
         coms = [c for c in coms if c["class_id"] in ids]

@@ -91,7 +91,13 @@ def _context(conn, request, ticked: set[int], form: dict | None = None) -> dict:
             **picker(conn, request.state.actor), "ticked": ticked, "motions": motions,
             "kind": form.get("kind") or "", "level": form.get("level") or "suggested",
             "motion_id": form.get("motion_id") or "", "topic_mode": form.get("topic_mode") or "prepared",
-            "country_mode": form.get("country_mode") or "random", "country_modes": CH.MODES}
+            "country_mode": form.get("country_mode") or "random", "country_modes": CH.MODES,
+            "packs": _packs(), "pack": form.get("pack") or ""}
+
+
+def _packs() -> list[dict]:
+    from app.modules.mun.packfile import available
+    return available()
 
 
 @router.get("/start")
@@ -154,17 +160,22 @@ def create_activity(w, actor, kind: str, chosen: list[dict], level: str, form) -
     lv = LEVELS[level]
     cid = _activity_class(w.conn, actor, chosen)
     if kind in ("unaa", "evatt"):
-        return _mun(w, kind, cid, chosen, lv, level, form.get("country_mode") or "random")
+        return _mun(w, kind, cid, chosen, lv, level, form.get("country_mode") or "random", form.get("pack") or "")
     if kind == "debate":
         return _debates(w, cid, chosen, lv, level, form)
     return _speeches(w, kind, cid, chosen, lv, level, form)
 
 
-def _mun(w, kind, cid, chosen, lv, level, mode: str = "random") -> tuple[str, str]:
+def _mun(w, kind, cid, chosen, lv, level, mode: str = "random", pack: str = "") -> tuple[str, str]:
     from app.modules.chair import service as C
     from app.modules.mun import packs, service as M
     stamp = today_iso()
-    info = packs.load_climate_conference(w, cid, name_suffix=f" · {stamp}") if kind == "unaa" else packs.load_evatt_scenario(w, cid)
+    # A scenario pack the teacher picked (D-097), else the standard one for the kind.
+    if pack and pack in {p["code"] for p in _packs()}:
+        from app.modules.mun.packfile import install
+        info = install(w, pack, cid, name_suffix=f" · {stamp}")
+    else:
+        info = packs.load_climate_conference(w, cid, name_suffix=f" · {stamp}") if kind == "unaa" else packs.load_evatt_scenario(w, cid)
     com = info["committee_id"]
     ids = [st["id"] for st in chosen]
     # Today's students, and how they get their countries (D-094).

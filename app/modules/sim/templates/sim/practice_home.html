@@ -7,8 +7,20 @@
 <section aria-labelledby="h-mine"><h2 id="h-mine">Your practice runs</h2>
 <ul>{% for m in mine %}<li><a href="/me/sim/{{ m.id }}">{{ m.committee }}: paragraph {{ m.position }}, as {{ m.iso3 }}</a> — {{ "voted" if m.stage == 'voted' else "lobbying" }}</li>{% endfor %}</ul></section>
 {% endif %}
+{% if packs %}
+<section class="card accent" aria-labelledby="h-solo"><h2 id="h-solo">{{ icon("play") }} Play a scenario on your own</h2>
+<p>Pick a scenario and a country. You get your own committee: every other country is played by the computer, from its position on each issue. Lobby, amend, then call the vote. Nobody else sees it.</p>
+{% for pk in packs %}
+<form method="post" action="/me/sim/scenario" class="stack card">{{ hidden_csrf(csrf) }}<input type="hidden" name="pack" value="{{ pk.code }}">
+  <h3>{{ pk.title }} <span class="badge">{{ pk.level|capitalize }}</span>{% if pk.fictional %} <span class="badge">Fictional</span>{% endif %}</h3>
+  <p class="small">{{ pk.summary }}</p>
+  <div class="field"><label for="sc{{ pk.code }}">Your country</label><select id="sc{{ pk.code }}" name="iso3_{{ pk.code }}">{% for c, nm in pk.options %}<option value="{{ c }}">{{ nm }}</option>{% endfor %}</select></div>
+  <button type="submit">{{ icon("play") }} Play {{ pk.title }}</button>
+</form>{% endfor %}
+</section>
+{% endif %}
 <section class="card" aria-labelledby="h-new"><h2 id="h-new">{{ icon("add") }} Start a practice run</h2>
-{% if not options %}{{ empty_state("Your class has no committee with a draft resolution yet.", "Ask your teacher to set up a committee and a draft resolution, then come back.", icon_name="committee") }}
+{% if not options %}{{ empty_state("Your class has no committee with a draft resolution yet.", "Play a scenario on your own above, or ask your teacher to set up a committee.", icon_name="committee") }}
 {% else %}
 {% for o in options %}
 <form method="post" action="/me/sim" class="stack card">{{ hidden_csrf(csrf) }}<input type="hidden" name="committee_id" value="{{ o.id }}">

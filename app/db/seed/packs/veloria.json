@@ -1,0 +1,272 @@
+{
+ "format": 1,
+ "code": "veloria",
+ "title": "The situation in Veloria",
+ "summary": "Security Council crisis in a fictional state: ceasefire, aid access, an arms embargo, sanctions and a UN mission. Every position is invented for practice.",
+ "level": "middle",
+ "fictional": true,
+ "committee": {
+  "type": "sc",
+  "name": "Security Council: the situation in Veloria (demo)",
+  "conference": "Evatt-style practice: the situation in Veloria (demo)",
+  "notes": "Fictional scenario for practice. Council membership as remembered for 2026; check before use."
+ },
+ "topic": {
+  "code": "SC_VELORIA",
+  "name": "The situation in Veloria (fictional demo scenario)",
+  "notes": "Fictional demo scenario. Every country position is invented and labelled Unverified demo."
+ },
+ "tags": {
+  "ceasefire": "Calls for an immediate ceasefire",
+  "humanitarian_access": "Requires safe, unimpeded humanitarian access",
+  "arms_embargo": "Imposes an arms embargo",
+  "sanctions": "Imposes targeted sanctions on individuals",
+  "peacekeeping": "Authorises a UN mission under Chapter VII",
+  "accountability": "Sets up an independent commission of inquiry",
+  "sovereignty": "Respects sovereignty and regional mediation"
+ },
+ "countries": [
+  "CHN",
+  "FRA",
+  "RUS",
+  "GBR",
+  "USA",
+  "DNK",
+  "GRC",
+  "PAK",
+  "PAN",
+  "SOM",
+  "BHR",
+  "COL",
+  "COD",
+  "LVA",
+  "LBR"
+ ],
+ "resolution": {
+  "title": "The situation in Veloria",
+  "preambular": [
+   {
+    "text": "Reaffirming its strong commitment to the sovereignty, independence, unity and territorial integrity of Veloria,",
+    "tags": [
+     "sovereignty"
+    ]
+   },
+   {
+    "text": "Expressing grave concern at the deteriorating humanitarian situation in the eastern provinces of Veloria and the displacement of civilians,",
+    "tags": [
+     "humanitarian_access"
+    ]
+   },
+   {
+    "text": "Welcoming the mediation efforts of the regional organisation and encouraging all parties to engage with them in good faith,",
+    "tags": [
+     "sovereignty"
+    ]
+   }
+  ],
+  "operative": [
+   {
+    "text": "Demands that all parties to the conflict in Veloria immediately cease hostilities and observe a nationwide ceasefire;",
+    "tags": [
+     "ceasefire"
+    ]
+   },
+   {
+    "text": "Calls upon all parties to allow and facilitate the safe, rapid and unimpeded passage of humanitarian relief to all civilians in need;",
+    "tags": [
+     "humanitarian_access"
+    ]
+   },
+   {
+    "text": "Decides that all Member States shall prevent the direct or indirect supply, sale or transfer of arms and related materiel to Veloria for twelve months;",
+    "tags": [
+     "arms_embargo"
+    ]
+   },
+   {
+    "text": "Decides that all Member States shall impose travel bans and asset freezes on individuals designated by the Committee as obstructing the peace process;",
+    "tags": [
+     "sanctions"
+    ]
+   },
+   {
+    "text": "Authorises, acting under Chapter VII of the Charter, the deployment of a United Nations stabilisation mission to protect civilians in the eastern provinces;",
+    "tags": [
+     "peacekeeping",
+     "humanitarian_access"
+    ]
+   },
+   {
+    "text": "Requests the Secretary-General to establish an independent commission of inquiry into alleged violations of international humanitarian law in Veloria;",
+    "tags": [
+     "accountability"
+    ]
+   }
+  ]
+ },
+ "positions": {
+  "USA": {
+   "ceasefire": 2,
+   "humanitarian_access": 2,
+   "arms_embargo": 1,
+   "sanctions": 2,
+   "peacekeeping": 1,
+   "accountability": 2,
+   "sovereignty": 0
+  },
+  "GBR": {
+   "ceasefire": 2,
+   "humanitarian_access": 2,
+   "arms_embargo": 1,
+   "sanctions": 1,
+   "peacekeeping": 1,
+   "accountability": 2,
+   "sovereignty": 0
+  },
+  "FRA": {
+   "ceasefire": 2,
+   "humanitarian_access": 2,
+   "arms_embargo": 1,
+   "sanctions": 1,
+   "peacekeeping": 2,
+   "accountability": 1,
+   "sovereignty": 0
+  },
+  "CHN": {
+   "ceasefire": 1,
+   "humanitarian_access": 1,
+   "arms_embargo": -1,
+   "sanctions": -2,
+   "peacekeeping": -1,
+   "accountability": -2,
+   "sovereignty": 2
+  },
+  "RUS": {
+   "ceasefire": 1,
+   "humanitarian_access": 0,
+   "arms_embargo": -2,
+   "sanctions": -2,
+   "peacekeeping": -2,
+   "accountability": -2,
+   "sovereignty": 2
+  },
+  "DNK": {
+   "ceasefire": 2,
+   "humanitarian_access": 2,
+   "arms_embargo": 1,
+   "sanctions": 1,
+   "peacekeeping": 1,
+   "accountability": 2,
+   "sovereignty": 0
+  },
+  "GRC": {
+   "ceasefire": 2,
+   "humanitarian_access": 2,
+   "arms_embargo": 1,
+   "sanctions": 0,
+   "peacekeeping": 1,
+   "accountability": 1,
+   "sovereignty": 1
+  },
+  "PAK": {
+   "ceasefire": 1,
+   "humanitarian_access": 1,
+   "arms_embargo": 0,
+   "sanctions": -1,
+   "peacekeeping": 0,
+   "accountability": -1,
+   "sovereignty": 2
+  },
+  "PAN": {
+   "ceasefire": 2,
+   "humanitarian_access": 2,
+   "arms_embargo": 1,
+   "sanctions": 0,
+   "peacekeeping": 1,
+   "accountability": 1,
+   "sovereignty": 1
+  },
+  "SOM": {
+   "ceasefire": 2,
+   "humanitarian_access": 2,
+   "arms_embargo": 0,
+   "sanctions": -1,
+   "peacekeeping": 0,
+   "accountability": 0,
+   "sovereignty": 2
+  },
+  "BHR": {
+   "ceasefire": 1,
+   "humanitarian_access": 1,
+   "arms_embargo": 0,
+   "sanctions": 0,
+   "peacekeeping": 0,
+   "accountability": -1,
+   "sovereignty": 1
+  },
+  "COL": {
+   "ceasefire": 2,
+   "humanitarian_access": 2,
+   "arms_embargo": 1,
+   "sanctions": 0,
+   "peacekeeping": 1,
+   "accountability": 1,
+   "sovereignty": 1
+  },
+  "COD": {
+   "ceasefire": 2,
+   "humanitarian_access": 2,
+   "arms_embargo": 1,
+   "sanctions": 0,
+   "peacekeeping": 0,
+   "accountability": 0,
+   "sovereignty": 2
+  },
+  "LVA": {
+   "ceasefire": 2,
+   "humanitarian_access": 2,
+   "arms_embargo": 2,
+   "sanctions": 2,
+   "peacekeeping": 1,
+   "accountability": 2,
+   "sovereignty": 0
+  },
+  "LBR": {
+   "ceasefire": 2,
+   "humanitarian_access": 2,
+   "arms_embargo": 1,
+   "sanctions": 0,
+   "peacekeeping": 1,
+   "accountability": 1,
+   "sovereignty": 1
+  }
+ },
+ "sources": {},
+ "news": [
+  {
+   "headline": "Ceasefire collapses in the eastern provinces",
+   "body": "Fighting has resumed near the river town of Marrow Ford after a two-day pause. Both sides blame the other for the first shot. Aid agencies have suspended convoys."
+  },
+  {
+   "headline": "Aid convoy stopped at a checkpoint",
+   "body": "A twelve-truck food and medicine convoy has been held at a checkpoint for nine hours. Local officials say paperwork is incomplete; aid workers say the delay is deliberate."
+  },
+  {
+   "headline": "Regional mediators offer talks in a neutral capital",
+   "body": "The regional organisation proposes face-to-face talks within ten days, on condition that the Council does not impose new sanctions meanwhile."
+  },
+  {
+   "headline": "Reports of weapons crossing the northern border",
+   "body": "Satellite images published by an independent research group appear to show armoured vehicles crossing into Veloria. The images have not been verified."
+  },
+  {
+   "headline": "Refugee numbers double in a week",
+   "body": "Neighbouring states report that more than 80,000 people have crossed from Veloria in seven days. One neighbour has asked the Council for emergency funding."
+  },
+  {
+   "headline": "Both sides agree to a 72-hour humanitarian pause",
+   "body": "The parties will hold fire for three days to let aid through, if the Council guarantees independent monitors. The offer expires at midnight."
+  }
+ ],
+ "author": "Ben Gough and the build session (D-063)"
+}

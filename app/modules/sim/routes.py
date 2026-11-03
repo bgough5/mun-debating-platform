@@ -196,8 +196,11 @@ def live_debrief(request: Request, sid: int, did: int, sess=Depends(require_stud
 # ---------- practice v3 ----------
 
 def _my_committees(conn, student_id: int) -> list[dict]:
-    return rows(conn, "SELECT DISTINCT cm.id, cm.name, cm.topic_id FROM committee cm JOIN class c ON c.id = cm.class_id "
-                      "JOIN student st ON st.class_id = c.id WHERE st.id = ? AND cm.deleted_at IS NULL ORDER BY cm.name", (student_id,))
+    """The class's committees, and the ones this student made from a pack to play alone (D-097)."""
+    return rows(conn, "SELECT DISTINCT cm.id, cm.name, cm.topic_id FROM committee cm LEFT JOIN class c ON c.id = cm.class_id "
+                      "LEFT JOIN student st ON st.class_id = c.id AND st.id = ? WHERE cm.deleted_at IS NULL "
+                      "AND (st.id IS NOT NULL OR cm.solo_student_id = ?) ORDER BY cm.solo_student_id IS NULL, cm.name",
+                (student_id, student_id))
 
 
 @router.get("/me/sim")
@@ -217,7 +220,30 @@ def practice_home(request: Request, sess=Depends(require_student)):
                                    "WHERE d.committee_id = ? AND d.deleted_at IS NULL ORDER BY c.name", (cm["id"],))
             if paras and countries:
                 options.append({**cm, "paras": paras, "countries": countries})
-    return render(request, "sim/practice_home.html", {"title": "Practice committee", "mine": mine, "options": options})
+    from app.modules.mun.packfile import available, un_members
+    packs = [{**p, "options": sorted(((c, un_members().get(c, c)) for c in p["countries"]), key=lambda x: x[1])} for p in available()]
+    return render(request, "sim/practice_home.html", {"title": "Practice committee", "mine": mine, "options": options, "packs": packs})
+
+
+@router.post("/me/sim/scenario")
+def practice_scenario(request: Request, sess=Depends(require_student), form=Depends(form_data)):
+    """Play a scenario pack alone (D-097): the pack becomes this student's own committee, and a practice run starts on
+    its first operative clause against the computed chamber."""
+    from app.modules.mun import choice as CH
+    from app.modules.mun.packfile import install, load
+    me = request.state.actor.id
+    code = form.get("pack") or ""
+    iso3 = (form.get(f"iso3_{code}") or form.get("iso3") or "").upper()
+    with request.app.state.db.write(request.state.actor) as w:
+        pack = load(code)
+        if iso3 not in pack["countries"]:
+            raise UserError("Choose a country that sits on this committee.")
+        info = install(w, code, None, name_suffix=" · solo", solo_student_id=me)
+        CH.set_roster(w, info["committee_id"], [me])
+        first = one(w.conn, "SELECT p.id FROM paragraph p WHERE p.resolution_id = ? AND p.kind = 'operative' AND p.deleted_at IS NULL "
+                            "ORDER BY p.position LIMIT 1", (info["resolution_id"],))
+        pid = SIM.create_practice(w, me, info["committee_id"], first["id"], iso3)
+    return redirect(f"/me/sim/{pid}", f"{pack['title']}: you are {iso3}. Lobby the room, amend if you need to, then call the vote.")
 
 
 @router.post("/me/sim")
