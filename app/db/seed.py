@@ -50,6 +50,12 @@ def _insert_rubric(conn, rub: dict) -> None:
                          (cc.lastrowid, lvl, text))
 
 
+def _flags() -> dict:
+    """iso3 -> flag SVG, built by tools/build_flags.py from flag-icons (MIT; flags-LICENSE.txt)."""
+    f = SEED_DIR / "flags.json"
+    return json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
+
+
 def load_pack() -> dict:
     return json.loads(PACK_FILE.read_text(encoding="utf-8"))
 
@@ -58,7 +64,7 @@ def seed_reference(conn: sqlite3.Connection) -> None:
     if conn.execute("SELECT COUNT(*) FROM country").fetchone()[0]:
         return
     pack = load_pack()
-    flags = {PACK_ISO3[n]: f["svg"] for n, f in pack["flags"].items()}
+    flags = {**{PACK_ISO3[n]: f["svg"] for n, f in pack["flags"].items()}, **_flags()}
     for r in _csv("countries.csv"):
         conn.execute("INSERT INTO country (iso3, name, un_member, p5, region, flag_svg) VALUES (?,?,?,?,?,?)",
                      (r["iso3"], r["name"], int(r["un_member"]), int(r["p5"]), r["region"], flags.get(r["iso3"], "")))
@@ -180,6 +186,12 @@ def seed_content_updates(conn: sqlite3.Connection) -> None:
         for rub in json.loads((SEED_DIR / "rubrics.json").read_text(encoding="utf-8")):
             if not conn.execute("SELECT 1 FROM rubric WHERE code = ?", (rub["code"],)).fetchone():
                 _insert_rubric(conn, rub)
+    # Every country's flag (D-093): a country with no flag, or still the simple flag the first pack carried, gets the
+    # full flag. A flag someone changed in Admin is kept.
+    old_flags = {PACK_ISO3[n]: f["svg"] for n, f in load_pack()["flags"].items()}
+    for iso3, svg in _flags().items():
+        conn.execute("UPDATE country SET flag_svg = ? WHERE iso3 = ? AND (flag_svg = '' OR flag_svg = ?)",
+                     (svg, iso3, old_flags.get(iso3, "")))
     if _table_exists(conn, "alignment"):
         # Real-world alliances for the map (D-090), added by code, so an edited membership list stays.
         for a in json.loads((SEED_DIR / "alignments.json").read_text(encoding="utf-8")):

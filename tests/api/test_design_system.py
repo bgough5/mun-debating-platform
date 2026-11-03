@@ -26,5 +26,5 @@ def test_projector_theme(app, coord):
     r = coord.post(f"/chair/committee/{com}/open", follow_redirects=False)
     sid = int(r.headers["location"].rstrip("/").rsplit("/", 1)[1])
     tok = db_one(app, "SELECT projector_token FROM live_session WHERE id = ?", (sid,))["projector_token"]
-    html = coord.get(f"/projector/{tok}").text
+    html = coord.get(f"/projector/{tok}/plain").text          # the old projector page (the board is D-092)
     assert 'class="projector"' in html and "proj-brand" in html

@@ -388,6 +388,23 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 
 
 
+### D-093 Every country's flag; tokens carry flag, regional group and alignments — Decided (2 Nov 2026, Ben)
+Ben: "make sure each country has a flag and other symbolism attached to them, eg a marker of their allignment"; the board "is merging into a civ, monopoly, risk hybrid looking board which i am happy with", and "please do ensure all spacing is perfect". He approved downloading a flag set ("yes download them, and stylise them to fit the rest of the theme of model UN gravitas and authority with the general style of the map").
+
+- **Flags for all 195 countries.** Only 31 had one. The flags come from flag-icons 7.2.3 (MIT licence, `app/db/seed/flags-LICENSE.txt`), downloaded from jsDelivr on 2 Nov. `tools/build_flags.py` rewrites each into the plain-shape SVG that `safe_svg` allows (copies instead of `<use>`, first colour instead of gradients, ids prefixed per country so many flags on one page never clash). All 195 pass the filter and were checked by eye on a contact sheet. Rounding path data or transforms bent the coats of arms (Bolivia, Mexico, El Salvador, Serbia), so both are kept exactly. The seed now holds them (`flags.json`, about 1.7 MB). An existing database gets them through `seed_content_updates`: a country with no flag, or still the simple flag from the first pack, gets the full flag; a flag changed in Admin is kept. Seven flags with detailed coats of arms are over 60 KB (Serbia about 300 KB).
+- **Styled for the board, not changed.** The flag's design is never altered. On the board it is toned to the map's aged paper (slightly less saturated, warmed), with a cloth-fold shading and a thin dark frame. Everywhere else it shows as it is.
+- **Title-deed tokens.**
+  - Each token (52×30, placed with room for what hangs below it) has a band along the top in its UN regional group's colour (like the colour group of a Monopoly property), with the country code and ★ for a permanent member.
+  - Below the band are the flag and a second line (a name, the roll answer, the vote).
+  - Up to three alignment shields hang from the bottom edge, as on a unit in a strategy game. They come from the groupings the map already has (D-090): NATO, EU, African Union, ASEAN, Arab League, BRICS, small island states, G20, least developed countries, most telling first.
+  - A long second line is squeezed to fit, not cut.
+- **The key.** A parchment cartouche in the bottom-left of the map explains the regional colours, the shields present in this room and the ★. It says the alignments were entered from memory and are not yet checked, which is true of all of them until someone checks them in Admin. It steps aside when the camera zooms in, or if a token in this room would sit under it. The compass moved to the bottom-right.
+- **Spacing.**
+  - When the camera zooms in, the view moves so that no token is cut in half at the top or bottom edge.
+  - Until sound is turned on, the rail keeps clear of the "Turn on sound" button.
+  - The board no longer makes a page scroll at any size (it is fixed to the window), which the 320-pixel reflow check now confirms.
+- **Tests:** the existing board tests, with the token count updated; contrast pairs for the band colours and shield monograms are in `design.py`.
+
 ### D-092 The board: a projector view of its own, in a retro war-room look — Decided (30 Oct and 2 Nov 2026, Ben)
 Ben: three views, "student view same as before, teacher view (on their screen only) projector view (extended screen connected like a second monitor would be that is controlled by teacher view)". Whip count only, no debate board. The look: "that old video game feel (monopoly, risk) while still referring to the importance and gravity of a UN". He chose a war-room table, the camera gliding to the speaker, and a debrief showing "the class results, but also how each different country ended up voting, shown visually on the map". After reviewing every stage in screenshots (2 Nov) he asked for the rework list to be fixed, the spacing tidied (the banner looked "a little funky"), nothing rounded or modern ("lavish, well crafted, rich"), and animations between the parts.
 

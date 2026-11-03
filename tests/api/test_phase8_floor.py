@@ -392,7 +392,7 @@ def test_security_council_veto_warning_and_minutes_record_the_floor(coord, app):
     country = db_one(app, "SELECT name FROM country WHERE iso3 = ?", (p5["iso3"],))["name"]
     assert "Veto:" in coord.get(f"/chair/{s['id']}/f/division").text and country in coord.get(f"/chair/{s['id']}/f/division").text
     tok = db_one(app, "SELECT projector_token FROM live_session WHERE id = ?", (s["id"],))["projector_token"]
-    assert "Veto:" in coord.get(f"/projector/{tok}").text
+    assert "Veto:" in coord.get(f"/projector/{tok}/plain").text
     minutes = coord.get(f"/chair/{s['id']}/minutes").text
     assert "Point of parliamentary inquiry from" in minutes and "answered" in minutes
 

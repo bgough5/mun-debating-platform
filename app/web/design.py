@@ -91,6 +91,12 @@ PAIRS = [
     ("lit", "un-blue-dk", TEXT, "gold lettering on the board's banner"), ("white", "un-blue-dk", TEXT, "the committee on the banner"),
     ("parchment", "un-blue", TEXT, "stage names on the banner"), ("walnut-dk", "parchment", TEXT, "the agenda ribbon"),
     ("white", "wood", TEXT, "an abstain band on a token"), ("parchment", "brass-dk", LARGE, "large lettering on dark brass"),
+    # Tokens on the board (D-093): the country code on its regional group's band, and alignment shield monograms.
+    ("walnut-dk", "reg-afr", TEXT, "code on an African Group band"), ("walnut-dk", "reg-apg", TEXT, "code on an Asia-Pacific band"),
+    ("walnut-dk", "reg-eeg", TEXT, "code on an Eastern European band"), ("walnut-dk", "reg-grulac", TEXT, "code on a Latin American band"),
+    ("walnut-dk", "reg-weog", TEXT, "code on a Western European band"), ("white", "un-blue-dk", TEXT, "NATO shield"),
+    ("white", "maroon", TEXT, "ASEAN shield"), ("white", "felt", TEXT, "Arab League shield"), ("white", "brass-dk", TEXT, "BRICS shield"),
+    ("white", "sea-lt", TEXT, "small island states shield"), ("white", "walnut", TEXT, "G20 shield"),
 ]
 
 

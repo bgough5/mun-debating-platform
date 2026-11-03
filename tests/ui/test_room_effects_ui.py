@@ -35,7 +35,7 @@ def test_projector_moments_and_the_students_placard(browser, live):
     sid = int(chair.url.rsplit("/", 1)[1])
     tok = q(live, "SELECT projector_token FROM live_session WHERE id = ?", (sid,))[0]["projector_token"]
     proj = browser.new_context(viewport={"width": 1280, "height": 720}).new_page()
-    proj.goto(live.url + f"/projector/{tok}")
+    proj.goto(live.url + f"/projector/{tok}/plain")          # the plain projector keeps the D-089 effects
     proj.wait_for_selector("[data-fx]", state="attached")
     assert proj.locator(".fx-layer").count() == 0                 # opening the page plays nothing
 

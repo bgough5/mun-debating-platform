@@ -12,7 +12,10 @@ from __future__ import annotations
 import functools
 import re
 
+from markupsafe import Markup
+
 from app.db import one, rows
+from app.web.safety import safe_svg
 from app.modules.mun import worldmap as WMAP
 from app.util import display_name, now
 
@@ -52,13 +55,50 @@ def box(iso3: str) -> tuple:
     return (a[0] - 6, a[1] - 6, a[0] + 6, a[1] + 6)
 
 
+# The board's tokens are title deeds: wider and taller than the committee map's, with room for a flag and the
+# alignment shields that hang from the bottom edge (TOKEN is the space each one is given when they are placed).
+TOKEN = (52.0, 36.0)
+FACE_H = 30.0
+# Alignment shields (D-093), most telling first; a token shows at most three. Groupings come from worldmap.groupings
+# (blocs and alliances, D-090); the monogram and colour are only for the board, and the key explains them.
+BADGES = [("NATO", "N", "NATO"), ("EU", "EU", "European Union"), ("AU", "AU", "African Union"), ("ASEAN", "AS", "ASEAN"),
+          ("ARAB", "AL", "Arab League"), ("BRICS", "BR", "BRICS"), ("AOSIS", "IS", "Small islands"),
+          ("G20", "20", "G20"), ("LDC", "LD", "Least developed")]
+
+
+REGION_SHORT = {"AFR": "African", "APG": "Asia-Pacific", "EEG": "Eastern Europe", "GRULAC": "Latin America", "WEOG": "Western & others"}
+
+
+def _flag(svg: str) -> Markup:
+    """A stored flag, through the same filter as everywhere else (it is drawn inside the map's own SVG)."""
+    return safe_svg(svg)
+
+
 def static_board(conn, committee_id: int) -> dict:
-    """What doesn't change during a session: the world, and a token for each country in the room."""
-    dels = rows(conn, "SELECT d.iso3, c.name, c.p5, c.region FROM delegation d JOIN country c ON c.iso3 = d.iso3 "
+    """What doesn't change during a session: the world, and a token for each country in the room with its flag,
+    UN regional group and alignments, and the key that explains them."""
+    dels = rows(conn, "SELECT d.iso3, c.name, c.p5, c.region, c.flag_svg FROM delegation d JOIN country c ON c.iso3 = d.iso3 "
                       "WHERE d.committee_id = ? AND d.deleted_at IS NULL ORDER BY c.name", (committee_id,))
-    wmap = WMAP.board(conn, [d["iso3"] for d in dels], mode="plain")
+    info = {d["iso3"]: d for d in dels}
+    wmap = WMAP.board(conn, [d["iso3"] for d in dels], mode="plain", token=TOKEN)
+    groups = {g["code"]: g for g in WMAP.groupings(conn)}
+    used, unchecked = [], False
     for t in wmap["tokens"]:
         t["box"] = " ".join(f"{v:.1f}" for v in box(t["iso3"]))
+        t["flag"] = _flag(info[t["iso3"]]["flag_svg"]) if t["iso3"] in info else Markup("")
+        t["badges"] = []
+        for code, mono, label in BADGES:
+            g = groups.get(code)
+            if g and t["iso3"] in g["members"] and len(t["badges"]) < 3:
+                t["badges"].append({"code": code, "mono": mono, "label": label})
+                if code not in used:
+                    used.append(code)
+                unchecked = unchecked or not g["verified"]
+    regions = [r for r in WMAP.REGIONS if any(t["region"] == r for t in wmap["tokens"])]
+    wmap["face_h"] = FACE_H
+    wmap["key"] = {"regions": [{"code": r, "name": REGION_SHORT[r]} for r in regions],
+                   "badges": [{"code": c, "mono": m, "label": lab} for c, m, lab in BADGES if c in used],
+                   "unchecked": unchecked, "p5": any(t["p5"] for t in wmap["tokens"])}
     return wmap
 
 

@@ -45,7 +45,7 @@ def test_only_the_coordinator_changes_sound_settings(app):
 
 def test_projector_marks_the_room_and_the_gavel_changes_its_marker(app, coord):
     sid, _, tok = evatt(app, coord)
-    proj = coord.get(f"/projector/{tok}").text
+    proj = coord.get(f"/projector/{tok}/plain").text
     assert 'data-fx-room="projector"' in proj and "Turn on sound" in proj
     before = marker(proj, "gavel")
     coord.post(f"/chair/{sid}/gavel", {"knocks": "2"})
@@ -83,6 +83,8 @@ def test_the_closed_vote_is_ready_for_the_reveal(app, coord):
 
 def test_placards_go_up_the_chair_recognises_them_and_lowers_them(app, coord):
     sid, ids, tok = evatt(app, coord)
+    with app.state.db.write(SYSTEM) as w:                                    # placards are for the floor (D-092)
+        SIM.set_stage(w, sid, "floor")
     a, b = join_as(app, ids[0]), join_as(app, ids[1])
     a.post(f"/live/{sid}/placard", {"action": "raise"})
     b.post(f"/live/{sid}/placard", {"action": "raise"})

@@ -12,7 +12,7 @@
 </head>
 {# The board (D-092): the war-room table for the projector on the extended screen. A page of its own: no site header,
    menus or footer. board.js keeps it live from /projector/<token>/state.json and plays every change. #}
-{% set tw, th = wmap.token_w, wmap.token_h %}
+{% set tw, th, fh = wmap.token_w, wmap.token_h, wmap.face_h %}
 <body class="board-body" data-token="{{ token }}" data-sid="{{ sid }}"
       data-fx-sound="{{ settings.get('fx_sound', 'projector') }}" data-fx-motion="{{ 'on' if settings.get('fx_motion', True) else 'off' }}">
 <a class="skip" href="#main">Skip to the board</a>
@@ -49,6 +49,9 @@
             <filter id="b-raise" x="-5%" y="-5%" width="110%" height="115%"><feDropShadow dx="0" dy="1.4" stdDeviation="1" flood-opacity=".5"/></filter>
             <filter id="b-tok" x="-30%" y="-40%" width="160%" height="190%"><feDropShadow dx=".8" dy="2.2" stdDeviation="1.2" flood-opacity=".6"/></filter>
             <filter id="b-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4"/></filter>
+            {# Flags take on the map's engraved, aged look: a little less saturated and warmed, with the fall of cloth. #}
+            <filter id="b-cloth-tone" color-interpolation-filters="sRGB"><feColorMatrix type="saturate" values=".78"/><feComponentTransfer><feFuncR type="linear" slope=".97" intercept=".03"/><feFuncG type="linear" slope=".93" intercept=".03"/><feFuncB type="linear" slope=".84" intercept=".02"/></feComponentTransfer></filter>
+            <linearGradient id="b-cloth" x1="0" x2="1" y1="0" y2="0"><stop offset="0" class="b-cl-d"/><stop offset=".28" class="b-cl-l"/><stop offset=".55" class="b-cl-d"/><stop offset=".8" class="b-cl-l"/><stop offset="1" class="b-cl-d"/></linearGradient>
           </defs>
           <rect class="b-sea" x="-2000" y="-2000" width="5000" height="5000" fill="url(#b-sea)"/>
           <rect class="b-sea-waves" x="-2000" y="-2000" width="5000" height="5000" fill="url(#b-waves)"/>
@@ -58,19 +61,24 @@
             {% for c in wmap.dots %}<circle class="b-land b-dot" data-iso="{{ c.iso3 }}" cx="{{ c.x }}" cy="{{ c.y }}" r="2.4"/>{% endfor %}
           </g>
           <g id="b-leaders">{% for t in wmap.tokens if t.leader %}<line class="b-leader" x1="{{ t.hx }}" y1="{{ t.hy }}" x2="{{ t.x }}" y2="{{ t.y }}"/>{% endfor %}</g>
-          <g id="b-tokens">
+          <g id="b-tokens" data-w="{{ tw }}" data-h="{{ th }}">
             {% for t in wmap.tokens %}
-            <g class="b-token" data-iso="{{ t.iso3 }}" data-box="{{ t.box }}" data-x="{{ t.x }}" data-y="{{ t.y }}" transform="translate({{ t.x }} {{ t.y }}) translate({{ -tw / 2 }} {{ -th / 2 }})" filter="url(#b-tok)">
+            <g class="b-token r-{{ t.region|lower }}" data-iso="{{ t.iso3 }}" data-box="{{ t.box }}" data-x="{{ t.x }}" data-y="{{ t.y }}" transform="translate({{ t.x }} {{ t.y }}) translate({{ -tw / 2 }} {{ -th / 2 }})">
               <g class="b-tok-in">
-                <circle class="b-halo" cx="{{ tw / 2 }}" cy="{{ th / 2 }}" r="30" filter="url(#b-glow)"/>
-                <rect class="b-face" width="{{ tw }}" height="{{ th }}" rx=".8"/>
-                <rect class="b-band" x="1.5" y="1.5" width="{{ tw - 3 }}" height="10"/>
-                <rect class="b-rule" x="1.5" y="1.5" width="{{ tw - 3 }}" height="{{ th - 3 }}"/>
-                <path class="b-bevel" d="M.6 {{ th - 0.6 }}H{{ tw - 0.6 }}V.6"/>
-                <text class="b-code" x="{{ tw / 2 }}" y="9.4" text-anchor="middle">{{ t.iso3 }}{% if t.p5 %} ★{% endif %}</text>
-                <text class="b-line" x="{{ tw / 2 }}" y="20.4" text-anchor="middle"></text>
-                <g class="b-placard" transform="translate({{ tw - 4 }} -4)"><g class="b-placard-in"><rect class="b-placard-stick" x="-.9" y="-6" width="1.8" height="14"/><rect class="b-placard-card" x="-12" y="-21" width="24" height="15"/><text class="b-placard-text" x="0" y="-10.6" text-anchor="middle">{{ t.iso3 }}</text></g></g>
-                <g class="b-veto" transform="translate({{ tw / 2 }} {{ th - 5 }}) rotate(-8)"><g class="b-veto-in"><rect x="-17" y="-5.5" width="34" height="11"/><text y="3" text-anchor="middle">VETO</text></g></g>
+                <circle class="b-halo" cx="{{ tw / 2 }}" cy="{{ fh / 2 }}" r="34" filter="url(#b-glow)"/>
+                <g filter="url(#b-tok)">
+                  <rect class="b-face" width="{{ tw }}" height="{{ fh }}" rx=".8"/>
+                  <rect class="b-band" x="1.5" y="1.5" width="{{ tw - 3 }}" height="10.5"/>
+                  <rect class="b-rule" x="1.5" y="1.5" width="{{ tw - 3 }}" height="{{ fh - 3 }}"/>
+                  <path class="b-bevel" d="M.6 {{ fh - 0.6 }}H{{ tw - 0.6 }}V.6"/>
+                  <text class="b-code" x="{{ tw / 2 }}" y="9.9" text-anchor="middle">{{ t.iso3 }}{% if t.p5 %} ★{% endif %}</text>
+                  <g class="b-flag" transform="translate(3.2 14.2)"><g filter="url(#b-cloth-tone)"><g transform="scale({{ 15 / 24 }})">{{ t.flag }}</g></g>
+                    <rect class="b-flag-cloth" width="15" height="11.25" fill="url(#b-cloth)"/><rect class="b-flag-frame" width="15" height="11.25"/></g>
+                  <text class="b-line" x="35.5" y="21.6" text-anchor="middle"></text>
+                </g>
+                {% for b in t.badges %}<g class="b-badge bd-{{ b.code|lower }}" transform="translate({{ 49.5 - (t.badges|length - loop.index0) * 9.4 }} 23.8)"><path d="M0 0H8.4V5.2Q8.4 8.6 4.2 9.8Q0 8.6 0 5.2Z"/><text x="4.2" y="5.6" text-anchor="middle">{{ b.mono }}</text></g>{% endfor %}
+                <g class="b-placard" transform="translate({{ tw - 5 }} -3)"><g class="b-placard-in"><rect class="b-placard-stick" x="-.9" y="-6" width="1.8" height="14"/><rect class="b-placard-card" x="-12" y="-21" width="24" height="15"/><text class="b-placard-text" x="0" y="-10.6" text-anchor="middle">{{ t.iso3 }}</text></g></g>
+                <g class="b-veto" transform="translate({{ tw / 2 }} {{ fh / 2 + 3 }}) rotate(-8)"><g class="b-veto-in"><rect x="-19" y="-6" width="38" height="12"/><text y="3.3" text-anchor="middle">VETO</text></g></g>
                 <g class="b-chip-wrap"><circle class="b-chip" cx="{{ tw }}" cy="0" r="5.6"/><circle class="b-chip-ring" cx="{{ tw }}" cy="0" r="3.6"/></g>
               </g>
             </g>
@@ -84,6 +92,12 @@
           <g class="b-compass-star"><path class="b-cs-a" d="M0-40L7-7 0 0Z M0 40L-7 7 0 0Z M40 0L7 7 0 0Z M-40 0L-7-7 0 0Z"/><path class="b-cs-b" d="M0-40L-7-7 0 0Z M0 40L7 7 0 0Z M40 0L7-7 0 0Z M-40 0L-7 7 0 0Z"/></g>
           <text class="b-compass-n" y="-30" text-anchor="middle">N</text><circle class="b-compass-pin" r="3"/>
         </svg>
+        <div class="b-key" id="b-key">
+          <p class="b-key-title">Key</p>
+          {% if wmap.key.regions %}<p class="b-key-head">UN regional groups</p><ul class="b-key-regions" aria-label="UN regional groups (the colour along the top of each token)">{% for r in wmap.key.regions %}<li><i class="b-sw r-{{ r.code|lower }}"></i>{{ r.name }}</li>{% endfor %}</ul>{% endif %}
+          {% if wmap.key.badges %}<p class="b-key-head">Alignments</p><ul class="b-key-badges" aria-label="Alignments (the shields under each token)">{% for b in wmap.key.badges %}<li><svg viewBox="-.5 -.5 9.4 10.8" aria-hidden="true" class="bd-{{ b.code|lower }}"><path d="M0 0H8.4V5.2Q8.4 8.6 4.2 9.8Q0 8.6 0 5.2Z"/><text x="4.2" y="5.6" text-anchor="middle">{{ b.mono }}</text></svg>{{ b.label }}</li>{% endfor %}</ul>{% endif %}
+          <p class="b-key-note">{% if wmap.key.p5 %}★ permanent member of the Security Council.{% endif %}{% if wmap.key.unchecked %} Alignments were entered from memory and are not yet checked.{% endif %}</p>
+        </div>
         <div class="b-cornerseal" id="b-cornerseal" hidden aria-hidden="true"></div>
       </div>
       <i class="b-corner tl" aria-hidden="true"></i><i class="b-corner tr" aria-hidden="true"></i><i class="b-corner bl" aria-hidden="true"></i><i class="b-corner br" aria-hidden="true"></i>

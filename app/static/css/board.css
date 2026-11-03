@@ -10,7 +10,7 @@ body.board-body { font-family: var(--book); color: var(--parchment); }
 .board-body .skip { position: absolute; left: -999px; top: 0; z-index: 99; background: var(--parchment); color: var(--ink); padding: .5rem 1rem; }
 .board-body .skip:focus { left: 1rem; }
 
-.b-stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden;
+.b-stage { position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden;
   display: grid; grid-template-rows: 172px 1fr 118px;
   background:
     radial-gradient(ellipse 70% 60% at 50% 38%, rgb(255 226 170 / 13%), transparent 70%),
@@ -127,8 +127,23 @@ body.board-body { font-family: var(--book); color: var(--parchment); }
 .b-spot.on { opacity: 1; }
 
 /* the compass rose, an engraver's flourish in the corner of the sea */
-.b-compass { position: absolute; left: 22px; bottom: 26px; width: 118px; height: 118px; opacity: .8; pointer-events: none; transition: opacity .8s ease; }
-.b-compass.away { opacity: 0; }          /* out of the way while the camera is in close */
+.b-compass { position: absolute; right: 22px; bottom: 26px; width: 118px; height: 118px; opacity: .8; pointer-events: none; transition: opacity .8s ease; }
+.b-compass.away, .b-key.away { opacity: 0; }          /* out of the way while the camera is in close */
+/* the map's key: a small parchment cartouche beside the compass */
+.b-key { position: absolute; left: 22px; bottom: 26px; width: 300px; box-sizing: border-box; padding: 9px 14px 8px; color: var(--ink); pointer-events: none;
+  background: linear-gradient(180deg, var(--parchment), var(--parchment-dk)); border: 2px solid var(--walnut-dk);
+  box-shadow: inset 0 0 0 2px var(--parchment), inset 0 0 0 3px var(--brass-dk), 4px 5px 0 rgb(0 0 0 / 35%); transition: opacity .8s ease; }
+.b-key-title { margin: 0 0 2px; font-family: var(--serif); font-weight: 700; letter-spacing: .24em; text-transform: uppercase; font-size: 12px; color: var(--maroon); }
+.b-key-head { margin: 5px 0 2px; padding-top: 4px; border-top: 1px solid var(--parchment-dk); font-family: var(--serif); font-weight: 700; font-size: 11px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.b-key ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1px 12px; }
+.b-key li { display: flex; align-items: center; gap: 6px; font-size: 12.5px; line-height: 1.4; white-space: nowrap; }
+.b-sw { display: inline-block; width: 18px; height: 10px; border: 1px solid var(--walnut-dk); }
+.b-sw.r-afr { background: var(--reg-afr); } .b-sw.r-apg { background: var(--reg-apg); } .b-sw.r-eeg { background: var(--reg-eeg); }
+.b-sw.r-grulac { background: var(--reg-grulac); } .b-sw.r-weog { background: var(--reg-weog); }
+.b-key svg { width: 15px; height: 17px; overflow: visible; }
+.b-key-note { margin: 5px 0 0; font-size: 11.5px; line-height: 1.3; font-style: italic; color: var(--muted); }
+.b-key-note:empty { display: none; }
 .b-compass-ring { fill: rgb(0 0 0 / 15%); stroke: var(--brass); stroke-width: 2; }
 .b-compass-ring2 { fill: none; stroke: var(--parchment); stroke-width: .8; stroke-dasharray: 2 3; }
 .b-compass-tick { stroke: var(--brass); stroke-width: 2; }
@@ -141,11 +156,25 @@ body.board-body { font-family: var(--book); color: var(--parchment); }
 .b-face { fill: var(--parchment); stroke: var(--walnut-dk); stroke-width: .9; transition: fill .4s ease; }
 .b-rule { fill: none; stroke: var(--wood); stroke-width: .35; }
 .b-bevel { fill: none; stroke: var(--walnut-dk); stroke-width: 1.2; opacity: .55; }
+/* the band along the top is the country's UN regional group, like the colour of a property on a title deed */
 .b-band { fill: var(--un-blue); transition: fill .4s ease; }
-.b-code { font-family: var(--serif); font-weight: 700; font-size: 8.4px; letter-spacing: .3px; fill: var(--white); }
-.b-line { font-family: var(--book); font-weight: 700; font-size: 6.4px; fill: var(--ink); }
+.b-code { font-family: var(--serif); font-weight: 700; font-size: 8.6px; letter-spacing: .3px; fill: var(--white); transition: fill .4s ease; }
+.b-token.r-afr .b-band { fill: var(--reg-afr); } .b-token.r-apg .b-band { fill: var(--reg-apg); } .b-token.r-eeg .b-band { fill: var(--reg-eeg); }
+.b-token.r-grulac .b-band { fill: var(--reg-grulac); } .b-token.r-weog .b-band { fill: var(--reg-weog); }
+.b-token.r-afr .b-code, .b-token.r-apg .b-code, .b-token.r-eeg .b-code, .b-token.r-grulac .b-code, .b-token.r-weog .b-code { fill: var(--walnut-dk); }
+.b-line { font-family: var(--book); font-weight: 700; font-size: 6.6px; fill: var(--ink); }
+/* the flag, toned to the map's aged paper and given the fall of cloth, in a thin dark frame */
+.b-flag-frame { fill: none; stroke: var(--walnut-dk); stroke-width: .7; }
+.b-cl-d { stop-color: var(--walnut-dk); stop-opacity: .26; } .b-cl-l { stop-color: var(--white); stop-opacity: .2; }
+/* alignment shields hang from the bottom edge, as on a unit in a strategy game */
+.b-badge { filter: url(#b-tok); }
+.b-badge path, .b-key svg path { stroke: var(--parchment); stroke-width: .7; }
+.b-badge text, .b-key svg text { font-family: var(--serif); font-weight: 700; font-size: 4.1px; fill: var(--white); }
+.bd-nato path { fill: var(--un-blue-dk); } .bd-eu path { fill: var(--un-blue); } .bd-au path { fill: var(--green); } .bd-asean path { fill: var(--maroon); }
+.bd-arab path { fill: var(--felt); } .bd-brics path { fill: var(--brass-dk); } .bd-aosis path { fill: var(--sea-lt); } .bd-g20 path { fill: var(--walnut); }
+.bd-ldc path { fill: var(--wood); }
 .b-halo { fill: var(--lit); opacity: 0; transition: opacity .5s ease; }
-.b-token.lit .b-face { fill: var(--lit); } .b-token.lit .b-band { fill: var(--brass-dk); }
+.b-token.lit .b-face { fill: var(--lit); }
 .b-token.speaking .b-halo { opacity: .85; animation: b-pulse 1.6s ease-in-out infinite; }
 .b-token.speaking .b-face { stroke: var(--white); stroke-width: 1.8; }
 .b-tok-in { transition: transform .5s cubic-bezier(.2, 1.4, .4, 1), opacity .5s ease; transform-box: fill-box; transform-origin: center; }
@@ -153,6 +182,7 @@ body.board-body { font-family: var(--book); color: var(--parchment); }
 .b-token.pop .b-tok-in { animation: b-pop .6s cubic-bezier(.2, 1.6, .4, 1); }
 .b-token.dealt .b-tok-in { animation: b-deal .7s cubic-bezier(.25, 1.4, .45, 1) both; }
 .b-token.v-yes .b-band { fill: var(--green); } .b-token.v-no .b-band { fill: var(--stamp); } .b-token.v-abstain .b-band { fill: var(--wood); }
+.b-token.v-yes .b-code, .b-token.v-no .b-code, .b-token.v-abstain .b-code { fill: var(--white); }
 .b-token.right .b-face { stroke: var(--green); stroke-width: 2.6; } .b-token.wrong .b-face { stroke: var(--stamp); stroke-width: 2.6; }
 /* a poker chip drops onto the deed when the vote is cast */
 .b-chip { fill: var(--control); stroke: var(--white); stroke-width: 1.1; stroke-dasharray: 2.2 1.6; }
@@ -185,6 +215,8 @@ body.board-body { font-family: var(--book); color: var(--parchment); }
 
 /* ---------- the rail: documents and brass plates that change with the stage ---------- */
 .b-rail { display: flex; flex-direction: column; gap: 18px; min-height: 0; overflow: hidden; padding: 4px 4px 12px; }
+/* until sound is turned on, its button sits under the rail: keep the rail's cards clear of it */
+.b-stage:has(.b-sound:not([hidden])) .b-rail { padding-bottom: 76px; }
 .b-card { position: relative; background:
     radial-gradient(ellipse at 30% 0%, rgb(255 255 255 / 40%), transparent 60%),
     linear-gradient(180deg, var(--parchment) 0%, var(--parchment) 72%, var(--parchment-dk) 100%);
@@ -196,6 +228,10 @@ body.board-body { font-family: var(--book); color: var(--parchment); }
 .b-card p { margin: 4px 0; font-size: 21px; line-height: 1.35; }
 .b-card .b-sub { font-size: 18px; color: var(--muted); }
 .b-card .b-big { font-family: var(--serif); font-weight: 700; font-size: 62px; line-height: 1; color: var(--un-blue); margin: 4px 0; overflow: hidden; }
+/* a tally card: the count and its words on one line */
+.b-card.b-tally { display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 16px; }
+.b-card.b-tally h2 { grid-column: 1 / -1; }
+.b-card.b-tally .b-big { font-size: 52px; margin: 0; }
 .b-card .b-big.roll { animation: b-roll .6s cubic-bezier(.2, 1.3, .4, 1); }
 .b-card .b-big.failed { color: var(--stamp); } .b-card .b-big.passed { color: var(--green); }
 .b-lesson { font-family: var(--book); font-style: italic; font-size: 22px; border-left: 5px solid var(--stamp); padding: 4px 0 4px 12px; margin-top: 10px; }
@@ -205,8 +241,8 @@ body.board-body { font-family: var(--book); color: var(--parchment); }
 .b-list li.next { background: linear-gradient(90deg, rgb(201 162 39 / 28%), transparent); box-shadow: inset 5px 0 0 var(--brass); padding-left: 12px; }
 /* the roll: a ledger, ticked off in ink as countries answer */
 .b-ledger { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px;
-  background: repeating-linear-gradient(180deg, transparent 0 33px, rgb(31 78 121 / 22%) 33px 34px); }
-.b-ledger li { display: flex; align-items: center; gap: 10px; height: 34px; font-size: 19px; white-space: nowrap; overflow: hidden; }
+  background: repeating-linear-gradient(180deg, transparent 0 30px, rgb(31 78 121 / 22%) 30px 31px); }
+.b-ledger li { display: flex; align-items: center; gap: 10px; height: 31px; font-size: 19px; white-space: nowrap; overflow: hidden; }
 .b-ledger li .b-box { flex: none; width: 20px; height: 20px; border: 2px solid var(--walnut); display: grid; place-items: center; }
 .b-ledger li .b-tick { width: 20px; height: 20px; }
 .b-ledger li .b-tick path { fill: none; stroke: var(--green); stroke-width: 3.4; stroke-linecap: square; stroke-dasharray: 30; stroke-dashoffset: 0; }

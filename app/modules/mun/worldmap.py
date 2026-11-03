@@ -55,14 +55,14 @@ def anchor(iso3: str) -> tuple[float, float] | None:
     return None
 
 
-def place_tokens(codes: list[str], width: float, height: float) -> dict[str, dict]:
+def place_tokens(codes: list[str], width: float, height: float, tw: float = TOKEN_W, th: float = TOKEN_H) -> dict[str, dict]:
     """Token positions, cached: they depend only on which countries are in the room (D-090: the live room rebuilds
-    the map on every change, and this keeps that cheap)."""
-    return {k: dict(v) for k, v in _placed(tuple(sorted(codes)), width, height).items()}
+    the map on every change, and this keeps that cheap). `tw` and `th`: the token's size (the board's are larger)."""
+    return {k: dict(v) for k, v in _placed(tuple(sorted(codes)), width, height, tw, th).items()}
 
 
 @functools.lru_cache(maxsize=64)
-def _placed(codes: tuple, width: float, height: float) -> dict[str, dict]:
+def _placed(codes: tuple, width: float, height: float, tw: float = TOKEN_W, th: float = TOKEN_H) -> dict[str, dict]:
     """Token positions: each starts on its country and is nudged apart from overlapping tokens (a few hundred
     rounds of gentle pushing). A token that moved far gets a leader line back to its country."""
     pts = {c: list(anchor(c)) for c in codes if anchor(c)}
@@ -76,10 +76,10 @@ def _placed(codes: tuple, width: float, height: float) -> dict[str, dict]:
                 ax, ay = pts[a]
                 bx, by = pts[b]
                 dx, dy = bx - ax, by - ay
-                ox, oy = TOKEN_W + 4 - abs(dx), TOKEN_H + 4 - abs(dy)
+                ox, oy = tw + 4 - abs(dx), th + 4 - abs(dy)
                 if ox > 0 and oy > 0:
                     moved = True
-                    if ox / TOKEN_W < oy / TOKEN_H:             # push apart along the cheaper axis
+                    if ox / tw < oy / th:             # push apart along the cheaper axis
                         s = (ox / 2 + 0.5) * (1 if dx >= 0 else -1)
                         pts[a][0] -= s
                         pts[b][0] += s
@@ -91,8 +91,8 @@ def _placed(codes: tuple, width: float, height: float) -> dict[str, dict]:
             if not settle:
                 pts[c][0] += (home[c][0] - pts[c][0]) * 0.02
                 pts[c][1] += (home[c][1] - pts[c][1]) * 0.02
-            pts[c][0] = min(max(pts[c][0], TOKEN_W / 2 + 2), width - TOKEN_W / 2 - 2)
-            pts[c][1] = min(max(pts[c][1], TOKEN_H / 2 + 2), height - TOKEN_H / 2 - 2)
+            pts[c][0] = min(max(pts[c][0], tw / 2 + 2), width - tw / 2 - 2)
+            pts[c][1] = min(max(pts[c][1], th / 2 + 2), height - th / 2 - 2)
         if not moved and settle:
             break
     out = {}
@@ -121,7 +121,7 @@ def groupings(conn) -> list[dict]:
 
 
 def board(conn, codes: list[str], mode: str = "region", values: dict | None = None, labels: dict | None = None,
-          highlight: set | None = None) -> dict:
+          highlight: set | None = None, token: tuple = (TOKEN_W, TOKEN_H)) -> dict:
     """Everything a map template needs. `values`: iso3 -> a class for the fill (vote modes); `labels`: iso3 -> the
     second line on a token; `highlight`: countries to light up (bloc mode)."""
     d = data()
@@ -156,9 +156,9 @@ def board(conn, codes: list[str], mode: str = "region", values: dict | None = No
                 cls += " wm-member"
             dots.append({"iso3": iso3, "x": round(x, 1), "y": round(y, 1), "cls": cls, "name": info[iso3]["name"]})
     tokens = []
-    for iso3, p in place_tokens(sorted(inside), w, h).items():
+    for iso3, p in place_tokens(sorted(inside), w, h, *token).items():
         c = info.get(iso3, {"name": iso3, "p5": 0, "region": ""})
-        tokens.append({"iso3": iso3, "name": c["name"], "p5": bool(c["p5"]), **p, "line": (labels or {}).get(iso3, ""),
+        tokens.append({"iso3": iso3, "name": c["name"], "p5": bool(c["p5"]), "region": c["region"] or "", **p, "line": (labels or {}).get(iso3, ""),
                        "cls": f"wm-{values[iso3]}" if values and iso3 in values else ("wm-member" if highlight and iso3 in highlight else "")})
     return {"width": w, "height": h, "land": land, "dots": dots, "tokens": tokens, "mode": mode,
-            "token_w": TOKEN_W, "token_h": TOKEN_H, "regions": REGIONS}
+            "token_w": token[0], "token_h": token[1], "regions": REGIONS}

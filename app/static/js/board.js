@@ -12,10 +12,11 @@
   var token = body.getAttribute("data-token"), sid = body.getAttribute("data-sid");
   var map = document.getElementById("b-map"), rail = document.getElementById("b-rail"), overlay = document.getElementById("b-overlay");
   var boardEl = document.getElementById("b-board"), spotEl = document.getElementById("b-spot"), compass = boardEl.querySelector(".b-compass");
+  var keyEl = document.getElementById("b-key");
   var S = null, fetchedAt = 0, scale = 1;
   var tokens = {}, lands = {}, home = {};
-  var face = map.querySelector(".b-face");
-  var TW = face ? +face.getAttribute("width") : 44, TH = face ? +face.getAttribute("height") : 26;
+  var tokGroup = document.getElementById("b-tokens");
+  var TW = +tokGroup.getAttribute("data-w") || 52, TH = +tokGroup.getAttribute("data-h") || 36, LINE_MAX = 28;
   map.querySelectorAll(".b-token").forEach(function (g) {
     var iso = g.getAttribute("data-iso");
     tokens[iso] = g; home[iso] = [+g.getAttribute("data-x"), +g.getAttribute("data-y")];
@@ -64,11 +65,20 @@
       tokens[iso].setAttribute("transform", "translate(" + home[iso][0] + " " + home[iso][1] + ") scale(" + k.toFixed(3) + ") translate(" + (-TW / 2) + " " + (-TH / 2) + ")");
     });
   }
+  // The key steps aside if a token in this room would sit underneath it (a committee with countries in the far south-west).
+  function keyCovers() {
+    var k = keyEl.getBoundingClientRect();
+    return Object.keys(tokens).some(function (iso) {
+      var r = tokens[iso].querySelector(".b-face").getBoundingClientRect();     // the deed itself, not its glow
+      return r.right > k.left && r.left < k.right && r.bottom > k.top && r.top < k.bottom;
+    });
+  }
   function setView(v) {
     view = v;
     map.setAttribute("viewBox", v.map(function (n) { return n.toFixed(1); }).join(" "));
     placeTokens(); spot();
     compass.classList.toggle("away", v[2] < WORLD[2] * .9);
+    if (keyEl) keyEl.classList.toggle("away", v[2] < WORLD[2] * .9 || keyCovers());
   }
   function glide(to, ms) {
     if (camAnim) cancelAnimationFrame(camAnim);
@@ -92,7 +102,15 @@
     if (w / hgt > aspect) hgt = w / aspect; else w = hgt * aspect;
     w = Math.min(w, WORLD[2]); hgt = Math.min(hgt, WORLD[3]);
     var cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-    glide([Math.max(WORLD[0] - 40, Math.min(cx - w / 2, WORLD[2] - w + 40)), Math.max(WORLD[1] - 30, Math.min(cy - hgt / 2, WORLD[3] - hgt + 30)), w, hgt], 1600);
+    var vx = Math.max(WORLD[0] - 40, Math.min(cx - w / 2, WORLD[2] - w + 40)), vy = Math.max(WORLD[1] - 30, Math.min(cy - hgt / 2, WORLD[3] - hgt + 30));
+    // Never cut a token in half at the top or bottom edge: move the view to take it in whole (or leave it out).
+    var k = Math.min(1, 1.5 * w / WORLD[2]), half = TH / 2 * k, pad = 8 * k;
+    Object.keys(home).forEach(function (c) {
+      var top = home[c][1] - half, bottom = home[c][1] + half;
+      if (top < vy && bottom > vy && vy - top < 70 * k) vy = top - pad;
+      else if (top < vy + hgt && bottom > vy + hgt && bottom - (vy + hgt) < 70 * k && top - pad > vy) vy = bottom + pad - hgt;
+    });
+    glide([vx, vy, w, hgt], 1600);
   }
   // The room darkens around whoever has the floor.
   function spot() {
@@ -189,9 +207,16 @@
       else if (whip && whip.phase === "open" && st === "voting_procedure") txt = (whip.calls[iso] || 0) + " call" + (whip.calls[iso] === 1 ? "" : "s");
       else if (predicted && predicted[iso]) txt = "call: " + predicted[iso];
       else txt = c.students.length ? c.students[0] + (c.students.length > 1 ? " +" + (c.students.length - 1) : "") : c.short;
-      g.querySelector(".b-line").textContent = txt;
+      setLine(g, txt);
     });
     cornerSeal(false);
+  }
+
+  // A token's second line, squeezed to fit beside the flag when it is long (a long short name, a long first name).
+  function setLine(g, txt) {
+    var t = g.querySelector(".b-line");
+    if (t.textContent !== txt) { t.textContent = txt; t.removeAttribute("textLength"); t.removeAttribute("lengthAdjust"); }
+    try { if (t.getComputedTextLength() > LINE_MAX) { t.setAttribute("textLength", LINE_MAX); t.setAttribute("lengthAdjust", "spacingAndGlyphs"); } } catch (e) { /* not drawn yet */ }
   }
 
   // The seal of the last result rests in the corner of the board while it is the news of the room.
@@ -265,7 +290,7 @@
     return c;
   }
   function rollCards() {
-    var out = [], c = card("roll", "Roll call");
+    var out = [], c = card("roll", "Roll call", "b-tally");
     add(c, big("roll", S.roll.present + " / " + S.roll.total), h("p", null, "delegations present"));
     out.push(c);
     var led = card("ledger", "The roll"), ul = h("ul", "b-ledger"), now = {};
@@ -502,7 +527,7 @@
         var v = result.votes[iso].vote;
         (lands[iso] || []).forEach(function (p) { p.classList.add("v-" + v); });
         var g = tokens[iso];
-        if (g) { g.classList.add("v-" + v, "cast"); restart(g, "pop"); g.querySelector(".b-line").textContent = VOTE_WORD[v]; }
+        if (g) { g.classList.add("v-" + v, "cast"); restart(g, "pop"); setLine(g, VOTE_WORD[v]); }
         if (i % 2 === 0) play("flip");
       }, 700 + i * step);
     });

@@ -23,7 +23,7 @@ def test_the_board_is_a_page_of_its_own(app, coord):
     page = Client(app, base_url="http://testserver").__enter__().get(f"/projector/{tok}").text   # no sign-in, like the old projector
     assert "board.js" in page and "board.css" in page and 'id="b-map"' in page
     assert 'class="site"' not in page and "Sign out" not in page                    # no app header, menus or footer
-    assert page.count('class="b-token"') == 15                                       # a token on each Security Council seat
+    assert page.count('class="b-token ') == 15                                       # a token on each Security Council seat
     m = re.search(r'<script id="b-initial" type="application/json">(.*?)</script>', page, re.S)
     st = json.loads(m.group(1))
     assert st["stage"]["code"] == "roll_call" and len(st["stage"]["all"]) == 6 and st["session"]["committee"]
