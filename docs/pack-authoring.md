@@ -92,4 +92,4 @@ Then run the validator on what comes back and fix what it lists (or paste the li
 - Packs live in `app/db/seed/packs/`. A file whose name starts with `_` is a template and is never offered.
 - `app/modules/mun/packfile.py` validates (`validate`), lists (`available`) and installs (`install`) packs. Only packs that pass validation are offered anywhere.
 - Installing creates the topic, its tags and the news script once (keyed by `topic.code`), then a new conference, committee, delegations, draft resolution and labelled positions each time.
-- `veloria.json` is the reference pack: the Evatt-style Security Council demo (D-063).
+- `veloria.json` is the reference pack: the Evatt-style Security Council demo (D-063). `comet_halcyon.json` is a second example: a General Assembly pack (20 countries) on an invented comet, where the nuclear-option and mining clauses are the close votes.
