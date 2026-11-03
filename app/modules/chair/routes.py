@@ -103,6 +103,10 @@ def _shared_view(conn, sid: int) -> dict:
     data["news_next"] = ROOM.next_script(conn, sid)
     data["news_left"] = ROOM.script_left(conn, sid)
     data["wm"] = SIM.whip_map(conn, sid)
+    # Country choice (D-094): the way countries are given out, who holds what, who is still waiting.
+    from app.modules.mun import choice as CH
+    data["countries"] = CH.view(conn, s["committee_id"])
+    data["country_options"] = CH.options(conn, s["committee_id"]) if data["countries"]["open"] else []
     data["view_seq"] = seq
     with _VIEW_LOCK:
         if len(_VIEW_CACHE) > 64:
@@ -193,7 +197,7 @@ def chair_console(request: Request, sid: int, sess=Depends(require_staff)):
 
 @router.get("/chair/{sid}/f/{part}")
 def chair_fragment(request: Request, sid: int, part: str, sess=Depends(require_staff)):
-    if part not in ("floor", "motions", "division", "status"):
+    if part not in ("floor", "motions", "division", "status", "countries"):
         raise UserError("Not found.", 404)
     with request.app.state.db.read() as conn:
         _manage(conn, request, sid)
@@ -206,6 +210,33 @@ def _chair_action(request: Request, sid: int, form, fn, msg: str = ""):
         _manage(w.conn, request, sid)
         out = fn(w, form)
     return redirect(f"/chair/{sid}", out if isinstance(out, str) else msg)
+
+
+# ---------- country choice (D-094) ----------
+
+@router.post("/chair/{sid}/countries")
+def chair_countries(request: Request, sid: int, sess=Depends(require_staff), form=Depends(form_data)):
+    """The Chair opens or closes choosing, or seats everyone still waiting at random."""
+    from app.modules.mun import choice as CH
+
+    def act(w, f):
+        s = C.get_session(w.conn, sid)
+        com, op = s["committee_id"], f.get("op")
+        if op == "open":
+            CH.set_mode(w, com, "choose", C.ch(sid))
+            return "Students can choose their countries now. Close choosing when everyone has one."
+        if op == "close":
+            n = CH.close_choosing(w, com, C.ch(sid))
+            return "Choosing is closed." + (f" {n} student(s) who hadn't chosen were seated at random." if n else "")
+        if op == "random":
+            CH.set_mode(w, com, "random", C.ch(sid))
+            n = CH.close_choosing(w, com, C.ch(sid))
+            return f"{n} student(s) seated at random." if n else "Everyone already has a country."
+        if op == "chair":
+            CH.set_mode(w, com, "chair", C.ch(sid))
+            return "You give out the countries: use the committee page."
+        raise UserError("Unknown action.")
+    return _chair_action(request, sid, form, act)
 
 
 # ---------- the live room (D-089): gavel, placards, breaking news ----------
@@ -508,6 +539,16 @@ def _student_action(request: Request, sid: int, form, fn, msg: str):
             raise UserError("You aren't in a delegation in this committee yet. Ask your teacher.", 403)
         fn(w, form, mine, s)
     return redirect(f"/live/{sid}", msg)
+
+
+@router.post("/live/{sid}/country")
+def live_country(request: Request, sid: int, sess=Depends(require_student), form=Depends(form_data)):
+    """A student picks their country while the Chair allows choosing (D-094)."""
+    from app.modules.mun import choice as CH
+    with request.app.state.db.write(request.state.actor) as w:
+        s = _student_session(w.conn, request, sid)
+        name = CH.choose(w, s["committee_id"], request.state.actor.id, form_int(form.get("delegation_id")), C.ch(sid))
+    return redirect(f"/live/{sid}", f"You are {name}. You can change it until your teacher closes choosing.")
 
 
 @router.post("/live/{sid}/placard")

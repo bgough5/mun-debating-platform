@@ -18,7 +18,7 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
     - merge `board` to `main` and push;
     - update the main deck.
 - **Ben's next two requests (4 Nov 2026, not started):**
-  1. **Students choose their country, if the Chair allows it.** The Chair picks how countries are given out for an activity: students pick, random, or assigned by the Chair (as now).
+  1. ~~Students choose their country~~: built as D-094 (`app/modules/mun/choice.py`; migration 0016 `committee.country_mode`, `choosing_open`, `committee_roster`). Today's students are on `committee_roster`, which also lets them open the session before they have a country (`committee_access`).
   2. **Students can open their country's alignments and information at any time**, not just once: a toggle or panel on the live page (blocs and alliances, regional group, flag, brief), always available.
 - Verified on Ben's laptop (Windows 10, 28 Oct 2026): `tools/windows_smoke.ps1 -Browser` passed: 620 engine and API tests, all 33 browser and axe tests, and start-up in 3.3 s. Not yet re-run on the laptop: the 90-minute soak (`python tools/loadtest.py --minutes 90`; memory now records on Windows, D-081).
 - Local backups from the 28 Oct sync, safe to delete once Ben is happy: branch `backup/local-phase7-2026-10-23` and `stash@{0}` (superseded duplicates of Phase 7 items 1, 5–8).

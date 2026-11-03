@@ -15,6 +15,7 @@ from fastapi import APIRouter, Depends, Request
 
 from app.db import one, rows
 from app.errors import UserError
+from app.modules.mun import choice as CH
 from app.util import display_name, today_iso
 from app.web.auth import can_run_class, require_staff
 from app.web.http import form_data
@@ -89,7 +90,8 @@ def _context(conn, request, ticked: set[int], form: dict | None = None) -> dict:
     return {"title": "Start an activity", "saved": saved_groups(conn, request.state.actor), "offer_save": True, "kinds": available_kinds(request.app.state.settings), "levels": LEVELS, "summaries": {k: level_summary(k) for k in LEVELS},
             **picker(conn, request.state.actor), "ticked": ticked, "motions": motions,
             "kind": form.get("kind") or "", "level": form.get("level") or "suggested",
-            "motion_id": form.get("motion_id") or "", "topic_mode": form.get("topic_mode") or "prepared"}
+            "motion_id": form.get("motion_id") or "", "topic_mode": form.get("topic_mode") or "prepared",
+            "country_mode": form.get("country_mode") or "random", "country_modes": CH.MODES}
 
 
 @router.get("/start")
@@ -152,24 +154,31 @@ def create_activity(w, actor, kind: str, chosen: list[dict], level: str, form) -
     lv = LEVELS[level]
     cid = _activity_class(w.conn, actor, chosen)
     if kind in ("unaa", "evatt"):
-        return _mun(w, kind, cid, chosen, lv, level)
+        return _mun(w, kind, cid, chosen, lv, level, form.get("country_mode") or "random")
     if kind == "debate":
         return _debates(w, cid, chosen, lv, level, form)
     return _speeches(w, kind, cid, chosen, lv, level, form)
 
 
-def _mun(w, kind, cid, chosen, lv, level) -> tuple[str, str]:
+def _mun(w, kind, cid, chosen, lv, level, mode: str = "random") -> tuple[str, str]:
     from app.modules.chair import service as C
     from app.modules.mun import packs, service as M
     stamp = today_iso()
     info = packs.load_climate_conference(w, cid, name_suffix=f" · {stamp}") if kind == "unaa" else packs.load_evatt_scenario(w, cid)
     com = info["committee_id"]
-    M.allocate_round_robin(w, com, [st["id"] for st in chosen])
+    ids = [st["id"] for st in chosen]
+    # Today's students, and how they get their countries (D-094).
+    CH.set_roster(w, com, ids)
+    CH.set_mode(w, com, mode if mode in CH.MODES else "random")
+    if mode not in ("choose", "chair"):
+        CH.allocate_random(w, com, ids)
     sid = C.open_session(w, com)
     w.update("live_session", sid, {"speaking_time_s": lv["mun"]}, C.ch(sid), action="speaking_time")
     seats = one(w.conn, "SELECT COUNT(*) AS n FROM delegation WHERE committee_id = ? AND deleted_at IS NULL", (com,))["n"]
-    return (f"/chair/{sid}", f"{KINDS[kind][0]} ready: {len(chosen)} student(s) seated across {seats} delegations "
-                             f"({LEVELS[level]['label'].lower()} level, {_mmss(lv['mun'])} speeches). "
+    how = {"choose": f"{len(chosen)} student(s) choose their countries from {seats} as they sign in",
+           "chair": f"{len(chosen)} student(s) to seat: give out the {seats} countries on the committee page"}.get(
+        mode, f"{len(chosen)} student(s) seated at random across {seats} delegations")
+    return (f"/chair/{sid}", f"{KINDS[kind][0]} ready: {how} ({LEVELS[level]['label'].lower()} level, {_mmss(lv['mun'])} speeches). "
                              "Countries without a student are voted by the engine and labelled computed.")
 
 

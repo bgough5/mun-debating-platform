@@ -1,0 +1,27 @@
+{% from "_macros.html" import hidden_csrf, flag %}
+{# Country choice (D-094): while the Chair allows it, a student picks (or changes) their country. #}
+{% set cc = countries %}
+{% macro country_list() %}
+<p class="small">Up to {{ cc.cap }} students can share a country. The first to take it is head of delegation and casts its vote; everyone holding it can use every tab.{% if country_options|selectattr('groups')|list %} Alignments were entered from memory and aren't checked yet.{% endif %}</p>
+<ul class="country-choices">
+  {% for o in country_options %}{% set hs = cc.holders.get(o.id, []) %}{% set here = mine and mine.id == o.id %}
+  <li><form method="post" action="/live/{{ s.id }}/country">{{ hidden_csrf(csrf) }}<input type="hidden" name="delegation_id" value="{{ o.id }}">
+    <button type="submit" class="country-choice{% if here %} mine{% endif %}" {% if here or hs|length >= cc.cap %}disabled{% endif %}>
+      <span class="cc-head">{{ flag(o.flag_svg, o.name) }} <strong>{{ o.name }}</strong>{% if o.p5 %} <span title="Permanent member of the Security Council">★</span>{% endif %}</span>
+      <span class="cc-meta">{{ o.region_name }}{% if o.groups %} · {{ o.groups|join(', ') }}{% endif %}</span>
+      <span class="cc-who">{% if here %}Your country{% elif hs|length >= cc.cap %}Full: {{ hs|map(attribute='name')|join(', ') }}{% elif hs %}{{ hs|map(attribute='name')|join(', ') }}{% else %}No one yet{% endif %}</span>
+    </button></form></li>
+  {% endfor %}
+</ul>
+{% endmacro %}
+{% if not mine %}
+<section class="card accent" aria-labelledby="h-choose" data-announce="Choose your country" data-announce-key="choose-country">
+  <h2 id="h-choose">{{ icon("committee") }} Choose your country</h2>
+  <p>Pick the country you'd like to represent today. You can change it until your teacher closes choosing; if you haven't chosen by then, you'll be given one.</p>
+  {{ country_list() }}
+</section>
+{% else %}
+<details class="card change-country"><summary>{{ icon("committee") }} Change your country <span class="small muted">(your teacher has choosing open)</span></summary>
+  {{ country_list() }}
+</details>
+{% endif %}

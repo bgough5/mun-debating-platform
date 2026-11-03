@@ -51,7 +51,8 @@
   {% if division.veto_by %}<p class="error-box" role="status">{{ icon("warning") }} <strong>Veto:</strong> {{ division.veto_by|join(', ') }} {{ 'has' if division.veto_by|length == 1 else 'have' }} voted no. A permanent member's no blocks this vote unless they change it.</p>{% endif %}
 </section>
 {% endif %}
-{% if not mine %}<div class="notice">You aren't in a delegation in this committee yet. Ask your teacher.</div>{% else %}
+{% if countries and countries.open and s.state == 'open' %}{% include "chair/_choose_country.html" %}{% endif %}
+{% if not mine %}{% if not (countries and countries.open) %}<div class="notice">You don't have a country yet. Your teacher will give you one.</div>{% endif %}{% else %}
 {% if s.state == 'open' and sim.stage.code in ('agenda', 'opening_speeches', 'floor') %}
 <div class="placard-control">
   {% if my_placard %}

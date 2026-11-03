@@ -27,8 +27,15 @@
     {% endfor %}
   </fieldset>
 
-  {% if "debate" in kinds or "speeches" in kinds %}
+  {% if "debate" in kinds or "speeches" in kinds or "unaa" in kinds or "evatt" in kinds %}
   <fieldset><legend>4. Options <span class="hint">used only by the activities they name</span></legend>
+    {% if "unaa" in kinds or "evatt" in kinds %}
+    <div class="checks" role="radiogroup" aria-label="Model UN countries">
+      <span class="small"><strong>Model UN countries:</strong></span>
+      {% for k, label in country_modes.items() %}<label><input type="radio" name="country_mode" value="{{ k }}" {% if country_mode == k %}checked{% endif %}> {{ label }}</label>{% endfor %}
+    </div>
+    <p class="hint">“Students choose”: each student picks a country on their screen until you close choosing; anyone who hasn't chosen is then seated at random. You can change this during the session.</p>
+    {% endif %}
     {% if "debate" in kinds %}
     <div class="field"><label for="mo">Debate motion <span class="hint">class debate only</span></label>
       <select id="mo" name="motion_id"><option value="">Pick one at random for the difficulty</option>

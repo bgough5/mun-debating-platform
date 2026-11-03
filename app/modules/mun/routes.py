@@ -157,8 +157,9 @@ def committee_view(request: Request, committee_id: int, s=Depends(require_any)):
         for m in members:
             by_del.setdefault(m["delegation_id"], []).append(m)
         resolutions = rows(conn, "SELECT * FROM resolution WHERE committee_id = ? AND deleted_at IS NULL ORDER BY id", (committee_id,))
-        students = rows(conn, "SELECT * FROM student WHERE class_id = ? AND deleted_at IS NULL AND active = 1 ORDER BY first_name",
-                        (com["class_id"],)) if com["class_id"] else []
+        students = rows(conn, "SELECT * FROM student WHERE deleted_at IS NULL AND active = 1 AND (class_id = ? OR id IN "
+                              "(SELECT student_id FROM committee_roster WHERE committee_id = ? AND deleted_at IS NULL)) ORDER BY first_name",
+                        (com["class_id"], committee_id))
         countries = rows(conn, "SELECT iso3, name FROM country WHERE deleted_at IS NULL ORDER BY name")
         blocs = rows(conn, "SELECT id, code, name FROM bloc WHERE deleted_at IS NULL ORDER BY name")
         mine = _my_delegation(conn, request.state.actor, committee_id)

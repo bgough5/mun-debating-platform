@@ -10,6 +10,9 @@
   <a class="button secondary" href="/chair/{{ s.id }}/whip-map">{{ icon("whip") }} Whip map</a>
   <span class="small muted">Sounds on the projector{% if settings.get('fx_sound', 'projector') in ('chair', 'everywhere') %} and here{% endif %} (Admin → Sound and motion).</span>
 </div>
+<div id="countries" data-live-channel="session:{{ s.id }}" hx-get="/chair/{{ s.id }}/f/countries" hx-trigger="live-update" hx-swap="innerHTML">
+{% include "chair/_chair_countries.html" %}
+</div>
 <section class="card accent" aria-labelledby="h-guide"><h2 id="h-guide">{{ icon("stage") }} Guide: what happens next</h2>
 <div id="guide" data-live-channel="session:{{ s.id }}" hx-get="/chair/{{ s.id }}/guide" hx-trigger="live-update" hx-swap="innerHTML">
 {% include "sim/_chair_guide.html" %}

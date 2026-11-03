@@ -204,6 +204,9 @@ def committee_access(conn, actor: Actor, committee_id: int) -> str:
             return "participate"
         mine = one(conn, "SELECT 1 FROM delegation_member dm JOIN delegation d ON d.id = dm.delegation_id "
                          "WHERE dm.student_id = ? AND d.committee_id = ? AND dm.deleted_at IS NULL", (actor.id, committee_id))
+        if not mine:   # ticked for today's activity, still choosing or waiting for a country (D-094)
+            mine = one(conn, "SELECT 1 FROM committee_roster WHERE student_id = ? AND committee_id = ? AND deleted_at IS NULL",
+                       (actor.id, committee_id))
         return "participate" if mine else "none"
     return "none"
 

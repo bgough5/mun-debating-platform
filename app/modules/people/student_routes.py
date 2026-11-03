@@ -81,7 +81,9 @@ def me(request: Request, sess=Depends(require_student)):
                           "JOIN committee cm ON cm.id = d.committee_id WHERE dm.student_id = ? AND dm.deleted_at IS NULL AND d.deleted_at IS NULL "
                           "AND cm.deleted_at IS NULL", (sid,))
         class_live = rows(conn, "SELECT ls.id, cm.name FROM live_session ls JOIN committee cm ON cm.id = ls.committee_id "
-                                "WHERE cm.class_id = ? AND ls.state = 'open'", (st["class_id"],))
+                                "WHERE ls.state = 'open' AND cm.deleted_at IS NULL AND (cm.class_id = ? OR cm.id IN "
+                                "(SELECT committee_id FROM committee_roster WHERE student_id = ? AND deleted_at IS NULL))",
+                          (st["class_id"], sid))
         tasks = rows(conn, "SELECT t.*, d.committee_id FROM task t JOIN delegation d ON d.id = t.delegation_id "
                            "WHERE t.assignee_student_id = ? AND t.deleted_at IS NULL ORDER BY t.status = 'done', t.id", (sid,))
         resolutions = rows(conn, "SELECT r.id, r.title, cm.name AS committee FROM resolution r JOIN committee cm ON cm.id = r.committee_id "

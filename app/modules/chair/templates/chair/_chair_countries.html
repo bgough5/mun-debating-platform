@@ -1,0 +1,18 @@
+{% from "_macros.html" import hidden_csrf %}
+{# Country choice (D-094): how countries are given out, who is still waiting, and the Chair's controls. #}
+{% set cc = countries %}
+{% if cc.roster or cc.open %}
+<section class="card country-card" aria-labelledby="h-countries" data-announce="{{ (cc.waiting|length ~ ' still without a country') if cc.waiting else 'Everyone has a country' }}" data-announce-key="countries">
+  <h2 id="h-countries">{{ icon("committee") }} Countries: {{ cc.mode_name }}{% if cc.mode == 'choose' %} ({{ 'choosing is open' if cc.open else 'choosing is closed' }}){% endif %}</h2>
+  <p>{% if cc.waiting %}Still without a country ({{ cc.waiting|length }} of {{ cc.roster }}): {{ cc.waiting|join(', ') }}.{% elif cc.roster %}Everyone on today's list ({{ cc.roster }}) has a country.{% else %}Students choose on their own screens.{% endif %}</p>
+  <div class="row">
+    {% if cc.open %}
+    <form method="post" action="/chair/{{ s.id }}/countries">{{ hidden_csrf(csrf) }}<button type="submit" name="op" value="close">Close choosing{% if cc.waiting %} and seat the rest at random{% endif %}</button></form>
+    {% else %}
+    <form method="post" action="/chair/{{ s.id }}/countries">{{ hidden_csrf(csrf) }}<button type="submit" name="op" value="open" class="secondary">Let students choose</button></form>
+    {% if cc.waiting %}<form method="post" action="/chair/{{ s.id }}/countries">{{ hidden_csrf(csrf) }}<button type="submit" name="op" value="random">Seat them at random</button></form>{% endif %}
+    {% endif %}
+    <a class="button secondary" href="/mun/committees/{{ s.committee_id }}">Assign countries yourself</a>
+  </div>
+</section>
+{% endif %}

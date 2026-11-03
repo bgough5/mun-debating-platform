@@ -388,6 +388,18 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 
 
 
+### D-094 Students can choose their country when the Chair allows it — Decided (4 Nov 2026, Ben)
+Ben: "students should have the ability to pick which country they want to be if the chair allows it (or still be random or assigned by chair)".
+
+- **Three ways, chosen when the activity starts** (Start an activity → Options → Model UN countries), and changeable during the session from the chair console:
+  - **At random** (the default): today's students are seated at random, always into one of the emptiest countries, so countries fill one student each before any has two. (Before this, /start seated students in ISO-code order, so the same countries always went first.)
+  - **Students choose:** each student picks a country on their live page. The chooser shows each country's flag, regional group, permanent seat, alignments (marked as not yet checked) and who already holds it. A student can change their mind until the Chair closes choosing; anyone who hasn't chosen is then seated at random.
+  - **The Chair assigns them:** as before, on the committee page, which now lists today's students as well as the group's.
+- **Up to four students per country** (`choice.CAP`). The first to take a country is head of delegation and casts its vote (D-088). If the head moves to another country, the next student holding the old one becomes its head.
+- **Today's list** (`committee_roster`, migration 0016) records who was ticked for the activity, by student id only. It lets a student open the live session, and see it under "Live now" on their page, before they have a country. Erasing a student removes them from it (`erase_student`).
+- **The Chair's card** at the top of the console shows the way in use, whether choosing is open, and who is still without a country. Its buttons are Close choosing (seat the rest at random), Let students choose, Seat them at random, and Assign countries yourself. The board fills each token with the student's name as they choose.
+- **Code:** `app/modules/mun/choice.py`; the student's chooser is `chair/_choose_country.html`; the Chair's card is `chair/_chair_countries.html`; tests are in `tests/api/test_country_choice.py`.
+
 ### D-093 Every country's flag; tokens carry flag, regional group and alignments — Decided (2 Nov 2026, Ben)
 Ben: "make sure each country has a flag and other symbolism attached to them, eg a marker of their allignment"; the board "is merging into a civ, monopoly, risk hybrid looking board which i am happy with", and "please do ensure all spacing is perfect". He approved downloading a flag set ("yes download them, and stylise them to fit the rest of the theme of model UN gravitas and authority with the general style of the map").
 

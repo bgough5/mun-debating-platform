@@ -631,3 +631,17 @@ body:not([data-fx-motion="off"]) .worldmap-wrap.animate .wm-token-in { animation
 @media (prefers-reduced-motion: reduce) { .fx-lower { animation: none !important; } }
 .board-open { background: var(--un-blue); border-color: var(--un-blue); font-family: var(--serif); letter-spacing: .04em; box-shadow: 0 4px 0 var(--walnut-dk); }
 .board-open:hover { background: var(--walnut); border-color: var(--walnut); }
+
+/* Country choice (D-094): a grid of countries a student can pick, each a large button. */
+.country-choices { list-style: none; margin: .6rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: .6rem; }
+.country-choices form { margin: 0; height: 100%; }
+.country-choice { display: grid; gap: .2rem; width: 100%; height: 100%; text-align: left; padding: .7rem .9rem; background: var(--card); color: var(--ink);
+  border: 1px solid var(--control); border-left: 5px solid var(--gold); border-radius: var(--radius); font-weight: 400; box-shadow: var(--shadow); }
+.country-choice:hover, .country-choice:focus-visible { background: var(--warn-bg); color: var(--ink); }
+.country-choice[disabled] { opacity: 1; cursor: default; background: var(--panel); border-left-color: var(--control); }
+.country-choice.mine { border-left-color: var(--green); background: var(--ok-bg); }
+.country-choice .cc-head { display: flex; align-items: center; gap: .45rem; font-size: 1.05rem; }
+.country-choice .cc-head .flag { width: 30px; height: auto; border: 1px solid var(--line); }
+.country-choice .cc-meta { font-size: .86rem; color: var(--muted); }
+.country-choice .cc-who { font-size: .86rem; color: var(--ink); }
+.change-country > summary { cursor: pointer; font-weight: 600; }
