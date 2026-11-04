@@ -400,7 +400,29 @@ Decided:
 - **Winning:** several victory paths (Mandate, Consensus, Architect, Kingmaker).
 - **Meters:** Influence, Respect, Trust (per country) and Expertise.
 
-The rules are proposed in `docs/design/solo-campaign.md` (v0.1). Nothing is built until Ben approves them and has seen the balance numbers from the bot harness (phase 1).
+Ben approved rules v0.1 on 5 Nov 2026. His answers: the title is "The Session"; music as well as sound effects (synthesised, off by default); teachers see results (paths and grades), never words; today's single-clause game stays as "Quick vote".
+
+**Phase 1 is built.**
+- The rules engine (`app/modules/sim/campaign/`) gets every country's position from the real vote engine (a test checks this).
+- The balance harness is `tools/campaign_sim.py`.
+- The engine tests are `tests/engine/test_campaign.py`.
+
+The simulation's 2,400 games led to rules v0.2 (`docs/design/solo-campaign.md` section 17):
+- the working group decides on changes to other people's text;
+- rivals move first each turn;
+- rivals are never permanent members where there's a veto;
+- instructions have three parts;
+- Architect is harder;
+- Standard has five turns a chapter.
+
+Measured on Standard:
+- 63% of competent bots reach silver or better;
+- each style wins gold on its own path 34–69% of the time;
+- no action is more than 19% of a winner's moves;
+- the hardest scenario is at 25%;
+- no games stuck.
+
+There is no interface yet. Phase 2 waits for Ben's calls on scenario labels, a Security Council fallback and Architect.
 
 ### D-100 The speech coach beside every speech box — Decided (5 Nov 2026, Ben)
 Ben: "there should be some stats and visual add-ins that makes speeches easier to write. some things such as word count, expected speaking time, repetitive language indicators, lists of persuasive techniques … keep the platform clean, easily set-up and intuitive … as pretty and fun/interactive/clear as possible." He chose:

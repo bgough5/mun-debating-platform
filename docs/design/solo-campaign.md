@@ -1,7 +1,8 @@
-# The Session: solo Model UN campaign (rules v0.1, for Ben's approval)
+# The Session: solo Model UN campaign (rules v0.2)
 
-Status: **proposal**. Ben is the overall designer and Claude the lead programmer (5 Nov 2026). Nothing is built
-until Ben approves these rules and has seen the balance numbers (phase 2).
+Status: **rules v0.1 approved by Ben on 5 Nov 2026**. v0.2 adds the changes the balance simulation called for
+(section 17). Ben is the overall designer and Claude the lead programmer. Phase 1 (the engine and the balance
+harness) is built; nothing in the interface is built until Ben has seen the balance numbers.
 
 Ben's brief, in his words:
 - "sound effects, animations, flow, setup, menus, the entire lot";
@@ -240,9 +241,69 @@ deck, so a saved game replays the same way.
 6. **Learning:** tutorial, Almanac, debrief dossier.
 7. **Polish:** animation, sound, accessibility, performance on a school laptop, and a full test pass.
 
-## 16. Open questions for Ben
+## 16. Ben's answers (5 Nov 2026)
 
-1. The title: "The Session"? Or something else?
-2. Music: a quiet ambient bed (synthesised, off by default), or sound effects only?
-3. Should teachers see students' campaign results (paths and grades, not their words)?
-4. Should today's single-clause game stay as a "Quick vote" mode beside the campaign?
+1. **Title:** "The Session".
+2. **Music:** yes, whatever can be made: a synthesised ambient bed, off by default, as well as the sound effects.
+3. **Teachers:** see students' campaign results (paths and grades), never their words.
+4. **Quick vote:** today's single-clause game stays as a "Quick vote" mode beside the campaign.
+
+## 17. What the balance simulation changed (v0.2, 5 Nov 2026)
+
+`python tools/campaign_sim.py --games 20` ran 2,400 games: 8 scenarios, 3 difficulties and 5 bot styles, 20 games
+each, at Standard length. The early runs found problems, and each was fixed by a rule that is also truer to life:
+
+| Problem found | Rule added |
+|---|---|
+| Rivals struck or amended away the player's key clause on the last turn, with no chance to reply. | **The working group decides.** A clause can be struck only if it wouldn't pass now. Someone else's clause can be amended only if the new version wins at least as many yes votes. The same rule applies to the player and to the rivals. |
+| The same problem, from turn order. | **Rivals move at the start of each turn**, so the player always has the last word in a chapter. |
+| Difficulty made almost no difference. | Rivals now get 1, 2 or 3 actions a turn with 1, 2 or 3 rivals (easy, standard, hard), and their lobbying is weaker or stronger to match. |
+| A rival that is a permanent member vetoed every clause in Security Council scenarios. | **Rivals are never permanent members where there is a veto.** The five still vote from their modelled positions and can be lobbied. |
+| A random player earned Mandate medals when the starting draft happened to suit them. | **Instructions have three parts:** get two commitments in and keep one out. Gold needs all three in a resolution that passes. |
+| Drafting was too easy to win. | **Architect gold** needs most of the final text to be yours, at least three of your own clauses adopted, and 60% of members voting yes. |
+| A Standard game was about 45 minutes. | **Five turns a chapter on Standard** (six on Full). |
+
+### Measured results (20 games per cell)
+
+| Target (section 14) | Measured | Met? |
+|---|---|---|
+| Standard: a competent bot reaches at least silver on its chosen path in 40–60% of games | **63%** | Just over |
+| Each style gets gold on its own path in 30–70% of games (Standard) | hardliner **34%**, analyst **37%**, broker **39%**, drafter **69%** | Yes (the drafter is at the edge) |
+| No single action is more than 35% of a winning bot's moves | highest is lobbying at **19%** | Yes |
+| The hardest scenario on Standard ≥ 25% | Climate change and international security: **25%** | Just |
+| No game gets stuck | **0** of 2,400 | Yes |
+| A random player does much worse than a competent one | random silver or better **24%**, against 63% | Yes |
+| A Standard game takes about an hour | a model of **55–61 minutes** (setup, moves and debrief) | Needs a real play test |
+
+Difficulty now matters. On Easy, a hardliner reaches silver or better 74% of the time; on Hard, 29%. For a broker
+the figures are 85% and 52%.
+
+**By scenario** (silver or better, competent bots, easy / standard / hard):
+
+| Scenario | Easy | Standard | Hard |
+|---|---|---|---|
+| Comet Halcyon-7 | 97% | 96% | 91% |
+| The situation in Veloria | 86% | 81% | 68% |
+| Who should govern AI? | 84% | 78% | 64% |
+| Autonomous weapons | 88% | 74% | 59% |
+| Migration | 75% | 61% | 60% |
+| Moving away from fossil fuels | 75% | 56% | 46% |
+| AI and cyber threats to peace (Security Council) | 50% | 33% | 28% |
+| Climate change and international security (Security Council) | 30% | 25% | 42% |
+
+These differences come from the scenarios' content, not the rules. Comet Halcyon-7 is a gentle fictional
+introduction. The two Security Council scenarios are hard because the permanent members' recorded positions
+lead to real vetoes; the way through is bundling a commitment a permanent member wants, so it abstains instead.
+
+**Limits of these numbers:** bots are not students. The time is a model of reading and thinking time, and must be
+checked in a real play test. The bots don't use the Almanac, music or their own words, which change nothing in the
+rules.
+
+### Decisions for Ben before phase 2
+
+1. **Scenario difficulty:** label scenarios Beginner, Standard or Expert from these numbers, rather than flattening
+   them? Comet would be Beginner, the GA scenarios and Veloria Standard, the two Security Council scenarios Expert.
+2. **Security Council:** add a real fallback where a veto would kill the resolution? Two candidates:
+   - a **Presidential Statement** the Council can agree by consensus instead;
+   - an action to ask a permanent member for a **constructive abstention**, paid for in Trust.
+3. **Drafter:** leave Architect gold at 69%, or make it a little harder?
