@@ -402,3 +402,64 @@ The old one-off tips are gone.
 | Average session (minutes, estimated) | — | 55–63 |
 
 The scenario labels still hold: Comet 96% (Beginner), the Standard scenarios 55–88%, and the Council scenarios 25% and 36% (Expert). Hard and hardliner is the weakest cell (25% silver or better).
+
+## 21. Rivals that play to win, your staff, and the golden rule (phase 8, 5 Nov 2026)
+
+Ben: "make sure there is counter play and that the cpu does try and win, while also remembering the golden rule of UN that the kids need to know - don't say no to something just because it is not exactly as you want it. accepting incremental change is better than no change at all." He kept rivals' plans hidden and added advisers: "advisors (with an icon) can be assigned to different countries to study, with better advisors giving more information, the ability to switch advisors, and advisors growing in strength when they successfully do something". His choices: junior advisers can be wrong and say how sure they are; advisers are hired with Influence, up to five, and bigger countries start with more but greener ones.
+
+**Rivals plan** (`engine._rival_options`, `_rival_act`, `rivals_move`, `PLAN`).
+- Each action, a rival lists every move it could make and values each by how much it serves its own instructions:
+  - put its wish in the text (a clause card, 2.2);
+  - take its red line out (an amendment 2.0, or a strike 1.8);
+  - push the room on the battle clause, which is the clause carrying its red line, or else the whole text. A lobby is worth more the closer the delegation is to tipping.
+- Other moves:
+  - win back delegations you have turned (`poach`: your goodwill there falls by 0.15);
+  - court a regional group;
+  - sign up sponsors in the last chapter.
+- Personalities weight the moves: the Hawk amends and strikes, the Broker holds side events and poaches, and the Spoiler strikes your clauses.
+- By difficulty:
+  - *Easy*: rivals pick a random move 40% of the time, and never poach.
+  - *Standard*: rivals play the best move.
+  - *Hard*: rivals also value going after the delegations you worked on last turn (+0.45).
+- `projection()` is the vote on the whole draft without the hidden moods. The tug-of-war bar shows it.
+
+**Your staff** (`start_staff`, `_staff_reports`, `_check_claims`, `a_hire`, `a_post`).
+- **Starting staff:** a permanent member brings four junior advisers, a G20 member three (1, 1 and 2 stars) and any other delegation two seniors. That is four stars for everyone.
+- **Kinds:**
+  - *Analysts* read rivals.
+  - *Regional experts* read their own group one star better.
+  - *Legal advisers* say at the summit whether a floor amendment would pass.
+  - The Intelligence network skill (formerly Rival intelligence) adds a star to every report.
+- **Reports** start the turn after posting:
+  - on a rival: a hunch about the region at one star, its next target at two, and the move plus its instructions at three;
+  - on a delegation: its mood, then what it most wants, then who courts it and how it would vote.
+- **Accuracy:** 70% at one star, 85% at two and 100% at three. Every report says how sure it is.
+- **Experience** comes from a rival warning that proved right (the rival moved there, or your reserve stopped it), a warning you acted on, a delegation brought round, or a correct vote forecast. Promotions come at 3 and 7 experience.
+- **Hiring:** 4 Influence for a junior, up to five advisers.
+
+**Counter-moves.**
+- *Hold in reserve* (1 action): cancels the first rival move against you before your next turn, then lapses.
+- *Secure* (1 action, 2 Influence, needs Trust and a lean your way, up to three): rivals pay double to move that delegation, and their push there is halved.
+- *Right of reply* at the summit (Respect 5): answers a rival who speaks against your clause. Unanswered, the speech warms the room 0.12 towards that rival.
+
+**The golden rule.**
+- On the whole text, a rival that got its wish abstains rather than voting it down. Clause by clause it still votes its red line down, which is the division of the question.
+- If you vote no on a final text that carries your main aim and not your red line, you lose 2 Respect. If you back an imperfect text, you gain 1.
+- Consensus silver and gold now need one of your aims in the passed text: consensus around someone else's text is their success.
+- The Chief warns you before the final vote; the debrief has "Half a loaf" and "Your rivals".
+- Architect gold needs 70% of the text yours (`R["architect_gold"]`, was 65%).
+
+**Measured** (2,400 games, 20 per cell; the harness now records whether each rival got what it came for):
+
+| Target | Phase 7 | Phase 8 |
+|---|---|---|
+| Rivals get what they came for: Easy / Standard / Hard | not measured (quick sample: 7.5 / 17.5 / 20%) | 9.5% / 22.5% / 42.6% |
+| Standard: silver or better | 66.1% | 66.7% |
+| Gold on own path: hardliner / analyst / broker / drafter | 43 / 43 / 49 / 64% | 40.6% / 39.4% / 41.9% / 70.6% |
+| Highest action share among winners | 24% | 22.4% |
+| Hardest scenario on Standard | 25% | 23.7% |
+| Random player, silver or better | 17.5% | 18.3% |
+| Stuck games | 0 | 0 |
+| Average session (minutes, estimated) | 55–63 | 55–64 |
+
+By scenario, silver or better on Standard: comet_halcyon 97.5%, ga_ai_governance 76.2%, ga_autonomous_weapons 80%, ga_climate_transition 56.2%, ga_migration 70%, sc_ai_cyber 46.3%, sc_climate_security 23.7%, veloria 83.8%.

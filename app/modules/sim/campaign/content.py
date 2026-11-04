@@ -149,3 +149,16 @@ RIVAL_STYLES = {
     "broker": {"name": "The Broker", "what": "Buys allies: courts whole regional groups and builds a bloc against you."},
     "spoiler": {"name": "The Spoiler", "what": "Goes after your text: targets the clauses you wrote, and saves a floor amendment for the summit."},
 }
+
+
+# Your staff (phase 8). Advisers study one delegation each and report at the start of every turn. Junior advisers can
+# be wrong, and say how sure they are; every report that proves right counts towards a promotion.
+STAFF_KINDS = {
+    "analyst": {"name": "Analyst", "icon": "analyst", "what": "Studies rivals: their next move, and what they're after."},
+    "regional": {"name": "Regional expert", "icon": "regional", "what": "Knows the delegations of your own regional group best."},
+    "legal": {"name": "Legal adviser", "icon": "legal", "what": "Reads the rules: at the summit, says whether a floor amendment would pass."},
+}
+STAFF_NAMES = ["Reyes", "Lindqvist", "Tanaka", "Asante", "Okafor", "Haddad", "Novak", "Moreau", "Kaur", "Silva", "Petrov",
+               "Nguyen", "Mensah", "Costa", "Ibrahim", "Larsen"]
+STAFF_RANKS = {1: "Junior adviser", 2: "Senior adviser", 3: "Principal adviser"}
+SURE = {1: "a hunch", 2: "fairly sure", 3: "certain"}

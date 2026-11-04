@@ -27,12 +27,19 @@
   <main class="b-table" id="main" tabindex="-1">
     {% include "chair/_board_map.html" %}
     <div class="s-verdict" id="s-verdict" aria-hidden="true"><span></span></div>
+    <div class="s-tug" id="s-tug" role="group" aria-labelledby="s-tug-h">
+      <p class="s-tug-h" id="s-tug-h">The vote as it stands</p>
+      <div class="s-tug-bar" aria-hidden="true"><i class="y"></i><i class="a"></i><i class="n"></i></div>
+      <p class="s-tug-n" id="s-tug-n" aria-live="polite">–</p>
+      <span class="s-tug-stamp" id="s-tug-stamp"></span>
+    </div>
     <aside class="b-rail s-rail" id="s-rail" aria-label="The session">
       <div class="s-tabs" role="tablist" aria-label="The session">
         <button type="button" role="tab" id="t-brief" aria-controls="p-brief" aria-selected="true" data-tab="brief">Brief</button>
         <button type="button" role="tab" id="t-draft" aria-controls="p-draft" aria-selected="false" tabindex="-1" data-tab="draft">Draft <span class="s-n" id="n-draft"></span></button>
-        <button type="button" role="tab" id="t-dele" aria-controls="p-dele" aria-selected="false" tabindex="-1" data-tab="dele">Delegations</button>
+        <button type="button" role="tab" id="t-dele" aria-controls="p-dele" aria-selected="false" tabindex="-1" data-tab="dele">Delegates</button>
         <button type="button" role="tab" id="t-summit" aria-controls="p-summit" aria-selected="false" tabindex="-1" data-tab="summit" hidden>The Summit</button>
+        <button type="button" role="tab" id="t-staff" aria-controls="p-staff" aria-selected="false" tabindex="-1" data-tab="staff">Staff</button>
         <button type="button" role="tab" id="t-record" aria-controls="p-record" aria-selected="false" tabindex="-1" data-tab="record">Record</button>
       </div>
       <div class="s-panes" tabindex="0" aria-label="Your move">
@@ -75,6 +82,13 @@
         <section class="b-card s-summit-card" id="c-summit" aria-live="polite"></section>
         <section class="b-card" id="c-results" hidden><h2>Votes so far</h2><ol class="s-results" id="c-result-list"></ol></section>
       </div>
+      <div class="s-pane" role="tabpanel" id="p-staff" aria-labelledby="t-staff" hidden>
+        <section class="b-card" id="c-staff"><h2>Your staff</h2>
+          <p class="s-small">Post each adviser to study a delegation or a rival. They report at the start of each turn; juniors can be wrong, and say how sure they are. Reports that prove right earn promotions.</p>
+          <ul class="s-staff" id="c-staff-list"></ul></section>
+        <section class="b-card" id="c-hire"><h2>Take on an adviser</h2>
+          <p class="s-small" id="c-hire-note"></p><div class="s-row" id="c-hire-row"></div></section>
+      </div>
       <div class="s-pane" role="tabpanel" id="p-record" aria-labelledby="t-record" hidden>
         <section class="b-card" id="c-rivals"><h2>Rivals</h2><ul class="s-log" id="c-rival-list"></ul></section>
         <section class="b-card" id="c-record"><h2>The record</h2><ol class="s-log" id="c-log" reversed></ol></section>
@@ -86,6 +100,7 @@
     <button type="button" class="s-btn ghost small" data-open="s-pause">Menu</button>
     <button type="button" class="s-btn ghost small" data-open="s-skills" id="s-skills-btn">Skills</button>
     <p class="p-msg" id="p-msg" role="status"></p>
+    <button type="button" class="s-btn ghost" id="s-reserve" title="Spend an action now to answer the first rival move against you before your next turn">Hold in reserve</button>
     <button type="button" class="s-btn" id="s-end-turn">End turn</button>
   </footer>
 

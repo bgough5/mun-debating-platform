@@ -76,6 +76,11 @@ class Bot:
             g, _ = self.act(g, {"do": "answer", "option": q["answer"] if right else (q["answer"] + 1) % len(q["options"])})
         for o in list(g.get("offers", [])):
             g, _ = self.act(g, {"do": "offer", "id": o["id"], "answer": "accept" if self.take(g, o) else "refuse"})
+        if self.style in ("broker", "analyst") and g["influence"] >= 6 and len(g.get("secured", [])) < 2:
+            friends = sorted((E.lean(self.scn, g, "you", i), i) for i in self.free(g)
+                             if g["trust"].get(i, 0) >= 1 and i not in g.get("secured", []))
+            if friends:
+                g, _ = self.act(g, {"do": "secure", "iso3": friends[-1][1]})
         for sk in BRANCH[self.style]:
             if g["xp"] >= K.SKILL_COST:
                 g, _ = self.act(g, {"do": "skill", "skill": sk})
@@ -90,6 +95,8 @@ class Bot:
                     break
             if not done:
                 break
+        if g["ap"] > 0 and self.style != "random" and not g.get("reserve"):
+            g, _ = self.act(g, {"do": "reserve"})          # keep the last action back to answer a rival
         g, _ = self.act(g, {"do": "end_turn"})
         return g
 
@@ -352,6 +359,8 @@ class Bot:
                     choice = "point_of_order"
                 elif not hurts and self.style in ("broker", "analyst"):
                     choice = "accept"
+            if choice == "stand" and self.style != "random" and s.get("attack") and vote == "yes"                     and g["respect"] >= E.R["reply_respect"]:
+                choice = "reply"
             if choice == "stand" and self.style != "random":
                 my = {"yes": 1, "no": -1, "abstain": 0}[vote]
                 close = my and self.swing_targets(g, c, my)

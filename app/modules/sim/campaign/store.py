@@ -189,7 +189,8 @@ def view(scn: Scenario, g: dict) -> dict:
              "sway": round(g["sway"]["you"].get(iso, 0.0), 2), "read": iso in g["read"],
              "signed": "sponsor" if iso in g["sponsors"] else "signatory" if iso in g["signatories"] else None,
              "pledged": iso in g.get("pledges", []), "favour": iso in g["favours"], "promised": iso in open_promise,
-             "predicted": g["whip"].get(iso),
+             "predicted": g["whip"].get(iso), "secured": iso in g.get("secured", []),
+             "studied_by": next((a["name"] for a in g.get("staff", []) if a.get("post") == iso), None),
              "sphere": _sphere(scn, g, iso),
              "est": None if rival or not final["tags"] else E.vote_of(scn, E.latent(scn, g, iso, final, mood=False))}
         if not rival and chapters:
@@ -234,6 +235,13 @@ def view(scn: Scenario, g: dict) -> dict:
                     **({"want": tags[r["want"]], "block": tags[r["block"]]} if "rival_intel" in g["skills"] else {})} for r in g["rivals"]],
         "crisis": g.get("crisis"), "offers": [{**o, "name": scn.member(o["iso3"]).name} for o in g.get("offers", [])] if chapters else [],
         "deals": g.get("deals", 0),
+        "staff": [{**{k: a[k] for k in ("id", "name", "kind", "stars", "xp", "post")}, "kind_name": K.STAFF_KINDS[a["kind"]]["name"],
+                   "what": K.STAFF_KINDS[a["kind"]]["what"], "rank": K.STAFF_RANKS[a["stars"]],
+                   "next_star": E.PROMOTE.get(a["stars"] + 1), "post_name": scn.member(a["post"]).name if a.get("post") else None,
+                   "report": a.get("report"), "starts": a.get("post") and g.get("tick", 0) <= a.get("since", 0)} for a in g.get("staff", [])],
+        "staff_kinds": [{"code": k, **v} for k, v in K.STAFF_KINDS.items()],
+        "reserve": g.get("reserve", 0), "secured": len(g.get("secured", [])),
+        "tug": _tug(scn, g),
         "event": g.get("event"), "question": {"ask": q["ask"], "options": q["options"]} if q else None,
         "draft": draft, "cards": [c for c in scn.cards if c["id"] in g["cards"]],
         "endorse": {REGIONS.get(r, r): _name(scn, g, a) for r, a in g["endorse"].items()},
@@ -245,9 +253,22 @@ def view(scn: Scenario, g: dict) -> dict:
         "regions": regions, "skill_list": skills, "skill_cost": K.SKILL_COST, "blocs": blocs, "last_chapter": last,
         "costs": {"propose": 0 if g["respect"] >= 8 else E.R["propose_cost"], "amend": 0 if "friendly" in g["skills"] else E.R["amend_cost"],
                   "strike": E.R["strike_cost"], "side_event": E.R["side_event_cost"], "abstain": E.R["abstain_cost"],
-                  "draft_max": E.R["draft_max"], "sponsors": E.R["sponsors"], "favour_trust": E.R["favour_trust"]},
+                  "draft_max": E.R["draft_max"], "sponsors": E.R["sponsors"], "favour_trust": E.R["favour_trust"],
+                  "hire": E.R["hire_cost"], "staff_max": E.R["staff_max"], "secure": E.R["secure_cost"], "secure_max": E.R["secure_max"],
+                  "reply_respect": E.R["reply_respect"]},
         "draft_ok": {"clauses": len(g["draft"]), "mine": sum(1 for c in g["draft"] if c["author"] == "you")},
     }
+
+
+def _tug(scn: Scenario, g: dict) -> dict:
+    """The tug-of-war bar: the vote on the whole draft as it stands, without the hidden moods."""
+    if g["phase"] == "done":
+        f = (g.get("summit") or {}).get("final") or {}
+        return {"yes": f.get("yes", 0), "no": f.get("no", 0), "abstain": f.get("abstain", 0), "passed": bool(f.get("passed")),
+                "summary": f.get("summary", ""), "of": len(scn.members), "final": True}
+    p = E.projection(scn, g)
+    return {"yes": p["yes"], "no": p["no"], "abstain": p["abstain"], "passed": p["passed"], "summary": p["summary"],
+            "of": len(scn.members), "final": False}
 
 
 def _sphere(scn: Scenario, g: dict, iso: str) -> str | None:
@@ -275,6 +296,9 @@ def _summit_view(scn: Scenario, g: dict) -> dict | None:
                "chance": E.chance(scn, g, c), "stance": E.stance(scn, g, "you", c), "mine": c["author"] == "you",
                "author": _name(scn, g, c["author"]),
                "promised_to": [scn.member(pr["iso3"]).name for pr in g["promises"] if pr["clause"] == c["id"] and pr["kept"] is None]}
+    atk = s.get("attack")
+    if atk:
+        atk = {**atk, "by_name": scn.member(atk["by"]).name}
     pend = s.get("pending")
     if pend:
         pend = {**pend, "by_name": scn.member(pend["by"]).name,
@@ -285,7 +309,16 @@ def _summit_view(scn: Scenario, g: dict) -> dict | None:
         results.append({**r, "text": c.get("text", ""), "labels": [scn.tags[t] for t in r["tags"]]})
     final = s.get("final")
     kept_tags = list(dict.fromkeys(t for r in s["results"] if r["passed"] for t in r["tags"]))
-    return {"step": s["step"], "current": cur, "pending": pend, "results": results, "final": final,
+    golden = None
+    if s["step"] == "final":
+        kept = {t for r in s["results"] if r["passed"] for t in r["tags"]}
+        m = g["mandate"]
+        if m["must"] in kept and m["red"] not in kept:
+            golden = "aims_in"
+        elif m["red"] in kept:
+            golden = "red_in"
+    return {"step": s["step"], "current": cur, "pending": pend, "results": results, "final": final, "attack": atk, "golden": golden,
+            "can_reply": g["respect"] >= E.R["reply_respect"],
             "kept": [scn.tags[t] for t in kept_tags],
             "statement_options": [{"code": t, "label": scn.tags[t]} for t in s.get("statement_options", [])],
             "statement": s.get("statement"), "speech": s.get("speech"),

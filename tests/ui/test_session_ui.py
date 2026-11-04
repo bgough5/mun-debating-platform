@@ -300,3 +300,44 @@ def test_the_chief_of_protocol_walks_a_new_player_through_the_session(browser, l
     assert page.is_hidden("#s-advice")
     assert not errors, errors
     ctx.close()
+
+
+
+def test_staff_the_vote_bar_and_the_reserve_in_the_browser(browser, live):
+    """Phase 8: the vote bar shows the projection; advisers are posted from the Staff tab and their pins appear on the
+    map; holding an action in reserve; the Staff tab passes axe."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 900})
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(live.url + "/session/new")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false}))")
+    page.click('[data-pick="pack"][data-value="comet_halcyon"]')
+    page.click('[data-step="1"] [data-next]')
+    page.wait_for_selector("#s-seats-box .s-seat")
+    page.click('.s-seat[data-value="NZL"]')
+    for n in (2, 3, 4, 5):
+        page.click(f'[data-step="{n}"] [data-next]')
+    page.click("#s-begin")
+    page.wait_for_selector("#s-chapter-card:not([hidden])")
+    page.click("#s-chapter-card [data-close]")
+    assert re.search(r"\d+ yes · \d+ abstain · \d+ no", page.inner_text("#s-tug-n"))
+    assert page.text_content("#s-tug-stamp") in ("Would pass", "Would fail")
+    page.click("#t-staff")
+    page.wait_for_selector("#c-staff-list .s-adviser")
+    first = page.locator("#c-staff-list select").first
+    target = first.locator("option").nth(1).get_attribute("value")
+    first.select_option(target)
+    page.wait_for_selector("#b-tokens .s-pin")
+    assert page.locator("#b-tokens .s-pin").count() == 1
+    page.wait_for_timeout(400)
+    assert not axe(page, "session_staff")
+    ap = page.locator("#s-ap i.on").count()
+    page.click("#s-reserve")
+    page.wait_for_function("document.getElementById('s-reserve').textContent === 'Reserve ready'")
+    assert page.locator("#s-ap i.on").count() == ap - 1 and page.is_disabled("#s-reserve")
+    page.click("#s-end-turn")
+    page.wait_for_function("document.getElementById('s-where').textContent.indexOf('turn 2') >= 0")
+    page.wait_for_function("document.querySelector('#c-staff-list .s-report .s-sure') !== null")   # the first report arrives
+    assert not errors, errors
+    ctx.close()

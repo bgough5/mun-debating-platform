@@ -183,7 +183,8 @@
     document.querySelectorAll("#b-map .b-token").forEach(function (g) { tokens[g.getAttribute("data-iso")] = g; });
     document.querySelectorAll("#b-map .b-land").forEach(function (l) { (lands[l.getAttribute("data-iso")] = lands[l.getAttribute("data-iso")] || []).push(l); });
     var SOUND = { lobby: "paper", read: "flip", propose: "stamp", amend: "paper", strike: "stamp", promise: "coin", side_event: "chime",
-                  favour: "coin", whip: "tick", sign: "stamp", skill: "chime", divide: "paper", merge: "stamp", bloc_whip: "chime", abstain: "stamp" };
+                  favour: "coin", whip: "tick", sign: "stamp", skill: "chime", divide: "paper", merge: "stamp", bloc_whip: "chime", abstain: "stamp",
+                  hire: "coin", post: "flip", reserve: "tick", secure: "stamp", offer: "paper" };
     var POS = { "2": ["p2", "Strongly for"], "1": ["p1", "For"], "0": ["p0", "Neutral"], "-1": ["n1", "Against"], "-2": ["n2", "Strongly against"] };
 
     function body(extra) {
@@ -215,7 +216,7 @@
     function opt(sel, value, text) { var o = h("option", "", text); o.value = value; sel.appendChild(o); return o; }
 
     // ---------- tabs ----------
-    var TABS = ["brief", "draft", "dele", "summit", "record"];
+    var TABS = ["brief", "draft", "dele", "summit", "staff", "record"];
     function setTab(name, focus) {
       TABS.forEach(function (t) {
         var b = $("t-" + t), on = t === name;
@@ -396,6 +397,8 @@
       for (var i = 1; i <= 3; i++) tr.appendChild(h("span", d.trust >= i ? "on" : d.trust <= -i ? "neg" : "off", d.trust <= -i ? "✕" : d.trust >= i ? "●" : "○"));
       fact("Trust", tr);
       fact("Goodwill", d.sway > 0 ? "+" + d.sway.toFixed(2) + " towards you" : d.sway < 0 ? d.sway.toFixed(2) : "none yet");
+      if (d.secured) fact("Secured", "signed a commitment: rivals find it twice as hard to move");
+      if (d.studied_by) fact("Studied by", d.studied_by);
       var flags = [];
       if (d.signed) flags.push("signed as your " + d.signed); if (d.pledged) flags.push("pledged to abstain");
       if (d.favour) flags.push("owes you a favour"); if (d.promised) flags.push("you've made it a promise");
@@ -414,6 +417,8 @@
         grid.appendChild(row);
       }
       grid.appendChild(btn("Call in a favour", "s-btn ghost small", function () { move({ do: "favour", iso3: picked }); }, noAp || d.trust < v.costs.favour_trust));
+      if (!d.secured) grid.appendChild(btn("Secure (" + v.costs.secure + " Influence)", "s-btn ghost small", function () { move({ do: "secure", iso3: picked }); },
+                                          noAp || d.trust < 1 || d.est !== "yes" || v.secured >= v.costs.secure_max || v.influence < v.costs.secure));
       if (d.veto && v.veto.length) grid.appendChild(btn("Ask to abstain, not veto", "s-btn ghost small", function () { move({ do: "abstain", iso3: picked }); }, noAp || d.pledged || d.trust < 1));
       if (v.last_chapter && !d.signed) {
         grid.appendChild(btn("Ask to sponsor", "s-btn small", function () { move({ do: "sign", iso3: picked, role: "sponsor" }); }, noAp));
@@ -522,6 +527,14 @@
       });
       $("c-aim").textContent = "Your aim: " + v.path.name + ". " + v.path.what;
       regions(v);
+      tug(v, prev);
+      staff(v);
+      pins(v);
+      var rs = $("s-reserve");
+      rs.hidden = v.phase !== "chapter";
+      rs.textContent = v.reserve ? "Reserve ready" : "Hold in reserve";
+      rs.classList.toggle("ready", !!v.reserve);
+      rs.disabled = !!v.reserve || !v.ap;
       draft(v, prev);
       countryPicker(v); country(v); skills(v);
       // the delegate's reply, and anything else the move said
@@ -644,7 +657,14 @@
           var am = h("div", "s-amendment");
           am.appendChild(h("b", "", "Floor amendment from " + S.pending.by_name));
           am.appendChild(h("p", "", "They move to " + S.pending.change + ". Accept it as friendly, rule it out of order, or let it go to a vote first."));
+          if (S.pending.advice) am.appendChild(h("p", "s-legal", "Your legal adviser (" + S.pending.advice.sure + "): put to a vote, it would " + (S.pending.advice.passes ? "pass." : "fail.")));
           box.appendChild(am);
+        }
+        if (S.attack) {
+          var at = h("div", "s-amendment s-attack");
+          at.appendChild(h("b", "", S.attack.by_name + " asks to speak against this clause"));
+          at.appendChild(h("p", "", "Unanswered, the speech will cool the room towards it. A right of reply (Respect " + v.costs.reply_respect + " or more) answers it."));
+          box.appendChild(at);
         }
         box.appendChild(h("p", "s-small", "First, what will you do? Then cast " + v.you.name + "'s vote."));
         var dec = h("div", "s-decide");
@@ -657,6 +677,7 @@
         chip("favour", "Call in a favour (" + S.favours.length + ")", S.favours.length > 0);
         if (S.pending) chip("accept", "Accept as friendly (+1 Respect)", true);
         if (S.pending) chip("point_of_order", "Point of order", S.po);
+        if (S.attack) chip("reply", "Right of reply", S.can_reply);
         box.appendChild(dec);
         var vt = h("div", "s-votes");
         [["yes", "Yes"], ["abstain", "Abstain"], ["no", "No"]].forEach(function (x) {
@@ -677,6 +698,8 @@
         box.appendChild(h("p", "", S.kept.length ? "What survived the division of the question commits countries to: " + S.kept.join("; ").toLowerCase() + "."
                                                  : "No clause was adopted, so there is nothing left to vote on."));
         box.appendChild(h("p", "s-small", "Cast " + v.you.name + "'s vote on the whole resolution."));
+        if (S.golden === "aims_in") box.appendChild(chiefNote("eyebrow", "Remember the first rule of the UN, Ambassador: don't vote down progress because it isn't everything you wanted. This text carries your capital's main aim."));
+        else if (S.golden === "red_in") box.appendChild(chiefNote("concerned", "This text crosses your red line. Voting against it is within your instructions; abstaining is a way to let progress through without endorsing it."));
         var fv = h("div", "s-votes");
         [["yes", "Yes"], ["abstain", "Abstain"], ["no", "No"]].forEach(function (x) { fv.appendChild(btn(x[1], "s-btn v-" + x[0], function () { move({ do: "final", vote: x[0] }); })); });
         box.appendChild(fv);
@@ -776,6 +799,27 @@
         grade === 1 ? "A respectable session. Read the turning points below: the next one will go further." :
         "A hard session, Ambassador. Every great delegate has one. The dossier below shows exactly what happened, and why."));
       b.insertBefore(chief, b.firstChild);
+      if (v.debrief && v.debrief.half_loaf) {
+        var hl = h("div", "s-debrief s-loaf"); hl.appendChild(h("h3", "", "Half a loaf"));
+        hl.appendChild(h("p", "", v.debrief.half_loaf.verdict));
+        if (v.debrief.half_loaf.gained.length) hl.appendChild(h("p", "s-sub", "Your aims in the resolution: " + v.debrief.half_loaf.gained.join("; ") + "."));
+        b.appendChild(hl);
+      }
+      if (v.debrief && v.debrief.rivals && v.debrief.rivals.length) {
+        var rvb = h("div", "s-debrief"); rvb.appendChild(h("h3", "", "Your rivals"));
+        var ul = h("ul", "s-rival-out");
+        v.debrief.rivals.forEach(function (r) {
+          var li = h("li", r.won ? "won" : ""); li.appendChild(h("b", "", r.name)); li.appendChild(h("span", "s-style", r.style));
+          li.appendChild(h("span", "", " " + r.verdict + ". It wanted a clause that " + lcf(r.want) + ", and nothing that " + lcf(r.block) + "."));
+          ul.appendChild(li);
+        });
+        rvb.appendChild(ul); b.appendChild(rvb);
+      }
+      if (v.debrief && v.debrief.staff && v.debrief.staff.length) {
+        var sb = h("div", "s-debrief"); sb.appendChild(h("h3", "", "Your staff"));
+        sb.appendChild(h("p", "s-sub", v.debrief.staff.map(function (a) { return a.name + " (" + a.kind + ", " + "★".repeat(a.stars) + ")"; }).join(" · ")));
+        b.appendChild(sb);
+      }
       debriefInto(b, v);
       hideAdvice();
       open("s-result");
@@ -934,16 +978,20 @@
         { at: "#b-board", face: "calm", title: "The room", demo: function () { if (sample) setTimeout(function () { envoy(v.you.iso3, sample, false); }, 500); },
           text: ["Every token is a delegation, banded in the colour of its regional group. Green leans towards your draft, red against.",
                  "As delegations lean your way, their land takes your colour; a rival's sphere shows too, like borders on a campaign map. Envoys cross the map whenever anyone makes a move. Click any token to work that delegation."] },
+        { at: "#s-tug", face: "thinking", title: "The vote as it stands",
+          text: ["This bar is the vote on the whole draft if it were held now: yes, abstain and no. Every move tugs it, yours and your rivals'.",
+                 "It leaves out each delegation's mood on the day, so the real vote can still surprise you. Keep a margin."] },
         { at: "#c-country", tab: "dele", pick: sample, face: "thinking", title: "Working a delegation",
           text: [list([["Read the file ", "(1 action): its positions, red lines and sources. Lobbying works better once you've read it."],
                        ["Lobby ", "with Influence: the further they are from you, the more it costs."],
                        ["Promise ", "to back a clause they like: trust grows, but only if you keep your word at the summit."],
                        ["Call in a favour ", "when trust is high: they back you on the day."],
                        ["Ask them to sponsor or sign ", "so the draft can be tabled first."],
-                       ["Predict their vote: ", "scored at the summit, and the Kingmaker's path." + (sc ? " Permanent members can be asked to abstain rather than veto." : "")]])] },
+                       ["Predict their vote: ", "scored at the summit, and the Kingmaker's path." + (sc ? " Permanent members can be asked to abstain rather than veto." : "")],
+                       ["Secure them ", "once they trust you and lean your way: a signed commitment makes them twice as hard for a rival to move."]])] },
         { at: "#c-regions", tab: "brief", face: "wry", title: "Regional groups",
           text: ["Win more than half of a regional group and it endorses your draft: extra Influence every turn, and its members lean your way at the vote.",
-                 "A side event, on the Delegations tab, works on a whole group at once (2 actions). Rivals court groups too, so an endorsement can be lost."] },
+                 "A side event, on the Delegates tab, works on a whole group at once (2 actions). Rivals court groups too, so an endorsement can be lost."] },
         { at: "#c-clauses", tab: "draft", face: "thinking", title: "The draft",
           text: ["This is the resolution as it stands. The dial on each clause is its chance of passing now.",
                  "You can amend a clause one commitment at a time, or strike it; with skills, divide or merge clauses. The working group must agree to changes to anyone else's text: it won't make a clause less popular, or strike one it would pass."] },
@@ -952,7 +1000,19 @@
                  "Your writing is for your own practice. It's never marked, and the Architect's path rewards a text that is mostly yours."] },
         { at: "#c-rivals", tab: "record", face: "concerned", title: "Your rivals",
           text: [list(v.rivals.map(function (r) { return [r.name + ", " + r.style_name + ": ", r.style_what]; })),
-                 "Rivals move at the start of every turn. Each turn an intelligence report on one of them arrives in the Record, with everything else that happened."] },
+                 "They play to win: each turn they look for the move that serves their instructions best, and on Hard they go after the delegations you worked on last. Their plans are hidden. That's what your staff is for."] },
+        { at: "#c-staff", tab: "staff", face: "wry", title: "Your staff",
+          text: ["You have " + (v.staff || []).length + " advisers. " + (v.staff && v.staff.length > 2 ? "A big delegation brings more staff, but greener ones." : "A smaller delegation brings fewer staff, but seasoned ones."),
+                 list([["Analysts ", "study rivals: where they're heading next, and what they're after."],
+                       ["Regional experts ", "read the delegations of your own regional group best."],
+                       ["Legal advisers ", "tell you at the summit whether a rival's floor amendment would pass."]]),
+                 "Post each to a delegation; reports start the turn after. Juniors can be wrong and say how sure they are; reports that prove right earn promotions. You can take on more, up to " + v.costs.staff_max + ", for Influence."] },
+        { at: "#s-reserve", face: "eyebrow", title: "Counter-moves",
+          text: [list([["Hold in reserve: ", "spend an action now, and your team answers the first rival move against you before your next turn."],
+                       ["Secure: ", "a delegation that trusts you signs a commitment, and rivals pay double to move it."],
+                       ["Right of reply: ", "at the summit, answer a rival who speaks against your clause (Respect " + v.costs.reply_respect + " or more)."],
+                       ["Point of order: ", "a skill: rule a rival's floor amendment out of order."]]),
+                 "When an adviser warns you a rival is heading for a delegation, this is how you get there first."] },
         { at: cr ? "#c-crisis" : "#c-event", tab: "brief", face: "concerned", title: "Crises, news and offers",
           text: [list([["A crisis ", "opens every chapter and changes the rules for that chapter" + (cr ? ". This one: " + lc(cr.title) + "." : ".")],
                        ["News ", "arrives every turn. Procedure questions earn Expertise and Respect if you answer correctly."],
@@ -964,6 +1024,9 @@
         { at: "#s-end-turn", face: "calm", title: "Ending a turn",
           text: ["When your actions are spent, end the turn. Offers lapse, Influence comes in, rivals move and the next turn opens. At the end of a chapter you'll see whether you met its goal.",
                  "Menu, or Escape, pauses the game. Your session is kept after every move, so you can stop and come back."] },
+        { face: "eyebrow", title: "The first rule of the UN",
+          text: ["Don't say no to something just because it isn't exactly what you wanted. A resolution that carries some of your aims is better than no resolution at all: half a loaf is better than none.",
+                 "Vote down a text that carries your capital's main aim and you lose Respect; back an imperfect one and the room respects you for it. Only your red line is a reason to say no. Your rivals keep this rule too: a rival that gets its wish will not sink the text."] },
         { face: "eyebrow", title: "Then, the Summit", art: artSummit,
           text: [list([["Your opening speech: ", "firm, open or bridge. Each moves a different part of the room."],
                        ["Clause by clause: ", "each is voted on separately. Before each vote, make a last offer, call in a favour or deal with a rival's floor amendment, then cast your own vote."],
@@ -1073,10 +1136,10 @@
 
     // advice: one short remark at a time, at the moments that matter, never over a card or the walkthrough
     var queue = [], adviceTimer = null, adviceFace = null, said = {};
-    function advise(face, text, once) {
+    function advise(face, text, once, adv) {
       if (!guideOn() || !G) return;
       if (once) { if (said[once]) return; said[once] = true; }
-      queue.push({ face: face, text: text });
+      queue.push({ face: face, text: text, adv: adv || null });
       if (queue.length > 3) queue.shift();
       setTimeout(adviceNext, 900);
     }
@@ -1089,10 +1152,18 @@
       if (!a || !queue.length || !a.hidden || !$("s-walk").hidden || document.querySelector(".s-overlay:not([hidden])")) return;
       if (V && V.phase === "done") { queue = []; return; }
       var x = queue.shift();
-      if (!adviceFace) { adviceFace = G.portrait(x.face); $("s-advice-face").appendChild(adviceFace); }
-      G.face(adviceFace, x.face);
+      var holder = $("s-advice-face");
+      if (x.adv) {
+        holder.textContent = ""; adviceFace = null;
+        holder.appendChild(staffIcon(x.adv.kind, x.adv.stars, 112));
+        $("s-advice-h").textContent = x.adv.name + ", " + x.adv.kind_name;
+      } else {
+        if (!adviceFace) { holder.textContent = ""; adviceFace = G.portrait(x.face); holder.appendChild(adviceFace); }
+        G.face(adviceFace, x.face);
+        $("s-advice-h").textContent = "The Chief of Protocol";
+      }
       $("s-advice-text").textContent = x.text;
-      a.hidden = false; restart(a, "s-advice-in"); restart(adviceFace, "g-react");
+      a.hidden = false; restart(a, "s-advice-in"); if (adviceFace) restart(adviceFace, "g-react");
       A.play("flip");
       adviceTimer = setTimeout(function () { if (!a.matches(":hover") && !a.contains(document.activeElement)) { hideAdvice(); setTimeout(adviceNext, 400); } }, 9000);
     }
@@ -1109,7 +1180,9 @@
       if (fresh.length) advise("wry", fresh[0].name + " is at your door with an offer. It's on your Brief, and it lapses when the turn ends.");
       news.forEach(function (x) {
         if (x.kind === "rival" && /struck your clause/.test(x.text)) advise("concerned", x.text + " Clauses with wide support are safer: the working group won't strike a clause it would pass.");
-        if (x.kind === "intel") advise("thinking", x.text.replace(/^Intelligence: /, "A word from our people: "));
+        if (x.kind === "worry") advise("concerned", x.text, null, staffOf(v, x.text));
+        if (x.kind === "promote") advise("delighted", x.text, null, staffOf(v, x.text));
+        if (x.kind === "counter") advise("delighted", x.text + " Well judged, Ambassador.");
       });
       if (v.phase === "chapter" && prev.chapter !== v.chapter && prev.objectives) {
         var met = v.objectives[String(prev.chapter)];
@@ -1117,6 +1190,102 @@
       }
       if (v.phase === "chapter" && v.ap === 0) advise("calm", "Your actions are spent. End the turn when you're ready.", "ap0");
       if (v.phase === "chapter" && v.xp >= v.skill_cost) advise("wry", "You have Expertise enough for a diplomatic skill. Open Skills to choose one.", "skill");
+    }
+
+    // ---------- phase 8: the vote as it stands, your staff, and their pins on the map ----------
+    function lcf(t) { t = String(t || "").replace(/\.$/, ""); return /^.[a-z]/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t; }
+    function chiefNote(face, text) {
+      var d = h("div", "s-chief-says s-chief-note"), f = h("div", "s-chief-face");
+      if (G) f.appendChild(G.portrait(face));
+      d.appendChild(f); d.appendChild(h("p", "", text));
+      return d;
+    }
+    function staffOf(v, text) {
+      var a = (v.staff || []).filter(function (x) { return text.indexOf(x.name) === 0; })[0];
+      return a || null;
+    }
+    // each adviser's icon: a brass roundel with the tool of their trade (a magnifying glass, a globe, the scales)
+    var GLYPH = {
+      analyst: "M22 22 m-9 0 a9 9 0 1 0 18 0 a9 9 0 1 0 -18 0 M28.5 28.5 L37 37",
+      regional: "M24 24 m-12 0 a12 12 0 1 0 24 0 a12 12 0 1 0 -24 0 M12 24 H36 M24 12 C17 18 17 30 24 36 M24 12 C31 18 31 30 24 36",
+      legal: "M24 11 V36 M15 36 H33 M12 17 H36 M12 17 L8 27 H16 Z M36 17 L32 27 H40 Z"
+    };
+    function staffIcon(kind, stars, size) {
+      var ns = "http://www.w3.org/2000/svg", svg = document.createElementNS(ns, "svg");
+      svg.setAttribute("viewBox", "0 0 48 " + (stars ? 60 : 48)); svg.setAttribute("width", size); svg.setAttribute("height", stars ? size * 1.25 : size);
+      svg.setAttribute("class", "s-ico s-ico-" + kind); svg.setAttribute("aria-hidden", "true");
+      function el(tag, attrs) { var e = document.createElementNS(ns, tag); Object.keys(attrs).forEach(function (k) { e.setAttribute(k, attrs[k]); }); svg.appendChild(e); return e; }
+      el("circle", { cx: 24, cy: 24, r: 22, class: "s-ico-disc" });
+      el("circle", { cx: 24, cy: 24, r: 18.5, class: "s-ico-ring" });
+      el("path", { d: GLYPH[kind] || GLYPH.analyst, class: "s-ico-glyph" });
+      for (var i = 0; i < (stars || 0); i++) el("path", { d: "M" + (24 + (i - (stars - 1) / 2) * 12) + " 49 l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z", class: "s-ico-star", transform: "scale(1 .9) translate(0 " + 5 + ")" });
+      return svg;
+    }
+    function tug(v, prev) {
+      var t = v.tug, box = $("s-tug"); if (!t) return;
+      box.hidden = v.phase !== "chapter";            // at the summit the real votes take over
+      var bar = box.querySelectorAll(".s-tug-bar i"), of = Math.max(1, t.of);
+      bar[0].style.width = (100 * t.yes / of) + "%"; bar[1].style.width = (100 * t.abstain / of) + "%"; bar[2].style.width = (100 * t.no / of) + "%";
+      var veto = /vetoed by ([^–—;.]+)/.exec(t.summary || "");
+      $("s-tug-n").textContent = t.yes + " yes · " + t.abstain + " abstain · " + t.no + " no" + (veto ? " · vetoed by " + veto[1].trim() : "");
+      var st = $("s-tug-stamp");
+      st.textContent = t.passed ? "Would pass" : "Would fail"; st.className = "s-tug-stamp " + (t.passed ? "pass" : "fail");
+      box.setAttribute("aria-label", "If the vote were now: " + t.summary);
+      if (prev && prev.tug && (prev.tug.yes !== t.yes || prev.tug.no !== t.no)) restart(box, "s-tug-move");
+      if (prev && prev.tug && prev.tug.passed !== t.passed && v.phase === "chapter") {
+        A.play(t.passed ? "chime" : "sting");
+        advise(t.passed ? "delighted" : "concerned", t.passed ? "As things stand, the draft would pass. Hold the room: rivals will try to turn it." :
+                                                        "As things stand, the draft would fail. Find the delegations closest to tipping.");
+      }
+    }
+    function staff(v) {
+      var ul = $("c-staff-list"); ul.textContent = "";
+      var others = Object.keys(v.tokens).filter(function (k) { return k !== v.you.iso3; })
+        .sort(function (a, b) { return v.tokens[a].name < v.tokens[b].name ? -1 : 1; });
+      (v.staff || []).forEach(function (a) {
+        var li = h("li", "s-adviser");
+        li.appendChild(staffIcon(a.kind, a.stars, 60));
+        var body = h("div", "s-adviser-body");
+        var top = h("p", "s-adviser-name"); top.appendChild(h("b", "", a.name)); top.appendChild(document.createTextNode(" · " + a.kind_name + ", " + a.rank));
+        body.appendChild(top);
+        if (a.next_star) {
+          var xp = h("span", "s-xp"); xp.setAttribute("role", "img"); xp.setAttribute("aria-label", a.xp + " of " + a.next_star + " towards promotion");
+          var fill = h("i"); fill.style.width = Math.min(100, 100 * a.xp / a.next_star) + "%"; xp.appendChild(fill); body.appendChild(xp);
+        }
+        var row = h("div", "s-row"), id = "s-post-" + a.id;
+        var lab = h("label", "s-small", "Studies"); lab.setAttribute("for", id); row.appendChild(lab);
+        var sel = h("select"); sel.id = id; opt(sel, "", "Nobody: back at the mission");
+        others.forEach(function (iso) { opt(sel, iso, v.tokens[iso].name + (v.tokens[iso].rival ? " (rival)" : "")); });
+        sel.value = a.post || "";
+        sel.disabled = v.phase === "done";
+        sel.addEventListener("change", function () { move({ do: "post", adviser: a.id, iso3: sel.value || null }); });
+        row.appendChild(sel); body.appendChild(row);
+        var rep = h("p", "s-report");
+        if (a.report) { rep.appendChild(h("span", "s-sure s-sure-" + a.report.stars, a.report.sure)); rep.appendChild(document.createTextNode(" " + a.report.text)); }
+        else rep.textContent = a.post ? (a.starts ? "Starts reporting next turn." : "No report yet.") : a.what;
+        body.appendChild(rep);
+        li.appendChild(body); ul.appendChild(li);
+      });
+      var n = (v.staff || []).length, full = n >= v.costs.staff_max;
+      $("c-hire-note").textContent = n + " of " + v.costs.staff_max + " advisers. A new adviser starts as a junior and costs " + v.costs.hire + " Influence.";
+      var hr = $("c-hire-row"); hr.textContent = "";
+      (v.staff_kinds || []).forEach(function (k) {
+        hr.appendChild(btn(k.name, "s-btn ghost small", function () { move({ do: "hire", kind: k.code }); },
+                           full || v.influence < v.costs.hire || v.phase !== "chapter"));
+      });
+    }
+    function pins(v) {
+      var layer = $("b-tokens"); if (!layer) return;
+      layer.querySelectorAll(".s-pin").forEach(function (p) { p.remove(); });
+      (v.staff || []).forEach(function (a) {
+        var t = a.post && tokens[a.post]; if (!t) return;
+        var ic = staffIcon(a.kind, 0, 26);
+        ic.setAttribute("x", +t.getAttribute("data-x") + 14); ic.setAttribute("y", +t.getAttribute("data-y") - 34);
+        ic.setAttribute("class", ic.getAttribute("class") + " s-pin");
+        var tt = document.createElementNS("http://www.w3.org/2000/svg", "title"); tt.textContent = a.name + " studies " + a.post_name; ic.appendChild(tt);
+        layer.appendChild(ic);
+      });
+      Object.keys(tokens).forEach(function (iso) { tokens[iso].classList.toggle("secured", !!(v.tokens[iso] || {}).secured); });
     }
 
     // ---------- the debrief dossier ----------
@@ -1169,6 +1338,7 @@
     $("s-side-event").addEventListener("click", function () { move({ do: "side_event", region: $("s-region-pick").value }); });
     $("s-bloc-whip").addEventListener("click", function () { move({ do: "bloc_whip", group: $("s-bloc-pick").value }); });
     $("s-end-turn").addEventListener("click", function () { amending = null; move({ do: "end_turn" }); });
+    $("s-reserve").addEventListener("click", function () { move({ do: "reserve" }); });
     $("s-abandon").addEventListener("click", function () {
       if (!window.confirm("Abandon this session? It can't be brought back.")) return;
       if (mode === "saved") api({ do: "abandon", save_id: +saveId }).then(function () { window.location.href = "/session"; });

@@ -27,6 +27,7 @@ class Member:
     p5: bool
     group: str = ""          # the bloc whose members share a mood (as in the engine)
     rho: float = 0.0
+    major: bool = False      # a G20 member: starts The Session with a bigger but greener staff (phase 8)
 
 
 @dataclass
@@ -87,6 +88,13 @@ def load(conn, committee_id: int, code: str) -> Scenario:
     dels = rows(conn, "SELECT d.iso3, c.name, c.region, c.p5 FROM delegation d JOIN country c ON c.iso3 = d.iso3 "
                       "WHERE d.committee_id = ? AND d.deleted_at IS NULL ORDER BY d.iso3", (committee_id,))
     members = [Member(d["iso3"], d["name"], d["region"] or "", bool(d["p5"])) for d in dels]
+    try:
+        g20 = {r["iso3"] for r in rows(conn, "SELECT am.iso3 FROM alignment_member am JOIN alignment a ON a.id = am.alignment_id "
+                                             "WHERE a.code = 'G20' AND a.deleted_at IS NULL AND am.deleted_at IS NULL")}
+    except Exception:          # an older database without alignments
+        g20 = set()
+    for m in members:
+        m.major = m.iso3 in g20
     target0 = {"kind": "paragraph", "id": None, "paragraph_id": None, "amendment_id": None, "resolution_id": res["id"],
                "committee_id": committee_id, "negate": False, "label": "Campaign clause"}
     first_tag = sorted(pack["tags"])[0]

@@ -87,16 +87,10 @@ def test_a_favour_offer_costs_influence_and_earns_a_favour(scn):
     assert g2["influence"] == inf - 2 and o["iso3"] in g2["favours"]
 
 
-def test_rivals_have_personalities_and_intelligence_reports_on_them(scn):
+def test_rivals_have_personalities(scn):
     for g in _games(scn, 10, difficulty="hard"):
         styles = [r["style"] for r in g["rivals"]]
         assert set(styles) <= set(K.RIVAL_STYLES) and len(set(styles)) == len(styles)  # three rivals, three personalities
-        assert any(x["kind"] == "intel" for x in g["log"])
-    g = _games(scn, 1)[0]
-    g["skills"].append("rival_intel")
-    g, _ = E.apply(scn, g, {"do": "end_turn"})
-    turn = [x for x in g["log"] if x["kind"] == "intel" and x["when"].endswith("turn 2")]
-    assert len(turn) == len(g["rivals"])                                               # Rival intelligence reports on every rival
 
 
 def test_the_spoiler_goes_after_your_own_clauses_and_saves_a_floor_amendment(scn):

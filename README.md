@@ -36,8 +36,10 @@ see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun
   games are saved; anyone can play as a guest from the sign-in page with no code, and nothing about a guest is kept.
 - **The Session (D-101):** an hour-long solo campaign at `/session`: chapters of lobbying and drafting, then a
   Summit voted clause by clause, then a debrief. Each chapter has a crisis; delegations bring offers; rivals have
-  personalities; positions shift. The Chief of Protocol walks new players through the whole session first, and
-  speaks up at key moments.
+  personalities and play to win, with hidden plans that your advisers (posted, hired, promoted) find out; you
+  answer them by holding an action in reserve, securing delegations and replying at the summit; positions shift. The
+  golden rule (half a loaf is better than none) is in the scoring. The Chief of Protocol walks new players through the
+  whole session first, and speaks up at key moments.
 - **People:** one student list with year levels, saved groups (for example "Debating Jr BGO", ticked in one go; D-085),
   teacher access (which teachers see whom), staff, student pathways and milestones.
 - **Speech coach (D-100):** beside every speech box, and hideable. It has a time dial against the target, word and sentence counts, a reading level, checks for repeated words, fillers and long sentences, and persuasive techniques ticked as they're used. It can mark these in the writing, adds Model UN and debate phrases at the cursor, and reads the speech aloud in the laptop's own voice. Teachers see it read-only.

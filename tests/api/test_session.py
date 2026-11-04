@@ -151,3 +151,32 @@ def test_the_view_shows_the_crisis_offers_and_rival_personalities(app):
     assert m.status_code == 200 and all(x["id"] != o["id"] for x in m.json()["view"]["offers"])
     again = api(c, {"do": "move", "state": m.json()["state"], "sig": m.json()["sig"], "action": {"do": "offer", "id": o["id"], "answer": "accept"}})
     assert again.status_code == 400 and "lapsed" in again.json()["error"]
+
+
+
+def test_the_view_shows_the_vote_as_it_stands_your_staff_and_counter_moves(app):
+    """Phase 8: the tug-of-war projection, advisers (posted and hired through the API), the reserve and securing."""
+    c = guest(app)
+    j = api(c, {"do": "new", "pack": "comet_halcyon", "iso3": "NZL", "length": "quick", "difficulty": "hard", "path": "mandate"}).json()
+    v = j["view"]
+    t = v["tug"]
+    assert t["yes"] + t["no"] + t["abstain"] == t["of"] and isinstance(t["passed"], bool) and t["summary"]
+    assert v["staff"] and all(a["kind_name"] and a["rank"] and a["report"] is None for a in v["staff"])
+    assert {k["code"] for k in v["staff_kinds"]} == {"analyst", "regional", "legal"}
+    assert v["reserve"] == 0 and v["costs"]["hire"] and v["costs"]["secure"]
+    st, sig = j["state"], j["sig"]
+
+    def move(action):
+        nonlocal st, sig
+        r = api(c, {"do": "move", "state": st, "sig": sig, "action": action})
+        assert r.status_code == 200, r.text
+        st, sig = r.json()["state"], r.json()["sig"]
+        return r.json()["view"]
+    rival = v["rivals"][0]["iso3"]
+    v = move({"do": "post", "adviser": v["staff"][0]["id"], "iso3": rival})
+    assert v["staff"][0]["post"] == rival and v["tokens"][rival]["studied_by"] == v["staff"][0]["name"]
+    v = move({"do": "reserve"})
+    assert v["reserve"] == 1 and v["ap"] >= 0
+    v = move({"do": "end_turn"})
+    assert v["staff"][0]["report"]["text"] and v["staff"][0]["report"]["sure"]
+    assert v["reserve"] == 0                                       # used against a rival, or lapsed

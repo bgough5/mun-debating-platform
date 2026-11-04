@@ -505,6 +505,26 @@ There is no interface yet. Phase 2 waits for Ben's calls on scenario labels, a S
 - **Balance:** re-measured in section 20 of the design doc.
 - **Also fixed:** the speech coach's mirror layer could stick out past a 320 px page for a moment after a resize. That was the intermittent `test_a11y_every_student_page` failure; the layer is now clamped with `max-width: 100%`.
 
+
+**Phase 8, rivals that play to win, advisers and the golden rule (5 Nov 2026).** Ben: "make sure there is counter play and that the cpu does try and win, while also remembering the golden rule of UN … don't say no to something just because it is not exactly as you want it." He chose:
+- rivals' plans hidden, with advisers you post to study countries;
+- junior advisers can be wrong and say so;
+- advisers are hired with Influence, up to five; bigger countries start with more but greener staff.
+
+Built:
+- rivals that plan for their own instructions; Hard rivals answer your last turn;
+- the tug-of-war vote bar;
+- advisers who report, are sometimes wrong at junior level, and earn promotions;
+- the counter-moves: hold in reserve, secure, right of reply;
+- the golden rule in rivals' votes, in your Respect, in Consensus scoring, in the Chief's warning and in the debrief's "Half a loaf".
+
+Measured in section 21 of the design doc.
+
+**Decided for phase 9, not yet built:**
+- **Country dossiers** use real World Bank indicators for real-issue scenarios: free to reuse with credit (CC BY 4.0), each figure shown with its source and year. Fictional scenarios get invented profiles marked as invented.
+- **Your capital's confidence:** being recalled ends the session on Hard; on Easy and Standard it costs a turn.
+- **The deal table:** trade votes, sponsorships, abstentions, funding pledges (Influence), trade terms, candidacy support and intelligence.
+
 ### D-100 The speech coach beside every speech box — Decided (5 Nov 2026, Ben)
 Ben: "there should be some stats and visual add-ins that makes speeches easier to write. some things such as word count, expected speaking time, repetitive language indicators, lists of persuasive techniques … keep the platform clean, easily set-up and intuitive … as pretty and fun/interactive/clear as possible." He chose:
 - every speech box, "togglable so it doesn't feel like a constant tutorial", plus Model UN phrases to click in ("addressing other honourable delegates etc.");

@@ -201,7 +201,7 @@
 /* ---------- phase 3: the player's moves ---------- */
 .s-rail { overflow: hidden; padding-right: 0; gap: 10px; }
 .s-tabs { display: flex; gap: 0; flex: none; border-bottom: 3px double var(--brass); }
-.s-tabs button { flex: 1; font: 700 17px var(--serif); letter-spacing: .06em; text-transform: uppercase; padding: 10px 6px; border: 2px solid var(--walnut-dk);
+.s-tabs button { flex: 1 1 auto; min-width: 0; font: 700 15px var(--serif); letter-spacing: .03em; text-transform: uppercase; padding: 10px 4px; border: 2px solid var(--walnut-dk);
   border-bottom: 0; border-radius: 0; background: var(--parchment-dk); color: var(--ink); cursor: pointer; min-height: 0; }
 .s-tabs button + button { border-left: 0; }
 .s-tabs button:hover { background: var(--parchment); color: var(--ink); }
@@ -589,3 +589,56 @@
 .s-chief-says { display: flex; gap: 18px; align-items: center; background: var(--white); border: 1px solid var(--walnut); padding: 10px 18px; margin: 4px 0 14px; }
 .s-chief-face .g-face { width: 92px; height: 107px; }
 .s-doc .s-chief-says p { font-style: italic; margin: 0; }
+
+/* ---------- Phase 8: the vote as it stands, your staff, counter-moves ---------- */
+.s-tug { position: absolute; z-index: 6; top: 40px; left: 392px; width: 640px; padding: 8px 14px 9px; color: var(--ink);
+  background: linear-gradient(180deg, var(--parchment), var(--parchment-dk)); border: 2px solid var(--brass-dk); box-shadow: 4px 5px 0 rgb(0 0 0 / 35%); }
+.s-tug[hidden] { display: none; }
+.s-tug-h { margin: 0 0 4px; font-family: var(--serif); font-size: 13px; letter-spacing: .22em; text-transform: uppercase; color: var(--brass-dk); }
+.s-tug-bar { display: flex; height: 20px; border: 2px solid var(--walnut); background: var(--white); overflow: hidden; }
+.s-tug-bar i { display: block; height: 100%; transition: width .7s cubic-bezier(.3, .9, .3, 1); }
+.s-tug-bar i.y { background: var(--map-yes); }
+.s-tug-bar i.a { background: var(--map-abstain); }
+.s-tug-bar i.n { background: var(--map-no); }
+.s-tug-n { margin: 4px 0 0; font-size: 16px; }
+.s-tug-stamp { position: absolute; right: 12px; bottom: 5px; font-family: var(--serif); font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+  padding: 1px 8px; border: 2px solid currentColor; transform: rotate(-3deg); }
+.s-tug-stamp.pass { color: var(--green-dk); }
+.s-tug-stamp.fail { color: var(--stamp); }
+.s-tug-move { animation: s-tug-move .6s ease; }
+@keyframes s-tug-move { 0% { transform: translateX(0); } 25% { transform: translateX(-4px); } 50% { transform: translateX(4px); } 100% { transform: none; } }
+
+.s-staff { list-style: none; padding: 0; margin: 0; }
+.s-adviser { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: start; padding: 10px 0; border-bottom: 1px solid var(--parchment-dk); }
+.s-adviser:last-child { border-bottom: 0; }
+.b-card .s-adviser-name { margin: 0 0 4px; font-size: 18px; }
+.s-adviser .s-row { gap: 8px; align-items: center; }
+.s-adviser select { max-width: 270px; font-size: 16px; }
+.b-card .s-report { margin: 6px 0 0; font-size: 17px; line-height: 1.35; }
+.s-sure { display: inline-block; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; padding: 0 6px; border: 1px solid var(--walnut); background: var(--white); }
+.s-sure-3 { border-color: var(--green-dk); color: var(--green-dk); }
+.s-sure-1 { border-style: dashed; }
+.s-xp { display: block; width: 160px; height: 7px; margin: 2px 0 6px; background: var(--white); border: 1px solid var(--walnut); }
+.s-xp i { display: block; height: 100%; background: var(--brass); transition: width .6s ease; }
+.s-ico { display: block; overflow: visible; }
+.s-ico-disc { fill: var(--brass); stroke: var(--brass-dk); stroke-width: 2; }
+.s-ico-ring { fill: var(--un-blue); }
+.s-ico-regional .s-ico-ring { fill: var(--felt); }
+.s-ico-legal .s-ico-ring { fill: var(--maroon); }
+.s-ico-glyph { fill: none; stroke: var(--parchment); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.s-ico-star { fill: var(--brass); stroke: var(--brass-dk); stroke-width: .8; }
+.s-pin { pointer-events: none; filter: drop-shadow(0 2px 2px rgb(0 0 0 / 45%)); animation: s-in .4s both; }
+.b-token.secured .b-face { stroke: var(--brass); stroke-width: 3; }
+
+#s-reserve.ready { background: var(--lit); }
+#s-reserve[hidden] { display: none; }
+.s-attack { border-left-color: var(--stamp); }
+.b-card .s-legal, .s-amendment .s-legal { font-style: italic; color: var(--maroon); margin: 4px 0 0; }
+.s-chief-note { margin: 8px 0 12px; }
+.s-chief-note .g-face { width: 74px; height: 86px; }
+.s-chief-note p { font-style: italic; font-size: 18px; margin: 0; }
+.s-loaf { border-left: 6px solid var(--brass); padding-left: 14px; }
+.s-rival-out { list-style: none; padding: 0; margin: 0; }
+.s-rival-out li { padding: 6px 0; font-size: 18px; }
+.s-rival-out li b { margin-right: 8px; }
+.s-rival-out li.won b { color: var(--stamp); }

@@ -96,6 +96,32 @@ def _moods(scn: Scenario, seed: int) -> dict:
     return out
 
 
+# Phase 8: rivals that plan, your staff, counter-moves and the golden rule.
+R.update({"hire_cost": 4, "staff_max": 5, "secure_cost": 2, "secure_max": 3, "poach_cost": 2, "poach_step": 0.15,
+          "reply_respect": 5, "attack": 0.12, "golden_respect": 2, "architect_gold": 0.7})
+PLAN = {"easy": {"noise": 0.4, "react": False, "poach": False},       # how rivals choose: easy ones blunder,
+        "standard": {"noise": 0.0, "react": False, "poach": True},   # standard ones play the best move,
+        "hard": {"noise": 0.0, "react": True, "poach": True}}        # hard ones also answer your last turn
+PROMOTE = {2: 3, 3: 7}                     # experience for a second and a third star
+ACCURACY = {1: 0.7, 2: 0.85, 3: 1.0}       # how often a report is right, by stars
+
+
+def start_staff(scn: Scenario, iso3: str, seed: int) -> list[dict]:
+    """Big delegations bring more advisers, but greener ones: a permanent member four juniors, a G20 member three, any
+    other delegation two seniors. Every mission starts with four stars in all."""
+    m = scn.member(iso3)
+    stars = [1, 1, 1, 1] if m.p5 else [1, 1, 2] if m.major else [2, 2]
+    kinds = ["analyst", "regional", "legal", "analyst"]
+    names = list(K.STAFF_NAMES)
+    random.Random(f"{seed}:staff").shuffle(names)
+    return [_adviser(kinds[i], names[i], s, m.region, i + 1) for i, s in enumerate(stars)]
+
+
+def _adviser(kind: str, name: str, stars: int, region: str, n: int) -> dict:
+    return {"id": f"a{n}", "name": name, "kind": kind, "stars": stars, "xp": 0, "post": None, "since": 0,
+            "region": region if kind == "regional" else None, "report": None, "claim": None}
+
+
 def new_game(scn: Scenario, iso3: str, length: str = "standard", difficulty: str = "standard", path: str = "mandate",
              seed: int = 1) -> dict:
     if not scn.member(iso3):
@@ -118,6 +144,8 @@ def new_game(scn: Scenario, iso3: str, length: str = "standard", difficulty: str
         "endorse": {}, "region_last": {}, "asked": [], "question": None, "event": None, "mods": {},
         "objectives": {}, "tabled_first": None, "summit": None, "result": None,
         "stats": {}, "log": [], "history": [], "drift": {}, "offers": [], "crisis": None, "deals": 0,
+        "staff": start_staff(scn, iso3, seed), "secured": [], "reserve": 0, "intent": {}, "tick": 0, "touched": [],
+        "last_touched": [], "moved": {}, "countered": [], "proj_prev": {}, "golden": None,
     }
     styles = list(K.RIVAL_STYLES)
     random.Random(f"{seed}:styles").shuffle(styles)
@@ -317,6 +345,8 @@ def stance(scn: Scenario, g: dict, actor: str, clause: dict) -> int:
         mu = scn.dist(tags).get(g["iso3"], (0, 1))[0]
     else:
         rv = next(r for r in g["rivals"] if r["iso3"] == actor)
+        if clause.get("id") == "final" and rv["want"] in tags and rv["block"] in tags:
+            return 0               # half a loaf: it won't vote down a text that carries what it came for
         if rv["block"] in tags:
             return -1
         if rv["want"] in tags or clause.get("author") == actor:
@@ -463,9 +493,15 @@ def _start_turn(scn: Scenario, g: dict) -> None:
         card["body"] = q["ask"]
     g["event"] = card
     _log(g, "news", card["title"], "event")
+    g["tick"] = g.get("tick", 0) + 1
+    g["last_touched"], g["touched"] = g.get("touched", []), []
     rivals_move(scn, g)
+    if g.get("reserve"):
+        g["reserve"] = 0
+        _log(g, "you", "Your reserve wasn't needed this time.", "info")
     _make_offers(scn, g)
-    _intelligence(scn, g)
+    _intentions(scn, g)
+    _staff_reports(scn, g)
 
 
 def _sway(g: dict, actor: str, iso: str, amount: float) -> float:
@@ -533,6 +569,8 @@ def apply(scn: Scenario, game: dict, action: dict) -> tuple[dict, dict]:
         raise GameError("That isn't something you can do now.")
     out = handler(scn, g, action) or {}
     g["stats"][do] = g["stats"].get(do, 0) + 1
+    if isinstance(action.get("iso3"), str) and do not in ("post", "end_turn"):
+        g.setdefault("touched", []).append(action["iso3"])
     return g, out
 
 
@@ -854,126 +892,224 @@ def _rival_spend(rv: dict, cost: int) -> bool:
     return True
 
 
-def _intelligence(scn: Scenario, g: dict) -> None:
-    """An intelligence report on a rival's next move: one rival each turn, every rival with Rival intelligence."""
-    if not g["rivals"]:
-        return
-    rng = _rng(g)
-    who = g["rivals"] if "rival_intel" in g["skills"] else [rng.choice(g["rivals"])]
-    for rv in who:
-        name = scn.member(rv["iso3"]).name
-        style = rv.get("style", "hawk")
-        mine = [i + 1 for i, c in enumerate(g["draft"]) if c["author"] == "you"]
-        blocked = [i + 1 for i, c in enumerate(g["draft"]) if rv["block"] in c["tags"]]
-        if style == "spoiler":
-            text = f"{name} has its eye on your clause {mine[0]}." if mine else f"{name} is waiting for you to put a clause of your own on the table."
-        elif style == "hawk":
-            text = f"{name} means to cut clause {blocked[0]}." if blocked else f"{name} is reading every line of the draft, looking for something to cut."
-        elif style == "broker":
-            regions = [REGIONS[m.region] for m in scn.members if m.region in REGIONS and g["endorse"].get(m.region) != rv["iso3"]]
-            text = f"{name} is courting the {rng.choice(regions)}." if regions else f"{name} is counting its votes."
+def final_clause(g: dict) -> dict:
+    """The draft as one text: every commitment in it."""
+    return {"id": "final", "tags": list(dict.fromkeys(t for c in g["draft"] for t in c["tags"])), "author": "draft"}
+
+
+def projection(scn: Scenario, g: dict) -> dict:
+    """The vote on the whole draft as things stand, leaving out every delegation's hidden mood on the day: what the
+    tug-of-war bar shows, and what rivals plan against."""
+    final = final_clause(g)
+    if not final["tags"]:
+        return {"yes": 0, "no": 0, "abstain": len(scn.members), "passed": False, "votes": {}, "summary": "There is no draft yet."}
+    st = {a: stance(scn, g, a, final) for a in ["you", *[r["iso3"] for r in g["rivals"]]]}
+    word = {1: "yes", -1: "no", 0: "abstain"}
+    votes = {}
+    for m in scn.members:
+        if m.iso3 == g["iso3"]:
+            votes[m.iso3] = word[st["you"]]
+        elif m.iso3 in st:
+            votes[m.iso3] = word[st[m.iso3]]
         else:
-            text = (f"{name} wants a clause that {_lc(scn.tags[rv['want']])}." if "rival_intel" in g["skills"]
-                    else f"{name} is working the room, gathering votes.")
-        _log(g, "news", "Intelligence: " + text, "intel", rv["iso3"])
+            votes[m.iso3] = vote_of(scn, latent(scn, g, m.iso3, final, st, mood=False))
+    res = tally(scn.rule, votes, len(votes))
+    return {"yes": res.yes, "no": res.no, "abstain": res.abstain, "passed": res.passed, "votes": votes, "summary": res.summary}
+
+
+STYLE_WEIGHT = {"hawk": {"amend": 1.3, "strike": 1.3}, "broker": {"side": 1.6, "lobby": 1.15, "poach": 1.2},
+                "spoiler": {"strike_you": 1.7}}
+
+
+def _rival_options(scn: Scenario, g: dict, rv: dict, react: bool = False, poach: bool = True) -> list:
+    """Every move a rival could make now, valued by how much it serves the rival's own instructions: get its wish into
+    the text, get its red line out, and then push the vote the way it wants the whole text to go. Each option is
+    (value, (kind, target), cost)."""
+    me, want, block = rv["iso3"], rv["want"], rv["block"]
+    w = STYLE_WEIGHT.get(rv.get("style", "hawk"), {})
+    secured = set(g.get("secured", []))
+    opts = []
+    in_text = {t for c in g["draft"] for t in c["tags"]}
+    if want not in in_text and len(g["draft"]) < R["draft_max"]:
+        card = next((c for c in scn.cards if c["id"] in g["cards"] and want in c["tags"] and block not in c["tags"]), None)
+        if card:
+            opts.append((2.2, ("propose", card["id"]), 1))
+    for c in g["draft"]:
+        if block in c["tags"]:
+            if len(c["tags"]) > 1:
+                opts.append((2.0 * w.get("amend", 1), ("amend", c["id"]), 1))
+            elif len(g["draft"]) > 1:
+                opts.append((1.8 * w.get("strike", 1), ("strike", c["id"]), 2))
+        elif c["author"] == "you" and want not in c["tags"] and "strike_you" in w and len(g["draft"]) > 1:
+            opts.append((1.0 * w["strike_you"], ("strike", c["id"]), 2))
+    # the battle: the clause carrying its red line (to vote it down clause by clause), or else the whole text
+    final = next((c for c in g["draft"] if block in c["tags"]), None) or final_clause(g)
+    mine = 0
+    if final["tags"]:
+        st = {a: stance(scn, g, a, final) for a in ["you", *[r["iso3"] for r in g["rivals"]]]}
+        mine = st[me]
+        if mine:
+            edge = scn.c_yes if mine > 0 else scn.c_no
+            for iso in scn.isos:
+                if iso in _others(g) or g["sway"][me].get(iso, 0.0) >= R["sway_cap"]:
+                    continue
+                x = latent(scn, g, iso, final, st, mood=False)
+                gap = (edge - x) * mine            # how far it must still move the rival's way (below zero: already there)
+                if gap < -0.3 or gap > 1.2:
+                    continue
+                v = 1.0 - abs(gap - 0.15) / 1.4
+                if iso in secured:
+                    v *= 0.5
+                if react and iso in g.get("last_touched", []):
+                    v += 0.45
+                opts.append((v * w.get("lobby", 1), ("lobby", iso), 2 if iso in secured else 1))
+                yours = g["sway"]["you"].get(iso, 0.0)
+                if poach and yours >= 0.3:
+                    opts.append(((v + 0.3 * min(1.0, yours)) * 0.9 * w.get("poach", 1), ("poach", iso),
+                                 R["poach_cost"] * (2 if iso in secured else 1)))
+    regions = sorted({m.region for m in scn.members if m.region in REGIONS and g["endorse"].get(m.region) != me})
+    if regions:
+        reg = max(regions, key=lambda r: (sum(1 for i in _region_members(scn, r) if i not in _others(g)
+                                              and 0 <= lean(scn, g, me, i) <= R["lean_min"] + 0.2), r))
+        opts.append((0.75 * w.get("side", 1), ("side", reg), 3))
+    if g["chapter"] == LENGTHS[g["length"]]["chapters"] and (
+            len(rv["sponsors"]) < R["sponsors"] or len(rv["signatories"]) + len(rv["sponsors"]) < _signers_needed(scn)):
+        taken = set(g["sponsors"]) | set(g["signatories"]) | set(rv["sponsors"]) | set(rv["signatories"])
+        pool = sorted((i for i in scn.isos if i not in _others(g) and i not in taken and lean(scn, g, me, i) >= 0),
+                      key=lambda i: (-lean(scn, g, me, i), i))
+        if pool:
+            opts.append((1.5, ("sign", pool[0]), 0))
+    if not opts:     # nothing pressing: build goodwill where it is closest to tipping
+        cands = sorted((abs(lean(scn, g, me, i) - 0.35), i) for i in scn.isos
+                       if i not in _others(g) and g["sway"][me].get(i, 0.0) < R["sway_cap"])
+        if cands:
+            opts.append((0.2, ("lobby", cands[0][1]), 1))
+    return sorted(opts, key=lambda o: (-o[0], o[1]))
+
+
+def _target_name(scn: Scenario, g: dict, kind: str, target: str) -> str:
+    if kind in ("amend", "strike"):
+        n = next((i + 1 for i, c in enumerate(g["draft"]) if c["id"] == target), None)
+        return f"clause {n}" if n else "a clause"
+    if kind == "propose":
+        return "a clause of its own"
+    if kind == "side":
+        return f"the {REGIONS.get(target, 'regional group')}"
+    return scn.member(target).name if scn.member(target) else target
+
+
+def _hostile(scn: Scenario, g: dict, kind: str, target: str) -> bool:
+    """Whether a rival's move works against you: one your reserve answers."""
+    if kind in ("lobby", "poach"):
+        return target in g["sponsors"] or target in g["signatories"] or lean(scn, g, "you", target) > 0
+    if kind in ("amend", "strike"):
+        c = next((c for c in g["draft"] if c["id"] == target), None)
+        return bool(c) and (c["author"] == "you" or g["mandate"]["must"] in c["tags"] or g["mandate"].get("also") in c["tags"])
+    return False
+
+
+def _rival_act(scn: Scenario, g: dict, rv: dict, kind: str, target: str, cost: int, step: float) -> bool:
+    if not _rival_spend(rv, cost):
+        return False
+    me = rv["iso3"]
+    name = scn.member(me).name
+    if g.get("reserve") and _hostile(scn, g, kind, target):
+        g["reserve"] -= 1
+        g.setdefault("countered", []).append({"rival": me, "target": target, "tick": g.get("tick", 0)})
+        _log(g, "you", f"Your reserve answered {name} at once: its move on {_target_name(scn, g, kind, target)} came to nothing.",
+             "counter", target if scn.member(target) else None)
+        g.setdefault("moved", {}).setdefault(me, []).append(target)
+        return True
+    if kind == "propose":
+        card = next(c for c in scn.cards if c["id"] == target)
+        g["cards"].remove(card["id"])
+        cid = f"p{g['next_id']}"
+        g["next_id"] += 1
+        g["draft"].append({"id": cid, "text": card["text"], "tags": list(card["tags"]), "author": me, "amended_by": [], "card": card["id"]})
+        _log(g, me, f"{name} proposed a clause: {card['text']}", "rival")
+    elif kind == "amend":
+        c = next(c for c in g["draft"] if c["id"] == target)
+        new = [t for t in c["tags"] if t != rv["block"]]
+        if c["author"] != me and not room_accepts(scn, g, c, new):
+            _log(g, me, f"{name} tried to amend {_target_name(scn, g, kind, target)}; the working group refused.", "rival")
+        else:
+            _break_promises_if_changed(scn, g, c, new)
+            c["tags"] = new
+            c["amended_by"].append(me)
+            _log(g, me, f"{name} amended a clause to drop the part that {_lc(scn.tags[rv['block']]).rstrip('.')}.", "rival")
+    elif kind == "strike":
+        c = next(c for c in g["draft"] if c["id"] == target)
+        yours = c["author"] == "you"
+        if not room_accepts(scn, g, c, None):
+            _log(g, me, f"{name} moved to strike {'your clause' if yours else 'a clause'}; the working group kept it.", "rival")
+        else:
+            g["draft"].remove(c)
+            g["struck"].append({**c, "by": me})
+            for p in g["promises"]:
+                if p["clause"] == c["id"] and p["kept"] is None:
+                    p["kept"] = "void"
+            _log(g, me, f"{name} struck {'your clause' if yours else 'a clause'} from the draft.", "rival")
+    elif kind == "lobby":
+        _sway(g, me, target, step * (0.5 if target in g.get("secured", []) else 1))
+        g["region_last"][scn.member(target).region] = me
+        _log(g, me, f"{name} lobbied {scn.member(target).name}.", "rival", target)
+    elif kind == "poach":
+        cut = R["poach_step"] * (0.5 if target in g.get("secured", []) else 1)
+        g["sway"]["you"][target] = round(max(0.0, g["sway"]["you"].get(target, 0.0) - cut), 4)
+        _sway(g, me, target, cut / 2)
+        _log(g, me, f"{name} won back ground with {scn.member(target).name}: your goodwill there fell.", "rival", target)
+    elif kind == "side":
+        for iso in _region_members(scn, target):
+            if iso not in _others(g):
+                _sway(g, me, iso, 0.12)
+        g["region_last"][target] = me
+        _log(g, me, f"{name} hosted a side event for the {REGIONS[target]}.", "rival")
+    elif kind == "sign":
+        role = "sponsor" if len(rv["sponsors"]) < R["sponsors"] and lean(scn, g, me, target) >= R["sponsor_lean"] else "signatory"
+        rv["sponsors" if role == "sponsor" else "signatories"].append(target)
+        _log(g, me, f"{scn.member(target).name} signed {name}'s draft as a {role}.", "rival", target)
+    g.setdefault("moved", {}).setdefault(me, []).append(target)
+    return True
 
 
 def rivals_move(scn: Scenario, g: dict) -> None:
+    """Each rival spends its actions on the best moves it can find for its own instructions. Easy rivals sometimes
+    blunder; hard ones also go after the delegations you worked on last turn."""
     d = DIFFICULTIES[g["difficulty"]]
-    last = g["chapter"] == LENGTHS[g["length"]]["chapters"]
+    plan = PLAN[g["difficulty"]]
+    rng = _rng(g)
     cr = g.get("crisis") or {}
+    g["moved"] = {}
     for rv in g["rivals"]:
-        name = scn.member(rv["iso3"]).name
-        tried: set = set()
-        style = rv.get("style", "hawk")
         extra = 1 if cr.get("id") == "partner" and cr.get("rival") == rv["iso3"] and cr.get("chapter") == g["chapter"] else 0
+        tried: set = set()
         for _ in range(d["ap"] + extra):
-            if style == "spoiler":
-                mine = [c for c in g["draft"] if c["author"] == "you" and c["id"] not in tried]
-                if mine:
-                    c = mine[0]
-                    tried.add(c["id"])
-                    if len(g["draft"]) > 1 and _rival_spend(rv, 2):
-                        if room_accepts(scn, g, c, None):
-                            g["draft"].remove(c)
-                            g["struck"].append({**c, "by": rv["iso3"]})
-                            for p in g["promises"]:
-                                if p["clause"] == c["id"] and p["kept"] is None:
-                                    p["kept"] = "void"
-                            _log(g, rv["iso3"], f"{name} struck your clause from the draft.", "rival")
-                        else:
-                            _log(g, rv["iso3"], f"{name} moved to strike your clause; the working group kept it.", "rival")
-                        continue
-            if style == "broker" and rv["influence"] >= 5:
-                regions = sorted({m.region for m in scn.members if m.region in REGIONS and g["endorse"].get(m.region) != rv["iso3"]})
-                if regions and _rival_spend(rv, 3):
-                    reg = max(regions, key=lambda r: sum(1 for i in _region_members(scn, r) if i not in _others(g)
-                                                        and 0 <= lean(scn, g, rv["iso3"], i) <= R["lean_min"] + 0.2))
-                    for iso in _region_members(scn, reg):
-                        if iso not in _others(g):
-                            _sway(g, rv["iso3"], iso, 0.12)
-                    g["region_last"][reg] = rv["iso3"]
-                    _log(g, rv["iso3"], f"{name} hosted a side event for the {REGIONS[reg]}.", "rival")
-                    continue
-            want_in = any(rv["want"] in c["tags"] for c in g["draft"])
-            blocked = [c for c in g["draft"] if rv["block"] in c["tags"]]
-            if not want_in:
-                card = next((c for c in scn.cards if c["id"] in g["cards"] and rv["want"] in c["tags"] and rv["block"] not in c["tags"]), None)
-                if card and len(g["draft"]) < R["draft_max"] and _rival_spend(rv, 1):
-                    g["cards"].remove(card["id"])
-                    cid = f"p{g['next_id']}"
-                    g["next_id"] += 1
-                    g["draft"].append({"id": cid, "text": card["text"], "tags": list(card["tags"]), "author": rv["iso3"], "amended_by": [], "card": card["id"]})
-                    _log(g, rv["iso3"], f"{name} proposed a clause: {card['text']}", "rival")
-                    continue
-            blocked = [c for c in blocked if c["id"] not in tried]
-            if blocked:
-                c = blocked[0]
-                tried.add(c["id"])
-                new = [t for t in c["tags"] if t != rv["block"]]
-                if len(c["tags"]) > 1 and _rival_spend(rv, 1):
-                    if c["author"] != rv["iso3"] and not room_accepts(scn, g, c, new):
-                        _log(g, rv["iso3"], f"{name} tried to amend a clause; the working group refused.", "rival")
-                        continue
-                    c["tags"] = new
-                    c["amended_by"].append(rv["iso3"])
-                    _log(g, rv["iso3"], f"{name} amended a clause to drop the part that {_lc(scn.tags[rv['block']]).rstrip('.')}.", "rival")
-                    continue
-                if len(c["tags"]) == 1 and len(g["draft"]) > 1 and _rival_spend(rv, 2):
-                    if not room_accepts(scn, g, c, None):
-                        _log(g, rv["iso3"], f"{name} moved to strike a clause; the working group kept it.", "rival")
-                        continue
-                    g["draft"].remove(c)
-                    g["struck"].append({**c, "by": rv["iso3"]})
-                    for p in g["promises"]:
-                        if p["clause"] == c["id"] and p["kept"] is None:
-                            p["kept"] = "void"
-                    _log(g, rv["iso3"], f"{name} struck a clause from the draft.", "rival")
-                    continue
-            if last and (len(rv["sponsors"]) < R["sponsors"] or len(rv["signatories"]) + len(rv["sponsors"]) < _signers_needed(scn)):
-                taken = set(g["sponsors"]) | set(g["signatories"]) | set(rv["sponsors"]) | set(rv["signatories"])
-                pool = sorted((i for i in scn.isos if i not in _others(g) and i not in taken), key=lambda i: -lean(scn, g, rv["iso3"], i))
-                if pool:
-                    who = pool[0]
-                    role = "sponsor" if len(rv["sponsors"]) < R["sponsors"] and lean(scn, g, rv["iso3"], who) >= R["sponsor_lean"] else "signatory"
-                    if lean(scn, g, rv["iso3"], who) >= 0:
-                        rv["sponsors" if role == "sponsor" else "signatories"].append(who)
-                        _log(g, rv["iso3"], f"{scn.member(who).name} signed {name}'s draft as a {role}.", "rival", who)
-                        continue
-            # lobby the delegation where its goodwill matters most: closest to the middle, in a group it could win
-            targets = []
-            for iso in scn.isos:
-                if iso in _others(g) or scn.dist([rv["want"]]).get(iso, (0, 1))[0] <= R["redline"]:
-                    continue
-                ln = lean(scn, g, rv["iso3"], iso)
-                if g["sway"][rv["iso3"]][iso] >= R["sway_cap"]:
-                    continue
-                targets.append((abs(ln - 0.35), iso))
-            if targets and _rival_spend(rv, 1):
-                iso = sorted(targets)[0][1]
-                _sway(g, rv["iso3"], iso, d["step"])
-                g["region_last"][scn.member(iso).region] = rv["iso3"]
-                _log(g, rv["iso3"], f"{name} lobbied {scn.member(iso).name}.", "rival", iso)
+            opts = [o for o in _rival_options(scn, g, rv, react=plan["react"], poach=plan["poach"]) if o[1] not in tried]
+            if plan["noise"] and rng.random() < plan["noise"]:
+                rng.shuffle(opts)
+            done = False
+            for _v, (kind, target), cost in opts:
+                if rv["influence"] >= cost:
+                    tried.add((kind, target))
+                    done = _rival_act(scn, g, rv, kind, target, cost, d["step"])
+                    if done:
+                        break
+            if not done:
+                break
+    _check_claims(scn, g)
+
+
+def _intentions(scn: Scenario, g: dict) -> None:
+    """What each rival means to do next, as things stand: advisers can find this out (and the player can then change
+    the rival's plans)."""
+    plan = PLAN[g["difficulty"]]
+    g["intent"] = {}
+    for rv in g["rivals"]:
+        opts = [o for o in _rival_options(scn, g, rv, poach=plan["poach"]) if rv["influence"] + R["rival_income"] >= o[2]]
+        if opts:
+            alt = opts[1] if len(opts) > 1 else None
+            g["intent"][rv["iso3"]] = {"kind": opts[0][1][0], "target": opts[0][1][1],
+                                       "alt_kind": alt[1][0] if alt else None, "alt": alt[1][1] if alt else None}
 
 
 # ---------------------------------------------------------------- upkeep and chapters
@@ -1067,6 +1203,27 @@ def _open_summit(scn: Scenario, g: dict) -> None:
 def _pending(scn: Scenario, g: dict) -> None:
     s = g["summit"]
     s["pending"] = None
+    s["attack"] = None
+    if s["i"] < len(s["queue"]):
+        c = _clause(g, s["queue"][s["i"]])
+        if stance(scn, g, "you", c) > 0:
+            foe = next((r["iso3"] for r in g["rivals"] if stance(scn, g, r["iso3"], c) < 0), None)
+            if foe:
+                s["attack"] = {"by": foe}
+    _pending_amendment(scn, g)
+    p = s.get("pending")
+    legal = max((a["stars"] for a in g.get("staff", []) if a["kind"] == "legal"), default=0)
+    if p and legal:
+        c = _clause(g, s["queue"][s["i"]])
+        trial = votes_on(scn, g, {**c, "tags": p["tags"]}, my_vote="no")
+        passes = tally(scn.rule, trial, len(trial)).passed
+        if _rng(g).random() >= ACCURACY[legal]:
+            passes = not passes
+        p["advice"] = {"passes": passes, "sure": K.SURE[legal]}
+
+
+def _pending_amendment(scn: Scenario, g: dict) -> None:
+    s = g["summit"]
     if s["i"] >= len(s["queue"]) or s["amendments_left"] <= 0:
         return
     c = _clause(g, s["queue"][s["i"]])
@@ -1141,8 +1298,22 @@ def s_decide(scn, g, a):
                 iso = sorted(cands)[0][1]
                 _sway(g, "you", iso, R["offer_step"])
                 out["offer"] = iso
+    elif choice == "reply":
+        if not s.get("attack"):
+            raise GameError("No one has spoken against this clause, so there is nothing to reply to.")
+        if g["respect"] < R["reply_respect"]:
+            raise GameError(f"The Chair grants a right of reply to delegates with Respect {R['reply_respect']} or more.")
+        out["reply"] = True
+        _log(g, "you", f"You exercised your right of reply: {scn.member(s['attack']['by']).name}'s attack fell flat.", "action")
     elif choice not in ("stand", "favour"):
-        raise GameError("Choose what to do: stand firm, make a last offer, call in a favour, accept or rule out an amendment.")
+        raise GameError("Choose what to do: stand firm, make a last offer, call in a favour, reply, accept or rule out an amendment.")
+    atk = s.get("attack")
+    if atk and choice != "reply":
+        for iso in scn.isos:
+            if iso not in _others(g):
+                _sway(g, atk["by"], iso, R["attack"])
+        out["attack"] = atk["by"]
+        _log(g, atk["by"], f"{scn.member(atk['by']).name} spoke against clause {s['i'] + 1}.", "rival")
     if p:   # an unfriendly floor amendment is voted on first
         trial = {**c, "tags": p["tags"]}
         st_votes = votes_on(scn, g, trial, my_vote="no")
@@ -1199,6 +1370,20 @@ def s_final(scn, g, a):
     else:
         votes, passed, summary, counts = {}, False, "No clauses were adopted, so there is no resolution to vote on.", {"yes": 0, "no": 0, "abstain": 0}
     s["final"] = {"tags": tags, "votes": votes, "passed": passed, "summary": summary, **counts, "my_vote": my_vote}
+    must, red, also = g["mandate"]["must"], g["mandate"]["red"], g["mandate"].get("also")
+    if tags and must in tags and red not in tags:
+        if my_vote == "no":
+            g["golden"] = "broke"
+            g["respect"] = max(0, g["respect"] - R["golden_respect"])
+            _log(g, "you", "You voted against a text that carried your capital's main aim. Half a loaf is better than none.", "warning")
+        elif my_vote == "yes" and also not in tags:
+            g["golden"] = "kept"
+            g["respect"] = min(R["respect_max"], g["respect"] + 1)
+            _log(g, "you", "You backed a text that wasn't everything you wanted. The room respects a delegate who takes progress.", "good")
+    for adv in g.get("staff", []):
+        cl = adv.get("claim") or {}
+        if cl.get("vote") and votes.get(cl.get("iso")) == cl["vote"]:
+            _xp(g, adv, f"Their forecast of {scn.member(cl['iso']).name}'s vote proved right.")
     snapshot(scn, g, "Summit")
     _log(g, "news", ("The resolution is adopted. " if passed else "The resolution fails. ") + summary, "vote")
     if not passed and scn.rule.veto:
@@ -1244,13 +1429,14 @@ def score(scn: Scenario, g: dict) -> dict:
         1 if (passed and (got[0] or got[2])) or (not passed and red in tags) else 0
     share = f["yes"] / max(1, len(scn.members))
     mine_regions = sum(1 for v in g["endorse"].values() if v == "you")
-    consensus = 0 if not passed else 3 if share >= 0.75 and mine_regions >= 2 else 2 if share >= 0.65 and mine_regions >= 1 else 1
+    aims = got[0] or got[1]          # consensus around a text that carries none of your aims is someone else's success
+    consensus = 0 if not passed else 3 if share >= 0.75 and mine_regions >= 2 and got[0] else         2 if share >= 0.65 and mine_regions >= 1 and aims else 1
     kept = [r["clause"] for r in s["results"] if r["passed"]]
     clauses = {c["id"]: c for c in g["draft"]}
     credit = [1.0 if clauses[c]["author"] == "you" else 0.5 if "you" in clauses[c]["amended_by"] else 0.0 for c in kept if c in clauses]
     own = sum(credit) / len(credit) if credit else 0.0
     own_kept = sum(1 for x in credit if x == 1.0)
-    architect = 0 if not passed else 3 if own >= 0.65 and own_kept >= 3 and share >= 0.65 else \
+    architect = 0 if not passed else 3 if own >= R["architect_gold"] and own_kept >= 3 and share >= 0.65 else \
         2 if own >= 0.5 and own_kept >= 2 else 1 if own >= 0.25 else 0
     st = s.get("statement") or {}
     if not passed and st.get("adopted"):
@@ -1275,10 +1461,222 @@ def score(scn: Scenario, g: dict) -> dict:
 
 GRADES = {0: "No medal", 1: "Bronze", 2: "Silver", 3: "Gold"}
 
+# ---------------------------------------------------------------- your staff (phase 8)
+
+def _eff_stars(scn: Scenario, g: dict, adv: dict, iso: str) -> int:
+    """How well an adviser reads a delegation: analysts read rivals best, regional experts their own group, and the
+    Intelligence network skill lifts everyone by a star."""
+    s = adv["stars"]
+    rival = any(r["iso3"] == iso for r in g["rivals"])
+    if adv["kind"] in ("analyst", "legal") and not rival:
+        s -= 1
+    if adv["kind"] == "regional" and not rival and scn.member(iso).region == adv.get("region"):
+        s += 1
+    if "rival_intel" in g["skills"]:
+        s += 1
+    return max(1, min(3, s))
+
+
+def _xp(g: dict, adv: dict, why: str) -> None:
+    adv["xp"] += 1
+    nxt = adv["stars"] + 1
+    if nxt in PROMOTE and adv["xp"] >= PROMOTE[nxt]:
+        adv["stars"] = nxt
+        _log(g, "staff", f"{adv['name']} is promoted to {K.STAFF_RANKS[nxt]}. {why}", "promote")
+    else:
+        _log(g, "staff", f"{adv['name']}: {why}", "staff")
+
+
+def _check_claims(scn: Scenario, g: dict) -> None:
+    """After the rivals move: an adviser whose warning about a rival proved right, or who warned you in time to act,
+    gains experience."""
+    tick = g.get("tick", 0)
+    acted = set(g.get("last_touched", [])) | set(g.get("secured", []))
+    blocked = {c["target"] for c in g.get("countered", []) if c.get("tick") == tick}
+    for adv in g.get("staff", []):
+        cl = adv.get("claim") or {}
+        if not cl.get("rival") or not cl.get("right"):
+            continue
+        name = scn.member(cl["rival"]).name
+        if cl["target"] in g.get("moved", {}).get(cl["rival"], []) or cl["target"] in blocked:
+            _xp(g, adv, f"Their warning about {name} proved right.")
+        elif cl["target"] in acted:
+            _xp(g, adv, f"You acted on their warning about {name}.")
+
+
+def _staff_reports(scn: Scenario, g: dict) -> None:
+    """At the start of each turn every posted adviser reports on the delegation they study. One-star reports can be
+    wrong, and say so; a report needs a full turn in post."""
+    rng = _rng(g)
+    rivals = {r["iso3"]: r for r in g["rivals"]}
+    proj = projection(scn, g)["votes"]
+    prev = g.get("proj_prev") or {}
+    final = final_clause(g)
+    verbs = {"lobby": "lobby", "poach": "try to win back", "amend": "amend", "strike": "move to strike", "propose": "propose",
+             "side": "court", "sign": "sign up"}
+    for adv in g.get("staff", []):
+        adv["claim"] = None
+        iso = adv.get("post")
+        if not iso or g.get("tick", 0) <= adv.get("since", 0):
+            continue
+        s = _eff_stars(scn, g, adv, iso)
+        right = s == 3 or rng.random() < ACCURACY[s]
+        name = scn.member(iso).name
+        if iso in rivals:
+            rv = rivals[iso]
+            it = g.get("intent", {}).get(iso)
+            if not it:
+                text = f"{name} is lying low: it has nothing in hand this turn."
+            else:
+                wrong = not right and it.get("alt")
+                kind, target = (it["alt_kind"], it["alt"]) if wrong else (it["kind"], it["target"])
+                where = _target_name(scn, g, kind, target)
+                if s == 1:
+                    m = scn.member(target)
+                    text = (f"{name} is busy around the {REGIONS.get(m.region, 'room')}." if m
+                            else f"{name} is working on the text.")
+                elif s == 2:
+                    text = f"{name} is going after {where}."
+                else:
+                    text = (f"{name} will {verbs.get(kind, 'move on')} {where}. It wants a clause that "
+                            f"{_lc(scn.tags[rv['want']]).rstrip('.')}, and nothing that {_lc(scn.tags[rv['block']]).rstrip('.')}.")
+                adv["claim"] = {"rival": iso, "target": target, "right": not wrong}
+        else:
+            mood = g["moods"].get(iso, 0.0)
+            warm = mood > 0.3 if right else mood <= 0.3
+            cool = mood < -0.3 if right else mood >= -0.3
+            parts = [f"{name} seems {'warmer than usual' if warm else 'cooler than usual' if cool else 'much as usual'} today"]
+            if s >= 2:
+                tag = max(scn.tags, key=lambda t: (mu_of(scn, g, iso, [t]), t))
+                parts.append(f"it most wants a clause that {_lc(scn.tags[tag]).rstrip('.')}")
+            if s >= 3:
+                courted = max(g["rivals"], key=lambda r: g["sway"][r["iso3"]].get(iso, 0.0), default=None)
+                if courted and g["sway"][courted["iso3"]].get(iso, 0.0) > 0.2:
+                    parts.append(f"{scn.member(courted['iso3']).name} has been courting it")
+                if final["tags"]:
+                    v = vote_of(scn, latent(scn, g, iso, final))
+                    parts.append(f"on the draft as it stands it would vote {v}")
+                    adv["claim"] = {"iso": iso, "vote": v}
+            text = "; ".join(parts) + "."
+            if prev.get(iso) not in (None, "yes") and proj.get(iso) == "yes" and proj.get(g["iso3"]) == "yes":
+                _xp(g, adv, f"Their work helped bring {name} round.")
+        adv["report"] = {"text": text, "sure": K.SURE[s], "stars": s, "at": iso, "tick": g.get("tick", 0)}
+        _log(g, "staff", f"{adv['name']} ({K.SURE[s]}): {text}", "staff", iso)
+    waver = sorted(i for i, v in prev.items() if v == "yes" and proj.get(i) != "yes" and i not in _others(g) and i != g["iso3"])
+    if waver and g.get("staff"):
+        who = next((a for a in g["staff"] if a.get("post") == waver[0]), g["staff"][0])
+        _log(g, "staff", f"{who['name']}: Ambassador, {scn.member(waver[0]).name} is wavering.", "worry", waver[0])
+    g["proj_prev"] = proj
+
+
+def a_hire(scn, g, a):
+    kind = a.get("kind")
+    if kind not in K.STAFF_KINDS:
+        raise GameError("Choose an analyst, a regional expert or a legal adviser.")
+    if len(g["staff"]) >= R["staff_max"]:
+        raise GameError(f"Your mission has room for {R['staff_max']} advisers.")
+    _spend(g, 0, R["hire_cost"])
+    used = {x["name"] for x in g["staff"]}
+    name = next(n for n in K.STAFF_NAMES if n not in used)
+    n = max((int(x["id"][1:]) for x in g["staff"]), default=0) + 1
+    g["staff"].append(_adviser(kind, name, 1, scn.member(g["iso3"]).region, n))
+    _log(g, "you", f"You took on {name} as a {K.STAFF_KINDS[kind]['name'].lower()}.", "action")
+    return {"hired": f"a{n}"}
+
+
+def a_post(scn, g, a):
+    adv = next((x for x in g["staff"] if x["id"] == a.get("adviser")), None)
+    if not adv:
+        raise GameError("Choose one of your advisers.")
+    iso = a.get("iso3") or None
+    if iso:
+        if not scn.member(iso) or iso == g["iso3"]:
+            raise GameError("Choose another delegation on the committee.")
+        other = next((x for x in g["staff"] if x is not adv and x.get("post") == iso), None)
+        if other:
+            raise GameError(f"{other['name']} already studies {scn.member(iso).name}.")
+    if iso == adv.get("post"):
+        return {}
+    adv.update(post=iso, since=g.get("tick", 0), report=None, claim=None)
+    _log(g, "you", f"{adv['name']} now studies {scn.member(iso).name}." if iso else f"{adv['name']} is back at the mission.", "action", iso)
+    return {}
+
+
+def a_reserve(scn, g, a):
+    if g.get("reserve"):
+        raise GameError("You already have an action held in reserve.")
+    _spend(g, 1, 0)
+    g["reserve"] = 1
+    _log(g, "you", "You held an action in reserve, to answer the first rival move against you.", "action")
+    return {}
+
+
+def a_secure(scn, g, a):
+    iso = a.get("iso3")
+    _country(scn, g, iso)
+    if iso in g["secured"]:
+        raise GameError(f"{scn.member(iso).name} is already secured.")
+    if len(g["secured"]) >= R["secure_max"]:
+        raise GameError(f"You can secure up to {R['secure_max']} delegations.")
+    if g["trust"].get(iso, 0) < 1 or lean(scn, g, "you", iso) <= R["lean_min"]:
+        raise GameError("Only a delegation that trusts you and leans your way will sign a commitment.")
+    _spend(g, 1, R["secure_cost"])
+    g["secured"].append(iso)
+    _log(g, "you", f"{scn.member(iso).name} signed a commitment: rivals will find it twice as hard to move.", "action", iso)
+    return {}
+
+
+# ---------------------------------------------------------------- the golden rule and the rivals, in the debrief
+
+def half_loaf(scn: Scenario, g: dict) -> dict:
+    """The first rule of the UN: don't vote down progress because it isn't everything you wanted."""
+    f = (g.get("summit") or {}).get("final") or {}
+    tags = f.get("tags") or []
+    m = g["mandate"]
+    aims = [x for x in (m["must"], m.get("also")) if x]
+    gained = [scn.tags[t] for t in aims if t in tags]
+    missing = [scn.tags[t] for t in aims if t not in tags]
+    red_in = m["red"] in tags
+    passed = bool(f.get("passed"))
+    if passed and gained:
+        verdict = (f"The resolution carries {len(gained)} of your capital's {len(aims)} aims. "
+                   + ("All of them: a complete success." if not missing else
+                      "Not everything, but each of those is now the committee's policy: more than no resolution would have given you."))
+    elif passed:
+        verdict = "The resolution passed without your aims in it. Next time, get a clause of yours into the text early."
+    elif gained and not red_in:
+        verdict = "The text carried your capital's aims, but it failed: with no resolution, nothing changes for anyone."
+    elif red_in:
+        verdict = "The text crossed your red line, so voting it down was within your instructions."
+    else:
+        verdict = "Nothing was adopted."
+    if g.get("golden") == "broke":
+        verdict += " You voted against a text that carried your main aim. Half a loaf is better than none."
+    elif g.get("golden") == "kept":
+        verdict += " You backed a text that wasn't everything you wanted: that is how the UN makes progress."
+    return {"gained": gained, "missing": missing, "red_in": red_in, "passed": passed, "my_vote": f.get("my_vote"),
+            "golden": g.get("golden"), "verdict": verdict}
+
+
+def rival_outcomes(scn: Scenario, g: dict) -> list[dict]:
+    f = (g.get("summit") or {}).get("final") or {}
+    tags = f.get("tags") or []
+    passed = bool(f.get("passed"))
+    out = []
+    for rv in g["rivals"]:
+        got, hit = rv["want"] in tags and passed, rv["block"] in tags and passed
+        verdict = ("got what it came for" if got and not hit else "won something, and lost something" if got else
+                   "lost: its red line is in the resolution" if hit else "went home with nothing")
+        out.append({"name": scn.member(rv["iso3"]).name, "style": K.RIVAL_STYLES[rv.get("style", "hawk")]["name"],
+                    "want": scn.tags[rv["want"]], "block": scn.tags[rv["block"]], "won": got and not hit, "verdict": verdict})
+    return out
+
+
 CHAPTER = {"lobby": a_lobby, "read": a_read, "propose": a_propose, "amend": a_amend, "strike": a_strike, "promise": a_promise,
            "side_event": a_side_event, "favour": a_favour, "whip": a_whip, "sign": a_sign, "answer": a_answer, "skill": a_skill,
-           "divide": a_divide, "merge": a_merge, "bloc_whip": a_bloc_whip, "abstain": a_abstain, "offer": a_offer, "end_turn": a_end_turn}
-SUMMIT = {"speech": s_speech, "decide": s_decide, "final": s_final, "statement": s_statement, "skill": a_skill}
+           "divide": a_divide, "merge": a_merge, "bloc_whip": a_bloc_whip, "abstain": a_abstain, "offer": a_offer,
+           "hire": a_hire, "post": a_post, "reserve": a_reserve, "secure": a_secure, "end_turn": a_end_turn}
+SUMMIT = {"speech": s_speech, "decide": s_decide, "final": s_final, "statement": s_statement, "skill": a_skill, "post": a_post}
 
 
 # ---------------------------------------------------------------- the debrief (phase 6)
@@ -1311,6 +1709,9 @@ def debrief(scn: Scenario, g: dict) -> dict:
         out["promises"].append({"country": scn.member(pr["iso3"]).name, "kept": pr["kept"]})
     for c in g["struck"]:
         out["struck"].append({"labels": [scn.tags[t] for t in c["tags"]], "by": "you" if c["by"] == "you" else scn.member(c["by"]).name})
+    out["half_loaf"] = half_loaf(scn, g)
+    out["rivals"] = rival_outcomes(scn, g)
+    out["staff"] = [{"name": a["name"], "kind": K.STAFF_KINDS[a["kind"]]["name"], "stars": a["stars"], "xp": a["xp"]} for a in g.get("staff", [])]
     if not tags:
         return out
     final = {"id": "final", "tags": tags, "author": "draft"}
