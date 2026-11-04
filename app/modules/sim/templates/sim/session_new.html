@@ -1,7 +1,7 @@
 {% from "sim/_session_head.html" import head, emblem, settings_panel %}{{ head(title) }}
 {# Setting up a session (D-101): six steps, one at a time. session.js keeps the choices and starts the game. #}
 <body class="board-body session-body" data-page="new" data-signed-in="{{ 'yes' if signed_in else 'no' }}">
-<a class="skip" href="#s-steps-main">Skip to the setup</a>
+<a class="skip" href="#main">Skip to the setup</a>
 <div id="b-stage" class="b-stage s-stage">
   <div class="b-lamp" aria-hidden="true"></div>
   <header class="b-top">
@@ -13,7 +13,7 @@
     </div>
   </header>
 
-  <main class="s-setup-main" id="s-steps-main" tabindex="-1">
+  <main class="s-setup-main" id="main" tabindex="-1">
     <ol class="s-steps" aria-label="Setup">
       {% for n, name in [(1, "Scenario"), (2, "Country"), (3, "Length"), (4, "Rivals"), (5, "Your aim"), (6, "Begin")] %}
       <li data-step-dot="{{ n }}" class="{{ 'now' if n == 1 }}"><span class="s-coin">{{ n }}</span>{{ name }}</li>{% endfor %}

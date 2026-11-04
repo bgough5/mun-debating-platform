@@ -104,11 +104,15 @@
   function newPage() {
     var choice = { pack: null, iso3: null, length: "standard", difficulty: "standard", path: "mandate" };
     var labels = { length: "Standard", difficulty: "Standard", path: "Mandate" };
-    var at = 1, loadedFor = null;
+    var at = 1, loadedFor = null, moved = false;
     var RIB = { 1: "Choose a scenario", 2: "Choose your country", 3: "How long?", 4: "How strong are your rivals?", 5: "What will you aim for?", 6: "Your briefing" };
     function show(n) {
       at = n;
-      document.querySelectorAll("[data-step]").forEach(function (s) { s.hidden = +s.getAttribute("data-step") !== n; });
+      document.querySelectorAll("[data-step]").forEach(function (s) {
+        s.hidden = +s.getAttribute("data-step") !== n;
+        if (!s.hidden && moved) restart(s, "s-anim");
+      });
+      moved = true;
       document.querySelectorAll("[data-step-dot]").forEach(function (d) {
         var k = +d.getAttribute("data-step-dot"); d.classList.toggle("now", k === n); d.classList.toggle("done", k < n);
       });

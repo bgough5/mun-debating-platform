@@ -194,3 +194,6 @@
 .s-pick p { font-size: 16px; line-height: 1.35; }
 .s-pick h3 { font-size: 21px; }
 .s-pick h3 { padding-right: 104px; }
+/* steps fade in when you move between them, not when the page first loads (so nothing is half-drawn) */
+.s-step { animation: none; }
+.s-step.s-anim { animation: s-in .45s cubic-bezier(.2, 1.1, .4, 1) both; }

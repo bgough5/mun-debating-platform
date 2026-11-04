@@ -2,7 +2,7 @@
 {# The Session's title screen (D-101). Open to everyone; a signed-in student sees their own saved sessions, a guest
    sees the session kept in this browser (session.js fills it in). #}
 <body class="board-body session-body" data-page="title" data-signed-in="{{ 'yes' if signed_in else 'no' }}">
-<a class="skip" href="#s-menu">Skip to the menu</a>
+<a class="skip" href="#main">Skip to the menu</a>
 <div id="b-stage" class="b-stage s-stage">
   <div class="b-lamp" aria-hidden="true"></div>
   <div class="b-motes" aria-hidden="true">{% for i in range(10) %}<i></i>{% endfor %}</div>
