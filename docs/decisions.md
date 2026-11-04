@@ -388,6 +388,20 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 
 
 
+### D-101 Solo play becomes a one-hour campaign — Direction decided, rules proposed (5 Nov 2026, Ben)
+Ben wants solo Model UN to be "an hour long experience" that feels like territory, economy and civilisation games, "with depth, gravity, decision making, unique scenarios", while staying educational. Ben is the overall designer and Claude the lead programmer.
+
+Decided:
+- **Solo only.** The live class committee stays procedure-only (D-091).
+- **Luck:** event cards and the vote's real uncertainty only; no dice.
+- **Guests:** the game is kept on that laptop only, and nothing goes to the server.
+- **Structure:** chapters build the resolution, adding, rewording and cutting clauses; a summit then votes, with higher-frequency decisions.
+- **Clauses:** clause cards, which the student may reword (the engine judges by the commitments ticked, never the words).
+- **Winning:** several victory paths (Mandate, Consensus, Architect, Kingmaker).
+- **Meters:** Influence, Respect, Trust (per country) and Expertise.
+
+The rules are proposed in `docs/design/solo-campaign.md` (v0.1). Nothing is built until Ben approves them and has seen the balance numbers from the bot harness (phase 1).
+
 ### D-100 The speech coach beside every speech box — Decided (5 Nov 2026, Ben)
 Ben: "there should be some stats and visual add-ins that makes speeches easier to write. some things such as word count, expected speaking time, repetitive language indicators, lists of persuasive techniques … keep the platform clean, easily set-up and intuitive … as pretty and fun/interactive/clear as possible." He chose:
 - every speech box, "togglable so it doesn't feel like a constant tutorial", plus Model UN phrases to click in ("addressing other honourable delegates etc.");
