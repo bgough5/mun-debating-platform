@@ -1,0 +1,63 @@
+{% from "sim/_session_head.html" import head, emblem, settings_panel %}{{ head(title) }}
+{# A session in play (D-101). The map and the frame come from the server; session.js asks for the game's view and
+   draws it: the meters, the chapter, the news, your instructions, the draft, the rivals and the record. A signed-in
+   student's session is saved on every move; a guest's lives in this browser, signed by the server. #}
+{% set tw, th, fh = wmap.token_w, wmap.token_h, wmap.face_h %}
+<body class="board-body session-body" data-page="game" data-mode="{{ mode }}" data-save-id="{{ save_id or '' }}"
+      data-pack="{{ pack }}" data-signed-in="{{ 'yes' if signed_in else 'no' }}">
+<a class="skip" href="#s-rail">Skip to the game</a>
+<div id="p-say" class="visually-hidden" role="status" aria-live="polite"></div>
+<div id="b-stage" class="b-stage s-stage">
+  <div class="b-lamp" aria-hidden="true"></div>
+  <header class="b-top">
+    {{ emblem() }}
+    <div class="b-titles">
+      <p class="b-kicker">The Session · <span id="s-where">…</span></p>
+      <h1 class="b-committee" id="b-committee">{{ title }}</h1>
+      <p class="b-ribbon"><span class="b-ribbon-text" id="s-you">…</span></p>
+    </div>
+    <ul class="s-meters" aria-label="Your standing">
+      <li class="s-meter" id="m-influence" title="Influence: spent on lobbying, side events and favours"><i aria-hidden="true">₳</i><b>–</b><span>Influence</span></li>
+      <li class="s-meter" id="m-respect" title="Respect: your standing in the room"><i aria-hidden="true">✦</i><b>–</b><span>Respect</span></li>
+      <li class="s-meter" id="m-expertise" title="Expertise: unlocks diplomatic skills"><i aria-hidden="true">✎</i><b>–</b><span>Expertise</span></li>
+      <li class="s-meter" id="m-ap" title="Action points left this turn"><i aria-hidden="true">⚑</i><span class="s-ap" id="s-ap"></span><span>Actions</span></li>
+    </ul>
+  </header>
+
+  <main class="b-table" id="main" tabindex="-1">
+    {% include "chair/_board_map.html" %}
+    <aside class="b-rail s-rail" id="s-rail" aria-label="The session" tabindex="0">
+      <section class="b-card" id="c-chapter"><h2 id="c-chapter-h">Chapter</h2><p class="s-goal" id="c-goal"></p><p class="s-small" id="c-turn"></p></section>
+      <section class="b-card" id="c-event" hidden><h2>News</h2><div id="c-event-body"></div></section>
+      <section class="b-card" id="c-instr"><h2>Your instructions</h2>
+        <p class="s-small">Secret, from your capital. Rivals have their own.</p><ul class="s-instr" id="c-instr-list"></ul>
+        <p class="s-small" id="c-aim"></p></section>
+      <section class="b-card" id="c-draft"><h2>The draft</h2><ol class="s-clauses" id="c-clauses"></ol></section>
+      <section class="b-card" id="c-rivals"><h2>Rivals</h2><ul class="s-log" id="c-rival-list"></ul></section>
+      <section class="b-card" id="c-record"><h2>The record</h2><ol class="s-log" id="c-log" reversed></ol></section>
+    </aside>
+  </main>
+  <footer class="b-bottom s-bar">
+    <button type="button" class="s-btn ghost small" data-open="s-pause">Menu</button>
+    <p class="p-msg" id="p-msg" role="status"></p>
+    <button type="button" class="s-btn" id="s-end-turn">End turn</button>
+  </footer>
+
+  <div class="s-overlay" id="s-chapter-card" hidden role="dialog" aria-modal="true" aria-labelledby="s-cc-h">
+    <div class="s-doc s-chapter"><p class="s-eyebrow" id="s-cc-eyebrow">Chapter</p><h2 id="s-cc-h">–</h2><p id="s-cc-goal"></p>
+      <div class="s-row s-center"><button type="button" class="s-btn" data-close="s-chapter-card">Begin</button></div></div>
+  </div>
+  <div class="s-overlay" id="s-pause" hidden role="dialog" aria-modal="true" aria-labelledby="s-pause-h">
+    <div class="s-doc s-pause"><h2 id="s-pause-h">Paused</h2>
+      <p class="s-sub" id="s-pause-note">{{ "Your session is saved after every move." if mode == "saved" else "Your session is kept on this laptop after every move." }}</p>
+      <button type="button" class="s-btn" data-close="s-pause">Resume</button>
+      <button type="button" class="s-btn ghost" data-open="s-settings">Settings</button>
+      <a class="s-btn ghost" href="/session" hx-boost="false">Save and leave</a>
+      <button type="button" class="s-btn ghost" id="s-abandon">Abandon this session</button>
+    </div>
+  </div>
+  {{ settings_panel() }}
+  <div class="b-overlay" id="b-overlay"></div>
+</div>
+</body>
+</html>

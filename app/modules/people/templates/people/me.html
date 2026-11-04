@@ -29,7 +29,8 @@
 </div>
 {% if modules.chair or modules.intelligence %}
 <section class="card" aria-labelledby="h-solo"><h2 id="h-solo">{{ icon("committee") }} Practise on your own</h2>
-  <ul>{% if modules.chair %}<li><a href="/play">Play a Model UN scenario solo</a>: your own committee on the board, every other country played by the computer. Your games are saved.</li>{% endif %}
+  <ul>{% if modules.chair %}<li><a href="/session" hx-boost="false">The Session</a>: an hour-long Model UN campaign on the board, against rival delegations. Saved as you play.</li>
+    <li><a href="/play" hx-boost="false">Quick vote</a>: one clause, ten minutes, every other country played by the computer.</li>{% endif %}
     {% if modules.intelligence %}<li><a href="/me/ai-practice">{{ negotiation_label }}</a>: practise a negotiation conversation with another delegation.</li>{% endif %}</ul>
 </section>
 {% endif %}

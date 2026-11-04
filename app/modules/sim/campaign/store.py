@@ -1,0 +1,227 @@
+"""Keeping The Session's games (D-101), and what the game page is shown.
+
+- **Signed-in students:** each campaign is a row in `campaign_save`, readable only by that student. Moves update
+  the row directly; the change log gets a one-line note per move, not a copy of the whole game (a game is tens of
+  kilobytes and a session is hundreds of moves).
+- **Guests:** nothing is stored. The game lives in the browser. The server signs each state it returns (an HMAC
+  with a key kept in `app_setting`), and only accepts a state back with a valid signature, so a guest can't edit
+  their way to a win.
+- **Scenarios:** read once per pack and kept for the life of the process. Every campaign uses the pack's shared
+  hidden committee (the one guest Quick vote uses, D-099), which nothing in a campaign ever changes.
+"""
+from __future__ import annotations
+
+import hashlib
+import hmac
+import json
+import secrets
+import threading
+
+from app.db import SYSTEM, one, rows, scalar
+from app.errors import UserError
+from app.modules.mun.worldmap import REGIONS
+from app.modules.sim.campaign import content as K
+from app.modules.sim.campaign import engine as E
+from app.modules.sim.campaign.scenario import Scenario, load, rebind
+from app.util import now_iso
+
+_SCN: dict[str, Scenario] = {}
+LOCK = threading.RLock()        # a scenario reads through one connection at a time
+MAX_STATE = 400_000             # bytes: a guest state larger than this is refused
+
+
+def scenario(db, conn, code: str) -> Scenario:
+    """The scenario for a pack, installed the first time (as the shared guest committee) and then cached."""
+    from app.modules.mun.packfile import available
+    from app.modules.sim import play
+    if code not in {p["code"] for p in available()}:
+        raise UserError("That scenario isn't available.", 404)
+    with LOCK:
+        cid = scalar(conn, "SELECT id FROM committee WHERE guest_pack = ? AND deleted_at IS NULL ORDER BY id LIMIT 1", (code,))
+        if not cid:
+            with db.write(SYSTEM) as w:
+                cid = play.guest_committee(w, code)
+        scn = _SCN.get(code)
+        if scn is None or scn.committee_id != cid:
+            scn = _SCN[code] = load(conn, cid, code)
+        return rebind(scn, conn)
+
+
+def forget() -> None:
+    """Drop cached scenarios (after a restore or a pack edit)."""
+    with LOCK:
+        _SCN.clear()
+
+
+# ---------------------------------------------------------------- guests: signed states
+
+def _key(db) -> bytes:
+    with db.read() as conn:
+        k = scalar(conn, "SELECT value FROM app_setting WHERE key = 'campaign_key'")
+    if not k:
+        with db.write(SYSTEM) as w:
+            k = scalar(w.conn, "SELECT value FROM app_setting WHERE key = 'campaign_key'")
+            if not k:
+                k = secrets.token_hex(32)
+                w.conn.execute("INSERT INTO app_setting (key, value) VALUES ('campaign_key', ?)", (k,))
+    return bytes.fromhex(k)
+
+
+def _norm(x):
+    """Numbers as a browser keeps them: JavaScript writes 0.0 as 0, so whole numbers are signed as integers."""
+    if isinstance(x, float):
+        return int(x) if x.is_integer() else round(x, 6)
+    if isinstance(x, dict):
+        return {k: _norm(v) for k, v in x.items()}
+    if isinstance(x, list):
+        return [_norm(v) for v in x]
+    return x
+
+
+def _canon(state: dict) -> bytes:
+    return json.dumps(_norm(state), sort_keys=True, separators=(",", ":")).encode()
+
+
+def sign(db, state: dict) -> str:
+    return hmac.new(_key(db), _canon(state), hashlib.sha256).hexdigest()
+
+
+def verify(db, state, sig) -> dict:
+    if not isinstance(state, dict) or not isinstance(sig, str) or len(_canon(state)) > MAX_STATE:
+        raise UserError("That game can't be loaded. Start a new session.", 400)
+    if not hmac.compare_digest(sign(db, state), sig):
+        raise UserError("That game has been changed outside the platform, so it can't continue. Start a new session.", 400)
+    return state
+
+
+# ---------------------------------------------------------------- signed-in students: saved campaigns
+
+def save_new(w, student_id: int, g: dict) -> int:
+    t = now_iso()
+    return w.insert("campaign_save", {"student_id": student_id, "pack": g["pack"], "iso3": g["iso3"], "length": g["length"],
+                                      "difficulty": g["difficulty"], "path": g["path"], "phase": g["phase"], "chapter": g["chapter"],
+                                      "grade": None, "state_json": json.dumps(g), "created_at": t, "updated_at": t})
+
+
+def save_move(w, save_id: int, g: dict, action: dict) -> None:
+    grade = g["result"]["grade"] if g.get("result") else None
+    w.conn.execute("UPDATE campaign_save SET state_json = ?, phase = ?, chapter = ?, grade = ?, updated_at = ? WHERE id = ?",
+                   (json.dumps(g), g["phase"], g["chapter"], grade, now_iso(), save_id))
+    w.log("campaign_save", save_id, "move", None, {"do": action.get("do"), "phase": g["phase"], "chapter": g["chapter"]})
+
+
+def mine(conn, save_id: int, student_id: int) -> dict:
+    r = one(conn, "SELECT * FROM campaign_save WHERE id = ? AND deleted_at IS NULL", (save_id,))
+    if not r:
+        raise UserError("That session doesn't exist.", 404)
+    if r["student_id"] != student_id:
+        raise UserError("That session belongs to someone else.", 403)
+    return {**r, "state": json.loads(r["state_json"])}
+
+
+def my_saves(conn, student_id: int) -> list[dict]:
+    from app.modules.mun.packfile import available
+    titles = {p["code"]: p["title"] for p in available()}
+    out = []
+    for r in rows(conn, "SELECT id, pack, iso3, length, difficulty, path, phase, chapter, grade, updated_at FROM campaign_save "
+                        "WHERE student_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 20", (student_id,)):
+        c = one(conn, "SELECT name FROM country WHERE iso3 = ?", (r["iso3"],))
+        out.append({**r, "title": titles.get(r["pack"], r["pack"]), "country": c["name"] if c else r["iso3"],
+                    "where": "Finished" if r["phase"] == "done" else ("The Summit" if r["phase"] == "summit" else f"Chapter {r['chapter']}"),
+                    "medal": E.GRADES.get(r["grade"]) if r["grade"] is not None else None})
+    return out
+
+
+# ---------------------------------------------------------------- setup: what the new-session screens offer
+
+def scenario_cards() -> list[dict]:
+    from app.modules.mun.packfile import available
+    types = {"sc": "Security Council", "ga_plenary": "General Assembly", "ga_third": "GA Third Committee"}
+    out = []
+    for p in available():
+        lvl = K.SCENARIO_LEVEL.get(p["code"], "standard")
+        out.append({"code": p["code"], "title": p["title"], "summary": p.get("summary", ""), "type": types.get(p.get("type"), ""),
+                    "fictional": bool(p.get("fictional")), "level": lvl, "level_name": K.LEVEL_NAMES[lvl]})
+    order = {"beginner": 0, "standard": 1, "expert": 2}
+    return sorted(out, key=lambda c: (order[c["level"]], c["title"]))
+
+
+def country_choices(scn: Scenario) -> list[dict]:
+    """Every seat, with how hard it is to play: how many delegations share your main instruction."""
+    out = []
+    for m in scn.members:
+        mand = E.mandate_for(scn, m.iso3)
+        friends = sum(1 for o in scn.members if o.iso3 != m.iso3 and (scn.positions.get(o.iso3, {}).get(mand["must"]) or 0) >= 1)
+        share = friends / max(1, len(scn.members) - 1)
+        hard = "Easier" if share >= 0.5 else "Harder" if share < 0.25 else "Balanced"
+        out.append({"iso3": m.iso3, "name": m.name, "region": REGIONS.get(m.region, ""), "p5": m.p5, "seat": hard,
+                    "allies": friends, "veto": m.iso3 in scn.rule.veto})
+    return sorted(out, key=lambda c: c["name"])
+
+
+# ---------------------------------------------------------------- what the game page shows
+
+def _name(scn: Scenario, g: dict, actor: str) -> str:
+    if actor in ("you", g["iso3"]):
+        return "You"
+    if actor == "draft":
+        return "Original draft"
+    m = scn.member(actor)
+    return m.name if m else actor
+
+
+def view(scn: Scenario, g: dict) -> dict:
+    tags = scn.tags
+    L = E.LENGTHS[g["length"]]
+    q = next((x for x in K.QUESTIONS if x["id"] == g.get("question")), None)
+    final = {"id": "final", "tags": list(dict.fromkeys(t for c in g["draft"] for t in c["tags"])), "author": "draft"}
+    tokens = {}
+    for iso in scn.isos:
+        if iso == g["iso3"]:
+            tokens[iso] = {"you": True}
+            continue
+        rival = any(r["iso3"] == iso for r in g["rivals"])
+        tokens[iso] = {"rival": rival, "trust": g["trust"].get(iso, 0), "lean": round(E.lean(scn, g, "you", iso), 2),
+                       "sway": round(g["sway"]["you"].get(iso, 0.0), 2), "read": iso in g["read"],
+                       "signed": "sponsor" if iso in g["sponsors"] else "signatory" if iso in g["signatories"] else None,
+                       "pledged": iso in g.get("pledges", []), "favour": iso in g["favours"],
+                       "est": None if rival or not final["tags"] else E.vote_of(scn, E.latent(scn, g, iso, final, mood=False))}
+    draft = []
+    for c in g["draft"]:
+        draft.append({"id": c["id"], "text": c["text"], "tags": [{"code": t, "label": tags[t]} for t in c["tags"]],
+                      "author": _name(scn, g, c["author"]), "mine": c["author"] == "you",
+                      "amended_by": [_name(scn, g, a) for a in c["amended_by"]], "stance": E.stance(scn, g, "you", c)})
+    return {
+        "v": E.VERSION, "pack": g["pack"], "title": scn.title, "fictional": scn.fictional, "phase": g["phase"],
+        "chapter": g["chapter"], "turn": g["turn"], "chapters": L["chapters"], "turns": L["turns"],
+        "chapter_name": K.CHAPTERS.get(g["chapter"] if g["length"] != "quick" else 1, {}).get("name", ""),
+        "goal": ("Build the draft (four clauses, one yours) and table it with sponsors and signatories." if g["length"] == "quick"
+                 else K.CHAPTERS.get(g["chapter"], {}).get("goal", "")),
+        "ap": g["ap"], "influence": g["influence"], "respect": g["respect"], "expertise": g["expertise"], "xp": g["xp"],
+        "you": {"iso3": g["iso3"], "name": scn.member(g["iso3"]).name},
+        "mandate": {k: {"code": v, "label": tags[v]} for k, v in g["mandate"].items()},
+        "path": {"code": g["path"], **K.PATHS[g["path"]]}, "difficulty": g["difficulty"], "length": g["length"],
+        "rivals": [{"iso3": r["iso3"], "name": scn.member(r["iso3"]).name,
+                    **({"want": tags[r["want"]], "block": tags[r["block"]]} if "rival_intel" in g["skills"] else {})} for r in g["rivals"]],
+        "event": g.get("event"), "question": {"ask": q["ask"], "options": q["options"]} if q else None,
+        "draft": draft, "cards": [c for c in scn.cards if c["id"] in g["cards"]],
+        "endorse": {REGIONS.get(r, r): _name(scn, g, a) for r, a in g["endorse"].items()},
+        "tokens": tokens, "log": g["log"][-14:], "skills": g["skills"], "objectives": g["objectives"],
+        "sponsors": len(g["sponsors"]), "signatories": len(g["signatories"]), "signers_needed": E._signers_needed(scn),
+        "summit": _summit_view(scn, g), "result": g.get("result"), "tags": tags,
+        "veto": sorted(scn.rule.veto), "rule": scn.rule.name,
+    }
+
+
+def _summit_view(scn: Scenario, g: dict) -> dict | None:
+    s = g.get("summit")
+    if not s:
+        return None
+    cur = None
+    if s["step"] == "clause" and s["i"] < len(s["queue"]):
+        c = next(c for c in g["draft"] if c["id"] == s["queue"][s["i"]])
+        cur = {"id": c["id"], "text": c["text"], "tags": [scn.tags[t] for t in c["tags"]], "n": s["i"] + 1, "of": len(s["queue"]),
+               "chance": E.chance(scn, g, c)}
+    return {"step": s["step"], "current": cur, "pending": s.get("pending"), "results": s["results"], "final": s.get("final"),
+            "statement_options": [{"code": t, "label": scn.tags[t]} for t in s.get("statement_options", [])],
+            "statement": s.get("statement")}

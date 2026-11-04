@@ -424,6 +424,16 @@ Measured on Standard:
 
 There is no interface yet. Phase 2 waits for Ben's calls on scenario labels, a Security Council fallback and Architect.
 
+**Phase 2, the shell (5 Nov 2026).**
+- **Pages:** `/session` (title: New session, Continue, Quick vote, Settings), `/session/new` (six setup steps: scenario with its Beginner/Standard/Expert label, country on the map with how hard the seat is, length, rivals, the victory path, the briefing), and the game page on the war-room board (meters, the chapter card, news and procedure moments, your secret instructions, the draft, rivals, the record, End turn, a pause menu).
+- **Saves:**
+  - A signed-in student's session is a `campaign_save` row (migration 0020), only theirs, deleted by `erase_student`. Each move updates the row and logs a one-line note, not a copy of the game.
+  - A guest's session is kept in their browser (up to three) and signed with an HMAC. The key lives in `app_setting.campaign_key`, and the signature covers numbers as a browser keeps them (0.0 as 0).
+- **Settings:** sound, music, the room, motion, text size and the summit timer, kept in the browser; sound and music are off by default.
+- **Sound:** `session-audio.js` synthesises every sound (no files), and every effect has a caption.
+- **Links:** "Play solo" in the student menu, the sign-in page and the landing page now open The Session; Quick vote (`/play`) stays alongside.
+- **Not yet:** the actions (lobby, propose, amend and the rest, phase 3) and the summit screens (phase 4).
+
 ### D-100 The speech coach beside every speech box — Decided (5 Nov 2026, Ben)
 Ben: "there should be some stats and visual add-ins that makes speeches easier to write. some things such as word count, expected speaking time, repetitive language indicators, lists of persuasive techniques … keep the platform clean, easily set-up and intuitive … as pretty and fun/interactive/clear as possible." He chose:
 - every speech box, "togglable so it doesn't feel like a constant tutorial", plus Model UN phrases to click in ("addressing other honourable delegates etc.");

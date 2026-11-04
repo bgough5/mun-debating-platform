@@ -12,7 +12,7 @@
 </form>
 <p class="small muted">Lost your card? Your teacher can show you your code. Staff: <a href="/login">sign in here</a>.</p>
 {% if modules.chair %}<section class="card guest-play" aria-labelledby="h-guest"><h2 id="h-guest">{{ icon("committee") }} No code? Play solo as a guest</h2>
-<p>Run your own Model UN committee on the board, against the computer. Nothing is saved; sign in to keep your games.</p>
-<p><a class="button secondary" href="/play">{{ icon("play") }} Play solo</a></p></section>{% endif %}
+<p>The Session: an hour-long Model UN campaign on the board, against rival delegations. As a guest it's kept on this laptop only; sign in to keep it anywhere.</p>
+<p><a class="button secondary" href="/session" hx-boost="false">{{ icon("play") }} Play solo</a> <a href="/play" hx-boost="false">or a ten-minute Quick vote</a></p></section>{% endif %}
 </div>
 {% endblock %}

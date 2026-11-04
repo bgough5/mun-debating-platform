@@ -1,0 +1,12 @@
+{# The country step of a new session (D-101): the committee on the map, and every seat with how hard it is to play. #}
+{% set tw, th, fh = wmap.token_w, wmap.token_h, wmap.face_h %}
+<div class="s-seats" data-code="{{ code }}">
+  <div class="b-table-map">{% include "chair/_board_map.html" %}</div>
+  <div class="s-seat-list" role="group" aria-label="Seats in {{ scn_title }}">
+    {% for s in seats %}
+    <button type="button" class="s-seat" data-pick="iso3" data-value="{{ s.iso3 }}" data-label="{{ s.name }}" aria-pressed="false">
+      <b>{{ s.name }}{% if s.p5 %} ★{% endif %}</b><em class="{{ s.seat }}">{{ s.seat }}</em>
+      <span>{{ s.region }}{% if s.veto %} · holds a veto{% endif %} · {{ s.allies }} {{ "delegation shares" if s.allies == 1 else "delegations share" }} your main aim</span>
+    </button>{% endfor %}
+  </div>
+</div>

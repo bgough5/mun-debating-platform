@@ -21,7 +21,7 @@ def start_guest(c, pack="comet_halcyon", iso="NZL"):
 
 def test_a_guest_plays_without_a_code_and_nothing_is_kept(app):
     c = guest(app)
-    assert "Play solo as a guest" in c.get("/join").text and "/play" in c.get("/").text
+    assert "Play solo as a guest" in c.get("/join").text and "/session" in c.get("/").text and "/play" in c.get("/join").text
     page = c.get("/play").text
     assert "playing as a guest" in page and "Comet Halcyon-7" in page and "Migration" in page.replace("migration", "Migration")
     practices_before = db_one(app, "SELECT COUNT(*) AS n FROM sim_practice")["n"]

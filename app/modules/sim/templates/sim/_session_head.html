@@ -1,0 +1,44 @@
+{# The Session's page head and banner (D-101): shared by the title, setup and game screens. #}
+{% macro head(title) %}<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<link rel="icon" href="/static/soc_crest.png">
+<link rel="stylesheet" href="/static/css/app.css">
+<link rel="stylesheet" href="/static/css/board.css">
+<link rel="stylesheet" href="/static/css/session.css">
+<script src="/static/js/session-audio.js" defer></script>
+<script src="/static/js/session.js" defer></script>
+</head>{% endmacro %}
+
+{% macro emblem() %}<div class="b-roundel" aria-hidden="true">
+  <svg class="b-emblem" viewBox="0 0 120 120"><g transform="translate(60 60)">
+    <g class="b-laurel">{% for i in range(9) %}<ellipse cx="0" cy="-45" rx="4.6" ry="10" transform="rotate({{ -150 + i * 15 }})"/><ellipse cx="0" cy="-45" rx="4.6" ry="10" transform="rotate({{ 150 - i * 15 }})"/>{% endfor %}</g>
+    <circle class="b-globe" r="32"/><path class="b-globe-line" d="M-32 0H32M0-32V32M-22-22C-8-11 8-11 22-22M-22 22C-8 11 8 11 22 22M0-32C-15-15-15 15 0 32M0-32C15-15 15 15 0 32"/>
+  </g></svg>
+</div>{% endmacro %}
+
+{# Settings: kept in this browser only. Sound, music and the room are off until the player turns them on. #}
+{% macro settings_panel() %}
+<div class="s-overlay" id="s-settings" hidden role="dialog" aria-modal="true" aria-labelledby="s-settings-h">
+  <div class="s-doc">
+    <h2 id="s-settings-h">Settings</h2>
+    <p class="s-sub">Kept on this laptop only. Every sound is also shown as a caption.</p>
+    <div class="s-settings">
+      {% for key, name, what, opts in [
+        ("sound", "Sound effects", "The gavel, stamps, cards and the vote.", [(True, "On"), (False, "Off")]),
+        ("music", "Music", "A quiet score for the war room.", [(True, "On"), (False, "Off")]),
+        ("murmur", "The room", "Delegates murmuring in the background.", [(True, "On"), (False, "Off")]),
+        ("motion", "Motion", "Animations. Auto follows this computer's setting.", [("auto", "Auto"), ("on", "On"), ("off", "Off")]),
+        ("text", "Text size", "Larger text on the cards.", [("normal", "Normal"), ("large", "Large")]),
+        ("timer", "Summit timer", "Twenty seconds for each decision at the summit.", [(True, "On"), (False, "Off")]),
+      ] %}
+      <div class="s-setting"><b id="set-{{ key }}">{{ name }}</b><span>{{ what }}</span>
+        <div class="s-switch" role="group" aria-labelledby="set-{{ key }}">{% for v, label in opts %}<button type="button" data-set="{{ key }}" data-value="{{ 'true' if v is sameas true else ('false' if v is sameas false else v) }}" aria-pressed="false">{{ label }}</button>{% endfor %}</div></div>
+      {% endfor %}
+    </div>
+    <div class="s-row"><button type="button" class="s-btn" data-close="s-settings">Done</button></div>
+  </div>
+</div>{% endmacro %}

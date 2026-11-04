@@ -256,7 +256,7 @@ def _start_turn(scn: Scenario, g: dict) -> None:
     if eff.get("influence"):
         g["influence"] += eff["influence"]
     card = {"id": ev["id"], "title": ev["title"], "body": ev["body"], "teaches": ev["teaches"],
-            "hypothetical": not scn.fictional}
+            "hypothetical": False}      # the built-in events are about the committee itself; scenario news on a real issue will be
     if eff.get("region_mood"):
         regions = sorted({m.region for m in scn.members if m.region in REGIONS})
         if regions:

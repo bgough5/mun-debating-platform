@@ -9,7 +9,7 @@
 {% endif %}
 <section class="card accent" aria-labelledby="h-solo"><h2 id="h-solo">{{ icon("play") }} Play a scenario on your own</h2>
 <p>Your own committee on the board: pick a scenario and a country, and every other country is played by the computer.</p>
-<p><a class="button" href="/play">{{ icon("play") }} Play solo</a></p></section>
+<p><a class="button" href="/session" hx-boost="false">{{ icon("play") }} The Session: a full campaign</a> <a class="button secondary" href="/play" hx-boost="false">Quick vote</a></p></section>
 <section class="card" aria-labelledby="h-new"><h2 id="h-new">{{ icon("add") }} Start a practice run</h2>
 {% if not options %}{{ empty_state("Your class has no committee with a draft resolution yet.", "Play a scenario on your own above, or ask your teacher to set up a committee.", icon_name="committee") }}
 {% else %}

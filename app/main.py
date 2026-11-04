@@ -127,7 +127,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.exception_handler(UserError)
     async def user_error(request: Request, exc: UserError):
-        if request.url.path.startswith("/play/api"):          # single player's moves are JSON (D-099)
+        if request.url.path.startswith(("/play/api", "/session/api")):   # single player's moves are JSON (D-099, D-101)
             from fastapi.responses import JSONResponse
             return JSONResponse({"error": exc.message}, status_code=exc.status)
         return render(request, "error.html", {"title": "That didn't work", "message": exc.message}, status=exc.status)
@@ -170,6 +170,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         from app.modules.floor.routes import router as floor_router
         app.include_router(chair_router)
         app.include_router(sim_router)
+        from app.modules.sim.session_routes import router as session_router
+        app.include_router(session_router)
         app.include_router(floor_router)
     if settings.module_on("debating"):
         from app.modules.debating.routes import router as debating_router

@@ -1,0 +1,58 @@
+{% from "sim/_session_head.html" import head, emblem, settings_panel %}{{ head(title) }}
+{# The Session's title screen (D-101). Open to everyone; a signed-in student sees their own saved sessions, a guest
+   sees the session kept in this browser (session.js fills it in). #}
+<body class="board-body session-body" data-page="title" data-signed-in="{{ 'yes' if signed_in else 'no' }}">
+<a class="skip" href="#s-menu">Skip to the menu</a>
+<div id="b-stage" class="b-stage s-stage">
+  <div class="b-lamp" aria-hidden="true"></div>
+  <div class="b-motes" aria-hidden="true">{% for i in range(10) %}<i></i>{% endfor %}</div>
+  <header class="b-top">
+    {{ emblem() }}
+    <div class="b-titles">
+      <p class="b-kicker">Model UN · a campaign for one</p>
+      <h1 class="b-committee" id="b-committee">{{ title }}</h1>
+      <p class="b-ribbon"><span class="b-ribbon-text">Three chapters to draft it. One summit to pass it.</span></p>
+    </div>
+  </header>
+
+  <main class="s-title-main" id="main" tabindex="-1">
+    <nav class="s-menu" id="s-menu" aria-label="The Session">
+      <a class="s-btn huge" href="/session/new" hx-boost="false">New session <small>about an hour</small></a>
+      <div class="s-doc" id="s-continue">
+        <h2>Continue</h2>
+        {% if signed_in %}
+          {% if saves %}
+          <ul class="s-saves">{% for s in saves %}<li><a href="/session/s/{{ s.id }}" hx-boost="false"><b>{{ s.title }}</b>
+            {% if s.medal %}<span class="s-medal">{{ s.medal }}</span>{% else %}<span></span>{% endif %}
+            <span>as {{ s.country }} · {{ s.where }}</span></a></li>{% endfor %}</ul>
+          {% else %}<p class="s-sub">No sessions yet. Start one: your progress is saved as you play.</p>{% endif %}
+        {% else %}
+          <ul class="s-saves" id="s-guest-saves"></ul>
+          <p class="s-sub" id="s-guest-none">You're playing as a guest: a session is kept on this laptop only. <a href="/join">Sign in with your code</a> to keep it anywhere.</p>
+        {% endif %}
+      </div>
+      <a class="s-btn ghost" href="/play" hx-boost="false">Quick vote <small>one clause, ten minutes</small></a>
+      <button type="button" class="s-btn ghost" data-open="s-settings">Settings <small>sound, music, motion</small></button>
+    </nav>
+
+    <section class="s-hero" aria-labelledby="s-hero-h">
+      <p class="s-eyebrow">You are your country's ambassador</p>
+      <h2 id="s-hero-h">The Session</h2>
+      <p class="s-lede">Work a real committee from first draft to final vote. Lobby delegations, make promises you'll have to keep,
+        win regional groups to your side, and outmanoeuvre rival delegations with their own secret instructions.</p>
+      <ol class="s-track" aria-label="How a session runs">
+        <li><span class="s-coin">1</span>Working group</li>
+        <li><span class="s-coin">2</span>Blocs</li>
+        <li><span class="s-coin">3</span>Sponsors</li>
+        <li class="summit"><span class="s-coin">★</span>The Summit</li>
+      </ol>
+      <div class="s-paths" aria-label="Four ways to win">
+        {% for code, p in paths.items() %}<div class="s-path"><b>{{ p.name }}</b><span>{{ p.what }}</span></div>{% endfor %}
+      </div>
+    </section>
+  </main>
+  <footer class="b-bottom"><p class="p-msg" id="s-msg" role="status"></p></footer>
+  {{ settings_panel() }}
+</div>
+</body>
+</html>

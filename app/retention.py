@@ -107,7 +107,8 @@ def erase_student(w, student_id: int) -> dict:
         conn.execute(f"DELETE FROM ai_practice_message WHERE practice_id IN ({marks})", tuple(practice))
         conn.execute(f"DELETE FROM ai_practice WHERE id IN ({marks})", tuple(practice))
     counts = {"ai_practice": len(practice)}
-    for table in ("practice_speech", "student_milestone", "claim_request", "speech_draft", "ff_entry", "committee_roster", "mun_award"):
+    for table in ("practice_speech", "student_milestone", "claim_request", "speech_draft", "ff_entry", "committee_roster", "mun_award",
+                  "campaign_save"):
         ids = take(table, "student_id = ?", (student_id,))
         conn.execute(f"DELETE FROM {table} WHERE student_id = ?", (student_id,))
         counts[table] = len(ids)
