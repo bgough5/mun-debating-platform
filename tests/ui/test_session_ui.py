@@ -9,12 +9,27 @@ from tests.ui.conftest import axe
 pytestmark = pytest.mark.ui
 
 
+def _to_the_summit(page):
+    """End turns until the summit's card: four in a Quick session, or three if a crisis brought the deadline forward."""
+    for _ in range(6):
+        if page.is_visible("#s-chapter-card"):
+            break
+        while page.is_visible("#s-advice"):
+            page.click("#s-advice-ok")
+        page.click("#s-end-turn")
+        page.wait_for_timeout(700)
+    page.wait_for_selector("#s-chapter-card:not([hidden])")
+    assert page.inner_text("#s-cc-h") == "The Summit"
+
+
 def test_a_guest_sets_up_and_continues_a_session(browser, live):
     ctx = browser.new_context(viewport={"width": 1600, "height": 900})
     page = ctx.new_page()
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.goto(live.url + "/session")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false}))")   # the walkthrough has its own test
+    page.reload()
     page.wait_for_selector("h1:has-text('The Session')")
     assert not axe(page, "session_title")
     # settings: sound is off until turned on, and the choice sticks
@@ -69,6 +84,7 @@ def test_a_guest_makes_moves_on_the_board(browser, live):
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.goto(live.url + "/session/new")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false}))")   # the walkthrough has its own test
     page.click('[data-pick="pack"][data-value="comet_halcyon"]')
     page.click('[data-step="1"] [data-next]')
     page.wait_for_selector("#s-seats-box .s-seat")
@@ -133,6 +149,7 @@ def test_a_quick_session_reaches_the_summit_and_ends_with_medals(browser, live):
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.goto(live.url + "/session/new")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false}))")   # the walkthrough has its own test
     page.click('[data-pick="pack"][data-value="comet_halcyon"]')
     page.click('[data-step="1"] [data-next]')
     page.wait_for_selector("#s-seats-box .s-seat")
@@ -144,11 +161,7 @@ def test_a_quick_session_reaches_the_summit_and_ends_with_medals(browser, live):
     page.click("#s-begin")
     page.wait_for_selector("#s-chapter-card:not([hidden])")
     page.click("#s-chapter-card [data-close]")
-    for turn in range(2, 5):
-        page.click("#s-end-turn")
-        page.wait_for_function(f"document.getElementById('s-where').textContent.indexOf('turn {turn}') >= 0")
-    page.click("#s-end-turn")
-    page.wait_for_selector("#s-chapter-card:not([hidden])")
+    _to_the_summit(page)
     assert page.inner_text("#s-cc-h") == "The Summit"
     page.click("#s-chapter-card [data-close]")
     assert page.get_attribute("#t-summit", "aria-selected") == "true" and page.is_hidden("#t-draft")
@@ -182,8 +195,8 @@ def test_the_almanac_and_the_debrief_in_the_browser(browser, live):
     page.goto(live.url + "/session/almanac/ga_migration")
     page.wait_for_selector("#a-countries details")
     assert not axe(page, "session_almanac")
-    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({timer: false, tips: true}))")
     page.goto(live.url + "/session/new")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({timer: false, tips: true}))")
     page.click('[data-pick="pack"][data-value="comet_halcyon"]')
     page.click('[data-step="1"] [data-next]')
     page.wait_for_selector("#s-seats-box .s-seat")
@@ -193,15 +206,11 @@ def test_the_almanac_and_the_debrief_in_the_browser(browser, live):
     for n in (3, 4, 5):
         page.click(f'[data-step="{n}"] [data-next]')
     page.click("#s-begin")
+    page.wait_for_selector("#s-walk:not([hidden])")                          # the guide on: the walkthrough comes first
+    page.click("#s-guide-skip")
     page.wait_for_selector("#s-chapter-card:not([hidden])")
     page.click("#s-chapter-card [data-close]")
-    page.wait_for_selector(".s-tip")                                          # tips on: the first one appears
-    assert "Your instructions" in page.inner_text(".s-tip")
-    page.click(".s-tip button:has-text('No more tips')")
-    for _ in range(4):
-        page.click("#s-end-turn")
-        page.wait_for_timeout(600)
-    page.wait_for_selector("#s-chapter-card:not([hidden])")
+    _to_the_summit(page)
     page.click("#s-chapter-card [data-close]")
     page.click(".s-stance:has-text('Open')")
     page.wait_for_selector("#c-summit .s-votes")
@@ -211,11 +220,83 @@ def test_the_almanac_and_the_debrief_in_the_browser(browser, live):
         page.wait_for_function(f"document.querySelectorAll('#c-result-list li').length === {n + 1}")
     page.click("#c-summit .s-votes button:has-text('Yes')")
     page.wait_for_selector("#s-result:not([hidden]) .s-plaque", timeout=15000)
-    assert page.locator(".s-tip").count() == 0
+    assert page.is_hidden("#s-advice") and page.locator("#s-result .s-chief-says svg").count() == 1   # the Chief's verdict, nothing over the dossier
     assert page.evaluate("document.querySelector('#s-result .s-final').scrollTop") == 0
     assert page.locator("#s-result .s-medal").count() == 4 and page.locator("#s-result .s-deed").count() >= 1
     assert "What to try next time" in page.inner_text("#s-result")
     page.wait_for_timeout(2500)                                               # let the deeds and medals land
     assert not axe(page, "session_debrief")
+    assert not errors, errors
+    ctx.close()
+
+
+def test_the_chief_of_protocol_walks_a_new_player_through_the_session(browser, live):
+    """Phase 7: a new session opens with the Chief of Protocol's walkthrough of the whole session, before the first
+    chapter card. Next, Back and the arrow keys move between steps; the spotlight moves with them; the checkbox turns
+    the guide off; the Menu replays the walkthrough; advice appears at key moments once the session is under way."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 900})
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(live.url + "/session/new")
+    page.evaluate("localStorage.removeItem('soc-session-settings')")
+    page.click('[data-pick="pack"][data-value="comet_halcyon"]')
+    page.click('[data-step="1"] [data-next]')
+    page.wait_for_selector("#s-seats-box .s-seat")
+    page.click('.s-seat[data-value="NZL"]')
+    for n in (2, 3, 4, 5):
+        page.click(f'[data-step="{n}"] [data-next]')
+    assert page.is_checked("#s-tips-on")                                     # on unless the player turns it off
+    page.click("#s-begin")
+    page.wait_for_selector("#s-walk:not([hidden])")
+    assert page.is_hidden("#s-chapter-card")                                 # the walkthrough comes before the session
+    steps = page.locator("#s-guide-dots li").count()
+    assert steps >= 15 and "Welcome" in page.inner_text("#s-guide-h")
+    assert page.locator("#s-guide-face svg.g-face").count() == 1
+    page.wait_for_timeout(800)
+    assert not axe(page, "session_walkthrough")
+    page.click("#s-guide-next")
+    assert "New Zealand" in page.inner_text("#s-guide-h")
+    spot = page.get_attribute("#s-spot", "style")
+    page.click("#s-guide-next")
+    page.click("#s-guide-next")
+    assert "instructions" in page.inner_text("#s-guide-h").lower()
+    assert page.get_attribute("#s-guide-face svg", "data-expression") == "eyebrow"   # the face changes with what's said
+    page.wait_for_timeout(100)
+    assert page.get_attribute("#s-spot", "style") != spot                    # the spotlight moved to the instructions
+    page.keyboard.press("ArrowLeft")
+    assert "hour" in page.inner_text("#s-guide-h").lower()
+    seen = set()
+    for _ in range(steps):
+        seen.add(page.inner_text("#s-guide-h").lower())
+        if page.inner_text("#s-guide-next").lower() == "begin the session":
+            break
+        page.keyboard.press("ArrowRight")
+    for title in ("your rivals", "crises, news and offers", "then, the summit", "and the debrief", "the gavel is yours"):
+        assert title in seen, (title, seen)
+    page.check("#s-guide-off")                                               # don't show the tutorial again
+    page.click("#s-guide-next")
+    page.wait_for_selector("#s-chapter-card:not([hidden])")
+    assert page.is_hidden("#s-walk")
+    assert page.evaluate("JSON.parse(localStorage.getItem('soc-session-settings')).tips") is False
+    page.click("#s-chapter-card [data-close]")
+    page.click("button:has-text('Menu')")
+    page.click("#s-replay-walk")                                             # replay from the Menu at any time
+    page.wait_for_selector("#s-walk:not([hidden])")
+    page.keyboard.press("Escape")
+    assert page.is_hidden("#s-walk")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: true}))")
+    for _ in range(4):                                                       # the Chief speaks up at key moments
+        page.click("#s-end-turn")
+        try:
+            page.wait_for_selector("#s-advice:not([hidden])", timeout=3000)
+            break
+        except Exception:
+            if page.is_visible("#s-chapter-card"):
+                page.click("#s-chapter-card [data-close]")
+    assert page.is_visible("#s-advice") and page.inner_text("#s-advice-text")
+    assert not axe(page, "session_advice")
+    page.click("#s-advice-ok")
+    assert page.is_hidden("#s-advice")
     assert not errors, errors
     ctx.close()

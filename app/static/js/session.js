@@ -68,6 +68,7 @@
   });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
+    var w = $("s-walk"); if (w && !w.hidden) { var sk = $("s-guide-skip"); if (sk) sk.click(); return; }
     var shown = Array.prototype.filter.call(document.querySelectorAll(".s-overlay"), function (o) { return !o.hidden; });
     if (shown.length) { close(shown[shown.length - 1].id); return; }
     if (page === "game") open("s-pause");
@@ -225,7 +226,6 @@
     document.querySelector(".s-tabs").addEventListener("click", function (e) {
       var b = e.target.closest("[data-tab]"); if (!b) return;
       setTab(b.getAttribute("data-tab")); A.play("flip");
-      if (V) { hideTip(); setTimeout(function () { nextTip(V); }, 300); }
     });
     document.querySelector(".s-tabs").addEventListener("keydown", function (e) {
       var shown = TABS.filter(function (t) { return !$("t-" + t).hidden; });
@@ -266,6 +266,9 @@
       $("s-cc-h").textContent = summit ? "The Summit" : v.chapter_name;
       var pre = prev && prev.phase === "chapter" ? ("Chapter " + prev.chapter + ": goal " + (was ? "met. +3 Influence, +1 Respect. " : "missed. ")) : "";
       $("s-cc-goal").textContent = pre + (summit ? "The draft goes to the vote, clause by clause, then as a whole." : v.goal);
+      var cr = !summit && v.crisis && v.crisis.chapter === v.chapter ? v.crisis : null;
+      $("s-cc-crisis").hidden = !cr;
+      if (cr) { $("s-cc-crisis-h").textContent = cr.title; $("s-cc-crisis-p").textContent = cr.body; $("s-cc-crisis-t").textContent = cr.teaches; }
       open("s-chapter-card");
       restart(document.querySelector("#s-chapter-card .s-doc"), "shown");
       A.play(v.chapter === 1 && !summit && !prev ? "open" : "chime");
@@ -440,6 +443,7 @@
         t.appendChild(tr);
       });
       b.appendChild(t);
+      if (f.shifts && f.shifts.length) b.appendChild(h("p", "s-shifted", "Since the session began: " + f.shifts.map(function (x) { return x.dir + " towards anything that " + lc(x.label); }).join("; ") + "."));
       if (f.red_lines.length) b.appendChild(h("p", "", "Red lines (they say they can never accept): " + f.red_lines.join("; ") + "."));
       if (f.sources.length) {
         var s = h("div", "s-sources"); s.appendChild(h("p", "s-sub", "Sources:"));
@@ -499,6 +503,19 @@
         } else if (ev.teaches) box.appendChild(h("p", "s-small", ev.teaches));
         if (!prev || prev.turn !== v.turn || prev.chapter !== v.chapter) A.play("news");
       }
+      var cr = v.phase === "chapter" && v.crisis && v.crisis.chapter === v.chapter ? v.crisis : null, cb = $("c-crisis-body");
+      $("c-crisis").hidden = !cr; cb.textContent = "";
+      if (cr) { cb.appendChild(h("p", "s-goal", cr.title)); cb.appendChild(h("p", "", cr.body)); cb.appendChild(h("p", "s-small", cr.teaches)); }
+      var ol = $("c-offer-list"); ol.textContent = "";
+      $("c-offers").hidden = !(v.offers && v.offers.length);
+      (v.offers || []).forEach(function (o) {
+        var li = h("li", "s-offer");
+        li.appendChild(h("p", "s-offer-text", o.text)); li.appendChild(h("p", "s-small", o.terms));
+        var row = h("div", "s-row");
+        row.appendChild(btn("Accept", "s-btn small", function () { move({ do: "offer", id: o.id, answer: "accept" }); }));
+        row.appendChild(btn("Turn it down", "s-btn ghost small", function () { move({ do: "offer", id: o.id, answer: "refuse" }); }));
+        li.appendChild(row); ol.appendChild(li);
+      });
       var il = $("c-instr-list"); il.textContent = "";
       [["in", "Get in: ", v.mandate.must.label], ["in", "Also get in: ", v.mandate.also.label], ["out", "Keep out: ", v.mandate.red.label]].forEach(function (x) {
         var li = h("li"); li.appendChild(h("span", x[0], x[1])); li.appendChild(document.createTextNode(x[2])); il.appendChild(li);
@@ -516,13 +533,19 @@
         restart(q, "s-in");
       }
       if (out && out.file) showFile(out.file);
-      if (out && out.accepted === false) say(action.do === "strike" ? "The working group wants that clause, so it stays. Your Influence is returned." : "The working group didn't accept that amendment: it would lose support. Your Influence is returned.");
+      if (out && action && action.do === "offer") say(out.refused_by_room ? "The working group wouldn't make the change, so the deal fell through." : out.accepted ? "Deal done." : "You turned the offer down.");
+      else if (out && out.accepted === false) say(action.do === "strike" ? "The working group wants that clause, so it stays. Your Influence is returned." : "The working group didn't accept that amendment: it would lose support. Your Influence is returned.");
       else if (out && out.right !== undefined) say((out.right ? "Right. " : "Not quite. ") + out.why);
       else if (action && action.do === "end_turn") say(v.phase === "summit" ? "The summit opens." : "Rivals have moved: see the Record.");
       else if (action && action.do === "speech") say("You gave a " + action.stance + " opening speech. The first clause is before the committee.");
       // rivals and the record
       var rl = $("c-rival-list"); rl.textContent = "";
-      v.rivals.forEach(function (r) { rl.appendChild(h("li", "rival", r.name + (r.want ? ": wants " + r.want.toLowerCase() + "; blocks " + r.block.toLowerCase() : ": instructions unknown (Rival intelligence reveals them)"))); });
+      v.rivals.forEach(function (r) {
+        var li = h("li", "rival s-rival-" + r.style);
+        li.appendChild(h("b", "", r.name)); li.appendChild(h("span", "s-style", r.style_name));
+        li.appendChild(h("span", "s-small", r.style_what + " " + (r.want ? "Wants " + r.want.toLowerCase() + "; blocks " + r.block.toLowerCase() + "." : "Its instructions are unknown (Rival intelligence reveals them).")));
+        rl.appendChild(li);
+      });
       var lg = $("c-log"); lg.textContent = "";
       var fresh = v.log.length - Math.min(seenLog, v.log.length), news = seenLog ? v.log.slice(v.log.length - fresh) : [];
       v.log.slice().reverse().forEach(function (x, k) { lg.appendChild(h("li", x.kind + (k < fresh && seenLog ? " fresh" : ""), x.when + ": " + x.text)); });
@@ -553,12 +576,15 @@
         var won = v.regions.some(function (r) { return r.owner === "you" && !prev.regions.some(function (p) { return p.code === r.code && p.owner === "you"; }); });
         var lost = prev.regions.some(function (p) { return p.owner === "you" && !v.regions.some(function (r) { return r.code === p.code && r.owner === "you"; }); });
         if (won) { A.play("fanfare"); say("A regional group now endorses your draft."); } else if (lost) { A.play("sting"); say("A regional group no longer endorses your draft."); }
+        moments(v, prev, news, won, lost);
       }
       $("s-end-turn").hidden = v.phase !== "chapter";
       summitTabs(v);
       summitPane(v, out);
-      setTimeout(function () { nextTip(V); }, 700);
-      if (!prev ? (v.turn === 1 && v.phase === "chapter" && seenLogAtStart(v)) : (prev.chapter !== v.chapter || prev.phase !== v.phase)) chapterCard(v, prev);
+      if (!prev ? (v.turn === 1 && v.phase === "chapter" && seenLogAtStart(v)) : (prev.chapter !== v.chapter || prev.phase !== v.phase)) {
+        if (!prev && guideOn() && v.chapter === 1) walkStart(v, function () { chapterCard(v, prev); });
+        else chapterCard(v, prev);
+      }
     }
     function seenLogAtStart(v) { return v.log.filter(function (x) { return x.kind === "action"; }).length === 0; }
 
@@ -742,8 +768,16 @@
         d.moments.forEach(function (x) { var li = h("li", x.kind); li.appendChild(h("span", "s-when", x.when)); li.appendChild(document.createTextNode(x.text)); ul.appendChild(li); });
         mo.appendChild(ul); b.appendChild(mo);
       }
+      var chief = h("div", "s-chief-says"), face = h("div", "s-chief-face");
+      if (G) face.appendChild(G.portrait(grade >= 2 ? "delighted" : grade === 1 ? "wry" : "concerned"));
+      chief.appendChild(face);
+      chief.appendChild(h("p", "", grade === 3 ? "Superb work, Ambassador. They will be studying this session for years." :
+        grade === 2 ? "Well done, Ambassador. A fine session, and there was more within reach: the dossier shows where." :
+        grade === 1 ? "A respectable session. Read the turning points below: the next one will go further." :
+        "A hard session, Ambassador. Every great delegate has one. The dossier below shows exactly what happened, and why."));
+      b.insertBefore(chief, b.firstChild);
       debriefInto(b, v);
-      hideTip();
+      hideAdvice();
       open("s-result");
       var doc = document.querySelector("#s-result .s-final"); doc.scrollTop = 0;
       var hd = $("s-result-h"); hd.tabIndex = -1; hd.focus();
@@ -824,56 +858,264 @@
       setTimeout(function () { c.remove(); land(); }, 1000);
     }
 
-    // ---------- tips: each part of the game explained the first time you meet it ----------
-    var SEEN = "soc-session-tips-seen";
-    function seen() { try { return JSON.parse(window.localStorage.getItem(SEEN) || "[]") || []; } catch (e) { return []; } }
-    function markSeen(id) { var s = seen(); if (s.indexOf(id) < 0) s.push(id); try { window.localStorage.setItem(SEEN, JSON.stringify(s)); } catch (e) { /* this page only */ } }
-    function tabIs(name) { return $("t-" + name).getAttribute("aria-selected") === "true"; }
-    var TIPS = [
-      { id: "instr", at: "#c-instr", when: function (v) { return v.phase === "chapter" && tabIs("brief"); }, title: "Your instructions",
-        text: "Secret orders from your capital: two commitments to get into the final text, one to keep out. Rival delegations have their own orders, opposite to yours." },
-      { id: "meters", at: "#m-influence", when: function (v) { return v.phase === "chapter"; }, title: "Your standing",
-        text: "Influence pays for lobbying and side events. Respect lowers costs and opens doors. Expertise unlocks skills. The flags are the actions you have left this turn." },
-      { id: "map", at: "#b-board", when: function (v) { return v.phase === "chapter"; }, title: "The room",
-        text: "Each token is a delegation; the band is its regional group. Green means likely to back your draft, red likely against. Click a token to open that delegation." },
-      { id: "dele", at: "#c-country", when: function (v) { return v.phase === "chapter" && tabIs("dele") && picked; }, title: "Working a delegation",
-        text: "Read a file before you lobby: you learn its positions and red lines, and lobbying works better. Promises build trust, but only if you keep them at the summit." },
-      { id: "draft", at: "#c-clauses", when: function (v) { return v.phase === "chapter" && tabIs("draft"); }, title: "The draft",
-        text: "The dial is each clause's chance of passing now. Propose clause cards, amend one commitment at a time, or strike a clause the room doesn't want. The working group must agree to changes to others' text." },
-      { id: "regions", at: "#c-regions", when: function (v) { return v.phase === "chapter" && tabIs("brief") && (v.turn > 1 || v.chapter > 1); }, title: "Regional groups",
-        text: "Win more than half of a regional group and it endorses your draft: a bonus every turn, and its members lean your way at the vote. Side events work on a whole group at once." },
-      { id: "endturn", at: "#s-end-turn", when: function (v) { return v.phase === "chapter" && v.ap === 0; }, title: "Ending the turn",
-        text: "Out of actions? End the turn. Rivals move at the start of each turn, so you always have the last word in a chapter." },
-      { id: "skills", at: "#s-skills-btn", when: function (v) { return v.phase === "chapter" && v.xp >= v.skill_cost; }, title: "A skill to unlock",
-        text: "You have enough Expertise for a diplomatic skill. Each branch suits a different way of playing." },
-      { id: "summit", at: "#c-summit", when: function (v) { return v.phase === "summit"; }, title: "The Summit",
-        text: "Each clause is voted on separately: the division of the question. Decide first (a last offer, a favour, or what to do with a rival's amendment), then cast your vote." }
-    ];
-    var tipEl = null;
-    function tipsOn() { return A.settings().tips !== false; }
-    function hideTip() {
-      if (tipEl) { tipEl.remove(); tipEl = null; }
-      document.querySelectorAll(".s-tip-target").forEach(function (x) { x.classList.remove("s-tip-target"); });
+    // ---------- the Chief of Protocol: a walkthrough of the whole session before it begins, and advice at key moments ----------
+    var G = window.socSession && window.socSession.guide;
+    function guideOn() { return A.settings().tips !== false; }
+    function stageBox(el) {
+      var sr = stage.getBoundingClientRect(), sc = sr.width / 1920, r = el.getBoundingClientRect();
+      return { x: (r.left - sr.left) / sc, y: (r.top - sr.top) / sc, w: r.width / sc, h: r.height / sc };
     }
-    function nextTip(v) {
-      if (!tipsOn() || tipEl || !v || v.phase === "done" || document.querySelector(".s-overlay:not([hidden])")) return;
-      var done = seen(), t = TIPS.filter(function (x) { return done.indexOf(x.id) < 0 && x.when(v) && document.querySelector(x.at); })[0];
-      if (!t) return;
-      var target = document.querySelector(t.at), sr = stage.getBoundingClientRect(), sc = sr.width / 1920, r = target.getBoundingClientRect();
-      var x = (r.left - sr.left) / sc, y = (r.top - sr.top) / sc, w = r.width / sc, hgt = r.height / sc;
-      tipEl = h("div", "s-tip"); tipEl.setAttribute("role", "dialog"); tipEl.setAttribute("aria-labelledby", "s-tip-h");
-      var hh = h("h2", "", t.title); hh.id = "s-tip-h"; tipEl.appendChild(hh); tipEl.appendChild(h("p", "", t.text));
-      var row = h("div", "s-row");
-      row.appendChild(btn("Got it", "s-btn small", function () { markSeen(t.id); hideTip(); A.play("flip"); nextTip(V); }));
-      row.appendChild(btn("No more tips", "s-btn ghost small", function () { A.set("tips", false); hideTip(); }));
-      tipEl.appendChild(row);
-      var left = x > 1100 ? x - 460 : Math.min(x + w + 20, 1460), top = Math.max(180, Math.min(y + (hgt > 300 ? 40 : 0), 760));
-      if (t.id === "meters") { left = x - 120; top = y + hgt + 18; }
-      if (t.id === "endturn") { left = x - 460; top = 780; }
-      tipEl.style.left = Math.max(20, left) + "px"; tipEl.style.top = top + "px";
-      stage.appendChild(tipEl);
-      target.classList.add("s-tip-target");
-      tipEl.querySelector("button").focus();
+    function visible(sel) { var e = sel && document.querySelector(sel); return e && e.getClientRects().length ? e : null; }
+    function lc(t) { t = String(t || "").replace(/\.$/, ""); return /^.[a-z]/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t; }
+    function list(items, cls) { var ul = h("ul", cls || "s-guide-list"); items.forEach(function (x) { var li = h("li"); if (x[0]) li.appendChild(h("b", "", x[0])); li.appendChild(document.createTextNode(x[1])); ul.appendChild(li); }); return ul; }
+
+    // little pictures for the steps that look ahead: the shape of the hour, the paths, the summit, the debrief
+    function artTimeline(v) {
+      var row = h("ol", "s-g-time"), quick = v.length === "quick";
+      var stops = quick ? [["Working session", v.turns + " turns"], ["The Summit", "the votes"], ["Debrief", "your medals"]] :
+        [1, 2, 3].slice(0, v.chapters).map(function (n) { return ["Chapter " + n, ["Working group", "Blocs", "Sponsors"][n - 1]]; })
+          .concat([["The Summit", "the votes"], ["Debrief", "your medals"]]);
+      stops.forEach(function (x, i) {
+        var li = h("li", i === 0 ? "now" : ""); li.style.animationDelay = (0.15 + i * 0.18) + "s";
+        li.appendChild(h("b", "", x[0])); li.appendChild(h("span", "", x[1])); row.appendChild(li);
+      });
+      return row;
+    }
+    function artPaths(v) {
+      var g = h("div", "s-g-paths");
+      [["mandate", "Mandate", "The hardliner"], ["consensus", "Consensus", "The broker"], ["architect", "Architect", "The drafter"], ["kingmaker", "Kingmaker", "The analyst"]].forEach(function (p, i) {
+        var d = h("div", "s-g-path" + (v.path.code === p[0] ? " yours" : "")); d.style.animationDelay = (0.1 + i * 0.15) + "s";
+        d.appendChild(h("i", "", "★")); d.appendChild(h("b", "", p[1])); d.appendChild(h("span", "", v.path.code === p[0] ? "Your aim" : p[2]));
+        g.appendChild(d);
+      });
+      return g;
+    }
+    function artSummit() {
+      var g = h("div", "s-g-summit");
+      for (var i = 0; i < 10; i++) { var t = h("i", i < 6 ? "y" : i < 8 ? "a" : "n"); t.style.animationDelay = (0.3 + i * 0.12) + "s"; g.appendChild(t); }
+      var st = h("span", "s-g-stamp", "Adopted"); g.appendChild(st);
+      return g;
+    }
+    function artMedals() {
+      var g = h("div", "s-g-medals");
+      [["bronze", "Bronze"], ["silver", "Silver"], ["gold", "Gold"]].forEach(function (m, i) {
+        var d = h("div", "s-g-medal " + m[0]); d.style.animationDelay = (0.2 + i * 0.25) + "s"; d.appendChild(h("span", "", m[1])); g.appendChild(d);
+      });
+      return g;
+    }
+
+    function walkSteps(v) {
+      var sample = Object.keys(v.tokens).filter(function (k) { var t = v.tokens[k]; return !t.you && !t.rival; })[0];
+      var sc = v.veto && v.veto.length, cr = v.crisis, quick = v.length === "quick";
+      return [
+        { face: "delighted", title: "Welcome, Ambassador",
+          text: ["I am the Chief of Protocol. My job is to see that this committee keeps to its rules, and that you know them before the gavel falls.",
+                 "In the next few minutes I'll show you exactly how this session will run: every stage, every choice open to you, and how it ends. Use Back to go over anything again, or Skip if you already know the way."] },
+        { at: ".b-titles", face: "calm", title: "You are " + v.you.name,
+          text: ["You represent " + v.you.name + " in " + v.title + ". The committee decides by its voting rule: " + v.rule + ".",
+                 sc ? "Five permanent members hold a veto: one no from any of them sinks a resolution, however many others vote yes. An abstention is not a veto." :
+                      "Every delegation has one vote. Abstentions don't count towards the majority, so turning a no into an abstention helps you."] },
+        { face: "thinking", title: "How the hour will run", art: artTimeline,
+          text: [(quick ? "This is a Quick session: one working session of " + v.turns + " turns" : v.chapters + " chapters of " + v.turns + " turns each") + ", then the Summit, then your debrief.",
+                 "Each turn you have a few actions. When they're spent, you end the turn: rivals answer, news arrives, and the next turn begins." +
+                 (quick ? "" : " Every chapter has its own goal; meet it for a bonus of Influence and Respect.")] },
+        { at: "#c-instr", tab: "brief", face: "eyebrow", title: "Your secret instructions",
+          text: [list([["Get in: ", "a clause that " + lc(v.mandate.must.label) + "."], ["Also get in: ", "a clause that " + lc(v.mandate.also.label) + "."],
+                       ["Keep out: ", "anything that " + lc(v.mandate.red.label) + ". That is your red line."]]),
+                 "Nobody else can see these orders. Your rivals have their own, roughly the opposite of yours."] },
+        { face: "wry", title: "Four ways to win", art: artPaths,
+          text: ["Every session is graded on all four paths, from no medal to gold. You're aiming for " + v.path.name + ": " + lc(v.path.what).replace(/\.$/, "") + ".",
+                 "But a gold on any path is a gold. If the session turns against your plan, change it."] },
+        { at: ".s-meters", face: "calm", title: "Your standing",
+          text: [list([["Influence ₳ ", "is your currency: lobbying, side events and favours cost it. You earn " + E_INCOME + " a turn, more with a regional group behind you."],
+                       ["Respect ✦ ", "is your standing in the room. At 7 you get an extra action each turn; at 8 proposing clauses is free."],
+                       ["Expertise ✎ ", "comes from reading country files and knowing procedure. Spend it on diplomatic skills."],
+                       ["Actions ⚑ ", "are your moves this turn. Most things cost one."]])] },
+        { at: "#b-board", face: "calm", title: "The room", demo: function () { if (sample) setTimeout(function () { envoy(v.you.iso3, sample, false); }, 500); },
+          text: ["Every token is a delegation, banded in the colour of its regional group. Green leans towards your draft, red against.",
+                 "As delegations lean your way, their land takes your colour; a rival's sphere shows too, like borders on a campaign map. Envoys cross the map whenever anyone makes a move. Click any token to work that delegation."] },
+        { at: "#c-country", tab: "dele", pick: sample, face: "thinking", title: "Working a delegation",
+          text: [list([["Read the file ", "(1 action): its positions, red lines and sources. Lobbying works better once you've read it."],
+                       ["Lobby ", "with Influence: the further they are from you, the more it costs."],
+                       ["Promise ", "to back a clause they like: trust grows, but only if you keep your word at the summit."],
+                       ["Call in a favour ", "when trust is high: they back you on the day."],
+                       ["Ask them to sponsor or sign ", "so the draft can be tabled first."],
+                       ["Predict their vote: ", "scored at the summit, and the Kingmaker's path." + (sc ? " Permanent members can be asked to abstain rather than veto." : "")]])] },
+        { at: "#c-regions", tab: "brief", face: "wry", title: "Regional groups",
+          text: ["Win more than half of a regional group and it endorses your draft: extra Influence every turn, and its members lean your way at the vote.",
+                 "A side event, on the Delegations tab, works on a whole group at once (2 actions). Rivals court groups too, so an endorsement can be lost."] },
+        { at: "#c-clauses", tab: "draft", face: "thinking", title: "The draft",
+          text: ["This is the resolution as it stands. The dial on each clause is its chance of passing now.",
+                 "You can amend a clause one commitment at a time, or strike it; with skills, divide or merge clauses. The working group must agree to changes to anyone else's text: it won't make a clause less popular, or strike one it would pass."] },
+        { at: "#c-cards", tab: "draft", face: "delighted", title: "The drafting table",
+          text: ["Clause cards are yours to propose. Write them in your own words if you like: the committee judges a clause by what it commits countries to, not by its wording.",
+                 "Your writing is for your own practice. It's never marked, and the Architect's path rewards a text that is mostly yours."] },
+        { at: "#c-rivals", tab: "record", face: "concerned", title: "Your rivals",
+          text: [list(v.rivals.map(function (r) { return [r.name + ", " + r.style_name + ": ", r.style_what]; })),
+                 "Rivals move at the start of every turn. Each turn an intelligence report on one of them arrives in the Record, with everything else that happened."] },
+        { at: cr ? "#c-crisis" : "#c-event", tab: "brief", face: "concerned", title: "Crises, news and offers",
+          text: [list([["A crisis ", "opens every chapter and changes the rules for that chapter" + (cr ? ". This one: " + lc(cr.title) + "." : ".")],
+                       ["News ", "arrives every turn. Procedure questions earn Expertise and Respect if you answer correctly."],
+                       ["Offers ", "come to your door: deals from delegations. Answering costs no action, but read the terms before you accept."],
+                       ["Positions shift. ", "Governments change their minds during the session, so a file you read early may be out of date later."]])] },
+        { at: "#s-skills-btn", face: "wry", title: "Diplomatic skills",
+          text: ["Spend Expertise on skills (" + v.skill_cost + " each) in four branches: Procedure, Diplomacy, Drafting and Analysis.",
+                 "Each branch suits a different way of playing: points of order, bloc whips, friendly amendments, rival intelligence and more."] },
+        { at: "#s-end-turn", face: "calm", title: "Ending a turn",
+          text: ["When your actions are spent, end the turn. Offers lapse, Influence comes in, rivals move and the next turn opens. At the end of a chapter you'll see whether you met its goal.",
+                 "Menu, or Escape, pauses the game. Your session is kept after every move, so you can stop and come back."] },
+        { face: "eyebrow", title: "Then, the Summit", art: artSummit,
+          text: [list([["Your opening speech: ", "firm, open or bridge. Each moves a different part of the room."],
+                       ["Clause by clause: ", "each is voted on separately. Before each vote, make a last offer, call in a favour or deal with a rival's floor amendment, then cast your own vote."],
+                       ["The resolution as a whole ", "goes to the final vote." + (sc ? " If it fails in the Council, a Presidential Statement may still be agreed." : "")]]),
+                 "With the summit timer on, you have twenty seconds for each decision. You can turn it off in Settings."] },
+        { face: "delighted", title: "And the debrief", art: artMedals,
+          text: ["When the gavel falls you'll see a medal on each path, your rank, the session in numbers, every clause as a title deed, the turning points, and why every delegation voted as it did, number by number.",
+                 "Positions in real-issue scenarios are estimates from sources, never fact. Read them as a starting point."] },
+        { face: "delighted", title: "The gavel is yours", last: true,
+          text: ["That's the whole session, from the first turn to the debrief. I'll be close by, and I'll speak up at the big moments.",
+                 "You can replay this walkthrough at any time from the Menu. Good luck, Ambassador."] }
+      ];
+    }
+    var E_INCOME = 2;
+
+    var W = { steps: null, i: 0, done: null, tab: null, face: null };
+    function walkStart(v, done, replay) {
+      if (!G) { if (done) done(); return; }
+      hideAdvice();
+      W.steps = walkSteps(v).filter(function (s) { return !s.at || !s.tab || !$("t-" + s.tab).hidden; });
+      W.i = 0; W.done = done; W.tab = TABS.filter(function (t) { return $("t-" + t).getAttribute("aria-selected") === "true"; })[0] || "brief";
+      var wrap = $("s-walk"), face = $("s-guide-face");
+      if (!W.face) { face.textContent = ""; W.face = G.portrait("calm"); face.appendChild(W.face); }
+      $("s-guide-off").checked = false;
+      var dots = $("s-guide-dots"); dots.textContent = "";
+      W.steps.forEach(function () { dots.appendChild(h("li")); });
+      wrap.hidden = false;
+      document.body.classList.add("s-walking");
+      if (!replay) A.play("open");
+      walkShow(0);
+    }
+    function walkShow(i) {
+      var s = W.steps[i]; W.i = i;
+      if (s.tab) setTab(s.tab);
+      if (s.pick) pick(s.pick);
+      var guide = $("s-guide"), talk = guide.querySelector(".s-guide-talk");
+      restart(talk, "s-talk-in");
+      G.face(W.face, s.face); restart(W.face, "g-react");
+      $("s-guide-step").textContent = (i + 1) + " of " + W.steps.length;
+      $("s-guide-h").textContent = s.title;
+      var b = $("s-guide-body"); b.textContent = "";
+      if (s.art) b.appendChild(s.art(V));
+      s.text.forEach(function (t) { if (typeof t === "string") b.appendChild(h("p", "", t)); else b.appendChild(t); });
+      $("s-guide-dots").querySelectorAll("li").forEach(function (d, k) { d.className = k < i ? "done" : k === i ? "on" : ""; });
+      $("s-guide-back").disabled = i === 0;
+      $("s-guide-next").textContent = s.last ? "Begin the session" : "Next";
+      $("s-guide-skip").hidden = !!s.last;
+      // the spotlight and the guide glide to the part of the table being explained
+      var spot = $("s-spot"), target = visible(s.at);
+      var panes = target && target.closest(".s-panes");
+      if (panes) {
+        var sc0 = stage.getBoundingClientRect().width / 1920, pr = panes.getBoundingClientRect(), tr = target.getBoundingClientRect();
+        if (tr.top < pr.top || tr.bottom > pr.bottom) panes.scrollTop += (tr.top - pr.top) / sc0 - 12;
+      }
+      requestAnimationFrame(function () {
+        var gw = guide.offsetWidth, gh = guide.offsetHeight, left, top;
+        if (target) {
+          var r = stageBox(target), pad = 10;
+          spot.classList.remove("off");
+          spot.style.left = (r.x - pad) + "px"; spot.style.top = (r.y - pad) + "px";
+          var bottom = panes ? stageBox(panes).y + stageBox(panes).h : 1080;
+          spot.style.width = (r.w + 2 * pad) + "px"; spot.style.height = Math.max(40, Math.min(r.h + 2 * pad, bottom - r.y + pad)) + "px";
+          if (r.x > 1100) { left = r.x - gw - 40; top = Math.min(Math.max(150, r.y), 1080 - gh - 40); }
+          else if (r.y < 200 && r.h < 200) { left = Math.min(Math.max(40, r.x + r.w / 2 - gw / 2), 1920 - gw - 40); top = r.y + r.h + 36; }
+          else if (r.w > 900) { left = 1920 - gw - 60; top = 1080 - gh - 130; }
+          else { left = Math.min(r.x + r.w + 40, 1920 - gw - 40); top = Math.min(Math.max(150, r.y), 1080 - gh - 40); }
+        } else {
+          spot.classList.add("off");
+          spot.style.left = "960px"; spot.style.top = "540px"; spot.style.width = "0px"; spot.style.height = "0px";
+          left = (1920 - gw) / 2; top = Math.max(60, (1080 - gh) / 2 - 20);
+        }
+        guide.style.left = Math.max(30, left) + "px"; guide.style.top = Math.max(30, top) + "px";
+        var X = parseFloat(spot.style.left), Y = parseFloat(spot.style.top), SW = parseFloat(spot.style.width), SH = parseFloat(spot.style.height);
+        var box = { t: [0, 0, 1920, Y], b: [0, Y + SH, 1920, 1080 - Y - SH], l: [0, Y, X, SH], r: [X + SW, Y, 1920 - X - SW, SH] };
+        document.querySelectorAll("#s-walk .s-dim").forEach(function (d) {
+          var q = box[d.getAttribute("data-dim")];
+          d.style.left = q[0] + "px"; d.style.top = q[1] + "px"; d.style.width = Math.max(0, q[2]) + "px"; d.style.height = Math.max(0, q[3]) + "px";
+        });
+        if (s.demo) s.demo();
+      });
+      $("s-guide-next").focus();
+      if (i > 0) A.play("flip");
+    }
+    function walkEnd() {
+      var wrap = $("s-walk"); if (wrap.hidden) return;
+      if ($("s-guide-off").checked) { A.set("tips", false); syncSettings(); }
+      wrap.hidden = true;
+      document.body.classList.remove("s-walking");
+      setTab(W.tab);
+      var done = W.done; W.done = null;
+      if (done) done(); else A.play("chime");
+    }
+    $("s-guide-next").addEventListener("click", function () { if (W.i >= W.steps.length - 1) walkEnd(); else walkShow(W.i + 1); });
+    $("s-guide-back").addEventListener("click", function () { if (W.i > 0) walkShow(W.i - 1); });
+    $("s-guide-skip").addEventListener("click", walkEnd);
+    $("s-walk").addEventListener("keydown", function (e) {
+      if (e.key === "ArrowRight") { e.preventDefault(); $("s-guide-next").click(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); $("s-guide-back").click(); }
+      else if (e.key === "Tab") {                                    // keep the keyboard inside the guide while it speaks
+        var f = Array.prototype.filter.call($("s-guide").querySelectorAll("button, input"), function (x) { return !x.disabled && !x.hidden; });
+        if (!f.length) return;
+        if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+      }
+    });
+
+    // advice: one short remark at a time, at the moments that matter, never over a card or the walkthrough
+    var queue = [], adviceTimer = null, adviceFace = null, said = {};
+    function advise(face, text, once) {
+      if (!guideOn() || !G) return;
+      if (once) { if (said[once]) return; said[once] = true; }
+      queue.push({ face: face, text: text });
+      if (queue.length > 3) queue.shift();
+      setTimeout(adviceNext, 900);
+    }
+    function hideAdvice() {
+      var a = $("s-advice"); if (a) a.hidden = true;
+      if (adviceTimer) { clearTimeout(adviceTimer); adviceTimer = null; }
+    }
+    function adviceNext() {
+      var a = $("s-advice");
+      if (!a || !queue.length || !a.hidden || !$("s-walk").hidden || document.querySelector(".s-overlay:not([hidden])")) return;
+      if (V && V.phase === "done") { queue = []; return; }
+      var x = queue.shift();
+      if (!adviceFace) { adviceFace = G.portrait(x.face); $("s-advice-face").appendChild(adviceFace); }
+      G.face(adviceFace, x.face);
+      $("s-advice-text").textContent = x.text;
+      a.hidden = false; restart(a, "s-advice-in"); restart(adviceFace, "g-react");
+      A.play("flip");
+      adviceTimer = setTimeout(function () { if (!a.matches(":hover") && !a.contains(document.activeElement)) { hideAdvice(); setTimeout(adviceNext, 400); } }, 9000);
+    }
+    $("s-advice-ok").addEventListener("click", function () { hideAdvice(); setTimeout(adviceNext, 300); });
+
+    // what's worth a remark: new chapters and their crises, deals at the door, intelligence, lost clauses, groups won and lost
+    function moments(v, prev, news, won, lost) {
+      if (v.phase === "chapter" && prev.chapter !== v.chapter && v.crisis && v.crisis.chapter === v.chapter)
+        advise("concerned", "A crisis: " + v.crisis.title + ". " + v.crisis.teaches);
+      if (prev.phase === "chapter" && v.phase === "summit") advise("eyebrow", "The Summit is open. Choose how to open your speech: firm to rally your friends, open for Respect, bridge for the undecided.");
+      if (won) advise("delighted", "Splendid: a regional group stands behind your draft. Keep it there; rivals will try to win it back.");
+      if (lost) advise("concerned", "We've lost a regional group's endorsement. A side event can win it back.");
+      var fresh = (v.offers || []).filter(function (o) { return !(prev.offers || []).some(function (p) { return p.id === o.id; }); });
+      if (fresh.length) advise("wry", fresh[0].name + " is at your door with an offer. It's on your Brief, and it lapses when the turn ends.");
+      news.forEach(function (x) {
+        if (x.kind === "rival" && /struck your clause/.test(x.text)) advise("concerned", x.text + " Clauses with wide support are safer: the working group won't strike a clause it would pass.");
+        if (x.kind === "intel") advise("thinking", x.text.replace(/^Intelligence: /, "A word from our people: "));
+      });
+      if (v.phase === "chapter" && prev.chapter !== v.chapter && prev.objectives) {
+        var met = v.objectives[String(prev.chapter)];
+        if (met !== undefined) advise(met ? "delighted" : "concerned", met ? "Chapter goal met. The committee has noticed." : "We missed the chapter's goal. No matter: what counts is the final vote.");
+      }
+      if (v.phase === "chapter" && v.ap === 0) advise("calm", "Your actions are spent. End the turn when you're ready.", "ap0");
+      if (v.phase === "chapter" && v.xp >= v.skill_cost) advise("wry", "You have Expertise enough for a diplomatic skill. Open Skills to choose one.", "skill");
     }
 
     // ---------- the debrief dossier ----------
@@ -921,7 +1163,8 @@
       var iso = t.getAttribute("data-iso"); if (iso === V.you.iso3) return;
       pick(iso); setTab("dele"); A.play("flip");
     });
-    document.addEventListener("click", function (e) { if (e.target.closest("[data-close]")) setTimeout(function () { nextTip(V); }, 400); });
+    document.addEventListener("click", function (e) { if (e.target.closest("[data-close]")) setTimeout(adviceNext, 500); });
+    $("s-replay-walk").addEventListener("click", function () { close("s-pause"); if (V) walkStart(V, null, true); });
     $("s-side-event").addEventListener("click", function () { move({ do: "side_event", region: $("s-region-pick").value }); });
     $("s-bloc-whip").addEventListener("click", function () { move({ do: "bloc_whip", group: $("s-bloc-pick").value }); });
     $("s-end-turn").addEventListener("click", function () { amending = null; move({ do: "end_turn" }); });

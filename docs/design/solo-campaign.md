@@ -353,3 +353,52 @@ Every scenario now has its own clause cards and events (8 and 6 each). A commitm
 | Stuck games | 0 | 0 |
 
 The scenario labels still match: Comet Halcyon-7 is at 97% (Beginner). The Standard scenarios are at 56–84%. The two Security Council scenarios are at 26% and 41% (Expert).
+
+## 20. The dynamic hour and the Chief of Protocol (phase 7, 5 Nov 2026)
+
+Ben chose all four dynamics ("60 min game should be dynamic") and a guide: "a lot more of a walkthrough, with a checkbox to dismiss all tutorial … some kind of character who explains everything … The player should know in full how the game is going to look before it happens." His choices: the Chief of Protocol; the guide also speaks at key moments; the walkthrough runs at the start of every new session until it's turned off.
+
+**Chapter crises** (`content.CRISES`, `engine._open_chapter`). Each chapter opens with one, shown on the chapter card and on the Brief, and it lasts for that chapter:
+- *A new government*: one delegation's position on one commitment moves 0.8 towards the opposite of its stated position.
+- *The press turns on part of the draft*: every non-rival delegation cools by 0.25 on one commitment.
+- *The deadline is brought forward*: the chapter has one turn fewer (`engine.turns_now`).
+- *A rival gains a partner*: that rival has one more action each turn.
+- *A donor conference*: +4 Influence for you and every rival.
+- *A regional group holds a summit*: that group endorses with a lean of 0.2 instead of 0.3.
+
+Each crisis says what it teaches. At each chapter start one or two capitals also send new instructions (±0.4 on one commitment).
+
+**Shifting delegations** (`g["drift"]`, `engine.drift`, `shift`, `mu_of`). A shift is added to the model's position in `latent`, so it reaches the vote, the country file ("Since the session began: cooler towards …"), lobbying costs, promises and offers. Shifts are capped at ±1.5 and logged in the Record.
+
+**Offers at your door** (`engine._make_offers`, `a_offer`). One or two delegations come with a deal each turn, which lapses when the turn ends. Answering costs no action. The deals:
+- *Back our clause*: a promise on a clause they like, +1 Trust and 0.35 goodwill.
+- *Drop part of a clause*: an amendment the working group must still accept; if it does, +1 Trust and 0.5 goodwill.
+- *A favour*: 2 Influence for a favour at the summit.
+
+**Rival personalities** (`content.RIVAL_STYLES`, `rivals_move`). Each rival has a different one:
+- *The Hawk*: the old behaviour; blocks first.
+- *The Broker*: holds side events for the regional group it's closest to winning.
+- *The Spoiler*: goes after the clauses you wrote, and saves one extra floor amendment for the summit.
+
+Every turn an intelligence report on one rival reaches the Record (every rival with Rival intelligence).
+
+**The Chief of Protocol** (`session-guide.js`). An original character: silver hair, half-moon glasses, a navy suit and a brass pin, in an oval brass frame. He has six expressions (calm, wry, eyebrow, concerned, delighted, thinking), blinks, breathes and reacts when his expression changes.
+- *The walkthrough:* 18 steps, written for the player's own session: their country, instructions, rivals and crisis. It covers how the hour runs (a timeline), the four paths, the meters, the room, working a delegation, regional groups, the draft, the drafting table, rivals, crises/news/offers, skills, ending a turn, a preview of the Summit and of the debrief, then "Begin the session". A spotlight and the guide glide between the parts of the table (four dimming panels, because a huge box-shadow isn't painted inside the scaled stage). Back, Next, Skip, the arrow keys and Escape all work, and focus stays inside the guide. "Don't show the tutorial again" turns the guide off (Settings → The guide turns it back on), and Menu → Replay the walkthrough replays it.
+- *Advice at key moments:* a new crisis, an offer at the door, a regional group won or lost, a rival striking your clause, intelligence, the chapter goal met or missed, the Summit opening, the first time your actions run out, and the first time you can afford a skill. One remark at a time, never over a card; it closes itself after 9 seconds.
+- *The debrief* opens with his verdict.
+
+The old one-off tips are gone.
+
+**Re-measured** (2,400 games, 20 per cell, with bots that answer offers: never one that ties them to their red line or drops their own instructions):
+
+| Target | Phase 5 | With the dynamics |
+|---|---|---|
+| Standard: silver or better | 65.5% | 66.1% |
+| Gold on own path: hardliner / analyst / broker / drafter | 35 / 46 / 42 / 64% | 43 / 43 / 49 / 64% |
+| Highest action share among winners | 18% | 24% (offers: answering is free, so most bots answer every offer) |
+| Hardest scenario on Standard | 26% | 25% (Security Council climate) |
+| Random player, silver or better | 19% | 17.5% |
+| Stuck games | 0 | 0 |
+| Average session (minutes, estimated) | — | 55–63 |
+
+The scenario labels still hold: Comet 96% (Beginner), the Standard scenarios 55–88%, and the Council scenarios 25% and 36% (Expert). Hard and hardliner is the weakest cell (25% silver or better).

@@ -74,6 +74,8 @@ class Bot:
             q = next(q for q in K.QUESTIONS if q["id"] == g["question"])
             right = self.rng.random() < (self.skill if self.style != "random" else 0.34)
             g, _ = self.act(g, {"do": "answer", "option": q["answer"] if right else (q["answer"] + 1) % len(q["options"])})
+        for o in list(g.get("offers", [])):
+            g, _ = self.act(g, {"do": "offer", "id": o["id"], "answer": "accept" if self.take(g, o) else "refuse"})
         for sk in BRANCH[self.style]:
             if g["xp"] >= K.SKILL_COST:
                 g, _ = self.act(g, {"do": "skill", "skill": sk})
@@ -90,6 +92,17 @@ class Bot:
                 break
         g, _ = self.act(g, {"do": "end_turn"})
         return g
+
+    def take(self, g, o) -> bool:
+        """Whether to accept an offer at the door: never one that ties you to your red line."""
+        if self.style == "random":
+            return self.rng.random() < 0.5
+        if o["kind"] == "back":
+            c = next((x for x in g["draft"] if x["id"] == o["clause"]), None)
+            return bool(c) and g["mandate"]["red"] not in c["tags"]
+        if o["kind"] == "drop":
+            return o["tag"] not in (g["mandate"]["must"], g["mandate"].get("also"))
+        return g["influence"] >= 4
 
     def options(self, g) -> list[dict]:
         return getattr(self, "opt_" + self.style)(g)

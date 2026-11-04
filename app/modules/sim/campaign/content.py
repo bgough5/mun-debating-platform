@@ -119,3 +119,33 @@ SCENARIO_LEVEL = {
     "sc_ai_cyber": "expert", "sc_climate_security": "expert",
 }
 LEVEL_NAMES = {"beginner": "Beginner", "standard": "Standard", "expert": "Expert"}
+
+
+# Chapter crises (phase 7): one opens each chapter and changes the rules for that chapter, like an era event.
+CRISES = [
+    {"id": "new_government", "title": "A new government in {country}",
+     "body": "An election in {country} brings in a new government. Its delegation has new instructions on any clause that {tag}.",
+     "teaches": "Delegations speak for their governments: when a government changes, its positions can change overnight."},
+    {"id": "press", "title": "The press turns on part of the draft",
+     "body": "Newspapers in many capitals attack any clause that {tag}. Delegations become warier of it.",
+     "teaches": "Public opinion at home limits what delegates can agree to abroad."},
+    {"id": "deadline", "title": "The deadline is brought forward",
+     "body": "The President of the committee announces that this chapter will close a turn early. Work fast.",
+     "teaches": "Negotiations run to the clock: deadlines force compromises, or leave texts unfinished."},
+    {"id": "partner", "title": "{rival} gains a partner",
+     "body": "A like-minded delegation joins {rival} and lends it staff for this chapter. It can do more each turn.",
+     "teaches": "Delegations pool their staff and their votes: small countries gain weight by working together."},
+    {"id": "donor", "title": "A donor conference",
+     "body": "Several capitals pledge money for the issue. Every delegation, rivals included, has more to work with this chapter.",
+     "teaches": "Funding pledges change what a resolution can promise, and who can afford to lobby for it."},
+    {"id": "regional_summit", "title": "The {region} holds a summit",
+     "body": "Leaders of the {region} meet in the middle of the session. The group is ready to back a draft more readily this chapter.",
+     "teaches": "Regional groups and organisations shape positions before they reach the UN."},
+]
+
+# Rival personalities (phase 7): how each rival plays, which a player can learn and plan for.
+RIVAL_STYLES = {
+    "hawk": {"name": "The Hawk", "what": "Blocks first: amends and strikes anything that crosses its instructions."},
+    "broker": {"name": "The Broker", "what": "Buys allies: courts whole regional groups and builds a bloc against you."},
+    "spoiler": {"name": "The Spoiler", "what": "Goes after your text: targets the clauses you wrote, and saves a floor amendment for the summit."},
+}

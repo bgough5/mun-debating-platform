@@ -83,7 +83,8 @@ def test_a_guest_plays_a_quick_session_to_the_end(app):
         r = r.json()
         st, sig = r["state"], r["sig"]
         return r
-    for _ in range(4):
+    r = {"view": j["view"]}
+    while r["view"]["phase"] == "chapter":                      # four turns, or three if the deadline is brought forward
         r = move({"do": "end_turn"})
     assert r["view"]["phase"] == "summit" and r["view"]["summit"]["step"] == "speech"
     r = move({"do": "speech", "stance": "bridge"})
@@ -116,7 +117,8 @@ def test_the_almanac_the_debrief_and_teachers_results(app, coord):
     a_text = "Calls on every observatory to publish its readings at once, a private sentence of mine;"
     card = j["view"]["cards"][0]["id"]
     api(a, {**body, "action": {"do": "propose", "card": card, "text": a_text}})
-    for _ in range(4):
+    r = {"view": j["view"]}
+    while r["view"]["phase"] == "chapter":
         r = api(a, {**body, "action": {"do": "end_turn"}}).json()
     r = api(a, {**body, "action": {"do": "speech", "stance": "open"}}).json()
     while r["view"]["summit"]["step"] == "clause":
@@ -130,3 +132,22 @@ def test_the_almanac_the_debrief_and_teachers_results(app, coord):
     page = coord.get("/session/results").text
     assert "New Zealand" in page and "Kingmaker" in page and "private sentence" not in page
     assert guest(app).get("/session/results", follow_redirects=False).status_code in (302, 303, 401, 403)
+
+
+def test_the_view_shows_the_crisis_offers_and_rival_personalities(app):
+    """Phase 7: the chapter's crisis, the offers at the door (answered through the API) and each rival's style."""
+    c = guest(app)
+    for seed_iso in ("NZL", "IND", "BRA", "JPN", "DEU", "NGA"):
+        j = api(c, {"do": "new", "pack": "comet_halcyon", "iso3": seed_iso, "length": "standard", "difficulty": "hard", "path": "mandate"}).json()
+        v = j["view"]
+        assert v["crisis"]["chapter"] == 1 and v["crisis"]["title"] and v["crisis"]["teaches"]
+        assert all(r["style_name"] and r["style_what"] for r in v["rivals"]) and len({r["style"] for r in v["rivals"]}) == 3
+        assert v["turns"] in (4, 5)                                                   # a deadline crisis takes a turn off
+        if v["offers"]:
+            break
+    o = v["offers"][0]
+    assert o["name"] and o["text"].startswith(o["name"]) and o["terms"]
+    m = api(c, {"do": "move", "state": j["state"], "sig": j["sig"], "action": {"do": "offer", "id": o["id"], "answer": "refuse"}})
+    assert m.status_code == 200 and all(x["id"] != o["id"] for x in m.json()["view"]["offers"])
+    again = api(c, {"do": "move", "state": m.json()["state"], "sig": m.json()["sig"], "action": {"do": "offer", "id": o["id"], "answer": "accept"}})
+    assert again.status_code == 400 and "lapsed" in again.json()["error"]

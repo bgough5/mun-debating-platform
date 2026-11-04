@@ -495,6 +495,16 @@ There is no interface yet. Phase 2 waits for Ben's calls on scenario labels, a S
   - **Envoys:** a brass token (red for a rival's) travels across the map from whoever made a move to the delegation it was about.
 - **Teachers:** Model UN → "See their results" (`/session/results`) lists their students' finished sessions: scenario, country, path, the grade on each path, the result and predictions. Never their words.
 
+
+**Phase 7, the dynamic hour and the Chief of Protocol (5 Nov 2026).** Ben chose all four dynamics and asked for a walkthrough with a character: "When you load in, it should automatically pop up with some kind of character who explains everything … it should walk you through the entire game before beginning the game, with smooth movement on the pop-ups … The player should know in full how the game is going to look before it happens." He chose the Chief of Protocol, advice at key moments, and the walkthrough at every new session until it's dismissed.
+- **Chapter crises:** six kinds; one opens each chapter and lasts for it.
+- **Offers at your door:** one or two each turn; answering costs no action, and they lapse when the turn ends.
+- **Rival personalities:** the Hawk, the Broker and the Spoiler, with an intelligence report each turn.
+- **Shifting delegations:** shifts from crises and new instructions reach the vote and the country files.
+- **The Chief of Protocol:** an 18-step walkthrough of the whole session with a gliding spotlight, advice at key moments, his verdict at the debrief, a "Don't show the tutorial again" checkbox and Replay in the Menu.
+- **Balance:** re-measured in section 20 of the design doc.
+- **Also fixed:** the speech coach's mirror layer could stick out past a 320 px page for a moment after a resize. That was the intermittent `test_a11y_every_student_page` failure; the layer is now clamped with `max-width: 100%`.
+
 ### D-100 The speech coach beside every speech box — Decided (5 Nov 2026, Ben)
 Ben: "there should be some stats and visual add-ins that makes speeches easier to write. some things such as word count, expected speaking time, repetitive language indicators, lists of persuasive techniques … keep the platform clean, easily set-up and intuitive … as pretty and fun/interactive/clear as possible." He chose:
 - every speech box, "togglable so it doesn't feel like a constant tutorial", plus Model UN phrases to click in ("addressing other honourable delegates etc.");

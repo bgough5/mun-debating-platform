@@ -38,6 +38,10 @@
       <div class="s-panes" tabindex="0" aria-label="Your move">
       <div class="s-pane" role="tabpanel" id="p-brief" aria-labelledby="t-brief">
         <section class="b-card" id="c-chapter"><h2 id="c-chapter-h">Chapter</h2><p class="s-goal" id="c-goal"></p><ul class="s-checks" id="c-progress"></ul><p class="s-small" id="c-turn"></p></section>
+        <section class="b-card s-offers" id="c-offers" hidden><h2>At your door</h2>
+          <p class="s-small">Delegations come to you with deals. Answering costs no action; an offer lapses at the end of the turn.</p>
+          <ul class="s-offer-list" id="c-offer-list"></ul></section>
+        <section class="b-card s-crisis-card" id="c-crisis" hidden><h2>This chapter's crisis</h2><div id="c-crisis-body"></div></section>
         <section class="b-card" id="c-event" hidden><h2>News</h2><div id="c-event-body"></div></section>
         <section class="b-card" id="c-instr"><h2>Your instructions</h2>
           <p class="s-small">Secret, from your capital. Rivals have their own.</p><ul class="s-instr" id="c-instr-list"></ul>
@@ -87,6 +91,7 @@
 
   <div class="s-overlay" id="s-chapter-card" hidden role="dialog" aria-modal="true" aria-labelledby="s-cc-h">
     <div class="s-doc s-chapter"><p class="s-eyebrow" id="s-cc-eyebrow">Chapter</p><h2 id="s-cc-h">–</h2><p id="s-cc-goal"></p>
+      <div class="s-cc-crisis" id="s-cc-crisis" hidden><span class="s-cc-stamp">Crisis</span><h3 id="s-cc-crisis-h"></h3><p id="s-cc-crisis-p"></p><p class="s-small" id="s-cc-crisis-t"></p></div>
       <div class="s-row s-center"><button type="button" class="s-btn" data-close="s-chapter-card">Begin</button></div></div>
   </div>
   <div class="s-overlay" id="s-pause" hidden role="dialog" aria-modal="true" aria-labelledby="s-pause-h">
@@ -94,6 +99,7 @@
       <p class="s-sub" id="s-pause-note">{{ "Your session is saved after every move." if mode == "saved" else "Your session is kept on this laptop after every move." }}</p>
       <button type="button" class="s-btn" data-close="s-pause">Resume</button>
       <button type="button" class="s-btn ghost" data-open="s-settings">Settings</button>
+      <button type="button" class="s-btn ghost" id="s-replay-walk">Replay the walkthrough</button>
       <a class="s-btn ghost" href="/session/almanac/{{ pack }}" target="_blank" rel="noopener" hx-boost="false">The Almanac (opens a new tab)</a>
       <a class="s-btn ghost" href="/session" hx-boost="false">Save and leave</a>
       <button type="button" class="s-btn ghost" id="s-abandon">Abandon this session</button>
@@ -115,6 +121,33 @@
       <div class="s-row"><a class="s-btn" href="/session" hx-boost="false">Back to The Session</a>
         <button type="button" class="s-btn ghost" data-close="s-result">Look at the board</button></div></div>
   </div>
+  <div class="s-walk" id="s-walk" hidden>
+    <div class="s-dim" data-dim="t" aria-hidden="true"></div><div class="s-dim" data-dim="b" aria-hidden="true"></div>
+    <div class="s-dim" data-dim="l" aria-hidden="true"></div><div class="s-dim" data-dim="r" aria-hidden="true"></div>
+    <div class="s-spot" id="s-spot" aria-hidden="true"></div>
+    <div class="s-guide" id="s-guide" role="dialog" aria-modal="true" aria-labelledby="s-guide-h" aria-describedby="s-guide-body">
+      <div class="s-guide-face" id="s-guide-face"></div>
+      <div class="s-guide-talk">
+        <p class="s-eyebrow"><span>The Chief of Protocol</span> · <span id="s-guide-step"></span></p>
+        <h2 id="s-guide-h">–</h2>
+        <div class="s-guide-body" id="s-guide-body"></div>
+        <ol class="s-guide-dots" id="s-guide-dots" aria-hidden="true"></ol>
+        <div class="s-guide-foot">
+          <label class="s-guide-off"><input type="checkbox" id="s-guide-off"> Don't show the tutorial again</label>
+          <span class="s-row">
+            <button type="button" class="s-btn ghost small" id="s-guide-skip">Skip</button>
+            <button type="button" class="s-btn ghost small" id="s-guide-back">Back</button>
+            <button type="button" class="s-btn small" id="s-guide-next">Next</button>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <section class="s-advice" id="s-advice" hidden aria-labelledby="s-advice-h">
+    <div class="s-advice-face" id="s-advice-face"></div>
+    <div class="s-advice-talk"><h2 class="s-eyebrow" id="s-advice-h">The Chief of Protocol</h2><p id="s-advice-text" aria-live="polite"></p>
+      <button type="button" class="s-btn ghost small" id="s-advice-ok">Thank you</button></div>
+  </section>
   {{ settings_panel() }}
   <div class="b-overlay" id="b-overlay"></div>
 </div>

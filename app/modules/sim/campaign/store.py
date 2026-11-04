@@ -194,7 +194,7 @@ def view(scn: Scenario, g: dict) -> dict:
              "est": None if rival or not final["tags"] else E.vote_of(scn, E.latent(scn, g, iso, final, mood=False))}
         if not rival and chapters:
             t["lobby_cost"] = E.lobby_cost(scn, g, iso)
-            t["promise_on"] = [c["id"] for c in g["draft"] if scn.dist(c["tags"]).get(iso, (0, 1))[0] >= 0.4]
+            t["promise_on"] = [c["id"] for c in g["draft"] if E.mu_of(scn, g, iso, c["tags"]) >= 0.4]
         if iso in g["read"]:
             t["file"] = E.country_file(scn, g, iso)
         tokens[iso] = t
@@ -221,7 +221,7 @@ def view(scn: Scenario, g: dict) -> dict:
     last = g["chapter"] == E.LENGTHS[g["length"]]["chapters"]
     return {
         "v": E.VERSION, "pack": g["pack"], "title": scn.title, "fictional": scn.fictional, "phase": g["phase"],
-        "chapter": g["chapter"], "turn": g["turn"], "chapters": L["chapters"], "turns": L["turns"],
+        "chapter": g["chapter"], "turn": g["turn"], "chapters": L["chapters"], "turns": E.turns_now(g) if g["phase"] == "chapter" else L["turns"],
         "chapter_name": K.CHAPTERS.get(g["chapter"] if g["length"] != "quick" else 1, {}).get("name", ""),
         "goal": ("Build the draft (four clauses, one yours) and table it with sponsors and signatories." if g["length"] == "quick"
                  else K.CHAPTERS.get(g["chapter"], {}).get("goal", "")),
@@ -229,8 +229,11 @@ def view(scn: Scenario, g: dict) -> dict:
         "you": {"iso3": g["iso3"], "name": scn.member(g["iso3"]).name},
         "mandate": {k: {"code": v, "label": tags[v]} for k, v in g["mandate"].items()},
         "path": {"code": g["path"], **K.PATHS[g["path"]]}, "difficulty": g["difficulty"], "length": g["length"],
-        "rivals": [{"iso3": r["iso3"], "name": scn.member(r["iso3"]).name,
+        "rivals": [{"iso3": r["iso3"], "name": scn.member(r["iso3"]).name, "style": r.get("style", "hawk"),
+                    "style_name": K.RIVAL_STYLES[r.get("style", "hawk")]["name"], "style_what": K.RIVAL_STYLES[r.get("style", "hawk")]["what"],
                     **({"want": tags[r["want"]], "block": tags[r["block"]]} if "rival_intel" in g["skills"] else {})} for r in g["rivals"]],
+        "crisis": g.get("crisis"), "offers": [{**o, "name": scn.member(o["iso3"]).name} for o in g.get("offers", [])] if chapters else [],
+        "deals": g.get("deals", 0),
         "event": g.get("event"), "question": {"ask": q["ask"], "options": q["options"]} if q else None,
         "draft": draft, "cards": [c for c in scn.cards if c["id"] in g["cards"]],
         "endorse": {REGIONS.get(r, r): _name(scn, g, a) for r, a in g["endorse"].items()},

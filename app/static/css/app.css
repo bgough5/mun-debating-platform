@@ -22,6 +22,7 @@
   --reg-afr: #D9A441; --reg-apg: #C97B5A; --reg-eeg: #8E9CC9; --reg-grulac: #7DB37A; --reg-weog: #6FA3B8;
   --walnut-dk: #24160B; --walnut: #3E2814; --un-blue: #1F4E79; --un-blue-lt: #5B8FCB; --lit: #F4D77A; --un-blue-dk: #12324F; --brass-dk: #7A5C0E;
   --hl-repeat: #FCE8A6; --hl-filler: #F9D3D0; --hl-long: #DCE8FA; --hl-tech: #CDEBD5;
+  --skin: #E2B48C; --skin-dk: #B9825A; --hair: #D3D6DB; --hair-dk: #8E939B; --navy: #1B2A45; --navy-lt: #2E4268;
   --serif: Cinzel, Georgia, "Times New Roman", serif;
   --sans: "Open Sans", Calibri, "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
   --book: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
@@ -807,7 +808,7 @@ details.advanced[open] > summary { margin-bottom: .6rem; }
 
 /* The marks: a copy of the text drawn behind the (now transparent) text box */
 .coach-host { position: relative; }
-.coach-back { position: absolute; z-index: 0; margin: 0; overflow: hidden; white-space: pre-wrap; overflow-wrap: break-word;
+.coach-back { position: absolute; z-index: 0; margin: 0; max-width: 100%; overflow: hidden; white-space: pre-wrap; overflow-wrap: break-word;
   color: transparent; background: var(--white); border-style: solid; border-color: transparent; border-radius: var(--radius); pointer-events: none; }
 textarea.coach-ta { position: relative; z-index: 1; background: transparent; }
 .coach-back mark, .coach-read mark { color: inherit; border-radius: 2px; padding: 0; transition: background-color .2s; }
