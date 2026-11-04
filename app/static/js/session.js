@@ -211,7 +211,7 @@
     function opt(sel, value, text) { var o = h("option", "", text); o.value = value; sel.appendChild(o); return o; }
 
     // ---------- tabs ----------
-    var TABS = ["brief", "draft", "dele", "record"];
+    var TABS = ["brief", "draft", "dele", "summit", "record"];
     function setTab(name, focus) {
       TABS.forEach(function (t) {
         var b = $("t-" + t), on = t === name;
@@ -221,15 +221,28 @@
     }
     document.querySelector(".s-tabs").addEventListener("click", function (e) { var b = e.target.closest("[data-tab]"); if (b) { setTab(b.getAttribute("data-tab")); A.play("flip"); } });
     document.querySelector(".s-tabs").addEventListener("keydown", function (e) {
-      var i = TABS.indexOf(document.activeElement.getAttribute("data-tab")); if (i < 0) return;
-      if (e.key === "ArrowRight" || e.key === "ArrowLeft") { e.preventDefault(); setTab(TABS[(i + (e.key === "ArrowRight" ? 1 : 3)) % 4], true); }
+      var shown = TABS.filter(function (t) { return !$("t-" + t).hidden; });
+      var i = shown.indexOf(document.activeElement.getAttribute("data-tab")); if (i < 0) return;
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") { e.preventDefault(); setTab(shown[(i + (e.key === "ArrowRight" ? 1 : shown.length - 1)) % shown.length], true); }
     });
 
     // ---------- moves ----------
     function move(action) {
-      if (V && V.phase !== "chapter") return;
+      if (V && V.phase === "done") return;
       call({ do: "move", action: action }).then(function (r) {
+        var votes = r.out && (r.out.votes || (r.out.final && r.out.final.votes));
+        if (votes && Object.keys(votes).length) {
+          var passed = r.out.final ? r.out.final.passed : r.out.passed;
+          draw(r.view, r.out, action);
+          var wait = sweep(votes, passed);
+          var sum = r.out.final ? r.out.final.summary : r.out.summary;
+          say((r.out.amendment ? "The floor amendment was " + r.out.amendment + ". " : "") +
+              (r.out.final ? "The resolution: " : "The clause: ") + (passed ? "adopted. " : "rejected. ") + (sum || ""));
+          if (r.view.phase === "done") setTimeout(function () { result(r.view); }, wait);
+          return;
+        }
         draw(r.view, r.out, action);
+        if (r.view.phase === "done" && action.do === "statement") setTimeout(function () { result(r.view); }, 600);
         if (action.do === "end_turn") A.play("gavel"); else if (SOUND[action.do]) A.play(SOUND[action.do]);
       }).catch(function (e) { say(e.message); A.play("tick"); });
     }
@@ -462,7 +475,7 @@
       for (var i = 0; i < Math.max(v.ap, 0); i++) ap.appendChild(h("i", "on"));
       $("m-ap").setAttribute("aria-label", v.ap + " actions left this turn");
       $("c-chapter-h").textContent = v.phase === "summit" ? "The Summit" : (v.length === "quick" ? "Working session" : "Chapter " + v.chapter + ": " + v.chapter_name);
-      $("c-goal").textContent = v.phase === "summit" ? "The summit screens arrive in the next update: for now, the session pauses here." : v.goal;
+      $("c-goal").textContent = v.phase === "chapter" ? v.goal : "The draft goes to the vote, clause by clause, then as a whole.";
       $("c-turn").textContent = v.phase === "chapter" ? "Turn " + v.turn + " of " + v.turns + "." : "";
       if (v.phase === "chapter") progress(v); else $("c-progress").textContent = "";
       // news
@@ -498,7 +511,8 @@
       if (out && out.file) showFile(out.file);
       if (out && out.accepted === false) say(action.do === "strike" ? "The working group wants that clause, so it stays. Your Influence is returned." : "The working group didn't accept that amendment: it would lose support. Your Influence is returned.");
       else if (out && out.right !== undefined) say((out.right ? "Right. " : "Not quite. ") + out.why);
-      else if (action && action.do === "end_turn") say("Rivals have moved: see the Record.");
+      else if (action && action.do === "end_turn") say(v.phase === "summit" ? "The summit opens." : "Rivals have moved: see the Record.");
+      else if (action && action.do === "speech") say("You gave a " + action.stance + " opening speech. The first clause is before the committee.");
       // rivals and the record
       var rl = $("c-rival-list"); rl.textContent = "";
       v.rivals.forEach(function (r) { rl.appendChild(h("li", "rival", r.name + (r.want ? ": wants " + r.want.toLowerCase() + "; blocks " + r.block.toLowerCase() : ": instructions unknown (Rival intelligence reveals them)"))); });
@@ -526,9 +540,183 @@
         if (won) { A.play("fanfare"); say("A regional group now endorses your draft."); } else if (lost) { A.play("sting"); say("A regional group no longer endorses your draft."); }
       }
       $("s-end-turn").hidden = v.phase !== "chapter";
+      summitTabs(v);
+      summitPane(v, out);
       if (!prev ? (v.turn === 1 && v.phase === "chapter" && seenLogAtStart(v)) : (prev.chapter !== v.chapter || prev.phase !== v.phase)) chapterCard(v, prev);
     }
     function seenLogAtStart(v) { return v.log.filter(function (x) { return x.kind === "action"; }).length === 0; }
+
+    // ---------- the summit ----------
+    var STANCE = {
+      firm: ["Firm", "State your country's position plainly. Delegations that share your main aim warm to you; those against it cool a little."],
+      open: ["Open", "Listen first and acknowledge the other side. The room respects it: +1 Respect."],
+      bridge: ["Bridge", "Speak to the undecided. Delegations in the middle warm to you."]
+    };
+    var GRADE = ["No medal", "Bronze", "Silver", "Gold"];
+    var choice = "stand", timer = null, shownStep = null;
+    function stopTimer() { if (timer) { clearTimeout(timer); timer = null; } }
+    function defaultVote(cur) { return cur.stance > 0 ? "yes" : cur.stance < 0 ? "no" : "abstain"; }
+
+    function summitTabs(v) {
+      var summit = v.phase !== "chapter";
+      ["brief", "draft", "dele"].forEach(function (t) { $("t-" + t).hidden = summit; });
+      $("t-summit").hidden = !summit;
+      if (summit && $("t-summit").getAttribute("aria-selected") !== "true" && $("t-record").getAttribute("aria-selected") !== "true") setTab("summit");
+    }
+
+    function summitPane(v, out) {
+      var S = v.summit; if (!S) return;
+      var box = $("c-summit"); box.textContent = "";
+      var key = S.step + ":" + (S.current ? S.current.id : "") + ":" + v.phase;
+      if (key !== shownStep) { choice = "stand"; stopTimer(); }
+      if (v.phase === "done") {
+        box.appendChild(h("h2", "", "The session is over"));
+        var fin = S.statement && S.statement.adopted ? "The resolution failed, but a Presidential Statement was agreed." :
+          S.final && S.final.passed ? "The resolution was adopted. " + S.final.summary : "The resolution failed. " + (S.final ? S.final.summary : "");
+        box.appendChild(h("p", "", fin));
+        box.appendChild(btn("See your results", "s-btn", function () { result(v); }));
+      } else if (S.step === "speech") {
+        box.appendChild(h("h2", "", "Your opening speech"));
+        box.appendChild(h("p", "", "The summit opens with each delegation's statement. How will " + v.you.name + " speak?"));
+        var ta = h("textarea"); ta.setAttribute("aria-label", "Your speech, if you want to write it (not saved or marked)");
+        ta.placeholder = "Your words, if you want to write them. For your own practice: not saved, not marked.";
+        ta.className = "s-speech"; box.appendChild(ta);
+        var st = h("div", "s-stances");
+        Object.keys(STANCE).forEach(function (k) {
+          var b = h("button", "s-stance"); b.type = "button";
+          b.appendChild(h("b", "", STANCE[k][0])); b.appendChild(h("span", "", STANCE[k][1]));
+          b.addEventListener("click", function () { move({ do: "speech", stance: k }); });
+          st.appendChild(b);
+        });
+        box.appendChild(st);
+      } else if (S.step === "clause" && S.current) {
+        var cur = S.current;
+        var hd = h("h2"); hd.appendChild(document.createTextNode("Clause " + cur.n)); hd.appendChild(h("span", "s-count", cur.n + " of " + cur.of)); box.appendChild(hd);
+        var dial = h("span", "s-dial"); dial.style.setProperty("--p", Math.round(cur.chance.p_pass * 100));
+        dial.appendChild(h("span", "", Math.round(cur.chance.p_pass * 100) + "%")); dial.setAttribute("aria-label", "About " + Math.round(cur.chance.p_pass * 100) + "% chance it passes");
+        box.appendChild(dial);
+        box.appendChild(h("p", "s-clause-big", cur.text));
+        box.appendChild(h("p", "s-small", (cur.mine ? "Your clause" : cur.author) + " · commits countries to: " + cur.tags.join("; ").toLowerCase()));
+        if (cur.promised_to.length) box.appendChild(h("p", "s-small", "You promised " + cur.promised_to.join(", ") + " to back this clause: vote yes to keep your word."));
+        if (S.pending) {
+          var am = h("div", "s-amendment");
+          am.appendChild(h("b", "", "Floor amendment from " + S.pending.by_name));
+          am.appendChild(h("p", "", "They move to " + S.pending.change + ". Accept it as friendly, rule it out of order, or let it go to a vote first."));
+          box.appendChild(am);
+        }
+        box.appendChild(h("p", "s-small", "First, what will you do? Then cast " + v.you.name + "'s vote."));
+        var dec = h("div", "s-decide");
+        function chip(k, label, enabled) {
+          var b = btn(label, "s-chip", function () { choice = k; dec.querySelectorAll(".s-chip").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); }); A.play("tick"); }, !enabled);
+          b.setAttribute("aria-pressed", String(choice === k)); dec.appendChild(b);
+        }
+        chip("stand", S.pending ? "Let it go to a vote" : "Stand firm", true);
+        chip("offer", "Last offer (" + S.offer_cost + " Influence)", S.influence >= S.offer_cost);
+        chip("favour", "Call in a favour (" + S.favours.length + ")", S.favours.length > 0);
+        if (S.pending) chip("accept", "Accept as friendly (+1 Respect)", true);
+        if (S.pending) chip("point_of_order", "Point of order", S.po);
+        box.appendChild(dec);
+        var vt = h("div", "s-votes");
+        [["yes", "Yes"], ["abstain", "Abstain"], ["no", "No"]].forEach(function (x) {
+          vt.appendChild(btn(x[1], "s-btn v-" + x[0], function () { stopTimer(); move({ do: "decide", choice: choice, vote: x[0] }); }));
+        });
+        box.appendChild(vt);
+        if (A.settings().timer && key !== shownStep) {
+          var bar = h("div", "s-timer"); bar.appendChild(h("i")); bar.style.setProperty("--secs", "20s"); box.appendChild(bar);
+          box.appendChild(h("p", "s-timer-note", "The Chair calls the vote in twenty seconds. (Turn the timer off in Settings.)"));
+          requestAnimationFrame(function () { bar.classList.add("run"); });
+          timer = setTimeout(function () {
+            say("Time: the Chair called the vote. " + v.you.name + " voted " + defaultVote(cur) + ".");
+            move({ do: "decide", choice: choice, vote: defaultVote(cur) });
+          }, 20000);
+        }
+      } else if (S.step === "final") {
+        box.appendChild(h("h2", "", "The resolution as a whole"));
+        box.appendChild(h("p", "", S.kept.length ? "What survived the division of the question commits countries to: " + S.kept.join("; ").toLowerCase() + "."
+                                                 : "No clause was adopted, so there is nothing left to vote on."));
+        box.appendChild(h("p", "s-small", "Cast " + v.you.name + "'s vote on the whole resolution."));
+        var fv = h("div", "s-votes");
+        [["yes", "Yes"], ["abstain", "Abstain"], ["no", "No"]].forEach(function (x) { fv.appendChild(btn(x[1], "s-btn v-" + x[0], function () { move({ do: "final", vote: x[0] }); })); });
+        box.appendChild(fv);
+      } else if (S.step === "statement") {
+        box.appendChild(h("h2", "", "A Presidential Statement"));
+        box.appendChild(h("p", "", "The resolution has failed. The President of the Council proposes a statement instead: it isn't binding, and it is adopted only if no member objects."));
+        var form = h("div", "s-statement");
+        S.statement_options.forEach(function (o) {
+          var lab = h("label"), cb = h("input"); cb.type = "checkbox"; cb.value = o.code;
+          lab.appendChild(cb); lab.appendChild(document.createTextNode(o.label)); form.appendChild(lab);
+        });
+        box.appendChild(form);
+        var row = h("div", "s-row");
+        row.appendChild(btn("Propose the statement", "s-btn", function () {
+          var tags = Array.prototype.map.call(form.querySelectorAll("input:checked"), function (x) { return x.value; });
+          if (!tags.length) { say("Tick at least one commitment for the statement, or let it go."); return; }
+          move({ do: "statement", tags: tags });
+        }));
+        row.appendChild(btn("No statement", "s-btn ghost", function () { move({ do: "statement", skip: true }); }));
+        box.appendChild(row);
+      }
+      shownStep = key;
+      // the votes so far
+      var rl = $("c-result-list"); rl.textContent = "";
+      $("c-results").hidden = !S.results.length;
+      S.results.forEach(function (r, k) {
+        var li = h("li", r.passed ? "passed" : "failed");
+        li.appendChild(h("b", "", r.passed ? "Adopted" : "Rejected"));
+        li.appendChild(h("span", "", "Clause " + (k + 1) + ": " + r.labels.join("; ").toLowerCase()));
+        li.appendChild(h("span", "s-small", r.summary));
+        rl.appendChild(li);
+      });
+    }
+
+    function sweep(votes, passed) {
+      Object.keys(tokens).forEach(function (iso) { tokens[iso].classList.remove("v-yes", "v-no", "v-abstain"); });
+      var order = Object.keys(votes).sort(function (a, b) {
+        var ta = tokens[a], tb = tokens[b];
+        return (ta ? +ta.getAttribute("data-x") : 0) - (tb ? +tb.getAttribute("data-x") : 0);
+      });
+      var step = A.motionOn() ? 70 : 0;
+      A.play("sweep");
+      order.forEach(function (iso, k) {
+        setTimeout(function () {
+          var t = tokens[iso]; if (!t) return;
+          t.classList.add("v-" + votes[iso]); if (step) restart(t, "v-cast"); if (k % 4 === 0) A.play("tick");
+          var line = t.querySelector(".b-line"); if (line) line.textContent = { yes: "Yes", no: "No", abstain: "Abstain" }[votes[iso]] || "";
+        }, k * step);
+      });
+      setTimeout(function () {
+        var vd = $("s-verdict"); vd.className = "s-verdict " + (passed ? "yes" : "no");
+        vd.querySelector("span").textContent = passed ? "Adopted" : "Rejected";
+        restart(vd, "show"); A.play("stamp");
+        setTimeout(function () { A.play(passed ? "fanfare" : "sting"); }, 300);
+      }, order.length * step + 200);
+      return order.length * step + 2900;
+    }
+
+    function result(v) {
+      var r = v.result; if (!r) return;
+      var p = v.path, grade = r.grade;
+      $("s-result-eyebrow").textContent = r.passed ? "The resolution was adopted" : r.statement ? "A Presidential Statement was agreed" : "The resolution failed";
+      $("s-result-h").textContent = GRADE[grade] + " for " + p.name;
+      var b = $("s-result-body"); b.textContent = "";
+      var mb = h("div", "s-medal-big shown"), medal = h("i", "g" + grade, GRADE[grade]);
+      mb.appendChild(medal); mb.appendChild(h("p", "", "You aimed for " + p.name + ": " + p.what));
+      b.appendChild(mb);
+      var t = h("table", "s-paths-table"), hr = h("tr");
+      ["Path", "What it rewards", "Your grade"].forEach(function (x) { hr.appendChild(h("th", "", x)); }); t.appendChild(hr);
+      Object.keys(r.paths).forEach(function (k) {
+        var tr = h("tr", k === p.code ? "chosen" : "");
+        var info = { mandate: "Your instructions in a resolution that passes", consensus: "Wide support across regional groups",
+                     architect: "Most of the final text is yours", kingmaker: "Accurate predictions, kept promises, high Respect" }[k];
+        tr.appendChild(h("td", "", k.charAt(0).toUpperCase() + k.slice(1))); tr.appendChild(h("td", "", info)); tr.appendChild(h("td", "", GRADE[r.paths[k]]));
+        t.appendChild(tr);
+      });
+      b.appendChild(t);
+      b.appendChild(h("p", "s-sub", "Predictions right: " + r.whip_right + " of " + r.whip_judged + " · promises kept " + r.kept_promises + ", broken " + r.broken_promises +
+                                   " · groups endorsing you: " + r.endorsements + " · Respect " + r.respect + " · Expertise " + r.expertise + ". The full debrief arrives in a later update."));
+      open("s-result");
+      A.play(grade >= 2 ? "fanfare" : grade === 1 ? "chime" : "sting");
+    }
 
     // the map is the way in to a delegation
     $("b-map").addEventListener("click", function (e) {
@@ -553,7 +741,7 @@
         return;
       }
     }
-    call({ do: "view" }).then(function (r) { draw(r.view); }).catch(function (e) { say(e.message); });
+    call({ do: "view" }).then(function (r) { draw(r.view); if (r.view.phase === "done") result(r.view); }).catch(function (e) { say(e.message); });
   }
 
   if (page === "title") titlePage();

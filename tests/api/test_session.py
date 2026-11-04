@@ -68,3 +68,33 @@ def test_a_students_session_is_saved_and_theirs_alone(app):
     with app.state.db.write(SYSTEM) as w:
         erase_student(w, st)
     assert db_one(app, "SELECT COUNT(*) AS n FROM campaign_save WHERE student_id = ?", (st,))["n"] == 0
+
+
+def test_a_guest_plays_a_quick_session_to_the_end(app):
+    """Phase 4: four turns, the summit (speech, every clause, the whole resolution) and the result, all through the API."""
+    c = guest(app)
+    j = api(c, {"do": "new", "pack": "comet_halcyon", "iso3": "NZL", "length": "quick", "difficulty": "easy", "path": "mandate"}).json()
+    st, sig = j["state"], j["sig"]
+
+    def move(action):
+        nonlocal st, sig
+        r = api(c, {"do": "move", "state": st, "sig": sig, "action": action})
+        assert r.status_code == 200, r.text
+        r = r.json()
+        st, sig = r["state"], r["sig"]
+        return r
+    for _ in range(4):
+        r = move({"do": "end_turn"})
+    assert r["view"]["phase"] == "summit" and r["view"]["summit"]["step"] == "speech"
+    r = move({"do": "speech", "stance": "bridge"})
+    while r["view"]["summit"]["step"] == "clause":
+        cur = r["view"]["summit"]["current"]
+        assert 0 <= cur["chance"]["p_pass"] <= 1 and cur["n"] <= cur["of"]
+        r = move({"do": "decide", "choice": "stand", "vote": "yes"})
+        assert set(r["out"]["votes"]) >= {"NZL"} and r["out"]["votes"]["NZL"] == "yes"
+    assert r["view"]["summit"]["step"] == "final" and len(r["view"]["summit"]["results"]) >= 1
+    r = move({"do": "final", "vote": "yes"})
+    assert r["view"]["phase"] == "done" and r["view"]["result"]["grade"] in (0, 1, 2, 3)
+    assert set(r["view"]["result"]["paths"]) == {"mandate", "consensus", "architect", "kingmaker"}
+    after = api(c, {"do": "move", "state": st, "sig": sig, "action": {"do": "end_turn"}})
+    assert after.status_code == 400 and "over" in after.json()["error"]

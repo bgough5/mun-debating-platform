@@ -124,3 +124,50 @@ def test_a_guest_makes_moves_on_the_board(browser, live):
     assert not axe(page, "session_skills")
     assert not errors, errors
     ctx.close()
+
+
+def test_a_quick_session_reaches_the_summit_and_ends_with_medals(browser, live):
+    """Phase 4: the summit, clause by clause, then the whole resolution, then the results."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 900})
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(live.url + "/session/new")
+    page.click('[data-pick="pack"][data-value="comet_halcyon"]')
+    page.click('[data-step="1"] [data-next]')
+    page.wait_for_selector("#s-seats-box .s-seat")
+    page.click('.s-seat[data-value="NZL"]')
+    page.click('[data-step="2"] [data-next]')
+    page.click('[data-pick="length"][data-value="quick"]')
+    for n in (3, 4, 5):
+        page.click(f'[data-step="{n}"] [data-next]')
+    page.click("#s-begin")
+    page.wait_for_selector("#s-chapter-card:not([hidden])")
+    page.click("#s-chapter-card [data-close]")
+    for turn in range(2, 5):
+        page.click("#s-end-turn")
+        page.wait_for_function(f"document.getElementById('s-where').textContent.indexOf('turn {turn}') >= 0")
+    page.click("#s-end-turn")
+    page.wait_for_selector("#s-chapter-card:not([hidden])")
+    assert page.inner_text("#s-cc-h") == "The Summit"
+    page.click("#s-chapter-card [data-close]")
+    assert page.get_attribute("#t-summit", "aria-selected") == "true" and page.is_hidden("#t-draft")
+    page.click(".s-stance:has-text('Open')")
+    page.wait_for_selector("#c-summit .s-votes")
+    assert not axe(page, "session_summit_clause")
+    seen = 0
+    while page.locator("#c-summit h2:has-text('Clause')").count():
+        seen += 1
+        page.click("#c-summit .s-votes button:has-text('Yes')")
+        page.wait_for_function(f"document.querySelectorAll('#c-result-list li').length === {seen}")
+    assert seen >= 1 and page.locator("#s-verdict").count() == 1
+    page.wait_for_selector("#c-summit h2:has-text('The resolution as a whole')")
+    page.click("#c-summit .s-votes button:has-text('Yes')")
+    page.wait_for_selector("#s-result:not([hidden])", timeout=15000)
+    assert page.locator("#s-result .s-paths-table tr").count() == 5
+    assert any(m in page.inner_text("#s-result-h") for m in ("Gold", "Silver", "Bronze", "No medal"))
+    assert not axe(page, "session_result")
+    page.click("#s-result [data-close]")
+    assert page.is_visible("#c-summit button:has-text('See your results')")
+    assert not errors, errors
+    ctx.close()

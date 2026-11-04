@@ -447,6 +447,23 @@ There is no interface yet. Phase 2 waits for Ben's calls on scenario labels, a S
 - **Feedback:** each move has a sound. A group won or lost plays a fanfare or a sting.
 - **Not yet:** the summit (phase 4).
 
+**Phase 4, the Summit (5 Nov 2026).**
+- **Tabs:** at the summit the side panel shows The Summit and the Record.
+- **Opening speech:** choose Firm, Open or Bridge. There's a box for the student's own words, for practice only, never saved or marked.
+- **Each clause:** shown with its chance of passing, whose it is, and any promise riding on it. A rival's floor amendment appears as a card. The decision comes first:
+  - stand firm, or let the amendment go to a vote;
+  - a last offer (2 Influence);
+  - call in a favour;
+  - accept the amendment as friendly (+1 Respect);
+  - a point of order (with the skill).
+  
+  Then the vote.
+- **Timer:** with it on (Settings), the Chair calls the vote after 20 seconds and casts the student's vote by their stance.
+- **The vote sweeps the map** west to east, each token turning yes, no or abstain, then ADOPTED or REJECTED is stamped over the map, with a fanfare or a sting.
+- **The resolution as a whole:** what survived goes to a final vote.
+- **Presidential Statement (Council):** a failed resolution offers a statement with the commitments ticked.
+- **The result:** the medal for the chosen path, the grade on all four paths, the predictions, the promises, the endorsements, Respect and Expertise. The full debrief is phase 6.
+
 ### D-100 The speech coach beside every speech box — Decided (5 Nov 2026, Ben)
 Ben: "there should be some stats and visual add-ins that makes speeches easier to write. some things such as word count, expected speaking time, repetitive language indicators, lists of persuasive techniques … keep the platform clean, easily set-up and intuitive … as pretty and fun/interactive/clear as possible." He chose:
 - every speech box, "togglable so it doesn't feel like a constant tutorial", plus Model UN phrases to click in ("addressing other honourable delegates etc.");

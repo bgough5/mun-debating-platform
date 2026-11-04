@@ -52,6 +52,6 @@ def test_the_session_uses_only_tokens():
     """The Session (D-101) has its own stylesheet; its colours come from the same tokens."""
     css = (Path(__file__).resolve().parents[1] / "app" / "static" / "css" / "session.css").read_text(encoding="utf-8")
     assert re.findall(r"#[0-9A-Fa-f]{6}\b|#[0-9A-Fa-f]{3}\b", css) == []
-    used = set(re.findall(r"var\(--([a-z0-9-]+)", css)) - {"p"}       # --p: a clause's chance on its dial, set by session.js
+    used = set(re.findall(r"var\(--([a-z0-9-]+)", css)) - {"p", "secs"}   # set by session.js: a clause's chance on its dial, the summit timer
     defined = set(re.findall(r"--([a-z0-9-]+):", CSS))
     assert used <= defined, used - defined

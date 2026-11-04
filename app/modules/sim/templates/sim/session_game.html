@@ -26,11 +26,13 @@
 
   <main class="b-table" id="main" tabindex="-1">
     {% include "chair/_board_map.html" %}
+    <div class="s-verdict" id="s-verdict" aria-hidden="true"><span></span></div>
     <aside class="b-rail s-rail" id="s-rail" aria-label="The session">
       <div class="s-tabs" role="tablist" aria-label="The session">
         <button type="button" role="tab" id="t-brief" aria-controls="p-brief" aria-selected="true" data-tab="brief">Brief</button>
         <button type="button" role="tab" id="t-draft" aria-controls="p-draft" aria-selected="false" tabindex="-1" data-tab="draft">Draft <span class="s-n" id="n-draft"></span></button>
         <button type="button" role="tab" id="t-dele" aria-controls="p-dele" aria-selected="false" tabindex="-1" data-tab="dele">Delegations</button>
+        <button type="button" role="tab" id="t-summit" aria-controls="p-summit" aria-selected="false" tabindex="-1" data-tab="summit" hidden>The Summit</button>
         <button type="button" role="tab" id="t-record" aria-controls="p-record" aria-selected="false" tabindex="-1" data-tab="record">Record</button>
       </div>
       <div class="s-panes" tabindex="0" aria-label="Your move">
@@ -64,6 +66,10 @@
         <section class="b-card" id="c-bloc" hidden><h2>Bloc whip</h2>
           <div class="s-row"><label class="visually-hidden" for="s-bloc-pick">Bloc</label><select id="s-bloc-pick"></select>
             <button type="button" class="s-btn small" id="s-bloc-whip">Whip the bloc</button></div></section>
+      </div>
+      <div class="s-pane" role="tabpanel" id="p-summit" aria-labelledby="t-summit" hidden>
+        <section class="b-card s-summit-card" id="c-summit" aria-live="polite"></section>
+        <section class="b-card" id="c-results" hidden><h2>Votes so far</h2><ol class="s-results" id="c-result-list"></ol></section>
       </div>
       <div class="s-pane" role="tabpanel" id="p-record" aria-labelledby="t-record" hidden>
         <section class="b-card" id="c-rivals"><h2>Rivals</h2><ul class="s-log" id="c-rival-list"></ul></section>
@@ -101,6 +107,12 @@
       <p class="s-sub" id="s-skills-note">Earn Expertise by reading country files and getting procedure right. Each skill costs 3.</p>
       <div class="s-tree" id="s-tree"></div>
       <div class="s-row"><button type="button" class="s-btn" data-close="s-skills">Done</button></div></div>
+  </div>
+  <div class="s-overlay" id="s-result" hidden role="dialog" aria-modal="true" aria-labelledby="s-result-h">
+    <div class="s-doc wide s-final"><p class="s-eyebrow" id="s-result-eyebrow">The session is over</p><h2 id="s-result-h">–</h2>
+      <div id="s-result-body"></div>
+      <div class="s-row"><a class="s-btn" href="/session" hx-boost="false">Back to The Session</a>
+        <button type="button" class="s-btn ghost" data-close="s-result">Look at the board</button></div></div>
   </div>
   {{ settings_panel() }}
   <div class="b-overlay" id="b-overlay"></div>

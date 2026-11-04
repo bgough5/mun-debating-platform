@@ -246,14 +246,33 @@ def view(scn: Scenario, g: dict) -> dict:
 
 
 def _summit_view(scn: Scenario, g: dict) -> dict | None:
+    """The summit as the page shows it: the clause before the committee, any floor amendment, what you can do about
+    it, the votes so far, and the final vote and statement."""
     s = g.get("summit")
     if not s:
         return None
+    clauses = {c["id"]: c for c in g["draft"]}
     cur = None
     if s["step"] == "clause" and s["i"] < len(s["queue"]):
-        c = next(c for c in g["draft"] if c["id"] == s["queue"][s["i"]])
+        c = clauses[s["queue"][s["i"]]]
         cur = {"id": c["id"], "text": c["text"], "tags": [scn.tags[t] for t in c["tags"]], "n": s["i"] + 1, "of": len(s["queue"]),
-               "chance": E.chance(scn, g, c)}
-    return {"step": s["step"], "current": cur, "pending": s.get("pending"), "results": s["results"], "final": s.get("final"),
+               "chance": E.chance(scn, g, c), "stance": E.stance(scn, g, "you", c), "mine": c["author"] == "you",
+               "author": _name(scn, g, c["author"]),
+               "promised_to": [scn.member(pr["iso3"]).name for pr in g["promises"] if pr["clause"] == c["id"] and pr["kept"] is None]}
+    pend = s.get("pending")
+    if pend:
+        pend = {**pend, "by_name": scn.member(pend["by"]).name,
+                "change": ("drop " + scn.tags[pend["remove"]].lower()) if pend.get("remove") else ("add " + scn.tags[pend["add"]].lower())}
+    results = []
+    for r in s["results"]:
+        c = clauses.get(r["clause"], {})
+        results.append({**r, "text": c.get("text", ""), "labels": [scn.tags[t] for t in r["tags"]]})
+    final = s.get("final")
+    kept_tags = list(dict.fromkeys(t for r in s["results"] if r["passed"] for t in r["tags"]))
+    return {"step": s["step"], "current": cur, "pending": pend, "results": results, "final": final,
+            "kept": [scn.tags[t] for t in kept_tags],
             "statement_options": [{"code": t, "label": scn.tags[t]} for t in s.get("statement_options", [])],
-            "statement": s.get("statement")}
+            "statement": s.get("statement"), "speech": s.get("speech"),
+            "favours": [scn.member(i).name for i in g["favours"]], "po": "point_of_order" in g["skills"] and not s["po_used"],
+            "offer_cost": E.R["offer_cost"], "influence": g["influence"],
+            "names": {m.iso3: m.name for m in scn.members}}
