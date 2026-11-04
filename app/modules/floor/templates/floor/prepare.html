@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_macros.html" import hidden_csrf, breadcrumb, empty_state %}
+{% from "_coach.html" import coach_layout %}
 {% block content %}
 {{ breadcrumb([("My page", "/me"), ("Prepare", None)]) }}
 <h1>{{ icon("task") }} Prepare: {{ com.name }}</h1>
@@ -30,11 +31,13 @@
 </section></li>
 <li><section aria-labelledby="h-open"><h2 id="h-open">{{ icon("speech") }} Your opening statement</h2>
   <p class="small">You'll say this out loud from the floor. Write it in your own words: the program never writes it for you. Students holding the same country can read it but not change it; nobody else sees it. A good opening statement says your country's position, what it wants in the resolution, and who it hopes to work with.</p>
-  <form method="post" action="/me/committees/{{ com.id }}/speeches" class="stack">{{ hidden_csrf(csrf) }}
+  {% call coach_layout("mun", country=(mine.country or mine.name), aim=90) %}
+  <form method="post" action="/me/committees/{{ com.id }}/speeches" class="stack" style="max-width:none">{{ hidden_csrf(csrf) }}
     <input type="hidden" name="kind" value="opening"><input type="hidden" name="title" value="Opening statement"><input type="hidden" name="next" value="/me/committees/{{ com.id }}/prepare">
-    <div class="field"><label for="ob">Opening statement</label><textarea id="ob" name="body" rows="10" maxlength="6000">{{ opening.body if opening else '' }}</textarea>
+    <div class="field"><label for="ob">Opening statement</label><textarea id="ob" name="body" rows="10" maxlength="6000" data-coach-text>{{ opening.body if opening else '' }}</textarea>
       {% if opening %}<p class="hint">{{ words(opening.body) }} words: about {{ seconds(opening.body) }} seconds out loud.</p>{% endif %}</div>
     <button type="submit">Save</button></form>
+  {% endcall %}
   {% if opening and opening.body %}<p class="small"><a href="/me/cards/mun/{{ opening.id }}?mode=dots">{{ icon("print") }} Cue cards: dot points</a> · <a href="/me/cards/mun/{{ opening.id }}?mode=full">full speech</a></p>{% endif %}
   {% if drafts|length > (1 if opening else 0) %}<p class="small">Other drafts: {% for d in drafts if d.kind != 'opening' %}{{ d.title }}{% if not loop.last %}, {% endif %}{% endfor %}. Edit them in the live session's My speech tab.</p>{% endif %}
   {% if team_drafts %}

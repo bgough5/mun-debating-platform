@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_macros.html" import hidden_csrf, breadcrumb, confirm_delete %}
+{% from "_coach.html" import coach_layout %}
 {% block content %}
 {{ breadcrumb([("Prep and practise", "/me/prep"), (speech.title, None)]) }}
 <h1>{{ icon("speech") }} {{ title }}</h1>
@@ -8,6 +9,7 @@
 <div class="row no-print"><a class="button secondary" href="/me/prep/speeches/{{ speech.id }}/rehearse">{{ icon("play") }} Rehearse with the timer</a>
   <a class="button secondary" href="/me/cards/speech/{{ speech.id }}?mode=dots">{{ icon("print") }} Cue cards: dot points</a>
   <a class="button secondary" href="/me/cards/speech/{{ speech.id }}?mode=full">{{ icon("print") }} Cue cards: full speech</a></div>
+{% call coach_layout("speech", target_field=True) %}
 <form method="post" action="/me/prep/speeches/{{ speech.id }}" class="stack" style="max-width:none" data-speech-writer data-autosave>{{ hidden_csrf(csrf) }}
   <div class="row">
     <div class="field"><label for="stl">Title</label><input id="stl" type="text" name="title" value="{{ speech.title }}" maxlength="120"></div>
@@ -16,11 +18,12 @@
   <p class="structure-meter" role="status" data-speech-total>{{ words }} words · about {{ seconds|mmss }} at {{ wpm }} words a minute</p>
   {% for s in sections %}
   <div class="field"><label for="sec-{{ s.key }}">{{ loop.index }}. {{ s.label }} {% if s.prompt %}<span class="hint">{{ s.prompt }}</span>{% endif %}</label>
-    <textarea id="sec-{{ s.key }}" name="sec_{{ s.key }}" rows="{{ 18 if sections|length == 1 else 4 }}" maxlength="{{ 8000 if sections|length == 1 else 4000 }}" data-section>{{ s.text }}</textarea>
+    <textarea id="sec-{{ s.key }}" name="sec_{{ s.key }}" rows="{{ 18 if sections|length == 1 else 4 }}" maxlength="{{ 8000 if sections|length == 1 else 4000 }}" data-section data-coach-text data-coach-label="{{ s.label }}">{{ s.text }}</textarea>
     <p class="small muted" data-count-for="sec-{{ s.key }}">{{ s.words }} word{{ 's' if s.words != 1 }}</p></div>
   {% endfor %}
   <p><button type="submit">Save</button> <span class="small muted" data-autosave-status role="status"></span></p>
 </form>
+{% endcall %}
 <p class="small muted">The time is an estimate at {{ wpm }} words a minute, a steady speaking pace. Time yourself when you rehearse: that's the real number.</p>
 {{ confirm_delete("/me/prep/speeches/" ~ speech.id ~ "/delete", "this speech", csrf) }}
 {% endblock %}

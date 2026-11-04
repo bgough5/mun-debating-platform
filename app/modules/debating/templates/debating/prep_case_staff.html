@@ -11,6 +11,7 @@
 <dl class="part-grid">{% for key, label, prompt, need in spec %}<div><dt>{{ label }}</dt><dd>{{ p.parts_d.get(key) or '—' }}</dd></div>{% endfor %}</dl>
 <p>{{ check_badge(p.check) }} {{ score_text(p.self_mean, "Student's own score") }}{% if p.speaker %} · {{ {1:'1st',2:'2nd',3:'3rd',4:'4th'}[p.speaker] }} speaker{% endif %}</p>
 {% endmacro %}
+{% from "_coach.html" import coach_layout %}
 {% block content %}
 {{ breadcrumb([("Debating", "/debating"), ("Student preparation", "/debating/prep?class_id=" ~ student.class_id), (student.name, None)]) }}
 <h1>{{ icon("debate") }} {{ title }}</h1>
@@ -27,6 +28,12 @@
 {% for p in rebs %}<section class="card" aria-labelledby="sr{{ p.id }}"><h3 id="sr{{ p.id }}" class="h4">Rebuttal {{ loop.index }}</h3>{{ parts(p, reb_parts) }}{{ staff_scores(p, rubrics.rebuttal) }}</section>
 {% else %}<p>No rebuttals yet.</p>{% endfor %}
 {% if opposition %}<p class="small muted">{{ summary.rebuttals_done }} of the {{ opposition|length }} listed likely arguments answered.</p>{% endif %}
+<h2>Speech</h2>
+{% if case.speech_text %}
+{% call coach_layout("debate", team_line=case.team_line, readonly=True) %}
+<div class="card"><p class="coach-read" data-coach-text>{{ case.speech_text }}</p></div>
+{% endcall %}
+{% else %}<p class="muted">No speech written yet.</p>{% endif %}
 <div class="field"><label for="sc">Comment for {{ student.first_name }}</label><textarea id="sc" name="staff_comment" rows="3" maxlength="2000">{{ case.staff_comment }}</textarea></div>
 <button type="submit">Save scores and comment</button>
 </form>

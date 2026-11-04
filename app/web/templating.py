@@ -79,7 +79,8 @@ def mmss(seconds) -> str:
     return f"{s // 60}:{s % 60:02d}"
 
 
-env.globals.update(icon=icon)
+from app.web.coach import coach_config  # noqa: E402  (the speech coach, D-100)
+env.globals.update(icon=icon, coach_config=coach_config)
 env.filters.update(quality=quality_badge, stance=stance_badge, position=position_label, pct=pct, num=num, when=short_time, mmss=mmss,
                    safe_svg=safe_svg)    # stored flag markup: allowlisted SVG only (S-5, D-083)
 

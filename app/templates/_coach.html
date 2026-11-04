@@ -1,0 +1,85 @@
+{# The speech coach (D-100): a panel beside a speech box. Wrap the writing with
+     {% call coach_layout("mun", country="France") %} ... textareas marked data-coach-text ... {% endcall %}
+   The script (coach.js) counts and marks the writing in the browser; nothing is sent anywhere. #}
+{% macro coach_panel(kind="speech", country=None, team_line=None, aim=None, readonly=False, target_field=False) %}
+{% set cfg = coach_config(kind, country, team_line, aim, readonly) %}
+<aside class="coach" data-coach aria-label="Speech coach">
+  <div class="coach-head">
+    <h2 class="coach-title">{{ icon("speech") }} Speech coach</h2>
+    <button type="button" class="coach-btn" data-coach-listen hidden aria-pressed="false">{{ icon("play") }}<span data-c-listen-label>Listen</span></button>
+    <button type="button" class="coach-btn" data-coach-toggle aria-expanded="true"><span data-c-toggle-label>Hide</span><span class="visually-hidden"> the speech coach</span></button>
+  </div>
+  <div class="coach-body" data-coach-body>
+    <div class="coach-dial-row">
+      <svg class="coach-dial" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+        <circle class="dial-track" cx="60" cy="60" r="50"></circle>
+        <circle class="dial-fill" data-c-dial cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="0 100"></circle>
+        <circle class="dial-over" data-c-over cx="60" cy="60" r="41" pathLength="100" stroke-dasharray="0 100"></circle>
+      </svg>
+      <div class="coach-dial-text">
+        <span class="coach-time" data-c-time>0:00</span>
+        <span class="coach-of">of <span data-c-aim-text>{{ cfg.aim|mmss }}</span></span>
+        <span class="coach-verdict" data-c-verdict>Start writing</span>
+      </div>
+    </div>
+    <div class="coach-controls">
+      <div class="coach-pace" role="group" aria-label="Speaking pace">
+        {% for wpm, name in cfg.paces %}<button type="button" class="coach-chip" data-c-pace="{{ wpm }}" aria-pressed="{{ 'true' if wpm == 130 else 'false' }}" title="{{ wpm }} words a minute">{{ name }}</button>{% endfor %}
+      </div>
+      {% if not target_field %}
+      <label class="coach-aim">Aim for <select data-c-aim>{% for s in cfg.aims %}<option value="{{ s }}" {% if s == cfg.aim %}selected{% endif %}>{{ s|mmss }}</option>{% endfor %}</select></label>
+      {% endif %}
+    </div>
+    <dl class="coach-tiles">
+      <div><dt>Words</dt><dd data-c-stat="words">0</dd></div>
+      <div><dt>Sentences</dt><dd data-c-stat="sentences">0</dd></div>
+      <div><dt>Words a sentence</dt><dd data-c-stat="avg">–</dd></div>
+      <div><dt>Reads like <span class="visually-hidden">(estimate)</span></dt><dd data-c-stat="level">–</dd></div>
+    </dl>
+    <div class="coach-balance" data-c-balance hidden><p class="coach-label">Time in each part</p><div class="balance-bar" data-c-bar></div><ul class="balance-key" data-c-key></ul></div>
+    <div class="coach-marks" role="group" aria-label="Show in the writing">
+      <span class="coach-label">Show in the writing</span>
+      <button type="button" class="coach-chip mk-repeat" data-c-mark="repeat" aria-pressed="false">Repeats</button>
+      <button type="button" class="coach-chip mk-filler" data-c-mark="filler" aria-pressed="false">Fillers</button>
+      <button type="button" class="coach-chip mk-long" data-c-mark="long" aria-pressed="false">Long sentences</button>
+      <button type="button" class="coach-chip mk-tech" data-c-mark="tech" aria-pressed="false">Techniques</button>
+      <button type="button" class="coach-chip mk-minute" data-c-mark="minute" aria-pressed="false">Minutes</button>
+    </div>
+    <div class="coach-tabs" role="tablist" aria-label="Speech coach">
+      <button type="button" role="tab" class="coach-tab" data-c-tab="check" aria-selected="true">Check <span class="coach-n" data-c-n="check"></span></button>
+      <button type="button" role="tab" class="coach-tab" data-c-tab="tech" aria-selected="false" tabindex="-1">Techniques <span class="coach-n" data-c-n="tech"></span></button>
+      {% if cfg.phrases %}<button type="button" role="tab" class="coach-tab" data-c-tab="phrases" aria-selected="false" tabindex="-1">Phrases</button>{% endif %}
+    </div>
+    <div class="coach-panel" role="tabpanel" data-c-panel="check">
+      <div data-c-check><p class="small muted">Write a few sentences and the coach will look for repeated words, fillers and sentences too long to say in one breath.</p></div>
+    </div>
+    <div class="coach-panel" role="tabpanel" data-c-panel="tech" hidden>
+      <p class="small muted">Click one to see where you've used it.</p>
+      <ul class="coach-tech">{% for t in cfg.techniques %}
+        <li data-c-tech="{{ t.code }}" {% if t.code == 'teamline' and not cfg.team_line %}hidden{% endif %}>
+          <button type="button" class="tech-btn" data-c-spot="tech:{{ t.code }}" aria-pressed="false"><span class="tech-name">{{ t.name }}</span><span class="tech-count" data-c-count>Not yet</span></button>
+          <p class="tech-what">{{ t.what }}{% if t.code == 'teamline' and cfg.team_line %} Yours: “{{ cfg.team_line }}”{% endif %}</p>
+          {% if t.example %}<p class="tech-eg">{{ t.example }}</p>{% endif %}
+        </li>{% endfor %}
+      </ul>
+    </div>
+    {% if cfg.phrases %}
+    <div class="coach-panel" role="tabpanel" data-c-panel="phrases" hidden>
+      <p class="small muted">Click a phrase to add it where your cursor is, then type over the “…”.</p>
+      {% for g in cfg.phrases %}<details class="phrase-group" {% if loop.first %}open{% endif %}><summary>{{ g.group }}</summary>
+        <div class="phrase-list">{% for p in g.lines %}<button type="button" class="phrase" data-c-insert="{{ p }}">{{ p }}</button>{% endfor %}</div></details>{% endfor %}
+    </div>
+    {% endif %}
+    <p class="coach-note">Counted on this laptop from your own words: nothing is sent anywhere. Techniques are spotted by simple word patterns, so the coach can miss one, or see one that isn't really there. The time is an estimate; time yourself when you rehearse.</p>
+    <p class="visually-hidden" aria-live="polite" data-c-say></p>
+  </div>
+  <script type="application/json" data-coach-config>{{ cfg|tojson }}</script>
+</aside>
+{% endmacro %}
+
+{% macro coach_layout(kind="speech", country=None, team_line=None, aim=None, readonly=False, target_field=False) %}
+<div class="coach-wrap" data-coach-scope>
+  <div class="coach-main">{{ caller() }}</div>
+  {{ coach_panel(kind, country, team_line, aim, readonly, target_field) }}
+</div>
+{% endmacro %}

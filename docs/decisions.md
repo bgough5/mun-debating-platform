@@ -388,6 +388,37 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 
 
 
+### D-100 The speech coach beside every speech box — Decided (5 Nov 2026, Ben)
+Ben: "there should be some stats and visual add-ins that makes speeches easier to write. some things such as word count, expected speaking time, repetitive language indicators, lists of persuasive techniques … keep the platform clean, easily set-up and intuitive … as pretty and fun/interactive/clear as possible." He chose:
+- every speech box, "togglable so it doesn't feel like a constant tutorial", plus Model UN phrases to click in ("addressing other honourable delegates etc.");
+- a coach panel beside the writing;
+- reading aloud with the laptop's voices only;
+- teachers seeing it read-only.
+
+- **Where.** The coach is beside:
+  - prepared speeches (`prep_speech.html`);
+  - debate speeches (`prep_case.html`);
+  - Model UN opening statements (`floor/prepare.html`) and drafts (`chair/live.html`, the My speech tab);
+  - read-only, the teacher's views of a speech and a case.
+- **What it shows.**
+  - A time dial at 110, 130 or 150 words a minute against the target: the speech's own target length, or an "Aim for" choice remembered per page. The default pace, 130, is the server's estimate.
+  - Words, sentences, words a sentence, and a Flesch–Kincaid year level, labelled as an estimate.
+  - For a speech in parts, time in each part.
+  - Check: repeats (content words used 3 or more times), fillers, sentences over 30 words, and repeated sentence starts. Model UN adds first person.
+  - Techniques: 12 general ones, plus rebuttal and the team line for debating and diplomatic address and the resolution for Model UN. Each has what it does and an example, a "Used ×n" tick, and click-to-show.
+  - Marks in the writing, and minute markers.
+  - Phrases (Model UN procedure; debate signposts and rebuttal; speech openers and closers) added at the cursor, with "…" selected for the student's own words.
+  - Listen: speech synthesis with `localService` voices only. The button is hidden when there are none.
+- **How it works.**
+  - The data is `app/web/coach.py`: patterns that read the same in Python and JavaScript, tested in Python against their own examples. The panel is `_coach.html` (`coach_layout`, a call block round the form; boxes marked `data-coach-text`), the script `coach.js`, and the styles are under "the speech coach" in `app.css`.
+  - Marks are drawn on a copy of the text behind a transparent text box, so the student's text, cursor, autosave and maxlength are untouched.
+  - Nothing is stored on the server. On the laptop it remembers only whether the panel is open, the pace, the marks shown and the aim.
+- **Honesty and privacy.**
+  - It never writes the speech: the phrases are the set formulas of procedure and signposting, with gaps.
+  - The panel says the techniques are spotted by simple patterns and can be wrong, and that the time is an estimate.
+- **Colours:** four pale mark tokens (`hl-repeat`, `hl-filler`, `hl-long`, `hl-tech`), each checked for ink text at AA.
+- **Tests:** `tests/api/test_coach.py` (every pattern against a yes and a no sentence, the config per kind, the panel on each page, read-only for staff) and `tests/ui/test_coach_ui.py` (counts, marks lined up with the text box, hide and stay hidden, phrases at the cursor with the country, teacher marks, axe).
+
 ### D-099 One front door for setup; single player on the board, for guests too — Decided (5 Nov 2026, Ben)
 Ben: setup "still has some remnants of previous iterations", "the process for setting up still isn't completely optimal or streamlined. setting up sessions for anything should be easy, straightforward and self explanatory", "I don't want anything still looking sloppy". And single player "with board game, pushed through to the student login section (it shouldn't require a code to use and should be available as guest as well. (although with login used it should be able to save progress etc)". He chose: the one-front-door setup ("with the options of which students are participating, and then the option to turn that participation into a saved group"); the demo rebuilt the new way; nothing kept for guests; the full board table.
 

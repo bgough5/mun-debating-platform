@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "_macros.html" import hidden_csrf, breadcrumb, confirm_delete %}
 {% from "debating/_prep_macros.html" import point_form, check_badge, score_text %}
+{% from "_coach.html" import coach_layout %}
 {% block content %}
 {{ breadcrumb([("Prep and practise", "/me/prep"), (side_label ~ " case", None)]) }}
 <h1>{{ icon("debate") }} {{ title }}</h1>
@@ -58,11 +59,13 @@
 
 <section class="card" id="speech" aria-labelledby="h-speech"><h2 id="h-speech">4. Your speech</h2>
 <p class="lede">Write out what you'll say, in your own words, using your arguments and rebuttals above. Leave a blank line between paragraphs. {% if team %}Your teammates can read it (not change it), so you don't double up.{% endif %}</p>
+{% call coach_layout("debate", team_line=case.team_line) %}
 <form method="post" action="/me/prep/cases/{{ case.id }}" class="stack" style="max-width:none" data-autosave>{{ hidden_csrf(csrf) }}
   <div class="field"><label for="sptx">Speech</label>
-    <textarea id="sptx" name="speech_text" rows="14" maxlength="8000">{{ case.speech_text }}</textarea>
+    <textarea id="sptx" name="speech_text" rows="14" maxlength="8000" data-coach-text>{{ case.speech_text }}</textarea>
     <p class="small muted">{{ speech_words }} words, about {{ speech_seconds|mmss }} out loud. <span data-autosave-status role="status"></span></p></div>
   <button type="submit">Save</button></form>
+{% endcall %}
 <p class="row"><a class="button secondary" href="/me/cards/case/{{ case.id }}?mode=dots">{{ icon("print") }} Cue cards: dot points</a>
   <a class="button secondary" href="/me/cards/case/{{ case.id }}?mode=full">{{ icon("print") }} Cue cards: full speech</a>
   {% if not case.speech_text %}<span class="small muted">Until you write your speech, the cards are made from your arguments and rebuttals.</span>{% endif %}</p>

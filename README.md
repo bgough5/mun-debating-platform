@@ -36,6 +36,7 @@ see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun
   games are saved; anyone can play as a guest from the sign-in page with no code, and nothing about a guest is kept.
 - **People:** one student list with year levels, saved groups (for example "Debating Jr BGO", ticked in one go; D-085),
   teacher access (which teachers see whom), staff, student pathways and milestones.
+- **Speech coach (D-100):** beside every speech box, and hideable. It has a time dial against the target, word and sentence counts, a reading level, checks for repeated words, fillers and long sentences, and persuasive techniques ticked as they're used. It can mark these in the writing, adds Model UN and debate phrases at the cursor, and reads the speech aloud in the laptop's own voice. Teachers see it read-only.
 - **Speeches and cue cards (D-087):** any speech (prepared, free-form, a debate case, a Model UN draft) as editable
   cue cards, dot points or full, printed four to an A4 page; speeches save themselves; debate teammates read each
   other's arguments and speeches, with a flag on likely double-ups. The Dashboard lists activities in

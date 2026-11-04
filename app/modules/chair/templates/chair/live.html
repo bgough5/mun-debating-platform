@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_macros.html" import hidden_csrf, flag %}
+{% from "_coach.html" import coach_layout %}
 {% block content %}
 <h1>{{ s.committee }}</h1>
 <p id="live-status" class="small muted">Connecting…</p>
@@ -53,21 +54,25 @@
   {% if mine %}
   {% for d in my_drafts %}
   <details {% if loop.first %}open{% endif %}><summary>{{ d.title }} <span class="small muted">({{ speech_kinds[d.kind] }}, {{ d.body.split()|length }} words)</span></summary>
-    <form method="post" action="/me/committees/{{ s.committee_id }}/speeches" class="stack">{{ hidden_csrf(csrf) }}
+    {% call coach_layout("mun", country=(mine.country or mine.name), aim=60) %}
+    <form method="post" action="/me/committees/{{ s.committee_id }}/speeches" class="stack" style="max-width:none">{{ hidden_csrf(csrf) }}
       <input type="hidden" name="next" value="/live/{{ s.id }}?tab=speech"><input type="hidden" name="draft_id" value="{{ d.id }}"><input type="hidden" name="kind" value="{{ d.kind }}">
       <div class="field"><label for="dt{{ d.id }}">Title</label><input id="dt{{ d.id }}" type="text" name="title" value="{{ d.title }}" maxlength="80"></div>
-      <div class="field"><label for="db{{ d.id }}">Draft</label><textarea id="db{{ d.id }}" name="body" rows="9" maxlength="6000">{{ d.body }}</textarea></div>
+      <div class="field"><label for="db{{ d.id }}">Draft</label><textarea id="db{{ d.id }}" name="body" rows="9" maxlength="6000" data-coach-text>{{ d.body }}</textarea></div>
       <div class="row"><button type="submit">Save</button><button type="submit" name="delete" value="1" class="secondary">Delete</button></div>
     </form>
+    {% endcall %}
     <p class="small"><a href="/me/cards/mun/{{ d.id }}?mode=dots">{{ icon("print") }} Cue cards: dot points<span class="visually-hidden"> for {{ d.title }}</span></a> · <a href="/me/cards/mun/{{ d.id }}?mode=full">full speech<span class="visually-hidden"> for {{ d.title }}</span></a></p></details>
   {% endfor %}
   <details {% if not my_drafts %}open{% endif %}><summary>{{ icon("add") }} New draft</summary>
-    <form method="post" action="/me/committees/{{ s.committee_id }}/speeches" class="stack">{{ hidden_csrf(csrf) }}
+    {% call coach_layout("mun", country=(mine.country or mine.name), aim=60) %}
+    <form method="post" action="/me/committees/{{ s.committee_id }}/speeches" class="stack" style="max-width:none">{{ hidden_csrf(csrf) }}
       <input type="hidden" name="next" value="/live/{{ s.id }}?tab=speech">
       <div class="field"><label for="nk">Kind</label><select id="nk" name="kind">{% for k, v in speech_kinds.items() %}<option value="{{ k }}" {% if k == 'speech' %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
       <div class="field"><label for="nt">Title</label><input id="nt" type="text" name="title" maxlength="80" placeholder="e.g. Moderated caucus on finance"></div>
-      <div class="field"><label for="nb">Draft</label><textarea id="nb" name="body" rows="7" maxlength="6000"></textarea></div>
-      <button type="submit">Save draft</button></form></details>
+      <div class="field"><label for="nb">Draft</label><textarea id="nb" name="body" rows="7" maxlength="6000" data-coach-text></textarea></div>
+      <button type="submit">Save draft</button></form>
+    {% endcall %}</details>
   {% if team_drafts %}
   <h3>{{ icon("people") }} Your co-delegates' drafts</h3>
   <p class="small">Others holding {{ mine.country or mine.name }} can read each other's drafts, so you don't say the same thing twice. Only the writer can change a draft.</p>

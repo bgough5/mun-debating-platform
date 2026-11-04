@@ -135,6 +135,18 @@ Topics, templates and likely arguments are all editable under Admin (Debating gr
 
 ## Speeches, cue cards and debate teams (students)
 
+**The speech coach** sits beside every speech box: prepared speeches, debate speeches, and Model UN opening statements and drafts. Students can hide it, and it stays hidden on that laptop until they open it again.
+- **Time dial:** the speaking time at a slow, steady or quick pace, against the speech's target. It shows "on time", how much is left, or how far over.
+- **Counts:** words, sentences, words a sentence, and the year level the speech reads at. The year level is an estimate from sentence and word length.
+- **Check:** repeated words, fillers ("really", "just", "I think"), sentences too long to say in one breath, and many sentences that start the same way. In Model UN it also flags "I/me/my", because delegates speak for their country.
+- **Techniques:** rhetorical questions, the rule of three, facts and figures, a call to action and more, each with what it does and an example. Each is ticked when the student uses it, and clicking one shows where. Debating adds rebuttal and the team line. Model UN adds diplomatic address and references to the resolution.
+- **Show in the writing:** marks repeats, fillers, long sentences, techniques or where each minute falls, right in the text. Only the screen changes; the writing doesn't.
+- **Phrases:** set phrases to click in where the cursor is. In Model UN these are "Honourable Chair, distinguished delegates", "The delegation of *their country* …", points and motions, and yielding. Debating has signposting and rebuttal starters. The student types over the "…".
+- **Listen:** reads the speech aloud in the laptop's own voice, highlighting each word. It shows only when the laptop has an offline voice, so the writing never leaves the machine.
+
+Everything is counted in the browser, and nothing is sent anywhere or saved. The techniques are spotted by simple word patterns, and the panel says so. Teachers see the same panel, read-only, beside a student's speech or debate case under **Student preparation**.
+
+
 Under **Prep and practise**, students can:
 - **Write a speech:** with a structure, or "Write it your way" (one box: paste or type the whole speech).
 - **Write out their speech for a debate,** at the bottom of their debate case.

@@ -49,6 +49,8 @@ TOKENS = {
     # The board (D-092): a walnut war-room table; UN blue for the institution (banners, the stage track).
     "walnut-dk": "#24160B", "walnut": "#3E2814", "un-blue": "#1F4E79", "un-blue-lt": "#5B8FCB", "lit": "#F4D77A",
     "un-blue-dk": "#12324F", "brass-dk": "#7A5C0E",
+    # The speech coach (D-100): pale marks behind the student's own (ink) text, so the writing stays readable.
+    "hl-repeat": "#FCE8A6", "hl-filler": "#F9D3D0", "hl-long": "#DCE8FA", "hl-tech": "#CDEBD5",
 }
 
 TEXT, LARGE, UI = 4.5, 3.0, 3.0
@@ -97,6 +99,11 @@ PAIRS = [
     ("walnut-dk", "reg-weog", TEXT, "code on a Western European band"), ("white", "un-blue-dk", TEXT, "NATO shield"),
     ("white", "maroon", TEXT, "ASEAN shield"), ("white", "felt", TEXT, "Arab League shield"), ("white", "brass-dk", TEXT, "BRICS shield"),
     ("white", "sea-lt", TEXT, "small island states shield"), ("white", "walnut", TEXT, "G20 shield"),
+    # The speech coach (D-100)
+    ("ink", "hl-repeat", TEXT, "a repeated word marked in the writing"), ("ink", "hl-filler", TEXT, "a filler word marked"),
+    ("ink", "hl-long", TEXT, "a long sentence marked"), ("ink", "hl-tech", TEXT, "a persuasive technique marked"),
+    ("ink", "lit", TEXT, "the word being read aloud"), ("un-blue", "hl-long", UI, "a long sentence's underline (non-text)"),
+    ("time-go", "white", 1.0, "the coach's time dial on target (decorative; the words say it)"),
 ]
 
 
