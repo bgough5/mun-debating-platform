@@ -108,3 +108,14 @@ CHAPTERS = {
     2: {"name": "Blocs", "goal": "Win the endorsement of at least one regional group."},
     3: {"name": "Sponsors", "goal": "Gather sponsors and signatories to table the draft first."},
 }
+
+# How hard each scenario is, from the balance harness (competent bots reaching silver on Standard: Beginner 85%+,
+# Standard 50-85%, Expert below 50%). Rerun tools/campaign_sim.py when a scenario changes; a new pack without a
+# label shows as Standard until it's measured.
+SCENARIO_LEVEL = {
+    "comet_halcyon": "beginner",
+    "veloria": "standard", "ga_ai_governance": "standard", "ga_autonomous_weapons": "standard",
+    "ga_migration": "standard", "ga_climate_transition": "standard",
+    "sc_ai_cyber": "expert", "sc_climate_security": "expert",
+}
+LEVEL_NAMES = {"beginner": "Beginner", "standard": "Standard", "expert": "Expert"}

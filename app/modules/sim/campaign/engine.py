@@ -35,7 +35,7 @@ R = {   # every number the balance harness tunes lives here
     "promise_sway": 0.2, "side_event_cost": 3, "side_event_step": 0.15, "endorse_pull": 0.25, "lean_min": 0.3,
     "favour_trust": 2, "offer_cost": 2, "offer_step": 0.5, "propose_cost": 1, "amend_cost": 1, "strike_cost": 2,
     "draft_max": 10, "sponsors": 3, "signatories_share": 0.2, "sponsor_lean": 0.6, "objective_influence": 3,
-    "rival_amendments": 1, "bloc_whip_step": 0.25,
+    "rival_amendments": 1, "bloc_whip_step": 0.25, "abstain_trust": 1, "abstain_cost": 2,
 }
 
 
@@ -183,7 +183,14 @@ def votes_on(scn: Scenario, g: dict, clause: dict, my_vote: str | None = None, f
             out[m.iso3] = "yes" if stances["you"] > 0 else "no"
         else:
             out[m.iso3] = vote_of(scn, latent(scn, g, m.iso3, clause, stances))
+            if out[m.iso3] == "no" and m.iso3 in g.get("pledges", []) and stances["you"] > 0 and not red_line(scn, m.iso3, clause["tags"]):
+                out[m.iso3] = "abstain"
     return out
+
+
+def red_line(scn: Scenario, iso: str, tags) -> bool:
+    """A commitment a country has said it can never accept (-2 in the scenario): no pledge covers it."""
+    return any((scn.positions.get(iso, {}).get(t) or 0) <= -2 for t in tags)
 
 
 def chance(scn: Scenario, g: dict, clause: dict, runs: int = 300) -> dict:
@@ -622,6 +629,24 @@ def a_bloc_whip(scn, g, a):
     return {"reached": members}
 
 
+def a_abstain(scn, g, a):
+    """Ask a permanent member to abstain rather than veto: in real Councils this is how texts survive a member's
+    doubts. It costs the trust you've built with that delegation, and it never covers its red lines."""
+    iso = a.get("iso3")
+    _country(scn, g, iso)
+    if iso not in scn.rule.veto:
+        raise GameError("Only a permanent member of the Security Council can veto, so only they can pledge to abstain.")
+    if iso in g.setdefault("pledges", []):
+        raise GameError("They've already pledged to abstain.")
+    if g["trust"].get(iso, 0) < R["abstain_trust"]:
+        raise GameError("They don't trust you enough to make that pledge. Build trust first: keep a promise to them.")
+    _spend(g, 1, R["abstain_cost"])
+    g["trust"][iso] -= 2
+    g["pledges"].append(iso)
+    _log(g, "you", f"{scn.member(iso).name} pledged to abstain rather than veto, except on its red lines.", "action")
+    return {}
+
+
 def a_end_turn(scn, g, a):
     if g.get("question"):
         g["question"] = None          # an unanswered procedure moment simply passes
@@ -914,10 +939,36 @@ def s_final(scn, g, a):
     else:
         votes, passed, summary, counts = {}, False, "No clauses were adopted, so there is no resolution to vote on.", {"yes": 0, "no": 0, "abstain": 0}
     s["final"] = {"tags": tags, "votes": votes, "passed": passed, "summary": summary, **counts, "my_vote": my_vote}
+    _log(g, "news", ("The resolution is adopted. " if passed else "The resolution fails. ") + summary, "vote")
+    if not passed and scn.rule.veto:
+        s["step"] = "statement"
+        s["statement_options"] = list(dict.fromkeys(t for r in s["results"] for t in r["tags"])) or list(scn.tags)
+        _log(g, "news", "The resolution has failed. The President of the Council proposes a statement instead, "
+                        "agreed by consensus: it is not binding, but it is the Council's voice.", "event")
+        return {"final": s["final"], "statement": True}
     g["phase"] = "done"
     g["result"] = score(scn, g)
-    _log(g, "news", ("The resolution is adopted. " if passed else "The resolution fails. ") + summary, "vote")
     return {"final": s["final"], "result": g["result"]}
+
+
+def s_statement(scn, g, a):
+    """A Presidential Statement: no vote, adopted only if no member objects (consensus). Weaker than a resolution,
+    so it earns at most silver."""
+    s = g["summit"]
+    if s["step"] != "statement":
+        raise GameError("A Presidential Statement comes only after a resolution fails in the Council.")
+    tags = [t for t in (a.get("tags") or []) if t in s["statement_options"]]
+    if a.get("skip") or not tags:
+        s["statement"] = {"tags": [], "adopted": False, "objectors": []}
+    else:
+        votes = votes_on(scn, g, {"id": "statement", "tags": tags, "author": "you"}, my_vote="yes")
+        objectors = sorted(i for i, v in votes.items() if v == "no")
+        s["statement"] = {"tags": tags, "adopted": not objectors, "objectors": objectors}
+        _log(g, "news", "The Presidential Statement is " + ("agreed by consensus." if not objectors else
+             "blocked: " + ", ".join(scn.member(i).name for i in objectors) + " objected."), "vote")
+    g["phase"] = "done"
+    g["result"] = score(scn, g)
+    return {"statement": s["statement"], "result": g["result"]}
 
 
 # ---------------------------------------------------------------- scoring
@@ -938,8 +989,15 @@ def score(scn: Scenario, g: dict) -> dict:
     credit = [1.0 if clauses[c]["author"] == "you" else 0.5 if "you" in clauses[c]["amended_by"] else 0.0 for c in kept if c in clauses]
     own = sum(credit) / len(credit) if credit else 0.0
     own_kept = sum(1 for x in credit if x == 1.0)
-    architect = 0 if not passed else 3 if own >= 0.6 and own_kept >= 3 and share >= 0.6 else \
+    architect = 0 if not passed else 3 if own >= 0.65 and own_kept >= 3 and share >= 0.65 else \
         2 if own >= 0.5 and own_kept >= 2 else 1 if own >= 0.25 else 0
+    st = s.get("statement") or {}
+    if not passed and st.get("adopted"):
+        sg = [must in st["tags"], also in st["tags"], red not in st["tags"]]
+        mandate = max(mandate, 2 if sg[0] and sg[2] else 1 if sg[0] or sg[2] else 0)
+        consensus = max(consensus, 2 if mine_regions >= 1 else 1)
+        mine_tags = {t for c in g["draft"] if c["author"] == "you" for t in c["tags"]}
+        architect = max(architect, 1 if mine_tags & set(st["tags"]) else 0)
     judged = [(iso, v) for iso, v in g["whip"].items() if iso in f["votes"]]
     right = sum(1 for iso, v in judged if f["votes"][iso] == v)
     acc = right / len(judged) if judged else 0.0
@@ -948,7 +1006,7 @@ def score(scn: Scenario, g: dict) -> dict:
     kingmaker = 0 if len(judged) < need else 3 if acc >= 0.8 and broken == 0 and g["respect"] >= 7 else \
         2 if acc >= 0.65 and broken <= 1 and g["respect"] >= 5 else 1 if acc >= 0.5 else 0
     paths = {"mandate": mandate, "consensus": consensus, "architect": architect, "kingmaker": kingmaker}
-    return {"passed": passed, "paths": paths, "chosen": g["path"], "grade": paths[g["path"]],
+    return {"passed": passed, "statement": bool(st.get("adopted")), "paths": paths, "chosen": g["path"], "grade": paths[g["path"]],
             "share_yes": round(share, 3), "own_text": round(own, 3), "whip_right": right, "whip_judged": len(judged),
             "broken_promises": broken, "kept_promises": sum(1 for p in g["promises"] if p["kept"] is True),
             "endorsements": mine_regions, "respect": g["respect"], "expertise": g["expertise"]}
@@ -958,5 +1016,5 @@ GRADES = {0: "No medal", 1: "Bronze", 2: "Silver", 3: "Gold"}
 
 CHAPTER = {"lobby": a_lobby, "read": a_read, "propose": a_propose, "amend": a_amend, "strike": a_strike, "promise": a_promise,
            "side_event": a_side_event, "favour": a_favour, "whip": a_whip, "sign": a_sign, "answer": a_answer, "skill": a_skill,
-           "divide": a_divide, "merge": a_merge, "bloc_whip": a_bloc_whip, "end_turn": a_end_turn}
-SUMMIT = {"speech": s_speech, "decide": s_decide, "final": s_final, "skill": a_skill}
+           "divide": a_divide, "merge": a_merge, "bloc_whip": a_bloc_whip, "abstain": a_abstain, "end_turn": a_end_turn}
+SUMMIT = {"speech": s_speech, "decide": s_decide, "final": s_final, "statement": s_statement, "skill": a_skill}

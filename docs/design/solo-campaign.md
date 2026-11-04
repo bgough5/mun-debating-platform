@@ -307,3 +307,32 @@ rules.
    - a **Presidential Statement** the Council can agree by consensus instead;
    - an action to ask a permanent member for a **constructive abstention**, paid for in Trust.
 3. **Drafter:** leave Architect gold at 69%, or make it a little harder?
+
+## 18. Ben's calls and rules v0.3 (5 Nov 2026)
+
+Ben's calls:
+- **Difficulty labels:** yes.
+- **Security Council fallbacks:** both.
+- **Architect:** slightly harder.
+
+| Change | Rule |
+|---|---|
+| **Scenario labels** | Beginner (Comet Halcyon-7), Standard (Veloria and the four General Assembly scenarios), Expert (the two Security Council scenarios). They're shown at setup, set from the measured win rates (`content.SCENARIO_LEVEL`), and must be re-measured when a scenario changes. |
+| **Constructive abstention** | A chapter action: ask a permanent member to pledge to abstain rather than veto. It needs Trust of at least 1 with that delegation and costs 2 Trust, 2 Influence and 1 action point. The pledge holds for every summit vote you support, except on that member's red lines (a commitment it has said it can never accept). |
+| **Presidential Statement** | When a Council resolution fails, the President proposes a statement agreed by consensus. You choose which commitments go in; it's adopted only if no member objects. It's not binding, so it earns at most silver on Mandate and Consensus and bronze on Architect. |
+| **Architect gold** | Now needs 65% of the final text to be yours, at least three of your clauses adopted, and 65% of members voting yes. |
+
+### Measured again (20 games per cell, 2,400 games)
+
+| Target | v0.2 | v0.3 |
+|---|---|---|
+| Standard: silver or better | 63% | 63% |
+| Gold on own path: hardliner / analyst / broker / drafter | 34 / 37 / 39 / **69%** | 33 / 37 / 41 / **50%** |
+| Highest action share among winners | 19% | 19% |
+| Hardest scenario on Standard | 25% | 24% (Expert) |
+| Random player, silver or better | 24% | 25% |
+| No stuck games | 0 | 0 |
+
+The bots hardly use constructive abstentions: you have to have built trust with a permanent member first, and the
+bots rarely do. A thoughtful student will; the next balance pass should give the bots that plan, to measure how
+much it helps.

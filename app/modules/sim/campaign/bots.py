@@ -131,6 +131,12 @@ class Bot:
                     continue
                 likes = sorted((t for t in self.scn.tags if t not in c["tags"] and t != g["mandate"]["red"]),
                                key=lambda t: -self.scn.dist([t]).get(p5, (0, 1))[0])
+                if p5 not in g.get("pledges", []):
+                    out.append({"do": "abstain", "iso3": p5})
+                    liked = [x for x in g["draft"] if self.scn.dist(x["tags"]).get(p5, (0, 1))[0] >= 0.4
+                             and E.stance(self.scn, g, "you", x) >= 0]
+                    if liked and not any(pr["iso3"] == p5 and pr["kept"] is None for pr in g["promises"]):
+                        out.append({"do": "promise", "iso3": p5, "clause": liked[0]["id"]})
                 if likes and len(c["tags"]) < 3:
                     out.append({"do": "amend", "clause": c["id"], "add": likes[0]})
                 out.append({"do": "lobby", "iso3": p5})
@@ -344,6 +350,16 @@ class Bot:
             if not ok:
                 g2, _ = self.act(g, {"do": "decide", "choice": "stand", "vote": vote})
             return g2
+        if s["step"] == "statement":
+            if self.style == "random":
+                tags = self.rng.sample(s["statement_options"], k=min(2, len(s["statement_options"])))
+            else:
+                red = g["mandate"]["red"]
+                tags = [t for t in s["statement_options"] if t != red and all(
+                    self.est(g, i, {"id": "st", "tags": [t], "author": "you"}) != "no" for i in self.scn.isos if i not in E._others(g))]
+                tags = tags or [g["mandate"]["must"]]
+            g, _ = self.act(g, {"do": "statement", "tags": tags})
+            return g
         vote = "yes" if self.style != "random" else self.rng.choice(E.VOTES)
         if self.style == "hardliner":
             kept = {t for r in s["results"] if r["passed"] for t in r["tags"]}

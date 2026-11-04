@@ -104,3 +104,69 @@ def test_every_style_finishes_a_game(scenarios, code, style):
     assert set(r["paths"]) == set(E.K.PATHS) and all(0 <= v <= 3 for v in r["paths"].values())
     assert r["grade"] == r["paths"][g["path"]]
     assert g["summit"]["final"]["passed"] in (True, False) and json.loads(json.dumps(g)) == g
+
+
+def test_every_scenario_has_a_difficulty_label():
+    from app.modules.mun.packfile import available
+    from app.modules.sim.campaign.content import LEVEL_NAMES, SCENARIO_LEVEL
+    assert {p["code"] for p in available()} <= set(SCENARIO_LEVEL)
+    assert set(SCENARIO_LEVEL.values()) <= set(LEVEL_NAMES)
+
+
+def test_a_pledged_permanent_member_abstains_except_on_its_red_lines(scenarios):
+    scn = scenarios["sc_climate_security"]
+    me = next(i for i in scn.isos if i not in scn.rule.veto)
+    g = E.new_game(scn, me, seed=9)
+    p5 = next(i for i in sorted(scn.rule.veto) if i not in E._others(g))
+    with pytest.raises(E.GameError):
+        E.apply(scn, g, {"do": "abstain", "iso3": p5})                       # no trust yet
+    with pytest.raises(E.GameError):
+        E.apply(scn, g, {"do": "abstain", "iso3": next(i for i in scn.isos if i not in scn.rule.veto and i not in E._others(g))})
+    g["trust"][p5], g["influence"] = 1, 10
+    g2, _ = E.apply(scn, g, {"do": "abstain", "iso3": p5})
+    assert g2["pledges"] == [p5] and g2["trust"][p5] == -1
+    for t in scn.tags:
+        clause = {"id": "x", "tags": [t], "author": "you"}
+        before, after = E.votes_on(scn, g, clause, my_vote="yes")[p5], E.votes_on(scn, g2, clause, my_vote="yes")[p5]
+        if before == "no":
+            assert after == ("no" if E.red_line(scn, p5, [t]) else "abstain"), t
+        else:
+            assert after == before
+
+
+def _to_final(scn, g):
+    g, _ = E.apply(scn, g, {"do": "speech", "stance": "open"})
+    while g["summit"]["step"] == "clause":
+        g, _ = E.apply(scn, g, {"do": "decide", "choice": "stand", "vote": "no"})
+    return g
+
+
+def test_a_failed_council_resolution_can_become_a_presidential_statement(scenarios):
+    scn = scenarios["sc_climate_security"]
+    me = next(i for i in scn.isos if i not in scn.rule.veto)
+    g = E.new_game(scn, me, "quick", seed=4)
+    vetoed = next(t for t in sorted(scn.tags) if any(E.red_line(scn, p5, [t]) for p5 in scn.rule.veto))
+    mild = [t for t in sorted(scn.tags) if t != vetoed][:2]
+    g["draft"] = [{"id": "d1", "text": "x", "tags": [vetoed], "author": "draft", "amended_by": []},
+                  {"id": "d2", "text": "y", "tags": [vetoed] + mild[:1], "author": "draft", "amended_by": []}]
+    E._open_summit(scn, g)
+    g = _to_final(scn, g)
+    g, out = E.apply(scn, g, {"do": "final", "vote": "no"})
+    assert not out["final"]["passed"] and out["statement"] and g["phase"] == "summit" and g["summit"]["step"] == "statement"
+    agreeable = [t for t in g["summit"]["statement_options"]
+                 if "no" not in E.votes_on(scn, g, {"id": "s", "tags": [t], "author": "you"}, my_vote="yes").values()]
+    g2, out = E.apply(scn, g, {"do": "statement", "tags": agreeable[:1] or g["summit"]["statement_options"][:1]})
+    assert g2["phase"] == "done" and out["statement"]["adopted"] == bool(agreeable)
+    r = g2["result"]
+    assert r["statement"] == bool(agreeable) and r["paths"]["mandate"] <= 2 and r["paths"]["consensus"] <= 2 and r["paths"]["architect"] <= 1
+    g3, out = E.apply(scn, g, {"do": "statement", "skip": True})
+    assert not out["statement"]["adopted"] and not g3["result"]["statement"]
+
+
+def test_no_statement_outside_the_council(scenarios):
+    scn = scenarios["comet_halcyon"]
+    g = E.new_game(scn, scn.isos[0], "quick", seed=4)
+    E._open_summit(scn, g)
+    g = _to_final(scn, g)
+    g, out = E.apply(scn, g, {"do": "final", "vote": "no"})
+    assert g["phase"] == "done" and "statement" not in out
