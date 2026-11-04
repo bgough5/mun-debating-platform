@@ -1053,6 +1053,7 @@
       wrap.hidden = true;
       document.body.classList.remove("s-walking");
       setTab(W.tab);
+      var pn = document.querySelector(".s-panes"); if (pn) pn.scrollTop = 0;   // back to the top of the rail, where the turn starts
       var done = W.done; W.done = null;
       if (done) done(); else A.play("chime");
     }
