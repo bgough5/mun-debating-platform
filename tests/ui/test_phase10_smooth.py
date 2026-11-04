@@ -84,8 +84,8 @@ def test_switching_pages_still_starts_at_the_top(browser, live):
     login(pg, live)
     pg.goto(live.url + "/debating")
     pg.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-    pg.click("a:has-text('New speaking round')")
-    pg.wait_for_url(re.compile(r"/debating/runs/new"))
+    pg.click("a:has-text('Start a speaking round')")
+    pg.wait_for_url(re.compile(r"/start\?kind=speeches"))
     time.sleep(0.3)
     assert pg.evaluate("scrollY") < 50
     ctx.close()

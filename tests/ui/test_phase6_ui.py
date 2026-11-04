@@ -80,7 +80,8 @@ def test_practice_committee_in_browser(browser, live):
     m = ga_member(live, 3)
     page = browser.new_context().new_page()
     join(page, live, m["student_id"])
-    page.click("nav a:has-text('Practice committee')")
+    page.click("nav a:has-text('Play solo')")                       # D-099: class committees are one link from Play solo
+    page.click("a:has-text('Practise a committee your class is running')")
     page.wait_for_selector("h1:has-text('Practice committee')")
     _no_bad(page, "p6_practice_home")
     page.locator("form[action='/me/sim'] button:has-text('Start')").first.click()
