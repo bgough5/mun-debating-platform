@@ -29,9 +29,11 @@ see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun
 - **Tournaments and carnivals:** events, houses, teams, rooms, adjudicators; seeded draws (random, then power-paired);
   rubric ballots and panels; ladders and speaker tabs; house points with reversals; run sheets and MC scripts;
   projector view; class practice for any number of students; a 325-student carnival generator for rehearsal.
-- **Start an activity (D-084):** one screen for UNAA or Evatt Model UN, a class debate, public speaking or your own
-  format. Tick who's here today from one student list (or add first-timers), choose junior, middle or senior
-  (suggested from year levels), and go; any number of students.
+- **Start (D-084, D-099):** the one front door for every activity, in three steps: choose Model UN (then a scenario),
+  a class debate, public speaking or your own format; tick who's taking part from one student list (or add
+  first-timers) and optionally save them as a group; choose junior, middle or senior (suggested from year levels).
+- **Play solo (D-099):** Model UN on the board, alone against the computer, from any scenario. Signed-in students'
+  games are saved; anyone can play as a guest from the sign-in page with no code, and nothing about a guest is kept.
 - **People:** one student list with year levels, saved groups (for example "Debating Jr BGO", ticked in one go; D-085),
   teacher access (which teachers see whom), staff, student pathways and milestones.
 - **Speeches and cue cards (D-087):** any speech (prepared, free-form, a debate case, a Model UN draft) as editable

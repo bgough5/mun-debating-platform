@@ -1,28 +1,50 @@
 {% extends "base.html" %}
 {% from "_macros.html" import hidden_csrf, empty_state %}
 {% block content %}
-<h1>Model UN</h1>
-{% for c in confs %}
-<section class="card" aria-labelledby="cf{{ c.id }}">
-  <h2 id="cf{{ c.id }}"><a href="/mun/conferences/{{ c.id }}">{{ c.name }}</a></h2>
-  <p class="small muted">{{ c.organiser }}{% if c.starts_on %} · {{ c.starts_on }}{% if c.ends_on %} to {{ c.ends_on }}{% endif %}{% endif %}</p>
-  {% if by_conf.get(c.id) %}<ul>{% for cm in by_conf[c.id] %}<li><a href="/mun/committees/{{ cm.id }}">{{ cm.name }}</a> <span class="muted">· {{ cm.rule }}</span></li>{% endfor %}</ul>
-  {% else %}<p class="muted">No committees you can see. Ask the coordinator to add you to a class that has one.</p>{% endif %}
+<h1>{{ icon("conference") }} Model UN</h1>
+<p class="lede">Scenarios to run with a class or play solo, and the committees you've run. To start a session, pick a scenario: it opens Start an activity with it chosen.</p>
+{% set types = {'sc': 'Security Council', 'ga_plenary': 'General Assembly', 'ga_third': 'GA Third Committee'} %}
+<section aria-labelledby="h-sc"><h2 id="h-sc">{{ icon("committee") }} Scenarios</h2>
+<div class="scenario-cards">
+{% for p in scenarios %}
+  <article class="card scenario-lib">
+    <h3>{{ p.title }}</h3>
+    <p class="sc-tags"><span class="badge">{{ types[p.type] }}</span> <span class="badge">{{ p.level|capitalize }}</span>
+      <span class="badge">{{ "Fictional" if p.fictional else "Real issue" }}</span> <span class="badge">{{ p.countries|length }} countries</span></p>
+    <p class="small">{{ p.summary }}</p>
+    <p><a class="button" href="/start?kind=mun&amp;pack={{ p.code }}">{{ icon("play") }} Run with a class<span class="visually-hidden">: {{ p.title }}</span></a></p>
+  </article>
+{% endfor %}
+</div>
+<p class="small">Students can play any scenario on their own from their sign-in page. New scenarios are files written from a template: see <code>docs/pack-authoring.md</code>.</p>
 </section>
-{% else %}{{ empty_state("No conferences yet.", "Create one below, load the climate pack, or use the getting-started guide.", "/welcome" if actor.is_coordinator else None, "Getting started" if actor.is_coordinator else None, "conference") }}{% endfor %}
+
+<section aria-labelledby="h-cm"><h2 id="h-cm">{{ icon("history") }} Your committees</h2>
+{% if committees %}
+<div class="table-wrap"><table><caption class="visually-hidden">Committees</caption>
+  <thead><tr><th scope="col">Committee</th><th scope="col">Voting</th><th scope="col">Session</th></tr></thead><tbody>
+  {% for cm in committees %}<tr><td><a href="/mun/committees/{{ cm.id }}">{{ cm.name }}</a></td><td>{{ cm.rule }}</td>
+    <td>{% if cm.open_session %}<a class="button secondary" href="/chair/{{ cm.open_session }}">Open the chair console<span class="visually-hidden"> for {{ cm.name }}</span></a>
+        {% else %}<form method="post" action="/chair/committee/{{ cm.id }}/open" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Open a session<span class="visually-hidden"> for {{ cm.name }}</span></button></form>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>
+{% else %}{{ empty_state("No committees yet.", "Run a scenario with a class above: its committee appears here.", None, None, "committee") }}{% endif %}
+</section>
+
 {% if actor.is_coordinator %}
+<details class="card advanced"><summary>{{ icon("settings") }} Advanced: build a conference or committee by hand</summary>
+<p class="small">For a real conference with its own countries and draft resolution. Most of the time a scenario is quicker.</p>
 <div class="grid">
-<section class="card" aria-labelledby="h-nc"><h2 id="h-nc">New conference</h2>
+<section aria-labelledby="h-nc"><h3 id="h-nc">New conference</h3>
 <form method="post" action="/mun/conferences" class="stack">{{ hidden_csrf(csrf) }}
-  <div class="field"><label for="cn">Name</label><input id="cn" name="name" required></div>
+  <div class="field"><label for="cn">Name</label><input id="cn" type="text" name="name" required></div>
   <div class="row"><div class="field"><label for="cs">Starts</label><input id="cs" type="date" name="starts_on"></div>
   <div class="field"><label for="ce">Ends</label><input id="ce" type="date" name="ends_on"></div></div>
-  <div class="field"><label for="co">Organiser</label><input id="co" name="organiser" placeholder="e.g. UNAA Victoria, UN Youth Australia"></div>
-  <button type="submit">Create conference</button></form></section>
-<section class="card" aria-labelledby="h-pack"><h2 id="h-pack">Start from the 2026 climate pack</h2>
-<p>Creates the UNAA Victoria 2026 General Assembly: 31 delegations, the draft resolution's nine operative clauses, the v2 overrides as evidence and three example amendments.
-Every value is labelled an unsourced estimate.</p>
-<form method="post" action="/mun/load-pack" class="inline">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Load the climate pack</button></form></section>
+  <div class="field"><label for="co">Organiser</label><input id="co" type="text" name="organiser" placeholder="e.g. UNAA Victoria, UN Youth Australia"></div>
+  <button type="submit" class="secondary">Create conference</button></form></section>
+<section aria-labelledby="h-cf"><h3 id="h-cf">Conferences</h3>
+  {% if confs %}<ul>{% for c in confs %}<li><a href="/mun/conferences/{{ c.id }}">{{ c.name }}</a></li>{% endfor %}</ul>{% else %}<p class="muted">None yet.</p>{% endif %}
+  <p class="small"><a href="/mun/calibration">How well the vote engine predicts (calibration)</a></p></section>
 </div>
+</details>
 {% endif %}
 {% endblock %}

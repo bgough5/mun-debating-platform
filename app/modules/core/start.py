@@ -23,14 +23,19 @@ from app.web.templating import render
 
 router = APIRouter()
 
+# The one front door (D-099): four activities. "unaa" and "evatt" are older names for Model UN with a set scenario and
+# are still accepted from links and forms; the Start page offers "mun" with a scenario card instead.
 KINDS = {
-    "unaa": ("UNAA Model UN", "General Assembly: every country votes, simple majority. Loads the climate resolution with 31 delegations."),
-    "evatt": ("Evatt Model UN", "Security Council: 15 members, nine votes to pass and a veto for the five permanent members. "
-                                "Loads a fictional crisis (Veloria), so no real country's position is at stake."),
-    "debate": ("Class debate", "Two teams. Up to eight students make one debate; more students are split into several debates."),
+    "mun": ("Model UN", "A committee from a scenario: roll call, debate, amendments and the vote, with the board on the projector."),
+    "debate": ("Class debate", "Two teams. Up to eight students make one debate; more are split into several debates."),
     "speeches": ("Public speaking", "Everyone ticked speaks in turn: prepared speeches, or impromptu topics drawn as each turn starts."),
-    "custom": ("Your own format", "A timed round of speakers with every setting yours to change: times, topics, order and names."),
+    "custom": ("Your own format", "A timed round of speakers with every setting yours: times, topics, order and names."),
 }
+LEGACY_KINDS = {"unaa": "climate2026", "evatt": "veloria"}       # kind -> the scenario it always meant
+CLIMATE = {"code": "climate2026", "title": "Climate finance (UNAA 2026)", "type": "ga_plenary", "level": "middle",
+           "fictional": False, "countries": [None] * 31,
+           "summary": "The UNAA Victoria 2026 General Assembly: 31 delegations and a nine-clause draft on climate finance. "
+                      "Positions are unsourced estimates from the original practice pack."}
 
 # What a difficulty level changes. Every value can still be edited once the activity is open.
 LEVELS = {
@@ -39,13 +44,17 @@ LEVELS = {
     "senior": {"label": "Senior", "years": "about Years 11–12", "mun": 120, "debate": 360, "reply": 180, "speech": 180, "think": 45},
 }
 DEBATE_ROOM_MAX = 8
-NEEDS = {"unaa": ("mun", "chair"), "evatt": ("mun", "chair"), "debate": ("debating",), "speeches": ("debating",),
-         "custom": ("debating",)}
+NEEDS = {"mun": ("mun", "chair"), "unaa": ("mun", "chair"), "evatt": ("mun", "chair"), "debate": ("debating",),
+         "speeches": ("debating",), "custom": ("debating",)}
 
 
 def available_kinds(settings) -> dict:
     """Only the kinds whose modules are switched on (Admin → Modules)."""
     return {k: v for k, v in KINDS.items() if all(settings.module_on(m) for m in NEEDS[k])}
+
+
+def accepted_kind(settings, kind: str) -> bool:
+    return kind in NEEDS and all(settings.module_on(m) for m in NEEDS[kind])
 
 
 def suggest_level(year_levels: list) -> str:
@@ -87,12 +96,14 @@ def _context(conn, request, ticked: set[int], form: dict | None = None) -> dict:
     motions = rows(conn, "SELECT id, motion, level FROM motion_bank WHERE deleted_at IS NULL ORDER BY level, motion")
     form = form or {}
     from app.modules.people.groups import saved_groups
-    return {"title": "Start an activity", "saved": saved_groups(conn, request.state.actor), "offer_save": True, "kinds": available_kinds(request.app.state.settings), "levels": LEVELS, "summaries": {k: level_summary(k) for k in LEVELS},
+    return {"title": "Start an activity", "saved": saved_groups(conn, request.state.actor), "offer_save": False, "kinds": available_kinds(request.app.state.settings), "levels": LEVELS, "summaries": {k: level_summary(k) for k in LEVELS},
             **picker(conn, request.state.actor), "ticked": ticked, "motions": motions,
             "kind": form.get("kind") or "", "level": form.get("level") or "suggested",
             "motion_id": form.get("motion_id") or "", "topic_mode": form.get("topic_mode") or "prepared",
             "country_mode": form.get("country_mode") or "random", "country_modes": CH.MODES,
-            "packs": _packs(), "pack": form.get("pack") or ""}
+            "scenarios": _packs() + [CLIMATE], "pack": form.get("pack") or "veloria", "group_name": form.get("group_name") or "",
+            "suggested": suggest_level([st["year_level"] for _y, people in picker(conn, request.state.actor)["groups"]
+                                        for st in people if st["id"] in ticked]) if ticked else ""}
 
 
 def _packs() -> list[dict]:
@@ -107,7 +118,8 @@ def start_page(request: Request, group: int | None = None, s=Depends(require_sta
         if group and request.app.state.settings.module_on("people"):
             from app.modules.people.groups import get_group
             ticked = set(get_group(conn, request.state.actor, group)["members"])
-        ctx = _context(conn, request, ticked)
+        q = request.query_params                  # links from the libraries: /start?kind=mun&pack=ga_migration
+        ctx = _context(conn, request, ticked, {k: q.get(k) for k in ("kind", "pack", "motion_id", "topic_mode") if q.get(k)})
     return render(request, "core/start.html", ctx)
 
 
@@ -122,8 +134,8 @@ def start_submit(request: Request, s=Depends(require_staff), form=Depends(form_d
         ctx["flash"] = done[1]
         return render(request, "core/start.html", ctx)
     kind = form.get("kind")
-    if kind not in available_kinds(request.app.state.settings):
-        raise UserError("Choose what you're running first: UNAA, Evatt, a class debate, public speaking or your own format.")
+    if not accepted_kind(request.app.state.settings, kind):
+        raise UserError("Choose what you're running first: Model UN, a class debate, public speaking or your own format.")
     with request.app.state.db.write(request.state.actor) as w:
         from app.modules.people.routes import visible_students
         allowed = {st["id"]: st for st in visible_students(w.conn, request.state.actor)}
@@ -134,6 +146,11 @@ def start_submit(request: Request, s=Depends(require_staff), form=Depends(form_d
         if level not in LEVELS:
             level = suggest_level([st["year_level"] for st in chosen])
         url, msg = create_activity(w, request.state.actor, kind, chosen, level, form)
+        name = (form.get("group_name") or "").strip()
+        if name and request.app.state.settings.module_on("people"):      # "and save these students as a group"
+            from app.modules.people.groups import save_group
+            _gid, gmsg = save_group(w, request.state.actor, name, {st["id"] for st in chosen})
+            msg = f"{msg} {gmsg}"
     from app.web.http import redirect
     return redirect(url, msg)
 
@@ -159,8 +176,9 @@ def _activity_class(conn, actor, chosen: list[dict]) -> int | None:
 def create_activity(w, actor, kind: str, chosen: list[dict], level: str, form) -> tuple[str, str]:
     lv = LEVELS[level]
     cid = _activity_class(w.conn, actor, chosen)
-    if kind in ("unaa", "evatt"):
-        return _mun(w, kind, cid, chosen, lv, level, form.get("country_mode") or "random", form.get("pack") or "")
+    if kind in ("mun", "unaa", "evatt"):
+        pack = form.get("pack") or LEGACY_KINDS.get(kind, "veloria")
+        return _mun(w, kind, cid, chosen, lv, level, form.get("country_mode") or "random", pack)
     if kind == "debate":
         return _debates(w, cid, chosen, lv, level, form)
     return _speeches(w, kind, cid, chosen, lv, level, form)
@@ -170,12 +188,14 @@ def _mun(w, kind, cid, chosen, lv, level, mode: str = "random", pack: str = "") 
     from app.modules.chair import service as C
     from app.modules.mun import packs, service as M
     stamp = today_iso()
-    # A scenario pack the teacher picked (D-097), else the standard one for the kind.
-    if pack and pack in {p["code"] for p in _packs()}:
+    # The scenario the teacher picked (D-097, D-099); the climate conference is the original v2 pack.
+    if pack == "climate2026":
+        info = packs.load_climate_conference(w, cid, name_suffix=f" · {stamp}")
+    elif pack in {p["code"] for p in _packs()}:
         from app.modules.mun.packfile import install
-        info = install(w, pack, cid, name_suffix=f" · {stamp}")
+        info = install(w, pack, cid, name_suffix=f" · {stamp}") if pack != "veloria" else packs.load_evatt_scenario(w, cid)
     else:
-        info = packs.load_climate_conference(w, cid, name_suffix=f" · {stamp}") if kind == "unaa" else packs.load_evatt_scenario(w, cid)
+        raise UserError("Choose a scenario for the committee.")
     com = info["committee_id"]
     ids = [st["id"] for st in chosen]
     # Today's students, and how they get their countries (D-094).
@@ -189,7 +209,7 @@ def _mun(w, kind, cid, chosen, lv, level, mode: str = "random", pack: str = "") 
     how = {"choose": f"{len(chosen)} student(s) choose their countries from {seats} as they sign in",
            "chair": f"{len(chosen)} student(s) to seat: give out the {seats} countries on the committee page"}.get(
         mode, f"{len(chosen)} student(s) seated at random across {seats} delegations")
-    return (f"/chair/{sid}", f"{KINDS[kind][0]} ready: {how} ({LEVELS[level]['label'].lower()} level, {_mmss(lv['mun'])} speeches). "
+    return (f"/chair/{sid}", f"Model UN ready: {how} ({LEVELS[level]['label'].lower()} level, {_mmss(lv['mun'])} speeches). "
                              "Countries without a student are voted by the engine and labelled computed.")
 
 

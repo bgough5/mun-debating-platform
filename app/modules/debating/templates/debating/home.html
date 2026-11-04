@@ -2,15 +2,15 @@
 {% from "_macros.html" import hidden_csrf, empty_state %}
 {% block content %}
 <h1>{{ icon("debate") }} Debating and public speaking</h1>
-<p class="lede">Run a class debate or a round of speeches on the projector, and follow your students' preparation.</p>
+<p class="lede">Your class debates and speaking rounds, and your students' preparation. To run a new one, use Start an activity.</p>
 
 <div class="grid">
   <section class="card" aria-labelledby="h-cd"><h2 id="h-cd">{{ icon("debate") }} Class debate</h2>
-    <p>Type each team's speakers, set the speech times, and project a timer that shows the bells.</p>
-    <a class="button" href="/debating/runs/new?kind=debate">New class debate</a></section>
-  <section class="card" aria-labelledby="h-sr"><h2 id="h-sr">{{ icon("speech") }} Speaking round</h2>
-    <p>A list of speakers giving prepared speeches, or impromptu speeches on a surprise topic each.</p>
-    <a class="button" href="/debating/runs/new?kind=speeches">New speaking round</a></section>
+    <p>Two teams with the bells on the projector. Tick who's here: eight or fewer make one debate, more are split into several.</p>
+    <a class="button" href="/start?kind=debate">{{ icon("play") }} Start a class debate</a></section>
+  <section class="card" aria-labelledby="h-sr"><h2 id="h-sr">{{ icon("speech") }} Public speaking</h2>
+    <p>Everyone ticked speaks in turn: prepared speeches, or an impromptu topic drawn for each.</p>
+    <a class="button" href="/start?kind=speeches">{{ icon("play") }} Start a speaking round</a></section>
   <section class="card" aria-labelledby="h-prep"><h2 id="h-prep">{{ icon("task") }} Student preparation</h2>
     <p>Cases, rebuttals, speech drafts and practice speeches your students have written, to score and comment on.</p>
     <form method="get" action="/debating/prep" class="inline"><div class="field"><label for="pc">Show</label>
@@ -26,10 +26,8 @@
 <thead><tr><th scope="col">Title</th><th scope="col">Type</th><th scope="col">Class</th><th scope="col" class="num">Speakers</th><th scope="col">Status</th><th scope="col">Set up</th></tr></thead>
 <tbody>{% for r in runs %}<tr><td><a href="/debating/runs/{{ r.id }}">{{ r.title }}</a></td><td>{{ 'Class debate' if r.kind == 'debate' else 'Speaking round' }}</td>
 <td>{{ r.class_name or '—' }}</td><td class="num">{{ r.n_speakers }}</td><td>{{ {'ready': 'Ready', 'running': 'Under way', 'finished': 'Finished'}[r.status] }}</td><td>{{ r.created_at|when }}</td></tr>{% endfor %}</tbody></table></div>
-{% else %}{{ empty_state("No class debates or speaking rounds yet.", "Start one above: it takes a minute to type the names.", icon_name="debate") }}{% endif %}
+{% else %}{{ empty_state("No class debates or speaking rounds yet.", "Start one above: tick who's here and go.", icon_name="debate") }}{% endif %}
 </section>
-
-<p><a href="/debating/practice">{{ icon("practice") }} Several practice debates at once</a>: tick who is here and the platform splits the class into rooms.</p>
 
 {% if show_tournaments %}
 <section aria-labelledby="h-tourn"><h2 id="h-tourn">{{ icon("award") }} Tournaments and carnivals</h2>
@@ -68,7 +66,8 @@
 </details>
 </section>
 {% elif actor.is_coordinator %}
-<p class="small muted no-print">Tournament and carnival tools (draws, ballots, ladders, house points) are hidden: this section is for classroom debating and public speaking (D-074).</p>
-<form method="post" action="/debating/tournaments" class="inline no-print">{{ hidden_csrf(csrf) }}<input type="hidden" name="show" value="1"><button type="submit" class="secondary">Show tournament tools</button></form>
+<details class="card advanced no-print"><summary>{{ icon("settings") }} Advanced: tournaments and carnivals</summary>
+<p class="small">Draws, adjudicated ballots, ladders and house points for a whole-school carnival or an inter-school tournament. Hidden unless you need them.</p>
+<form method="post" action="/debating/tournaments" class="inline">{{ hidden_csrf(csrf) }}<input type="hidden" name="show" value="1"><button type="submit" class="secondary">Show tournament tools</button></form></details>
 {% endif %}
 {% endblock %}

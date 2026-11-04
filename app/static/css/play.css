@@ -1,0 +1,42 @@
+/* Single player on the board (D-099): board.css gives the table, map and tokens; this adds the player's controls in
+   the same retro look (square, bevelled, brass and parchment). Colours are tokens only. */
+.p-rail { overflow-y: auto; padding-right: 10px; }
+.p-rail .b-card { flex: none; }
+.p-rail .b-card[hidden] { display: none; }
+.p-clause { font-family: var(--book); font-size: 22px; line-height: 1.4; }
+.b-card .p-sub { font-size: 17px; color: var(--muted); margin: 4px 0; }
+.p-tags { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.p-tags li { font-size: 16px; padding: 4px 10px; background: var(--white); border: 1px solid var(--brass-dk); }
+.p-tags label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.p-tags li.on { background: var(--lit); }
+.p-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 8px 0 0; }
+.p-row select { font-size: 18px; padding: 6px 8px; min-width: 220px; border: 2px solid var(--walnut-dk); background: var(--white); color: var(--ink); }
+.p-btn { font-family: var(--serif); font-weight: 700; font-size: 17px; letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
+  color: var(--walnut-dk); background: linear-gradient(180deg, var(--lit), var(--brass) 55%, var(--brass-dk)); border: 2px solid var(--walnut-dk);
+  border-radius: 0; padding: 8px 16px; box-shadow: inset 0 1px 0 rgb(255 255 255 / 50%), 3px 4px 0 rgb(0 0 0 / 35%); }
+.p-btn:hover, .p-btn:focus-visible { background: var(--lit); }
+.p-btn:focus-visible { outline: 3px solid var(--un-blue); outline-offset: 2px; }
+.p-btn.ghost { background: var(--parchment); }
+.p-btn.big { font-size: 21px; padding: 12px 22px; }
+.p-btn[disabled] { opacity: .5; cursor: default; }
+.p-btn[hidden] { display: none; }
+.p-log { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 10px; }
+.p-log li { border-left: 5px solid var(--un-blue); background: rgb(255 255 255 / 55%); padding: 8px 12px; }
+.p-log li.fresh { animation: b-card-in .6s cubic-bezier(.2, 1.25, .4, 1) both; }
+.p-log .who { font-family: var(--serif); font-weight: 700; font-size: 19px; }
+.p-log .heard { font-family: var(--book); font-style: italic; font-size: 18px; margin: 4px 0; }
+.p-reads { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.p-reads button { font-size: 14px; padding: 4px 8px; border: 1px solid var(--walnut); background: var(--parchment); color: var(--ink); cursor: pointer; border-radius: 0; }
+.p-reads button[aria-pressed="true"] { background: var(--un-blue); color: var(--white); border-color: var(--un-blue-dk); }
+.p-vote { font-size: 19px; display: flex; gap: 6px; align-items: center; padding: 6px 12px; border: 2px solid var(--walnut-dk); background: var(--white); cursor: pointer; }
+.p-vote:has(input:checked) { background: var(--lit); }
+.p-msg { margin: 0; padding: 12px 20px; font-family: var(--book); font-size: 21px; font-weight: 700; color: var(--ink);
+  background: linear-gradient(180deg, var(--parchment), var(--parchment-dk)); border-top: 3px double var(--walnut-dk); border-bottom: 3px double var(--walnut-dk); }
+.p-msg:empty { visibility: hidden; }
+.p-result-list { margin: 6px 0 0; padding-left: 22px; font-size: 18px; }
+/* the map in single player: the player's own country, and what each conversation suggested */
+.b-token { cursor: pointer; }
+.b-token.you .b-face { fill: var(--lit); stroke: var(--white); stroke-width: 2; }
+.b-token.read-yes .b-face { fill: var(--map-yes); } .b-token.read-no .b-face { fill: var(--map-no); }
+.b-token.read-abstain .b-face { fill: var(--map-abstain); } .b-token.talked .b-face { stroke: var(--un-blue); stroke-width: 2.2; }
+.b-token.picked .b-halo { opacity: .7; }

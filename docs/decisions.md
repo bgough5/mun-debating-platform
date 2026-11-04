@@ -388,6 +388,44 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 
 
 
+### D-099 One front door for setup; single player on the board, for guests too — Decided (5 Nov 2026, Ben)
+Ben: setup "still has some remnants of previous iterations", "the process for setting up still isn't completely optimal or streamlined. setting up sessions for anything should be easy, straightforward and self explanatory", "I don't want anything still looking sloppy". And single player "with board game, pushed through to the student login section (it shouldn't require a code to use and should be available as guest as well. (although with login used it should be able to save progress etc)". He chose: the one-front-door setup ("with the options of which students are participating, and then the option to turn that participation into a saved group"); the demo rebuilt the new way; nothing kept for guests; the full board table.
+
+- **One front door.** **Start** is the only place to set anything up, in three steps:
+  1. The activity, as four cards: Model UN, class debate, public speaking, your own format. Only that activity's options then appear: for Model UN, the scenario cards (every pack plus the UNAA climate conference) and how countries are given out; the motion for a debate; the topics for speaking.
+  2. Who's taking part, with "Save these students as a group for next time" right there.
+  3. Difficulty, as chips with the suggested level shown.
+  - "UNAA" and "Evatt" are no longer separate choices. They still work in old links and forms: `unaa` means the climate conference, `evatt` means Veloria.
+- **The menu.**
+  - Staff: Start, Model UN, Debating, People, Admin.
+  - The chair console is reached from an activity. Intelligence, calibration and the classic v2 game are linked from Admin.
+  - Students: My page, Play solo, Prep & practise. Practice negotiation is linked from My page, with its honest label.
+- **Libraries, not setup pages.**
+  - **Model UN** lists the scenarios (each with **Run with a class**) and your committees; building a conference by hand is under Advanced.
+  - **Debating** lists your class debates and speaking rounds and students' preparation; its start buttons go to Start. Tournament tools sit under Advanced; the old "several practice debates" link is gone, since Start splits big groups itself.
+  - The Dashboard shows Start, In progress and Saved groups. The old committee list, task count and quick links are gone.
+- **Demo data.**
+  - Names come from one list, so no two demo students share a name and nobody shows a group tag ("Aisha R. (Year 8 Debating (demo))" is gone).
+  - The duplicate demo "Security Council" committee is gone; the Veloria Council is the demo's Security Council.
+  - Two saved groups are added: "Debating Juniors (demo)" and "Model UN club (demo)".
+  - The teacher-access groups stay, because the tests rely on them to check who sees whom.
+- **Single player on the board** (`app/modules/sim/play.py`, `/play`, `sim/play_game.html`, `play.js`, `play.css`).
+  - The war-room table with the world map, flags and tokens.
+  - Steps 1–4: read the clause; lobby up to five delegations (click a country or choose it); record what you think each will do; amend what the clause commits countries to; check the whip count; cast your own vote and call the vote. The vote sweeps the map and the seal lands. The debrief scores your readings and shows who your amendment moved.
+  - Solo runs open on the clause closest to 50/50.
+  - **Signed in:** the game is the student's own solo committee and practice run, saved as they go, and listed under "Your games".
+  - **Guests**, from **Play solo as a guest** on the sign-in page and the landing page:
+    - The game lives in the browser tab and is sent with each move; the server checks it against the scenario and answers. Nothing about a guest is written down.
+    - One shared committee per scenario (`committee.guest_pack`, migration 0019) holds the clauses and positions. It is made by the system the first time, and never listed for staff.
+    - Moves are JSON with the CSRF header (`/play/api`); errors come back as JSON.
+  - The board's map is now one template (`chair/_board_map.html`) shared by the projector and the game.
+  - The practice engine's vote is split into `practice_result` (no writes, used for guests) and `call_vote` (saves).
+- **Packs:** Ben considers every pack checked for now.
+- **Tests:**
+  - `tests/api/test_play.py`: a guest plays and nothing is kept; tampered games are refused; a student's game is saved and theirs alone.
+  - `tests/api/test_start_activity.py` covers the kinds.
+  - The UI tests pick the Model UN card.
+
 ### D-098 Six real-issue scenario packs, written by delegated models — Decided (5 Nov 2026, Ben)
 Ben asked for new scenarios "playable in both sec council, and mostly in general assembly", on real issues relevant to high-school students (climate, AI, immigration and so on), with preambles that are "completely low stakes, not really debatable". He asked for the work to be delegated to keep costs down.
 

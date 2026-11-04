@@ -52,8 +52,10 @@ def home(request: Request):
                  if st.module_on("debating" if x["kind"] != "mun" else "chair")]
         from app.modules.people.groups import saved_groups
         saved = saved_groups(conn, sess.actor)
+        has_students = bool(scalar(conn, "SELECT 1 FROM student WHERE deleted_at IS NULL AND active = 1 LIMIT 1"))
     return render(request, "core/dashboard.html", {"title": "Dashboard", "classes": classes, "committees": committees,
-                                                   "tasks_open": tasks_open, "going": going, "saved": saved})
+                                                   "tasks_open": tasks_open, "going": going, "saved": saved,
+                                                   "has_students": has_students})
 
 
 @router.get("/setup")

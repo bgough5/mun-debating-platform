@@ -97,10 +97,12 @@ def mun_home(request: Request, s=Depends(require_staff)):
         ids = staff_class_ids(conn, s.actor)
     if ids is not None:
         coms = [c for c in coms if c["class_id"] in ids]
-    by_conf: dict = {}
-    for c in coms:
-        by_conf.setdefault(c["conference_id"], []).append(c)
-    return render(request, "mun/home.html", {"title": "Model UN", "confs": confs, "by_conf": by_conf})
+    from app.modules.core.start import CLIMATE, _packs
+    with request.app.state.db.read() as conn:
+        for c in coms:
+            c["open_session"] = scalar(conn, "SELECT id FROM live_session WHERE committee_id = ? AND state != 'closed' ORDER BY id DESC LIMIT 1", (c["id"],))
+    coms.sort(key=lambda c: -c["id"])
+    return render(request, "mun/home.html", {"title": "Model UN", "confs": confs, "committees": coms, "scenarios": _packs() + [CLIMATE]})
 
 
 @router.post("/conferences")

@@ -2,60 +2,80 @@
 {% from "_macros.html" import hidden_csrf, empty_state %}
 {% block content %}
 <h1>{{ icon("play") }} Start an activity</h1>
-<p class="lede">Choose what you're running, tick who's here today, pick a difficulty and go. Any number of students works, and every time, topic and name can still be changed once it's open.</p>
+<p class="lede">Three steps: what you're running, who's here, how hard. Everything can still be changed once it's open.</p>
 
 {% if not kinds %}{{ empty_state("No activities are switched on.", "Ask the coordinator to switch on Model UN or Debating in Admin → Modules.", None, None, "settings") }}
 {% else %}
-<form method="post" action="/start" class="start-form">{{ hidden_csrf(csrf) }}
-  <fieldset><legend>1. What are you running?</legend>
+{% set types = {'sc': 'Security Council', 'ga_plenary': 'General Assembly', 'ga_third': 'GA Third Committee'} %}
+<form method="post" action="/start" class="start-form" data-start>{{ hidden_csrf(csrf) }}
+  <fieldset class="step"><legend><span class="step-n">1</span> What are you running?</legend>
+    <div class="activity-cards">
     {% for k, (name, about) in kinds.items() %}
-    <label class="choice"><input type="radio" name="kind" value="{{ k }}" required {% if kind == k %}checked{% endif %}>
-      <span><strong>{{ name }}</strong><br><span class="hint">{{ about }}</span></span></label>
+      <label class="activity-card"><input type="radio" name="kind" value="{{ k }}" required {% if kind == k %}checked{% endif %}>
+        <span class="ac-icon">{{ icon({'mun': 'committee', 'debate': 'debate', 'speeches': 'speech', 'custom': 'settings'}[k]) }}</span>
+        <strong>{{ name }}</strong><span class="hint">{{ about }}</span></label>
     {% endfor %}
-  </fieldset>
-
-  <fieldset><legend>2. Who's taking part today? <span class="hint" data-tick-count>{{ ticked|length }} ticked</span></legend>
-{% include "core/_pick_students.html" %}
-  </fieldset>
-
-  <fieldset><legend>3. Difficulty</legend>
-    <label class="choice"><input type="radio" name="level" value="suggested" {% if level not in levels %}checked{% endif %}>
-      <span><strong>Suggested from year levels</strong><br><span class="hint">Junior if most students ticked are Year 8 or below, senior if Year 11 or above, otherwise middle.</span></span></label>
-    {% for k, v in levels.items() %}
-    <label class="choice"><input type="radio" name="level" value="{{ k }}" {% if level == k %}checked{% endif %}>
-      <span><strong>{{ v.label }}</strong> <span class="muted">({{ v.years }})</span><br><span class="hint">{{ summaries[k] }}</span></span></label>
-    {% endfor %}
-  </fieldset>
-
-  {% if "debate" in kinds or "speeches" in kinds or "unaa" in kinds or "evatt" in kinds %}
-  <fieldset><legend>4. Options <span class="hint">used only by the activities they name</span></legend>
-    {% if "unaa" in kinds or "evatt" in kinds %}
-    <div class="checks" role="radiogroup" aria-label="Model UN countries">
-      <span class="small"><strong>Model UN countries:</strong></span>
-      {% for k, label in country_modes.items() %}<label><input type="radio" name="country_mode" value="{{ k }}" {% if country_mode == k %}checked{% endif %}> {{ label }}</label>{% endfor %}
     </div>
-    <p class="hint">“Students choose”: each student picks a country on their screen until you close choosing; anyone who hasn't chosen is then seated at random. You can change this during the session.</p>
-    {% if packs %}<div class="field"><label for="pk">Model UN scenario <span class="hint">replaces the standard one for UNAA or Evatt</span></label>
-      <select id="pk" name="pack"><option value="">Standard (UNAA: climate finance; Evatt: Veloria)</option>
-        {% for p in packs %}<option value="{{ p.code }}" {% if pack == p.code %}selected{% endif %}>{{ p.title }} ({{ {'sc': 'Security Council', 'ga_plenary': 'General Assembly', 'ga_third': 'GA Third Committee'}[p.type] }}, {{ p.level }}{{ ', fictional' if p.fictional }})</option>{% endfor %}</select></div>{% endif %}
+
+    {% if "mun" in kinds %}
+    <div class="step-options" data-for="mun">
+      <h2 class="opt-head">Scenario</h2>
+      <div class="scenario-cards">
+      {% for p in scenarios %}
+        <label class="scenario-card"><input type="radio" name="pack" value="{{ p.code }}" {% if pack == p.code %}checked{% endif %}>
+          <strong>{{ p.title }}</strong>
+          <span class="sc-tags"><span class="badge">{{ types[p.type] }}</span> <span class="badge">{{ p.level|capitalize }}</span>
+            <span class="badge">{{ "Fictional" if p.fictional else "Real issue" }}</span> <span class="badge">{{ p.countries|length }} countries</span></span>
+          <span class="hint">{{ p.summary }}</span></label>
+      {% endfor %}
+      </div>
+      <div class="checks" role="radiogroup" aria-label="How countries are given out">
+        <span class="small"><strong>Countries:</strong></span>
+        {% for k, label in country_modes.items() %}<label><input type="radio" name="country_mode" value="{{ k }}" {% if country_mode == k %}checked{% endif %}> {{ label }}</label>{% endfor %}
+      </div>
+      <p class="hint">“Students choose”: each picks a country on their screen until you close choosing; anyone left is then given one at random.</p>
+    </div>
     {% endif %}
     {% if "debate" in kinds %}
-    <div class="field"><label for="mo">Debate motion <span class="hint">class debate only</span></label>
-      <select id="mo" name="motion_id"><option value="">Pick one at random for the difficulty</option>
-        {% for m in motions %}<option value="{{ m.id }}" {% if motion_id == m.id|string %}selected{% endif %}>{{ m.level|capitalize }}: {{ m.motion }}</option>{% endfor %}</select></div>
+    <div class="step-options" data-for="debate">
+      <div class="field"><label for="mo">Motion</label>
+        <select id="mo" name="motion_id"><option value="">Pick one at random for the difficulty</option>
+          {% for m in motions %}<option value="{{ m.id }}" {% if motion_id == m.id|string %}selected{% endif %}>{{ m.level|capitalize }}: {{ m.motion }}</option>{% endfor %}</select></div>
+    </div>
     {% endif %}
     {% if "speeches" in kinds %}
-    <div class="checks" role="radiogroup" aria-label="Public speaking topics">
-      <span class="small"><strong>Public speaking topics:</strong></span>
-      <label><input type="radio" name="topic_mode" value="prepared" {% if topic_mode != 'impromptu' %}checked{% endif %}> Prepared speeches</label>
-      <label><input type="radio" name="topic_mode" value="impromptu" {% if topic_mode == 'impromptu' %}checked{% endif %}> Impromptu (a topic is drawn as each turn starts)</label>
+    <div class="step-options" data-for="speeches">
+      <div class="checks" role="radiogroup" aria-label="Speech topics">
+        <span class="small"><strong>Topics:</strong></span>
+        <label><input type="radio" name="topic_mode" value="prepared" {% if topic_mode != 'impromptu' %}checked{% endif %}> Prepared speeches</label>
+        <label><input type="radio" name="topic_mode" value="impromptu" {% if topic_mode == 'impromptu' %}checked{% endif %}> Impromptu (a topic is drawn as each turn starts)</label>
+      </div>
     </div>
     {% endif %}
   </fieldset>
-  {% endif %}
 
-  <p><button type="submit" name="op" value="start">{{ icon("play") }} Start</button>
-    <span class="hint">Everything is saved as you go: open it again later from the Dashboard, Model UN or Debating.</span></p>
+  <fieldset class="step"><legend><span class="step-n">2</span> Who's taking part? <span class="hint" data-tick-count>{{ ticked|length }} ticked</span></legend>
+{% include "core/_pick_students.html" %}
+    {% if modules.people %}
+    <div class="field save-as"><label for="sg">Save these students as a group for next time <span class="hint">optional, e.g. “Debating Jr BGO”</span></label>
+      <input id="sg" type="text" name="group_name" maxlength="60" value="{{ group_name }}"></div>
+    {% endif %}
+  </fieldset>
+
+  <fieldset class="step"><legend><span class="step-n">3</span> Difficulty</legend>
+    <div class="level-row">
+      <label class="level-chip"><input type="radio" name="level" value="suggested" {% if level not in levels %}checked{% endif %}>
+        <strong>Suggested</strong><span class="hint">from the year levels ticked{% if suggested %}: {{ levels[suggested].label }}{% endif %}</span></label>
+      {% for k, v in levels.items() %}
+      <label class="level-chip"><input type="radio" name="level" value="{{ k }}" {% if level == k %}checked{% endif %}>
+        <strong>{{ v.label }}</strong><span class="hint">{{ v.years }}</span></label>
+      {% endfor %}
+    </div>
+    <details class="small"><summary>What changes with difficulty</summary><ul>{% for k, v in levels.items() %}<li><strong>{{ v.label }}:</strong> {{ summaries[k] }}</li>{% endfor %}</ul></details>
+  </fieldset>
+
+  <p><button type="submit" name="op" value="start" class="big">{{ icon("play") }} Start</button>
+    <span class="hint">Everything is saved as you go: pick it up again from the Dashboard.</span></p>
 </form>
 {% endif %}
 {% endblock %}

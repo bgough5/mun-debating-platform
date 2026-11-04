@@ -190,7 +190,8 @@ def test_kinds_follow_the_modules_switched_on():
     only_debating = SimpleNamespace(module_on=lambda m: m == "debating")
     assert set(S.available_kinds(only_debating)) == {"debate", "speeches", "custom"}
     only_mun = SimpleNamespace(module_on=lambda m: m in ("mun", "chair"))
-    assert set(S.available_kinds(only_mun)) == {"unaa", "evatt"}
+    assert set(S.available_kinds(only_mun)) == {"mun"}                       # one Model UN card; unaa and evatt are still accepted (D-099)
+    assert S.accepted_kind(only_mun, "evatt") and S.accepted_kind(only_mun, "unaa")
 
 
 def test_writes_are_logged(app, coord):

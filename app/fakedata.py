@@ -41,12 +41,12 @@ def fake_people(rng: random.Random, n: int) -> list[tuple[str, str]]:
 
 
 def make_class(w: Writer, name: str, year: int, n: int, rng: random.Random, code: str | None = None,
-               years: tuple[int, ...] = ()) -> tuple[int, list[int]]:
+               years: tuple[int, ...] = (), people: list[tuple[str, str]] | None = None) -> tuple[int, list[int]]:
     cid = w.insert("class", {"name": name, "year": year, "code": code or new_code(), "code_set_at": now_iso()}, log=False)
     # Year levels come from their own random stream, so adding them doesn't change any other demo data (D-084).
     yr = random.Random(f"{name}|years")
     ids = []
-    for f, i in fake_people(rng, n):
+    for f, i in (people if people is not None else fake_people(rng, n)):
         ids.append(w.insert("student", {"class_id": cid, "first_name": f, "last_initial": i,
                                         "year_level": yr.choice(years) if years else None}, log=False))
     return cid, ids
@@ -60,21 +60,29 @@ def populate_demo(conn, seed: int = 2026) -> dict:
     w = Writer(conn, SYSTEM)
     try:
         info: dict = {}
-        # Groups mix year levels, as real ones do.
-        info["mun_class"], mun_students = make_class(w, "Year 9 Model UN (demo)", 2026, 25, rng, code="DEMO9M", years=(9, 10, 11))
-        info["small_class"], small = make_class(w, "Lunchtime MUN club (demo)", 2026, 3, rng, code="DEMO3C", years=(7, 10, 12))
-        info["debate_class"], debaters = make_class(w, "Year 8 Debating (demo)", 2026, 20, rng, code="DEMO8D", years=(7, 8, 9))
+        # One list of names for the whole school (D-099), so no two students share a name and nobody needs their group
+        # shown beside them. The groups below only decide which teachers see whom; they mix year levels, as real ones do.
+        people = fake_people(rng, 48)
+        info["mun_class"], mun_students = make_class(w, "Year 9 Model UN (demo)", 2026, 25, rng, code="DEMO9M", years=(9, 10, 11),
+                                                     people=people[:25])
+        info["small_class"], small = make_class(w, "Lunchtime MUN club (demo)", 2026, 3, rng, code="DEMO3C", years=(7, 10, 12),
+                                                people=people[25:28])
+        info["debate_class"], debaters = make_class(w, "Year 8 Debating (demo)", 2026, 20, rng, code="DEMO8D", years=(7, 8, 9),
+                                                    people=people[28:])
         staff_id = w.insert("staff", {"name": "Demo Chair", "pass_hash": hash_passphrase(DEMO_STAFF_PASSPHRASE)}, log=False)
         for cid in (info["mun_class"], info["small_class"], info["debate_class"]):
             w.insert("staff_class", {"staff_id": staff_id, "class_id": cid}, log=False)
         ga = packs.load_climate_conference(w, info["mun_class"])
         service.allocate_round_robin(w, ga["committee_id"], mun_students)
-        sc = packs.load_security_council(w, info["small_class"])
-        service.allocate_round_robin(w, sc["committee_id"], small)
         evatt = packs.load_evatt_scenario(w, info["small_class"])          # fictional crisis, invented positions (D-063)
         service.allocate_round_robin(w, evatt["committee_id"], small)
         info["evatt"] = evatt
-        info.update(ga=ga, sc=sc, staff_id=staff_id)
+        info.update(ga=ga, staff_id=staff_id)
+        # Saved groups, the way a teacher ticks students for an activity (D-085).
+        for gname, members in (("Debating Juniors (demo)", debaters[:10]), ("Model UN club (demo)", small + mun_students[:9])):
+            gid = w.insert("student_group", {"name": gname, "staff_id": None, "created_at": now_iso()}, log=False)
+            for sid_ in members:
+                w.insert("student_group_member", {"group_id": gid, "student_id": sid_}, log=False)
         try:
             from app.modules.debating.demo import populate_debating_demo
         except ImportError:

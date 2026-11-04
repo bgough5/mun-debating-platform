@@ -17,7 +17,7 @@ def ga(app):
 
 
 def sc(app):
-    return db_one(app, "SELECT * FROM committee WHERE name = 'Security Council'")
+    return db_one(app, "SELECT * FROM committee WHERE name LIKE 'Security Council%' ORDER BY id LIMIT 1")      # the demo's Veloria Council (D-099)
 
 
 def member_of(app, committee_id, iso3=None):

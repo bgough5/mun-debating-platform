@@ -27,6 +27,12 @@
     {% else %}<p>No tasks yet. When your delegation is given lobbying tasks, they appear here.</p>{% endfor %}
   </section>
 </div>
+{% if modules.chair or modules.intelligence %}
+<section class="card" aria-labelledby="h-solo"><h2 id="h-solo">{{ icon("committee") }} Practise on your own</h2>
+  <ul>{% if modules.chair %}<li><a href="/play">Play a Model UN scenario solo</a>: your own committee on the board, every other country played by the computer. Your games are saved.</li>{% endif %}
+    {% if modules.intelligence %}<li><a href="/me/ai-practice">{{ negotiation_label }}</a>: practise a negotiation conversation with another delegation.</li>{% endif %}</ul>
+</section>
+{% endif %}
 {% if debating is defined %}{% include "debating/_me.html" ignore missing %}{% endif %}
 {% include "people/_pathway.html" %}
 {% endblock %}

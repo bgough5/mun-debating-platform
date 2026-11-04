@@ -62,6 +62,22 @@
     });
   }
   document.addEventListener("DOMContentLoaded", initBallots);
+
+  // Start an activity (D-099): only the chosen activity's options show. Without JavaScript every option shows.
+  function initStart() {
+    document.querySelectorAll("form[data-start]").forEach(function (f) {
+      if (f._start) return;
+      f._start = true;
+      function sync() {
+        var k = f.querySelector('input[name="kind"]:checked');
+        f.querySelectorAll("[data-for]").forEach(function (el) { el.hidden = !k || el.getAttribute("data-for") !== k.value; });
+      }
+      f.addEventListener("change", function (e) { if (e.target.name === "kind") sync(); });
+      sync();
+    });
+  }
+  document.addEventListener("DOMContentLoaded", initStart);
+  document.addEventListener("htmx:load", initStart);
   document.addEventListener("htmx:load", initBallots);
   document.addEventListener("htmx:load", rememberPanels);
   document.addEventListener("htmx:afterSettle", initMenu);

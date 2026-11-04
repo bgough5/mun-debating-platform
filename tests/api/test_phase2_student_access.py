@@ -50,5 +50,5 @@ def test_students_see_only_own_tasks_and_class(app, coord):
     c = join_as(app, me["student_id"])
     assert "Lobby" not in c.get(f"/mun/committees/{com['id']}").text.split("Lobbying tasks")[1].split("Delegations")[0]
     assert c.post(f"/mun/tasks/{other_task}", {"status": "done"}).status_code == 403
-    sc_com = db_one(app, "SELECT id FROM committee WHERE name = 'Security Council'")["id"]
+    sc_com = db_one(app, "SELECT id FROM committee WHERE name LIKE 'Security Council%' ORDER BY id LIMIT 1")["id"]
     assert c.get(f"/mun/committees/{sc_com}").status_code == 403

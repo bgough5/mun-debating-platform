@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, empty_state %}
+{% block content %}
+<h1>{{ icon("committee") }} Play solo</h1>
+<p class="lede">Your own Model UN committee on the board. Pick a scenario and a country: every other country is played by the computer from its position on each issue. Talk to delegations, amend the clause if it would win votes, then call the vote.</p>
+{% if not signed_in %}
+<div class="notice" role="note">{{ icon("info") }} You're playing as a guest: nothing is saved, and the game ends when you close the tab. <a href="/join">Sign in with your code</a> to keep your games.</div>
+{% endif %}
+{% if mine %}
+<section class="card" aria-labelledby="h-mine"><h2 id="h-mine">{{ icon("history") }} Your games</h2>
+<ul class="group-list">{% for g in mine %}<li><a href="/play/s/{{ g.id }}" hx-boost="false">{{ g.committee }}</a> <span class="muted">as {{ g.country }} ·
+  {% if g.stage == 'voted' %}{{ "passed" if g.passed else "failed" }}{% else %}in progress{% endif %}</span></li>{% endfor %}</ul>
+</section>
+{% endif %}
+{% set types = {'sc': 'Security Council', 'ga_plenary': 'General Assembly', 'ga_third': 'GA Third Committee'} %}
+<section aria-labelledby="h-pick"><h2 id="h-pick">{{ icon("play") }} Choose a scenario</h2>
+{% if packs %}
+<div class="scenario-cards">
+{% for p in packs %}
+<form method="post" action="/play/start" class="card scenario-lib stack" hx-boost="false">{{ hidden_csrf(csrf) }}<input type="hidden" name="pack" value="{{ p.code }}">
+  <h3>{{ p.title }}</h3>
+  <p class="sc-tags"><span class="badge">{{ types[p.type] }}</span> <span class="badge">{{ p.level|capitalize }}</span>
+    <span class="badge">{{ "Fictional" if p.fictional else "Real issue" }}</span></p>
+  <p class="small">{{ p.summary }}</p>
+  <div class="field"><label for="c-{{ p.code }}">Your country</label><select id="c-{{ p.code }}" name="iso3_{{ p.code }}">{% for c, nm in p.options %}<option value="{{ c }}">{{ nm }}</option>{% endfor %}</select></div>
+  <button type="submit">{{ icon("play") }} Play<span class="visually-hidden"> {{ p.title }}</span></button>
+</form>
+{% endfor %}
+</div>
+{% else %}{{ empty_state("No scenarios are installed yet.", "Ask your teacher to add one.", None, None, "committee") }}{% endif %}
+</section>
+{% if signed_in %}<p class="small"><a href="/me/sim">Practise a committee your class is running</a> with up to two classmates.</p>{% endif %}
+{% endblock %}

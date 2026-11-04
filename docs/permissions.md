@@ -23,12 +23,12 @@ student may open a resolution only in their own class's committee, and a ballot 
 
 | Role required | Routes |
 |---|---|
-| Public | 26 |
+| Public | 30 |
 | Signed in (any role, checked per item) | 30 |
-| Students only | 53 |
+| Students only | 54 |
 | Staff and coordinator | 121 |
 | Coordinator only | 40 |
-| **Total** | **270** |
+| **Total** | **275** |
 
 ## Coordinator only
 
@@ -258,6 +258,7 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/me/sim/{pid}` |
 | POST | `/me/sim/{pid}` |
 | GET | `/me/team/{run_id}` |
+| GET | `/play/s/{pid}` |
 
 ## Signed in (any role, checked per item)
 
@@ -313,6 +314,10 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/login` | Sign-in form (throttled) |
 | POST | `/login` | Sign-in form (throttled) |
 | POST | `/logout` | Sign-out |
+| GET | `/play` | Single player: choose a scenario; open to guests, who keep nothing (D-099) |
+| POST | `/play/api` | Single player moves: a guest's game is checked and answered without storing it; a saved game needs the student's own session (D-099) |
+| GET | `/play/g/{code}/{iso3}/{seed}/{pid}` | Single player as a guest: the game is in the address and the browser; nothing stored (D-099) |
+| POST | `/play/start` | Single player: start a game; a guest's is never stored, a signed-in student's is their own (D-099) |
 | GET | `/practice-game` | Link to the frozen v2 practice game |
 | GET | `/practice-game/solo` | The frozen v2 solo game page |
 | GET | `/privacy` | Privacy notice |

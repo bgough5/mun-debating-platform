@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<link rel="icon" href="/static/soc_crest.png">
+<link rel="stylesheet" href="/static/css/app.css">
+<link rel="stylesheet" href="/static/css/board.css">
+<link rel="stylesheet" href="/static/css/play.css">
+<script src="/static/js/play.js" defer></script>
+</head>
+{# Single player on the board (D-099): the war-room table for one player. play.js plays the game: talk to delegations,
+   record what you heard, amend the clause, check the whip count, call the vote. A guest's game lives in this tab;
+   a signed-in student's is saved as they go. #}
+{% set tw, th, fh = wmap.token_w, wmap.token_h, wmap.face_h %}
+<body class="board-body play-body" data-fx-motion="{{ 'on' if settings.get('fx_motion', True) else 'off' }}">
+<a class="skip" href="#p-rail">Skip to the game</a>
+<div id="p-say" class="visually-hidden" role="status" aria-live="polite"></div>
+<div id="b-stage" class="b-stage p-stage">
+  <div class="b-lamp" aria-hidden="true"></div>
+  <header class="b-top">
+    <div class="b-roundel" aria-hidden="true">
+      <svg class="b-emblem" viewBox="0 0 120 120"><g transform="translate(60 60)">
+        <g class="b-laurel">{% for i in range(9) %}<ellipse cx="0" cy="-45" rx="4.6" ry="10" transform="rotate({{ -150 + i * 15 }})"/><ellipse cx="0" cy="-45" rx="4.6" ry="10" transform="rotate({{ 150 - i * 15 }})"/>{% endfor %}</g>
+        <circle class="b-globe" r="32"/><path class="b-globe-line" d="M-32 0H32M0-32V32M-22-22C-8-11 8-11 22-22M-22 22C-8 11 8 11 22 22M0-32C-15-15-15 15 0 32M0-32C15-15 15 15 0 32"/>
+      </g></svg>
+    </div>
+    <div class="b-titles">
+      <p class="b-kicker">Single player · Model UN{% if game.mode == 'guest' %} <span class="b-tag">Guest: nothing is saved</span>{% else %} <span class="b-tag">Saved as you play</span>{% endif %}</p>
+      <h1 class="b-committee" id="b-committee">{{ title }}</h1>
+      <p class="b-ribbon"><span class="b-ribbon-text">You are {{ country }} · {{ game.rule }}</span></p>
+    </div>
+    <ol class="b-track" id="p-track" aria-label="Steps">
+      {% for name in ["Read", "Lobby", "Amend", "Vote"] %}<li class="{{ 'now' if loop.first }}"><span class="b-coin"><span>{{ loop.index }}</span></span><span class="b-coin-name">{{ name }}</span></li>{% endfor %}
+    </ol>
+  </header>
+
+  <main class="b-table" id="main" tabindex="-1">
+    {% include "chair/_board_map.html" %}
+    <aside class="b-rail p-rail" id="p-rail" aria-label="Your move">
+      <section class="b-card"><h2>Clause {{ game.position }}</h2>
+        <p class="p-clause" id="p-clause">{{ game.clause }}</p>
+        <p class="p-sub">It commits countries to:</p>
+        <ul class="p-tags" id="p-tags"></ul>
+        <p class="p-row"><button type="button" class="p-btn ghost" id="p-amend">Amend the clause</button>
+          <button type="button" class="p-btn" id="p-amend-save" hidden>Save the amendment</button></p>
+      </section>
+      <section class="b-card p-gauge"><h2>Your whip count</h2>
+        <p class="b-big" id="p-chance">…</p><p class="p-sub" id="p-range">chance it passes</p></section>
+      <section class="b-card" id="p-lobby-card"><h2>Lobby</h2>
+        <p class="p-sub"><span id="p-left"></span> Click a country on the map, or choose one here.</p>
+        <div class="p-row"><label class="visually-hidden" for="p-who">Talk to</label>
+          <select id="p-who">{% for o in others %}<option value="{{ o.iso3 }}">{{ o.name }}</option>{% endfor %}</select>
+          <button type="button" class="p-btn" id="p-talk">Talk</button></div>
+        <ol class="p-log" id="p-log"></ol>
+      </section>
+      <section class="b-card" id="p-vote-card"><h2>The vote</h2>
+        <p class="p-sub">How does {{ country }} vote?</p>
+        <div class="p-row" role="radiogroup" aria-label="Your vote">
+          {% for v, label in [("yes", "Yes"), ("abstain", "Abstain"), ("no", "No")] %}<label class="p-vote"><input type="radio" name="p-my" value="{{ v }}"> {{ label }}</label>{% endfor %}</div>
+        <p class="p-row"><button type="button" class="p-btn big" id="p-call">Call the vote</button></p>
+      </section>
+      <section class="b-card" id="p-result" hidden></section>
+    </aside>
+  </main>
+  <footer class="b-bottom"><p class="p-msg" id="p-msg" role="status"></p></footer>
+  <div class="b-overlay" id="b-overlay"></div>
+</div>
+<script id="p-initial" type="application/json">{{ game|tojson }}</script>
+</body>
+</html>

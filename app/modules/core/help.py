@@ -92,8 +92,8 @@ CONTEXT = [
         "Lost card or shared code? Open the student under Manage and give them a new code; the old one stops working.",
     ]),
     ("/start", "Starting an activity", [
-        "Choose UNAA or Evatt Model UN, a class debate, public speaking or your own format.",
-        "Tick who's here today. Students stay on the list once entered; add first-timers under \"First time here?\" and they are ticked for you.",
+        "Step 1: choose Model UN, a class debate, public speaking or your own format. Only that activity's options appear: for Model UN, pick a scenario card and how countries are given out.",
+        "Step 2: tick who's here today. Students stay on the list once entered; add first-timers under \"First time here?\" and they are ticked for you. Type a name under \"Save these students as a group\" to tick them all in one go next time.",
         "Any number works. Model UN shares the countries out (a country with no student is voted by the engine and labelled computed); more than eight debaters are split into several debates; public speaking takes everyone ticked.",
         "Difficulty changes speech times and the motions and impromptu topics offered. Suggested picks it from the year levels of the students ticked.",
         "Everything is saved as you go. Next time, use Resume under In progress on the Dashboard: it asks who's here, with last time's students ticked.",

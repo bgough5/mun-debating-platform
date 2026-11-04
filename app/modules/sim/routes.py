@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Body, Depends, Request
 
 from app.db import one, rows, scalar
 from app.errors import UserError
@@ -327,3 +327,140 @@ def practice_action(request: Request, pid: int, sess=Depends(require_student), f
         else:
             raise UserError("Unknown action.")
     return redirect(f"/me/sim/{pid}", msg)
+
+
+# ---------- single player on the board (D-099) ----------
+
+def _student_id(request: Request) -> int | None:
+    s = getattr(request.state, "session", None)
+    return s.actor.id if s and s.actor.kind == "student" else None
+
+
+@router.get("/play")
+def play_home(request: Request):
+    """Pick a scenario and a country. Open to everyone: signed-in students keep their games, guests keep nothing."""
+    from app.modules.mun.packfile import available, un_members
+    me = _student_id(request)
+    packs = [{**p, "options": sorted(((c, un_members().get(c, c)) for c in p["countries"]), key=lambda x: x[1])} for p in available()]
+    mine = []
+    if me:
+        with request.app.state.db.read() as conn:
+            mine = rows(conn, "SELECT sp.id, sp.stage, sp.result_json, cm.name AS committee, m.iso3, c.name AS country FROM sim_practice sp "
+                              "JOIN sim_practice_member m ON m.practice_id = sp.id JOIN committee cm ON cm.id = sp.committee_id "
+                              "JOIN country c ON c.iso3 = m.iso3 WHERE m.student_id = ? AND sp.deleted_at IS NULL AND cm.solo_student_id = ? "
+                              "ORDER BY sp.id DESC LIMIT 12", (me, me))
+        for g in mine:
+            g["passed"] = json.loads(g["result_json"]).get("passed") if g["result_json"] else None
+            g["committee"] = g["committee"].replace(" · solo", "")
+    return render(request, "sim/play_home.html", {"title": "Play solo", "packs": packs, "mine": mine, "signed_in": bool(me)})
+
+
+@router.post("/play/start")
+def play_start(request: Request, form=Depends(form_data)):
+    from app.modules.mun import choice as CH
+    from app.modules.mun.packfile import closest_vote, install, load
+    from app.modules.sim import play as PLAY
+    code = form.get("pack") or ""
+    iso3 = (form.get(f"iso3_{code}") or form.get("iso3") or "").upper()
+    pack = load(code)
+    if iso3 not in pack["countries"]:
+        raise UserError("Choose a country that sits on this committee.")
+    me = _student_id(request)
+    from app.db import SYSTEM          # a guest has no account: the scenario's shared committee is made by the system
+    with request.app.state.db.write(request.state.actor if me else SYSTEM) as w:
+        if me:
+            info = install(w, code, None, name_suffix=" · solo", solo_student_id=me)
+            CH.set_roster(w, info["committee_id"], [me])
+            pid = SIM.create_practice(w, me, info["committee_id"], closest_vote(w.conn, PLAY.operative_ids(w.conn, info["committee_id"])), iso3)
+            url = f"/play/s/{pid}"
+        else:
+            cid = PLAY.guest_committee(w, code)
+            para = closest_vote(w.conn, PLAY.operative_ids(w.conn, cid))
+            url = f"/play/g/{code}/{iso3}/{PLAY.new_seed()}/{para}"
+    return redirect(url)
+
+
+def _game_page(request: Request, conn, committee_id: int, paragraph_id: int, state: dict):
+    from app.modules.chair.board import static_board
+    from app.modules.sim import play as PLAY
+    para = one(conn, "SELECT p.position, v.text, v.tags FROM paragraph p JOIN paragraph_version v ON v.id = p.current_version_id "
+                     "WHERE p.id = ?", (paragraph_id,))
+    country = scalar(conn, "SELECT name FROM country WHERE iso3 = ?", (state["iso3"],)) or state["iso3"]
+    others = rows(conn, "SELECT d.iso3, c.name FROM delegation d JOIN country c ON c.iso3 = d.iso3 WHERE d.committee_id = ? "
+                        "AND d.deleted_at IS NULL AND d.iso3 != ? ORDER BY c.name", (committee_id, state["iso3"]))
+    cm = one(conn, "SELECT cm.name, vr.name AS rule FROM committee cm JOIN voting_rule vr ON vr.id = cm.voting_rule_id WHERE cm.id = ?",
+             (committee_id,))
+    title = cm["name"].replace(" · solo", "").replace(" · guest play", "")
+    game = {**state, "clause": para["text"], "position": para["position"], "original_tags": [t for t in (para["tags"] or "").split(",") if t],
+            "tag_labels": PLAY.topic_tags(conn, committee_id), "limit": PLAY.LIMIT, "country": country, "rule": cm["rule"],
+            "names": {**{o["iso3"]: o["name"] for o in others}, state["iso3"]: country}}
+    return render(request, "sim/play_game.html", {"title": title, "wmap": static_board(conn, committee_id), "game": game,
+                                                  "others": others, "country": country})
+
+
+@router.get("/play/g/{code}/{iso3}/{seed}/{pid}")
+def play_guest(request: Request, code: str, iso3: str, seed: int, pid: int):
+    from app.modules.sim import play as PLAY
+    with request.app.state.db.read() as conn:
+        g = PLAY.guest_game(conn, code, iso3.upper(), seed, pid)
+        state = {"mode": "guest", "code": code, "iso3": g["iso3"], "seed": seed, "paragraph_id": pid,
+                 "tags": [t for t in g["tags"].split(",") if t], "lobbies": [], "stage": "lobbying", "result": None, "my_vote": None}
+        return _game_page(request, conn, g["committee_id"], pid, state)
+
+
+@router.get("/play/s/{pid}")
+def play_saved(request: Request, pid: int, sess=Depends(require_student)):
+    from app.modules.sim import play as PLAY
+    me = request.state.actor.id
+    with request.app.state.db.read() as conn:
+        p = SIM.get_practice(conn, pid, me)
+        return _game_page(request, conn, p["committee_id"], p["paragraph_id"], PLAY.saved_state(conn, p, me))
+
+
+@router.post("/play/api")
+def play_api(request: Request, payload: dict = Body(...)):
+    """One move in a game. A guest's game comes with the request and nothing is stored; a saved game is the signed-in
+    student's own practice run, checked against their account."""
+    from app.modules.sim import play as PLAY
+    action = payload.get("action")
+    if payload.get("mode") == "saved":
+        me = _student_id(request)
+        if not me:
+            raise UserError("Sign in to keep playing this saved game.", 403)
+        with request.app.state.db.write(request.state.actor) as w:
+            p = SIM.get_practice(w.conn, int(payload.get("pid") or 0), me)
+            if action == "lobby":
+                lid = SIM.lobby(w, p, me, str(payload.get("iso3_target") or ""))
+                return {"id": lid, "heard": scalar(w.conn, "SELECT heard FROM sim_practice_lobby WHERE id = ?", (lid,)), "tags": p["tags"] or ""}
+            if action == "read":
+                SIM.record_reading(w, p, me, int(payload.get("id") or 0), int(payload.get("position")), "")
+                return {"ok": True}
+            if action == "amend":
+                SIM.amend(w, p, [str(t) for t in payload.get("tags") or []])
+                return {"tags": one(w.conn, "SELECT tags FROM sim_practice WHERE id = ?", (p["id"],))["tags"].split(",")}
+            if action == "chance":
+                r = SIM.practice_prediction(w.conn, p)["result"]
+                return {"p_pass": round(r.p_pass, 3), "yes_mean": round(r.yes_mean, 1), "yes_lo": r.yes_lo, "yes_hi": r.yes_hi}
+            if action == "vote":
+                SIM.set_member_vote(w, p, me, str(payload.get("my_vote") or ""))
+                before = SIM.practice_prediction(w.conn, p)["result"].p_pass
+                return SIM.call_vote(w, SIM.get_practice(w.conn, p["id"], me), before)
+        raise UserError("Unknown move.")
+    with request.app.state.db.read() as conn:
+        g = PLAY.guest_game(conn, str(payload.get("code") or ""), str(payload.get("iso3") or "").upper(), payload.get("seed"),
+                            int(payload.get("paragraph_id") or 0), [str(t) for t in payload.get("tags") or []])
+        lobbies = PLAY.clean_lobbies(conn, g, payload.get("lobbies"))
+        if action == "lobby":
+            if len(lobbies) >= PLAY.LIMIT:
+                raise UserError(f"You've used all {PLAY.LIMIT} conversations. Record what you think, then call the vote.")
+            target = str(payload.get("iso3_target") or "")
+            if target == g["iso3"]:
+                raise UserError("That's your own country.")
+            return {"heard": SIM.lobby_line(conn, g, target), "tags": g["tags"]}
+        if action == "amend":
+            return {"tags": g["tags"].split(",")}
+        if action == "chance":
+            return PLAY.chance(conn, g, lobbies)
+        if action == "vote":
+            return PLAY.guest_vote(conn, g, str(payload.get("my_vote") or ""), lobbies)
+    raise UserError("Unknown move.")

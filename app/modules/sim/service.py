@@ -496,11 +496,7 @@ def lobby(w: Writer, p: dict, student_id: int, iso3: str) -> int:
     used = scalar(w.conn, "SELECT COUNT(*) FROM sim_practice_lobby WHERE practice_id = ? AND student_id = ?", (p["id"], student_id))
     if used >= LOBBY_LIMIT:
         raise UserError(f"You've used all {LOBBY_LIMIT} conversations. Record what you think, then call the vote.")
-    hm = hidden_mandates(w.conn, p).get(iso3)
-    if not hm:
-        raise UserError("That country isn't on this committee.")
-    topic_id = scalar(w.conn, "SELECT topic_id FROM committee WHERE id = ?", (p["committee_id"],))
-    line = _lines(w.conn, iso3, topic_id).get(hm["bucket"]) or GENERIC_LINES[hm["bucket"]]
+    line = lobby_line(w.conn, p, iso3)
     return w.insert("sim_practice_lobby", {"practice_id": p["id"], "student_id": student_id, "iso3": iso3, "heard": line,
                                            "tags": p["tags"] or "", "created_at": now_iso()})
 
@@ -550,42 +546,60 @@ def set_member_vote(w: Writer, p: dict, student_id: int, vote: str) -> None:
     w.conn.execute("UPDATE sim_practice_member SET vote = ? WHERE practice_id = ? AND student_id = ?", (vote, p["id"], student_id))
 
 
-def call_vote(w: Writer, p: dict, p_pass_before: float) -> dict:
-    if p["stage"] != "lobbying":
-        raise UserError("This practice has already voted.")
-    original = one(w.conn, "SELECT v.tags FROM paragraph p JOIN paragraph_version v ON v.id = p.current_version_id WHERE p.id = ?",
+def practice_result(conn, p: dict, member_votes: dict, lobbies: list[dict], p_pass_before: float) -> dict:
+    """The vote on a practice clause and its debrief, worked out without saving anything (single player for guests,
+    D-099, uses it directly). `member_votes`: iso3 -> the players' own votes; `lobbies`: the conversations, each
+    {iso3, heard, position (or None), note, tags (the clause's tags when it happened), student_id}."""
+    original = one(conn, "SELECT v.tags FROM paragraph p JOIN paragraph_version v ON v.id = p.current_version_id WHERE p.id = ?",
                    (p["paragraph_id"],))["tags"] or ""
-    now_m = hidden_mandates(w.conn, p)
-    before_m = hidden_mandates(w.conn, p, [t for t in original.split(",") if t])
-    members = {m["iso3"]: m for m in rows(w.conn, "SELECT * FROM sim_practice_member WHERE practice_id = ?", (p["id"],))}
-    votes = {iso: (members[iso]["vote"] or "abstain") if iso in members else m["vote"] for iso, m in now_m.items()}
-    c = one(w.conn, "SELECT * FROM committee WHERE id = ?", (p["committee_id"],))
-    rule = _rule(w.conn, c["voting_rule_id"])
+    now_m = hidden_mandates(conn, p)
+    before_m = hidden_mandates(conn, p, [t for t in original.split(",") if t])
+    votes = {iso: (member_votes.get(iso) or "abstain") if iso in member_votes else m["vote"] for iso, m in now_m.items()}
+    c = one(conn, "SELECT * FROM committee WHERE id = ?", (p["committee_id"],))
+    rule = _rule(conn, c["voting_rule_id"])
     out = tally(rule, votes, len(votes))
     # A reading is scored against the delegation's mandate when the conversation happened (the text may have been
     # amended since), and the debrief says if the amendment then moved that delegation.
     readings = []
     at_time: dict[str, dict] = {}
-    for r in rows(w.conn, "SELECT * FROM sim_practice_lobby WHERE practice_id = ? ORDER BY id", (p["id"],)):
-        tags_then = r["tags"] or p["tags"] or ""
-        then = at_time.setdefault(tags_then, hidden_mandates(w.conn, p, [t for t in tags_then.split(",") if t])).get(r["iso3"])
+    for r in lobbies:
+        tags_then = r.get("tags") or p["tags"] or ""
+        then = at_time.setdefault(tags_then, hidden_mandates(conn, p, [t for t in tags_then.split(",") if t])).get(r["iso3"])
         truth = now_m.get(r["iso3"])
-        read_vote = None if r["position"] is None else ("yes" if r["position"] >= 1 else "no" if r["position"] <= -1 else "abstain")
-        readings.append({"iso3": r["iso3"], "country": truth["name"] if truth else r["iso3"], "heard": r["heard"],
-                         "read": r["position"], "read_vote": read_vote, "student_id": r["student_id"],
+        pos = r.get("position")
+        read_vote = None if pos is None else ("yes" if pos >= 1 else "no" if pos <= -1 else "abstain")
+        readings.append({"iso3": r["iso3"], "country": truth["name"] if truth else r["iso3"], "heard": r.get("heard", ""),
+                         "read": pos, "read_vote": read_vote, "student_id": r.get("student_id"),
                          "then_vote": then["vote"] if then else None, "actual_vote": truth["vote"] if truth else None,
                          "correct": None if read_vote is None or not then else read_vote == then["vote"],
                          "moved_after": bool(then and truth and then["vote"] != truth["vote"])})
     moved = [{"iso3": iso, "country": now_m[iso]["name"], "before": before_m[iso]["vote"], "after": now_m[iso]["vote"]}
-             for iso in sorted(now_m) if iso in before_m and iso not in members and before_m[iso]["vote"] != now_m[iso]["vote"]]
+             for iso in sorted(now_m) if iso in before_m and iso not in member_votes and before_m[iso]["vote"] != now_m[iso]["vote"]]
     names = {iso: m["name"] for iso, m in now_m.items()}
     piv = [{**x, "country": names.get(x["iso3"], x["iso3"])} for x in pivotal(rule, votes, len(votes))]
-    result = {"passed": out.passed, "summary": out.summary, "yes": out.yes, "no": out.no, "abstain": out.abstain,
-              "vetoed_by": list(out.vetoed_by), "p_pass_before": p_pass_before, "readings": readings, "moved": moved,
-              "pivotal": piv, "votes": votes, "rule": rule.name, "tags": _tags(p), "original_tags": original.split(",") if original else []}
+    return {"passed": out.passed, "summary": out.summary, "yes": out.yes, "no": out.no, "abstain": out.abstain,
+            "vetoed_by": list(out.vetoed_by), "p_pass_before": p_pass_before, "readings": readings, "moved": moved,
+            "pivotal": piv, "votes": votes, "rule": rule.name, "tags": _tags(p), "original_tags": original.split(",") if original else []}
+
+
+def call_vote(w: Writer, p: dict, p_pass_before: float) -> dict:
+    if p["stage"] != "lobbying":
+        raise UserError("This practice has already voted.")
+    members = {m["iso3"]: m["vote"] for m in rows(w.conn, "SELECT * FROM sim_practice_member WHERE practice_id = ?", (p["id"],))}
+    lobbies = rows(w.conn, "SELECT * FROM sim_practice_lobby WHERE practice_id = ? ORDER BY id", (p["id"],))
+    result = practice_result(w.conn, p, members, lobbies, p_pass_before)
     w.conn.execute("UPDATE sim_practice SET stage = 'voted', result_json = ? WHERE id = ?", (json.dumps(result), p["id"]))
-    w.log("sim_practice", p["id"], "voted", None, {"passed": out.passed})
+    w.log("sim_practice", p["id"], "voted", None, {"passed": result["passed"]})
     return result
+
+
+def lobby_line(conn, p: dict, iso3: str) -> str:
+    """What a delegation says when lobbied: in character, from its hidden mandate on the clause as it now stands."""
+    hm = hidden_mandates(conn, p).get(iso3)
+    if not hm:
+        raise UserError("That country isn't on this committee.")
+    topic_id = scalar(conn, "SELECT topic_id FROM committee WHERE id = ?", (p["committee_id"],))
+    return _lines(conn, iso3, topic_id).get(hm["bucket"]) or GENERIC_LINES[hm["bucket"]]
 
 
 # ---------------- whip-count map (D-089) ----------------

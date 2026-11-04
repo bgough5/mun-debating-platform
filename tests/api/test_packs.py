@@ -74,7 +74,7 @@ def test_a_student_plays_a_pack_alone(app, coord):
     st = db_one(app, "SELECT id FROM student WHERE active = 1 ORDER BY id DESC LIMIT 1")["id"]
     a = join_as(app, st)
     page = a.get("/me/sim").text
-    assert "Play a scenario on your own" in page and "The situation in Veloria" in page
+    assert "Play a scenario on your own" in page and "href=\"/play\"" in page          # the board game is the way in (D-099)
     r = a.post("/me/sim/scenario", {"pack": "veloria", "iso3_veloria": "FRA"}, follow_redirects=False)
     assert r.status_code in (302, 303)
     pid = int(r.headers["location"].rsplit("/", 1)[1])

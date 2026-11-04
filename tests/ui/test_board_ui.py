@@ -31,7 +31,7 @@ def test_the_board_plays_the_session(browser, live):
     boxes = chair.locator(".year-block").first.locator("input[type=checkbox]")
     for i in range(min(5, boxes.count())):
         boxes.nth(i).check()
-    chair.check("input[name=kind][value=evatt]")
+    chair.check("input[name=kind][value=mun]")          # Model UN; the Veloria scenario is chosen by default
     chair.click("button[name=op][value=start]")
     chair.wait_for_url(re.compile(r"/chair/\d+$"), wait_until="commit")
     sid = int(chair.url.rsplit("/", 1)[1])

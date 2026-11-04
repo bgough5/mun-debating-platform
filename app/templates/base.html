@@ -30,19 +30,17 @@
     <nav class="main" aria-label="Main">
       <ul>
       {% if actor and actor.is_staff %}
-        {% if modules.mun %}<li><a href="/mun" {% if req_path.startswith('/mun') %}aria-current="page"{% endif %}>{{ icon("conference") }} Model UN</a></li>{% endif %}
-        {% if modules.chair %}<li><a href="/chair" {% if req_path.startswith('/chair') %}aria-current="page"{% endif %}>{{ icon("chair") }} Chair</a></li>{% endif %}
+        {# One front door (D-099): Start, the two libraries, People and Admin. The chair console, Intelligence and the
+           classic game are reached from inside these (an open session, Admin, Model UN → Advanced). #}
+        <li><a href="/start" {% if req_path.startswith('/start') %}aria-current="page"{% endif %}>{{ icon("play") }} Start</a></li>
+        {% if modules.mun %}<li><a href="/mun" {% if req_path.startswith('/mun') or req_path.startswith('/chair') %}aria-current="page"{% endif %}>{{ icon("conference") }} Model UN</a></li>{% endif %}
         {% if modules.debating %}<li><a href="/debating" {% if req_path.startswith('/debating') %}aria-current="page"{% endif %}>{{ icon("debate") }} Debating</a></li>{% endif %}
         {% if modules.people %}<li><a href="/people" {% if req_path.startswith('/people') %}aria-current="page"{% endif %}>{{ icon("people") }} People</a></li>{% endif %}
-        {% if modules.intelligence %}<li><a href="/intel" {% if req_path.startswith('/intel') %}aria-current="page"{% endif %}>{{ icon("prediction") }} Intelligence</a></li>{% endif %}
-        {% if actor.is_coordinator %}<li><a href="/admin" {% if req_path.startswith('/admin') %}aria-current="page"{% endif %}>{{ icon("settings") }} Admin</a></li>{% endif %}
-        <li><a href="/practice-game">{{ icon("practice") }} Classic practice game</a></li>
+        {% if actor.is_coordinator %}<li><a href="/admin" {% if req_path.startswith('/admin') or req_path.startswith('/intel') %}aria-current="page"{% endif %}>{{ icon("settings") }} Admin</a></li>{% endif %}
       {% elif actor and actor.kind == 'student' %}
         <li><a href="/me" {% if req_path == '/me' %}aria-current="page"{% endif %}>{{ icon("student") }} My page</a></li>
-        {% if modules.chair %}<li><a href="/me/sim" {% if req_path.startswith('/me/sim') %}aria-current="page"{% endif %}>{{ icon("committee") }} Practice committee</a></li>{% endif %}
+        {% if modules.chair %}<li><a href="/play" {% if req_path.startswith('/me/sim') or req_path.startswith('/play') %}aria-current="page"{% endif %}>{{ icon("committee") }} Play solo</a></li>{% endif %}
         {% if modules.debating %}<li><a href="/me/prep" {% if req_path.startswith('/me/prep') or req_path.startswith('/me/practice') %}aria-current="page"{% endif %}>{{ icon("practice") }} Prep &amp; practise</a></li>{% endif %}
-        {% if modules.intelligence %}<li><a href="/me/ai-practice" {% if req_path.startswith('/me/ai-practice') %}aria-current="page"{% endif %}>{{ icon("ai") }} {{ negotiation_label }}</a></li>{% endif %}
-        <li><a href="/practice-game">{{ icon("practice") }} Classic practice game</a></li>
       {% endif %}
       </ul>
     </nav>

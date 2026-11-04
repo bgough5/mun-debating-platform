@@ -127,6 +127,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.exception_handler(UserError)
     async def user_error(request: Request, exc: UserError):
+        if request.url.path.startswith("/play/api"):          # single player's moves are JSON (D-099)
+            from fastapi.responses import JSONResponse
+            return JSONResponse({"error": exc.message}, status_code=exc.status)
         return render(request, "error.html", {"title": "That didn't work", "message": exc.message}, status=exc.status)
 
     @app.exception_handler(StarletteHTTPException)
