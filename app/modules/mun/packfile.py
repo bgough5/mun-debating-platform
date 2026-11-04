@@ -53,6 +53,12 @@ def _text(v, field: str, lo: int, hi: int, errors: list) -> str:
     return v
 
 
+def source_links(s) -> list[str]:
+    """A country's sources: one link, or a list of up to four (one page rarely covers every clause)."""
+    links = s if isinstance(s, list) else [s] if s else []
+    return [x for x in links if isinstance(x, str) and URL.match(x)][:4]
+
+
 def validate(pack: dict, filename_code: str | None = None) -> list[str]:
     """Every problem with a pack, in plain words (empty when it can be used)."""
     e: list[str] = []
@@ -137,11 +143,12 @@ def validate(pack: dict, filename_code: str | None = None) -> list[str]:
                 e.append(f"positions.{iso}.{t}: not one of the pack's tags.")
             if not isinstance(v, int) or isinstance(v, bool) or not -2 <= v <= 2:
                 e.append(f"positions.{iso}.{t}: a whole number from -2 (strongly oppose) to 2 (strongly support).")
-        if fictional is False and not (isinstance(sources.get(iso), str) and URL.match(sources[iso])):
+        if fictional is False and not source_links(sources.get(iso)):
             e.append(f"sources.{iso}: a real topic needs a source link for every country with a position (or leave the position out).")
     for iso, s in sources.items():
-        if not isinstance(s, str) or not URL.match(s):
-            e.append(f"sources.{iso}: a single http(s) link.")
+        links = s if isinstance(s, list) else [s]
+        if not 1 <= len(links) <= 4 or not all(isinstance(x, str) and URL.match(x) for x in links):
+            e.append(f"sources.{iso}: one http(s) link, or a list of up to four.")
     news = pack.get("news") or []
     if not isinstance(news, list) or len(news) > 8:
         e.append("news: at most 8 updates.")
@@ -184,16 +191,17 @@ def available() -> list[dict]:
     return out
 
 
-def most_contested(pack: dict) -> int:
-    """The operative clause (0-based) the countries agree on least: the lowest average support across its tags. A solo
-    run starts there, so the first vote is a real contest rather than one that passes untouched."""
-    positions = pack.get("positions") or {}
-
-    def support(cl):
-        vals = [pos[t] for pos in positions.values() for t in cl.get("tags") or [] if t in pos]
-        return sum(vals) / len(vals) if vals else 0.0
-    ops = pack["resolution"]["operative"]
-    return min(range(len(ops)), key=lambda i: (support(ops[i]), i))
+def closest_vote(conn, paragraph_ids: list[int]) -> int:
+    """The operative clause whose vote the engine finds closest to a coin toss. A solo run starts there, so the first
+    vote is a real contest: neither one that passes untouched nor one no lobbying could save (a Security Council clause
+    a permanent member is sure to veto)."""
+    from app.modules.mun.predict import run_prediction
+    best, gap = paragraph_ids[0], 2.0
+    for pid in paragraph_ids:
+        p = run_prediction(conn, "paragraph", pid, runs=300, seed=7)["result"].p_pass
+        if abs(p - 0.5) < gap:
+            best, gap = pid, abs(p - 0.5)
+    return best
 
 
 def install(w: Writer, code: str, class_id: int | None = None, name_suffix: str = "", solo_student_id: int | None = None) -> dict:
@@ -234,7 +242,7 @@ def install(w: Writer, code: str, class_id: int | None = None, name_suffix: str 
                                      position=pos, strength="moderate", source_type="demo_unverified", summary=UNVERIFIED.format(name=cname))
             else:
                 service.add_evidence(w, subject_kind="country", iso3=iso, target_kind="tag", tag_code=tag, topic_id=topic_id,
-                                     position=pos, strength="weak", source_type="ai_estimate", source=pack["sources"][iso],
+                                     position=pos, strength="weak", source_type="ai_estimate", source=" ; ".join(source_links(pack["sources"][iso])),
                                      summary=ESTIMATE.format(name=cname))
             n += 1
     return {"conference_id": conf, "committee_id": cid, "resolution_id": res, "delegations": dels, "paragraphs": paras, "evidence": n,

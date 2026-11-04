@@ -55,6 +55,7 @@ def test_the_validator_catches_what_authors_get_wrong():
     assert "no markup" in broken(lambda p: p.update(summary="<script>alert(1)</script> a scenario summary that is long enough"))
     assert "no links" in broken(lambda p: p.update(summary="See https://example.com for this scenario summary text here"))
     assert "source link" in broken(lambda p: p.update(fictional=False, news=[]))         # a real topic needs sources
+    assert "up to four" in broken(lambda p: p["sources"].update(USA=["https://a.example/x"] * 5))
     assert "only for fictional" in broken(lambda p: p.update(fictional=False, positions={}))  # and no invented news
     template = json.loads((PF.PACK_DIR / "_template.json").read_text(encoding="utf-8"))
     assert PF.validate(template, "replace_with_file_name") == []                          # the template's shape is valid
@@ -79,10 +80,11 @@ def test_a_student_plays_a_pack_alone(app, coord):
     pid = int(r.headers["location"].rsplit("/", 1)[1])
     run = db_one(app, "SELECT sp.committee_id, m.iso3 FROM sim_practice sp JOIN sim_practice_member m ON m.practice_id = sp.id WHERE sp.id = ?", (pid,))
     assert run["iso3"] == "FRA"
-    pack = PF.load("veloria")
-    text = db_one(app, "SELECT v.text FROM sim_practice sp JOIN paragraph p ON p.id = sp.paragraph_id "
-                       "JOIN paragraph_version v ON v.id = p.current_version_id WHERE sp.id = ?", (pid,))["text"]
-    assert text == pack["resolution"]["operative"][PF.most_contested(pack)]["text"]      # starts on the closest vote
+    para = db_one(app, "SELECT paragraph_id FROM sim_practice WHERE id = ?", (pid,))["paragraph_id"]
+    ops = [r["id"] for r in db_rows(app, "SELECT p.id FROM paragraph p JOIN resolution r ON r.id = p.resolution_id "
+                                         "WHERE r.committee_id = ? AND p.kind = 'operative' ORDER BY p.position", (run["committee_id"],))]
+    with app.state.db.read() as conn:
+        assert para == PF.closest_vote(conn, ops)                                          # starts on the closest vote
     com = db_one(app, "SELECT * FROM committee WHERE id = ?", (run["committee_id"],))
     assert com["solo_student_id"] == st and com["class_id"] is None
     assert a.get(f"/me/sim/{pid}").status_code == 200

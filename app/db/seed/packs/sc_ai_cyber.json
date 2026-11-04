@@ -1,0 +1,81 @@
+{
+ "format": 1,
+ "code": "sc_ai_cyber",
+ "title": "Artificial intelligence and cyber threats to peace",
+ "summary": "Security Council practice on cyberattacks on hospitals and power grids, ransomware, human control of nuclear launch decisions and how far the Council itself should act on AI.",
+ "level": "senior",
+ "fictional": false,
+ "committee": {
+  "type": "sc",
+  "name": "Security Council: AI and cyber threats to peace and security (practice)",
+  "conference": "Practice: AI and cyber threats to peace and security",
+  "notes": "A practice draft written for class; not an adopted UN text. Council membership as the platform knows it for 2026; check before use. Positions are estimates from the linked UN records."
+ },
+ "topic": {
+  "code": "SC_AI_CYBER",
+  "name": "Artificial intelligence and cyber threats to international peace and security",
+  "notes": "Real topic. Country positions are estimates from the linked records, not facts; countries with no source are left unknown."
+ },
+ "tags": {
+  "infrastructure_protection": "Protects hospitals, power grids and other key infrastructure from cyberattack",
+  "state_responsibility": "Makes States answerable for cyberattacks launched from their territory",
+  "nuclear_human_control": "Requires human control of nuclear launch decisions, including where AI helps",
+  "ai_military_talks": "Joins United Nations talks on the military use of AI",
+  "council_briefings": "Gives the Security Council regular briefings on AI and cyber threats",
+  "disinformation": "Acts against AI-enabled false information that fuels armed conflict"
+ },
+ "countries": ["CHN", "FRA", "RUS", "GBR", "USA", "DNK", "GRC", "PAK", "PAN", "SOM", "BHR", "COL", "COD", "LVA", "LBR"],
+ "resolution": {
+  "title": "Artificial intelligence and cyber threats to international peace and security",
+  "preambular": [
+   {"text": "Recalling the purposes and principles of the Charter of the United Nations, and the Security Council's primary responsibility for the maintenance of international peace and security,", "tags": []},
+   {"text": "Recalling that Member States have agreed, in reports endorsed by the General Assembly, that international law, including the Charter, applies to the use of information and communications technologies,", "tags": []},
+   {"text": "Noting the Council's open debates on artificial intelligence in July 2023 and September 2025, and on threats in cyberspace in June 2024,", "tags": []},
+   {"text": "Noting that digital technologies bring real benefits to health care, education and economies, alongside new risks,", "tags": []}
+  ],
+  "operative": [
+   {"text": "Calls upon all States to refrain from cyberattacks on hospitals, power grids, water systems and other critical infrastructure, and to protect such infrastructure on their own territory;", "tags": ["infrastructure_protection"]},
+   {"text": "Calls upon every State to take reasonable steps to stop ransomware and other cyberattacks being launched from its territory, and to investigate and prosecute those responsible;", "tags": ["state_responsibility"]},
+   {"text": "Calls upon nuclear-armed States to adopt and publish national policies that keep a human in control of every decision to use nuclear weapons, including where artificial intelligence supports early warning or command systems;", "tags": ["nuclear_human_control"]},
+   {"text": "Encourages all Member States to take part in United Nations discussions on the military use of artificial intelligence;", "tags": ["ai_military_talks"]},
+   {"text": "Requests the Secretary-General to brief the Council regularly on how artificial intelligence and cyber threats affect international peace and security, drawing on the General Assembly's cyber processes rather than repeating them;", "tags": ["council_briefings"]},
+   {"text": "Requests the Secretary-General to report on how artificial intelligence is used to spread false information that fuels armed conflict, and on steps States can take to counter it.", "tags": ["disinformation"]}
+  ]
+ },
+ "positions": {
+  "USA": {"ai_military_talks": -2, "nuclear_human_control": -1, "infrastructure_protection": 1, "council_briefings": 1},
+  "CHN": {"council_briefings": 1, "ai_military_talks": 1},
+  "FRA": {"council_briefings": 1, "infrastructure_protection": 1, "ai_military_talks": 1, "disinformation": 1},
+  "GBR": {"council_briefings": 1, "infrastructure_protection": 1, "ai_military_talks": 1, "disinformation": 1},
+  "RUS": {"state_responsibility": -1, "council_briefings": -1, "ai_military_talks": -1},
+  "DNK": {"council_briefings": 1, "infrastructure_protection": 1},
+  "GRC": {"council_briefings": 1, "infrastructure_protection": 1},
+  "LVA": {"council_briefings": 1, "infrastructure_protection": 1},
+  "BHR": {"council_briefings": 1, "infrastructure_protection": 1},
+  "LBR": {"council_briefings": 1, "infrastructure_protection": 1},
+  "PAN": {"nuclear_human_control": 1},
+  "SOM": {"nuclear_human_control": 1},
+  "PAK": {"nuclear_human_control": 0},
+  "COL": {"ai_military_talks": 1},
+  "COD": {"ai_military_talks": 1}
+ },
+ "sources": {
+  "USA": ["https://www.armscontrol.org/act/2025-12/news/us-russia-oppose-un-resolutions-military-use-ai", "https://italyun.esteri.it/en/news/dalla_rappresentanza/2024/06/joint-statement-on-the-use-of-information-and-communications-technology-in-the-context-of-international-peace-and-security/"],
+  "CHN": "https://subsites.chinadaily.com.cn/wic/2023-07/24/c_904774.htm",
+  "FRA": ["https://italyun.esteri.it/en/news/dalla_rappresentanza/2024/06/joint-statement-on-the-use-of-information-and-communications-technology-in-the-context-of-international-peace-and-security/", "https://digitallibrary.un.org/record/4091377/files/S_PV.10005-EN.pdf"],
+  "GBR": ["https://italyun.esteri.it/en/news/dalla_rappresentanza/2024/06/joint-statement-on-the-use-of-information-and-communications-technology-in-the-context-of-international-peace-and-security/", "https://digitallibrary.un.org/record/4091377/files/S_PV.10005-EN.pdf"],
+  "DNK": "https://italyun.esteri.it/en/news/dalla_rappresentanza/2024/06/joint-statement-on-the-use-of-information-and-communications-technology-in-the-context-of-international-peace-and-security/",
+  "GRC": "https://italyun.esteri.it/en/news/dalla_rappresentanza/2024/06/joint-statement-on-the-use-of-information-and-communications-technology-in-the-context-of-international-peace-and-security/",
+  "LVA": "https://italyun.esteri.it/en/news/dalla_rappresentanza/2024/06/joint-statement-on-the-use-of-information-and-communications-technology-in-the-context-of-international-peace-and-security/",
+  "BHR": "https://italyun.esteri.it/en/news/dalla_rappresentanza/2024/06/joint-statement-on-the-use-of-information-and-communications-technology-in-the-context-of-international-peace-and-security/",
+  "LBR": "https://italyun.esteri.it/en/news/dalla_rappresentanza/2024/06/joint-statement-on-the-use-of-information-and-communications-technology-in-the-context-of-international-peace-and-security/",
+  "RUS": ["https://thenationalnews.com/news/us/2024/06/20/un-warns-of-increase-in-malicious-cyber-activities-worldwide", "https://digitallibrary.un.org/record/4091377/files/S_PV.10005-EN.pdf", "https://www.armscontrol.org/act/2025-12/news/us-russia-oppose-un-resolutions-military-use-ai"],
+  "PAN": "https://un-project.org/votes/resolution/A-RES-80-23/",
+  "SOM": "https://un-project.org/votes/resolution/A-RES-80-23/",
+  "PAK": "https://un-project.org/votes/resolution/A-RES-80-23/",
+  "COL": "https://un-project.org/votes/resolution/A-RES-80-58/",
+  "COD": "https://un-project.org/votes/resolution/A-RES-80-58/"
+ },
+ "news": [],
+ "author": "Claude Sonnet (delegated), 4 Nov 2026; to be checked by B. Gough"
+}

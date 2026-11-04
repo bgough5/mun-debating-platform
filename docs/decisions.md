@@ -388,6 +388,25 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 
 
 
+### D-098 Six real-issue scenario packs, written by delegated models — Decided (5 Nov 2026, Ben)
+Ben asked for new scenarios "playable in both sec council, and mostly in general assembly", on real issues relevant to high-school students (climate, AI, immigration and so on), with preambles that are "completely low stakes, not really debatable". He asked for the work to be delegated to keep costs down.
+
+- **The packs.** One Sonnet agent wrote each pack, following `docs/pack-authoring.md`:
+  - General Assembly: `ga_autonomous_weapons`, `ga_migration`, `ga_ai_governance`, `ga_climate_transition`.
+  - Security Council: `sc_climate_security`, `sc_ai_cyber`.
+  - All are `"fictional": false`, with no news. Preambles carry no tags.
+- **Sources.**
+  - Every position comes from a page the agent opened and read; a country without one is left out (unknown).
+  - Mostly these are UN voting records: un-project.org, a third-party mirror of UN votes, because the UN Digital Library and press.un.org blocked the agents. The Security Council packs also use the Council's own verbatim records (S/PV PDFs) and, for a few countries, news reports.
+  - Two migration positions (Australia, Israel) rest on Wikipedia.
+  - A country may now list up to four sources, because one page rarely covers every clause.
+- **Playability, measured with the engine (P(pass) by clause).**
+  - Three General Assembly packs have close votes: AI governance (0.47–0.98), autonomous weapons (0.41–0.97) and climate transition (0.32–0.66).
+  - The migration clauses all lean to passing (0.79–0.92).
+  - Both Security Council packs are hard: the best clause is about 0.2. The permanent members' stances are unknown or opposed on most clauses, which matches the real Council (the 2021 climate-security draft was vetoed). Students win by lobbying and amending.
+- **Solo runs** now start on the clause the engine finds closest to 50/50 (`packfile.closest_vote`), not the clause with the lowest average support, so a Security Council run doesn't open on a certain veto.
+- **Before students see them**, a teacher checks each pack as the guide says. Its `author` field reads "to be checked by B. Gough".
+
 ### D-097 Play Model UN alone; scenario packs as data files anyone can write — Decided (4 Nov 2026, Ben)
 Ben: "let me know if there is a way to play the MUN game solo. If not make a way. furthering that, develop a template for new packs in the game, as i will end up delegating this to lesser models and other engines".
 

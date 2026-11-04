@@ -25,53 +25,294 @@
   "liability": "Holds launching States liable for damage from the mission",
   "no_claims": "Bars any State or company from claiming the comet's resources"
  },
- "countries": ["USA", "CHN", "RUS", "IND", "JPN", "FRA", "GBR", "DEU", "BRA", "NGA", "ZAF", "IDN", "AUS", "NZL", "MEX", "KEN", "FJI", "SAU", "KOR", "EGY"],
+ "countries": [
+  "USA",
+  "CHN",
+  "RUS",
+  "IND",
+  "JPN",
+  "FRA",
+  "GBR",
+  "DEU",
+  "BRA",
+  "NGA",
+  "ZAF",
+  "IDN",
+  "AUS",
+  "NZL",
+  "MEX",
+  "KEN",
+  "FJI",
+  "SAU",
+  "KOR",
+  "EGY"
+ ],
  "resolution": {
   "title": "The approach of comet Halcyon-7",
   "preambular": [
-   {"text": "Alarmed that astronomers have confirmed that comet fragment Halcyon-7 is on course to strike the Earth in nineteen months,", "tags": ["deflection"]},
-   {"text": "Recalling that outer space is free for exploration and use by all States and is not subject to national appropriation,", "tags": ["no_claims"]},
-   {"text": "Noting with concern that the most likely impact zone lies in the ocean beside the Marelle Islands, home to 400,000 people,", "tags": ["relief_fund"]},
-   {"text": "Recognising that only a few States have rockets able to reach the fragment in time,", "tags": ["un_command"]}
+   {
+    "text": "Alarmed that astronomers have confirmed that comet fragment Halcyon-7 is on course to strike the Earth in nineteen months,",
+    "tags": []
+   },
+   {
+    "text": "Recalling that outer space is free for exploration and use by all States and is not subject to national appropriation,",
+    "tags": []
+   },
+   {
+    "text": "Noting with concern that the most likely impact zone lies in the ocean beside the Marelle Islands, home to 400,000 people,",
+    "tags": []
+   },
+   {
+    "text": "Recognising that only a few States have rockets able to reach the fragment in time,",
+    "tags": []
+   }
   ],
   "operative": [
-   {"text": "Calls upon every Member State with an observatory to share its tracking data on Halcyon-7 openly and in real time;", "tags": ["data_sharing"]},
-   {"text": "Decides to establish a joint mission to deflect the fragment, paid for by contributions from Member States in proportion to their means;", "tags": ["deflection"]},
-   {"text": "Requests that the mission be coordinated by the United Nations Office for Outer Space Affairs rather than by any single State;", "tags": ["un_command"]},
-   {"text": "Authorises the use of a nuclear device in space to deflect the fragment, but only if every other method has failed;", "tags": ["nuclear_option", "deflection"]},
-   {"text": "Establishes a relief fund to evacuate and shelter the people of the Marelle Islands until the danger has passed;", "tags": ["relief_fund"]},
-   {"text": "Affirms that the States launching the mission remain liable for any damage caused by its rockets or debris;", "tags": ["liability"]},
-   {"text": "Declares that no State or company may claim ownership of the fragment or of any material taken from it.", "tags": ["no_claims"]}
+   {
+    "text": "Calls upon every Member State with an observatory to share its tracking data on Halcyon-7 openly and in real time;",
+    "tags": [
+     "data_sharing"
+    ]
+   },
+   {
+    "text": "Decides to establish a joint mission to deflect the fragment, paid for by contributions from Member States in proportion to their means;",
+    "tags": [
+     "deflection"
+    ]
+   },
+   {
+    "text": "Requests that the mission be coordinated by the United Nations Office for Outer Space Affairs rather than by any single State;",
+    "tags": [
+     "un_command"
+    ]
+   },
+   {
+    "text": "Authorises the use of a nuclear device in space to deflect the fragment, but only if every other method has failed;",
+    "tags": [
+     "nuclear_option",
+     "deflection"
+    ]
+   },
+   {
+    "text": "Establishes a relief fund to evacuate and shelter the people of the Marelle Islands until the danger has passed;",
+    "tags": [
+     "relief_fund"
+    ]
+   },
+   {
+    "text": "Affirms that the States launching the mission remain liable for any damage caused by its rockets or debris;",
+    "tags": [
+     "liability"
+    ]
+   },
+   {
+    "text": "Declares that no State or company may claim ownership of the fragment or of any material taken from it.",
+    "tags": [
+     "no_claims"
+    ]
+   }
   ]
  },
  "positions": {
-  "USA": {"data_sharing": 1, "deflection": 2, "un_command": -1, "nuclear_option": 1, "relief_fund": 1, "liability": -1, "no_claims": -1},
-  "CHN": {"data_sharing": 0, "deflection": 2, "un_command": -1, "nuclear_option": 1, "relief_fund": 1, "liability": -1, "no_claims": -1},
-  "RUS": {"data_sharing": -1, "deflection": 1, "un_command": -2, "nuclear_option": 2, "relief_fund": 0, "liability": -2, "no_claims": 0},
-  "IND": {"data_sharing": 1, "deflection": 2, "un_command": 1, "nuclear_option": 0, "relief_fund": 1, "liability": 0, "no_claims": 1},
-  "JPN": {"data_sharing": 2, "deflection": 2, "un_command": 1, "nuclear_option": -2, "relief_fund": 2, "liability": 1, "no_claims": 0},
-  "FRA": {"data_sharing": 2, "deflection": 2, "un_command": 1, "nuclear_option": 0, "relief_fund": 1, "liability": 1, "no_claims": 1},
-  "GBR": {"data_sharing": 2, "deflection": 2, "un_command": 0, "nuclear_option": 0, "relief_fund": 1, "liability": 0, "no_claims": 0},
-  "DEU": {"data_sharing": 2, "deflection": 2, "un_command": 2, "nuclear_option": -2, "relief_fund": 1, "liability": 1, "no_claims": 1},
-  "BRA": {"data_sharing": 1, "deflection": 1, "un_command": 2, "nuclear_option": -1, "relief_fund": 2, "liability": 2, "no_claims": 2},
-  "NGA": {"data_sharing": 1, "deflection": 1, "un_command": 2, "nuclear_option": -1, "relief_fund": 2, "liability": 2, "no_claims": 2},
-  "ZAF": {"data_sharing": 2, "deflection": 1, "un_command": 2, "nuclear_option": -2, "relief_fund": 2, "liability": 2, "no_claims": 2},
-  "IDN": {"data_sharing": 1, "deflection": 2, "un_command": 1, "nuclear_option": -1, "relief_fund": 2, "liability": 2, "no_claims": 1},
-  "AUS": {"data_sharing": 2, "deflection": 2, "un_command": 1, "nuclear_option": -1, "relief_fund": 2, "liability": 1, "no_claims": 0},
-  "NZL": {"data_sharing": 2, "deflection": 2, "un_command": 2, "nuclear_option": -2, "relief_fund": 2, "liability": 2, "no_claims": 2},
-  "MEX": {"data_sharing": 1, "deflection": 1, "un_command": 2, "nuclear_option": -2, "relief_fund": 2, "liability": 2, "no_claims": 2},
-  "KEN": {"data_sharing": 1, "deflection": 1, "un_command": 2, "nuclear_option": -1, "relief_fund": 2, "liability": 2, "no_claims": 2},
-  "FJI": {"data_sharing": 1, "deflection": 2, "un_command": 2, "nuclear_option": -2, "relief_fund": 2, "liability": 2, "no_claims": 2},
-  "SAU": {"data_sharing": 0, "deflection": 1, "un_command": 0, "nuclear_option": 0, "relief_fund": 1, "liability": 0, "no_claims": -1},
-  "KOR": {"data_sharing": 2, "deflection": 2, "un_command": 1, "nuclear_option": -1, "relief_fund": 1, "liability": 1, "no_claims": 0},
-  "EGY": {"data_sharing": 1, "deflection": 1, "un_command": 2, "nuclear_option": -1, "relief_fund": 1, "liability": 2, "no_claims": 1}
+  "USA": {
+   "data_sharing": 1,
+   "deflection": 2,
+   "un_command": -1,
+   "nuclear_option": 1,
+   "relief_fund": 1,
+   "liability": -1,
+   "no_claims": -1
+  },
+  "CHN": {
+   "data_sharing": 0,
+   "deflection": 2,
+   "un_command": -1,
+   "nuclear_option": 1,
+   "relief_fund": 1,
+   "liability": -1,
+   "no_claims": -1
+  },
+  "RUS": {
+   "data_sharing": -1,
+   "deflection": 1,
+   "un_command": -2,
+   "nuclear_option": 2,
+   "relief_fund": 0,
+   "liability": -2,
+   "no_claims": 0
+  },
+  "IND": {
+   "data_sharing": 1,
+   "deflection": 2,
+   "un_command": 1,
+   "nuclear_option": 0,
+   "relief_fund": 1,
+   "liability": 0,
+   "no_claims": 1
+  },
+  "JPN": {
+   "data_sharing": 2,
+   "deflection": 2,
+   "un_command": 1,
+   "nuclear_option": -2,
+   "relief_fund": 2,
+   "liability": 1,
+   "no_claims": 0
+  },
+  "FRA": {
+   "data_sharing": 2,
+   "deflection": 2,
+   "un_command": 1,
+   "nuclear_option": 0,
+   "relief_fund": 1,
+   "liability": 1,
+   "no_claims": 1
+  },
+  "GBR": {
+   "data_sharing": 2,
+   "deflection": 2,
+   "un_command": 0,
+   "nuclear_option": 0,
+   "relief_fund": 1,
+   "liability": 0,
+   "no_claims": 0
+  },
+  "DEU": {
+   "data_sharing": 2,
+   "deflection": 2,
+   "un_command": 2,
+   "nuclear_option": -2,
+   "relief_fund": 1,
+   "liability": 1,
+   "no_claims": 1
+  },
+  "BRA": {
+   "data_sharing": 1,
+   "deflection": 1,
+   "un_command": 2,
+   "nuclear_option": -1,
+   "relief_fund": 2,
+   "liability": 2,
+   "no_claims": 2
+  },
+  "NGA": {
+   "data_sharing": 1,
+   "deflection": 1,
+   "un_command": 2,
+   "nuclear_option": -1,
+   "relief_fund": 2,
+   "liability": 2,
+   "no_claims": 2
+  },
+  "ZAF": {
+   "data_sharing": 2,
+   "deflection": 1,
+   "un_command": 2,
+   "nuclear_option": -2,
+   "relief_fund": 2,
+   "liability": 2,
+   "no_claims": 2
+  },
+  "IDN": {
+   "data_sharing": 1,
+   "deflection": 2,
+   "un_command": 1,
+   "nuclear_option": -1,
+   "relief_fund": 2,
+   "liability": 2,
+   "no_claims": 1
+  },
+  "AUS": {
+   "data_sharing": 2,
+   "deflection": 2,
+   "un_command": 1,
+   "nuclear_option": -1,
+   "relief_fund": 2,
+   "liability": 1,
+   "no_claims": 0
+  },
+  "NZL": {
+   "data_sharing": 2,
+   "deflection": 2,
+   "un_command": 2,
+   "nuclear_option": -2,
+   "relief_fund": 2,
+   "liability": 2,
+   "no_claims": 2
+  },
+  "MEX": {
+   "data_sharing": 1,
+   "deflection": 1,
+   "un_command": 2,
+   "nuclear_option": -2,
+   "relief_fund": 2,
+   "liability": 2,
+   "no_claims": 2
+  },
+  "KEN": {
+   "data_sharing": 1,
+   "deflection": 1,
+   "un_command": 2,
+   "nuclear_option": -1,
+   "relief_fund": 2,
+   "liability": 2,
+   "no_claims": 2
+  },
+  "FJI": {
+   "data_sharing": 1,
+   "deflection": 2,
+   "un_command": 2,
+   "nuclear_option": -2,
+   "relief_fund": 2,
+   "liability": 2,
+   "no_claims": 2
+  },
+  "SAU": {
+   "data_sharing": 0,
+   "deflection": 1,
+   "un_command": 0,
+   "nuclear_option": 0,
+   "relief_fund": 1,
+   "liability": 0,
+   "no_claims": -1
+  },
+  "KOR": {
+   "data_sharing": 2,
+   "deflection": 2,
+   "un_command": 1,
+   "nuclear_option": -1,
+   "relief_fund": 1,
+   "liability": 1,
+   "no_claims": 0
+  },
+  "EGY": {
+   "data_sharing": 1,
+   "deflection": 1,
+   "un_command": 2,
+   "nuclear_option": -1,
+   "relief_fund": 1,
+   "liability": 2,
+   "no_claims": 1
+  }
  },
  "sources": {},
  "news": [
-  {"headline": "A second fragment is spotted behind Halcyon-7", "body": "Observatories report a smaller fragment trailing the first. It would probably fall into open ocean, but only three countries have shared the tracking data needed to be sure."},
-  {"headline": "A mining company says it will claim the comet", "body": "Starward Minerals says it will launch a probe within a year and keep whatever it brings back. Lawyers say States cannot claim the comet; whether a company can is less clear."},
-  {"headline": "The Marelle Islands ask the world for help", "body": "The islands' government says it can move only a third of its people on its own. It asks the General Assembly for ships, money and places for families to stay."},
-  {"headline": "The launch window is closing", "body": "Mission planners say a deflection rocket must leave within five months to have a good chance. Every month of delay makes it more likely the nuclear option will be needed."}
+  {
+   "headline": "A second fragment is spotted behind Halcyon-7",
+   "body": "Observatories report a smaller fragment trailing the first. It would probably fall into open ocean, but only three countries have shared the tracking data needed to be sure."
+  },
+  {
+   "headline": "A mining company says it will claim the comet",
+   "body": "Starward Minerals says it will launch a probe within a year and keep whatever it brings back. Lawyers say States cannot claim the comet; whether a company can is less clear."
+  },
+  {
+   "headline": "The Marelle Islands ask the world for help",
+   "body": "The islands' government says it can move only a third of its people on its own. It asks the General Assembly for ships, money and places for families to stay."
+  },
+  {
+   "headline": "The launch window is closing",
+   "body": "Mission planners say a deflection rocket must leave within five months to have a good chance. Every month of delay makes it more likely the nuclear option will be needed."
+  }
  ],
  "author": "Claude (build session) as the example pack, 4 Nov 2026"
 }

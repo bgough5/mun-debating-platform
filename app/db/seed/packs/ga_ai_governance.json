@@ -1,0 +1,294 @@
+{
+ "format": 1,
+ "code": "ga_ai_governance",
+ "title": "Who should govern artificial intelligence?",
+ "summary": "The General Assembly debates how the world should govern AI: an expert panel, a global agency, binding rules, sharing skills with developing countries, and protections for voters, creators and children.",
+ "level": "middle",
+ "fictional": false,
+ "committee": {
+  "type": "ga_plenary",
+  "name": "General Assembly: governing artificial intelligence (practice)",
+  "conference": "Practice: governing artificial intelligence",
+  "notes": "A practice draft written for class; not an adopted UN text. Positions are estimates from the linked UN records."
+ },
+ "topic": {
+  "code": "GA_AI_GOVERNANCE",
+  "name": "Governing artificial intelligence",
+  "notes": "Real topic. Practice draft; country positions are estimates taken from the linked sources, and countries without a source are left to the platform's general model."
+ },
+ "tags": {
+  "un_science_panel": "Sets up an independent panel of scientists to report on AI",
+  "global_agency": "Creates a global United Nations agency for AI",
+  "binding_rules": "Makes the rules for dangerous AI legally binding",
+  "ai_capacity": "Shares computing power, skills and technology with developing countries",
+  "election_safeguards": "Labels AI-made content to protect elections",
+  "banned_uses": "Stops AI uses that break human rights law",
+  "copyright_data": "Protects copyright and personal data when AI is trained",
+  "child_safety": "Requires stronger protection for children using AI"
+ },
+ "countries": [
+  "USA",
+  "CHN",
+  "RUS",
+  "GBR",
+  "JPN",
+  "KOR",
+  "CAN",
+  "AUS",
+  "IND",
+  "SGP",
+  "ARE",
+  "FRA",
+  "DEU",
+  "ESP",
+  "NLD",
+  "ITA",
+  "SWE",
+  "BRA",
+  "NGA",
+  "ZAF",
+  "KEN",
+  "MEX",
+  "MAR",
+  "UKR",
+  "CRI",
+  "BHS",
+  "FJI",
+  "MDV"
+ ],
+ "resolution": {
+  "title": "Governing artificial intelligence",
+  "preambular": [
+   {
+    "text": "Reaffirming the Charter of the United Nations and the Universal Declaration of Human Rights,",
+    "tags": []
+   },
+   {
+    "text": "Recalling the 2030 Agenda for Sustainable Development and its seventeen Sustainable Development Goals,",
+    "tags": []
+   },
+   {
+    "text": "Recalling also General Assembly resolution 78/265 on safe, secure and trustworthy artificial intelligence and resolution 78/311 on building artificial intelligence skills in developing countries,",
+    "tags": []
+   },
+   {
+    "text": "Noting the Global Digital Compact, which the General Assembly adopted in 2024 as part of the Pact for the Future,",
+    "tags": []
+   },
+   {
+    "text": "Noting that this draft deals only with civilian uses of artificial intelligence and not with weapons,",
+    "tags": []
+   }
+  ],
+  "operative": [
+   {
+    "text": "Decides to set up an independent scientific panel of 40 experts from all regions, chosen through an open call by the Secretary-General, to report each year on what artificial intelligence can do and what risks it brings;",
+    "tags": [
+     "un_science_panel"
+    ]
+   },
+   {
+    "text": "Requests the Secretary-General to propose a new United Nations agency for artificial intelligence, able to inspect and approve the most powerful AI systems;",
+    "tags": [
+     "global_agency"
+    ]
+   },
+   {
+    "text": "Calls upon all States to agree a treaty that makes rules for the most dangerous AI systems legally binding, instead of relying on voluntary principles;",
+    "tags": [
+     "binding_rules"
+    ]
+   },
+   {
+    "text": "Urges richer countries to share computing power, training and technology with developing countries, on terms that both sides agree;",
+    "tags": [
+     "ai_capacity"
+    ]
+   },
+   {
+    "text": "Encourages companies to label images, audio and video made by AI, so that voters can tell real material from fake, especially during elections;",
+    "tags": [
+     "election_safeguards"
+    ]
+   },
+   {
+    "text": "Calls upon States to stop using AI systems that cannot be used without breaking human rights law;",
+    "tags": [
+     "banned_uses"
+    ]
+   },
+   {
+    "text": "Encourages safeguards for copyright and for personal data when AI systems are trained on books, art and online posts;",
+    "tags": [
+     "copyright_data"
+    ]
+   },
+   {
+    "text": "Urges States to require stronger protection for children who use AI tools, including age checks and the removal of harmful content.",
+    "tags": [
+     "child_safety"
+    ]
+   }
+  ]
+ },
+ "positions": {
+  "GBR": {
+   "ai_capacity": 1,
+   "banned_uses": 1,
+   "election_safeguards": 1,
+   "copyright_data": 1
+  },
+  "JPN": {
+   "ai_capacity": 1,
+   "banned_uses": 1,
+   "election_safeguards": 1,
+   "copyright_data": 1
+  },
+  "KOR": {
+   "ai_capacity": 1,
+   "banned_uses": 1,
+   "election_safeguards": 1,
+   "copyright_data": 1
+  },
+  "CAN": {
+   "ai_capacity": 1,
+   "banned_uses": 1,
+   "election_safeguards": 1,
+   "copyright_data": 1
+  },
+  "AUS": {
+   "ai_capacity": 1,
+   "banned_uses": 1,
+   "election_safeguards": 1,
+   "copyright_data": 1
+  },
+  "SGP": {
+   "ai_capacity": 1,
+   "banned_uses": 1,
+   "election_safeguards": 1,
+   "copyright_data": 1
+  },
+  "ARE": {
+   "ai_capacity": 1,
+   "banned_uses": 1,
+   "election_safeguards": 1,
+   "copyright_data": 1
+  },
+  "ITA": {
+   "ai_capacity": 1,
+   "banned_uses": 1,
+   "election_safeguards": 1,
+   "copyright_data": 1
+  },
+  "SWE": {
+   "ai_capacity": 1,
+   "banned_uses": 1,
+   "election_safeguards": 1,
+   "copyright_data": 1
+  },
+  "BRA": {
+   "ai_capacity": 1,
+   "banned_uses": 1,
+   "election_safeguards": 1,
+   "copyright_data": 1
+  },
+  "ZAF": {
+   "ai_capacity": 1,
+   "banned_uses": 1,
+   "election_safeguards": 1,
+   "copyright_data": 1
+  },
+  "KEN": {
+   "ai_capacity": 1,
+   "banned_uses": 1,
+   "election_safeguards": 1,
+   "copyright_data": 1
+  },
+  "MAR": {
+   "ai_capacity": 1,
+   "banned_uses": 1,
+   "election_safeguards": 1,
+   "copyright_data": 1
+  },
+  "BHS": {
+   "ai_capacity": 1,
+   "banned_uses": 1,
+   "election_safeguards": 1,
+   "copyright_data": 1
+  },
+  "FJI": {
+   "ai_capacity": 1,
+   "banned_uses": 1,
+   "election_safeguards": 1,
+   "copyright_data": 1
+  },
+  "MDV": {
+   "ai_capacity": 1,
+   "banned_uses": 1,
+   "election_safeguards": 1,
+   "copyright_data": 1
+  },
+  "DEU": {
+   "un_science_panel": 1,
+   "ai_capacity": 1
+  },
+  "FRA": {
+   "un_science_panel": 1,
+   "ai_capacity": 1
+  },
+  "NLD": {
+   "un_science_panel": 1,
+   "ai_capacity": 1
+  },
+  "USA": {
+   "un_science_panel": -2,
+   "global_agency": -1
+  },
+  "ESP": {
+   "un_science_panel": 2
+  },
+  "MEX": {
+   "un_science_panel": 1
+  },
+  "UKR": {
+   "un_science_panel": 0
+  },
+  "CHN": {
+   "global_agency": 1,
+   "ai_capacity": 1
+  },
+  "CRI": {
+   "un_science_panel": 1,
+   "global_agency": 1
+  }
+ },
+ "sources": {
+  "GBR": "https://digitallibrary.un.org/record/4040897/files/A_78_L.49-EN.pdf",
+  "JPN": "https://digitallibrary.un.org/record/4040897/files/A_78_L.49-EN.pdf",
+  "KOR": "https://digitallibrary.un.org/record/4040897/files/A_78_L.49-EN.pdf",
+  "CAN": "https://digitallibrary.un.org/record/4040897/files/A_78_L.49-EN.pdf",
+  "AUS": "https://digitallibrary.un.org/record/4040897/files/A_78_L.49-EN.pdf",
+  "SGP": "https://digitallibrary.un.org/record/4040897/files/A_78_L.49-EN.pdf",
+  "ARE": "https://digitallibrary.un.org/record/4040897/files/A_78_L.49-EN.pdf",
+  "ITA": "https://digitallibrary.un.org/record/4040897/files/A_78_L.49-EN.pdf",
+  "SWE": "https://digitallibrary.un.org/record/4040897/files/A_78_L.49-EN.pdf",
+  "BRA": "https://digitallibrary.un.org/record/4040897/files/A_78_L.49-EN.pdf",
+  "ZAF": "https://digitallibrary.un.org/record/4040897/files/A_78_L.49-EN.pdf",
+  "KEN": "https://digitallibrary.un.org/record/4040897/files/A_78_L.49-EN.pdf",
+  "MAR": "https://digitallibrary.un.org/record/4040897/files/A_78_L.49-EN.pdf",
+  "BHS": "https://digitallibrary.un.org/record/4040897/files/A_78_L.49-EN.pdf",
+  "FJI": "https://digitallibrary.un.org/record/4040897/files/A_78_L.49-EN.pdf",
+  "MDV": "https://digitallibrary.un.org/record/4040897/files/A_78_L.49-EN.pdf",
+  "DEU": "https://www.eeas.europa.eu/delegations/un-new-york/eu-statement-un-general-assembly-terms-reference-and-modalities-establishment-and-functioning_en",
+  "FRA": "https://www.eeas.europa.eu/delegations/un-new-york/eu-statement-un-general-assembly-terms-reference-and-modalities-establishment-and-functioning_en",
+  "NLD": "https://www.eeas.europa.eu/delegations/un-new-york/eu-statement-un-general-assembly-terms-reference-and-modalities-establishment-and-functioning_en",
+  "USA": "https://unric.org/en/general-assembly-appoints-artificial-intelligence-panel/",
+  "ESP": "https://unric.org/en/general-assembly-appoints-artificial-intelligence-panel/",
+  "MEX": "https://unric.org/en/general-assembly-appoints-artificial-intelligence-panel/",
+  "UKR": "https://unric.org/en/general-assembly-appoints-artificial-intelligence-panel/",
+  "CHN": "https://www.csis.org/analysis/what-un-global-dialogue-ai-governance-reveals-about-global-power-shifts",
+  "CRI": "https://www.arabnews.com/node/2613132/amp"
+ },
+ "news": [],
+ "author": "Claude Sonnet (delegated), 4 Nov 2026; to be checked by B. Gough"
+}

@@ -8,18 +8,15 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
 - Build progress and measured exit criteria: `docs/phase-reports.md`. Phase tags `phase-1-complete` to `phase-10-complete` are all on GitHub (`phase-7` and `phase-8` share commit `4e28a2b`).
 - **All work happens in the local Claude Code session on Ben's laptop (decided 28 Oct 2026).** The cloud session that built Phases 1–10 is retired; everything it did is on GitHub. Don't start cloud sessions for this repo.
 - **Feature freeze (D-082, 29 Oct 2026):** PR #1 is merged into `main` (tag `feature-freeze`). Fixes, hardening and simplification only, until real use shows a need. Work on a short branch from `main`, push, merge after tests pass. `platform-build` is history only.
-- **Setup simplification (D-084, 29 Oct 2026):** stage 1 (one student list with year levels, People → Students; tournament tools hidden behind `show_tournaments`) and stage 2 (Start an activity, `/start`, `app/modules/core/start.py`) are on `main`. Stage 3 (Dashboard "In progress" with Resume → "Who's here today?", `app/modules/core/resume.py`) and saved groups (D-085: People → Groups, `app/modules/people/groups.py`; old classes shown as "Teacher access") are on `main`. Shared countries (D-086) are on `main`. Cue cards, autosave and debate team view (D-087) are on `main`. Rehearse from cards, team comments, prep overview by group and head-of-delegation voting (D-088) are on `main`. The live room (D-089: gavel, sounds, title cards, vote reveal, whip map, placards, breaking news), the real world map with alignments (D-090), and "Now speaking" and "Amendment adopted" (D-091) are on `main`. Effects only show procedure more clearly; Ben ruled out game mechanics (D-091). The board (D-092: the projector view in its own window, in a retro war-room look) is on `main`. The main deck (https://claude.ai/artifact/1B5XZqCFwEKEtRjnS25HKV) is paused until the board is finished (Ben, 30 Oct); the stage-by-stage review deck is https://claude.ai/artifact/FX2JNSedk4DrE4g8VwBGyJ.
-- **Where we stopped (4 Nov 2026), branch `board`, not merged or pushed:**
-  - D-092 (the board) and D-093 (all 195 flags; tokens with flag, regional band and alignment shields; the map key) are committed on `board`.
-  - Last full suite (before D-093): 9 failures. Seven were old tests still pointing at `/projector/<token>` (now `/plain`) and the board's 320 px reflow; all are fixed and pass alone. The two `test_start_ui` timeouts passed on a rerun.
-  - Next steps:
-    - check the last screenshots (roll call rail vs the "Turn on sound" button; the key at world view);
-    - run the full suite solo;
-    - merge `board` to `main` and push;
-    - update the main deck.
-- **Ben's next two requests (4 Nov 2026, not started):**
-  1. ~~Students choose their country~~: built as D-094 (`app/modules/mun/choice.py`; migration 0016 `committee.country_mode`, `choosing_open`, `committee_roster`). Today's students are on `committee_roster`, which also lets them open the session before they have a country (`committee_access`).
-  2. ~~Alignments at will~~: built as D-095, the "My country" panel above the live tabs (`app/modules/mun/mycountry.py`).
+- **Setup simplification (D-084, 29 Oct 2026):** stage 1 (one student list with year levels, People → Students; tournament tools hidden behind `show_tournaments`) and stage 2 (Start an activity, `/start`, `app/modules/core/start.py`) are on `main`. Stage 3 (Dashboard "In progress" with Resume → "Who's here today?", `app/modules/core/resume.py`) and saved groups (D-085: People → Groups, `app/modules/people/groups.py`; old classes shown as "Teacher access") are on `main`. Shared countries (D-086) are on `main`. Cue cards, autosave and debate team view (D-087) are on `main`. Rehearse from cards, team comments, prep overview by group and head-of-delegation voting (D-088) are on `main`. The live room (D-089: gavel, sounds, title cards, vote reveal, whip map, placards, breaking news), the real world map with alignments (D-090), and "Now speaking" and "Amendment adopted" (D-091) are on `main`. Effects only show procedure more clearly; Ben ruled out game mechanics (D-091). The board (D-092: the projector view in its own window, in a retro war-room look) is on `main`. The main deck is https://claude.ai/artifact/1B5XZqCFwEKEtRjnS25HKV, written as Ben's presentation to leadership. The stage-by-stage review deck is https://claude.ai/artifact/FX2JNSedk4DrE4g8VwBGyJ.
+- **Since the board (4–5 Nov 2026), all on `main`:**
+  - the board and flags (D-092, D-093);
+  - country choice and "My country" (D-094, D-095);
+  - scoring (D-096);
+  - solo play and scenario packs (D-097);
+  - six real-issue packs (D-098, on branch `packs` until merged).
+
+  The main deck was rewritten for leadership on 4 Nov ("From Engagement to the Classroom", 21 slides).
 - Verified on Ben's laptop (Windows 10, 28 Oct 2026): `tools/windows_smoke.ps1 -Browser` passed: 620 engine and API tests, all 33 browser and axe tests, and start-up in 3.3 s. Not yet re-run on the laptop: the 90-minute soak (`python tools/loadtest.py --minutes 90`; memory now records on Windows, D-081).
 - Local backups from the 28 Oct sync, safe to delete once Ben is happy: branch `backup/local-phase7-2026-10-23` and `stash@{0}` (superseded duplicates of Phase 7 items 1, 5–8).
 - Guides: `docs/staff-guide.md`, `docs/privacy-summary.md` (for school sign-off), `docs/permissions.md` (generated), `docs/backup-restore.md`, `docs/pilot-checklist.md`.

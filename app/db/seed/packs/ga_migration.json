@@ -1,0 +1,385 @@
+{
+ "format": 1,
+ "code": "ga_migration",
+ "title": "Safe, orderly and regular migration",
+ "summary": "The General Assembly debates how countries can manage migration together: legal pathways, returns, children in detention, sharing responsibility, climate displacement and each State's right to decide.",
+ "level": "middle",
+ "fictional": false,
+ "committee": {
+  "type": "ga_plenary",
+  "name": "General Assembly: safe, orderly and regular migration (practice)",
+  "conference": "Practice: safe, orderly and regular migration",
+  "notes": "A practice draft written for class; not an adopted UN text. Positions are estimates from the linked UN voting records."
+ },
+ "topic": {
+  "code": "GA_MIGRATION",
+  "name": "Safe, orderly and regular migration",
+  "notes": "Real topic. Positions are estimates taken from the 2018 recorded vote on the Global Compact for Safe, Orderly and Regular Migration and the statements made at that meeting."
+ },
+ "tags": {
+  "legal_pathways": "Opens more regular routes for work, study and family reunion",
+  "returns": "Sets rules for returning and readmitting people who have no right to stay",
+  "child_detention": "Stops children being held in immigration detention",
+  "shared_responsibility": "Shares responsibility for arrivals through resettlement and funding",
+  "climate_displacement": "Plans for people forced to move by floods, drought and rising seas",
+  "data_borders": "Shares migration data and aligns border checks and identity papers",
+  "sovereignty": "Affirms each State alone decides who may enter and stay"
+ },
+ "countries": [
+  "IND",
+  "IDN",
+  "PHL",
+  "DEU",
+  "FRA",
+  "GBR",
+  "CAN",
+  "MEX",
+  "TUR",
+  "NGA",
+  "MAR",
+  "BGD",
+  "ZAF",
+  "CHN",
+  "RUS",
+  "FJI",
+  "USA",
+  "HUN",
+  "POL",
+  "CZE",
+  "ISR",
+  "AUS",
+  "AUT",
+  "CHL",
+  "ITA",
+  "CHE",
+  "SGP",
+  "DZA"
+ ],
+ "resolution": {
+  "title": "Working together on safe, orderly and regular migration",
+  "preambular": [
+   {
+    "text": "Guided by the purposes and principles of the Charter of the United Nations,",
+    "tags": []
+   },
+   {
+    "text": "Recalling the Universal Declaration of Human Rights, which says that all people are born free and equal in dignity and rights,",
+    "tags": []
+   },
+   {
+    "text": "Recognising that people have always moved between countries to work, to study, to join family and to find safety,",
+    "tags": []
+   },
+   {
+    "text": "Mindful that every State has a duty to treat all people within its territory with dignity,",
+    "tags": []
+   }
+  ],
+  "operative": [
+   {
+    "text": "Urges States to open more regular routes for work, study and family reunion, including for workers in lower-paid jobs;",
+    "tags": [
+     "legal_pathways"
+    ]
+   },
+   {
+    "text": "Calls upon States to cooperate on the return and readmission of their own nationals who have no right to stay, checking each case individually and supporting people to settle back home;",
+    "tags": [
+     "returns"
+    ]
+   },
+   {
+    "text": "Decides that children should not be held in immigration detention and that community-based care should be used instead;",
+    "tags": [
+     "child_detention"
+    ]
+   },
+   {
+    "text": "Encourages States to share responsibility for large numbers of arrivals, by resettling some people and by funding the countries that host the most;",
+    "tags": [
+     "shared_responsibility"
+    ]
+   },
+   {
+    "text": "Requests States to plan for people who must leave home because of floods, drought and rising seas, including by offering humanitarian visas;",
+    "tags": [
+     "climate_displacement"
+    ]
+   },
+   {
+    "text": "Encourages States to share migration data and to align border checks and identity papers, with strong rules to protect privacy;",
+    "tags": [
+     "data_borders"
+    ]
+   },
+   {
+    "text": "Affirms that each State alone decides who may enter and stay in its territory, and that no international text creates a right to enter any particular country.",
+    "tags": [
+     "sovereignty"
+    ]
+   }
+  ]
+ },
+ "positions": {
+  "IND": {
+   "legal_pathways": 1,
+   "returns": 1,
+   "child_detention": 1,
+   "shared_responsibility": 1,
+   "climate_displacement": 1,
+   "data_borders": 1,
+   "sovereignty": 0
+  },
+  "IDN": {
+   "legal_pathways": 1,
+   "returns": 1,
+   "child_detention": 1,
+   "shared_responsibility": 1,
+   "climate_displacement": 1,
+   "data_borders": 1,
+   "sovereignty": 0
+  },
+  "PHL": {
+   "legal_pathways": 1,
+   "returns": 1,
+   "child_detention": 1,
+   "shared_responsibility": 1,
+   "climate_displacement": 1,
+   "data_borders": 1,
+   "sovereignty": 0
+  },
+  "DEU": {
+   "legal_pathways": 1,
+   "returns": 1,
+   "child_detention": 1,
+   "shared_responsibility": 1,
+   "climate_displacement": 1,
+   "data_borders": 1,
+   "sovereignty": 0
+  },
+  "FRA": {
+   "legal_pathways": 1,
+   "returns": 1,
+   "child_detention": 1,
+   "shared_responsibility": 1,
+   "climate_displacement": 1,
+   "data_borders": 1,
+   "sovereignty": 0
+  },
+  "GBR": {
+   "legal_pathways": 1,
+   "returns": 1,
+   "child_detention": 1,
+   "shared_responsibility": 1,
+   "climate_displacement": 1,
+   "data_borders": 1,
+   "sovereignty": 0
+  },
+  "CAN": {
+   "legal_pathways": 1,
+   "returns": 1,
+   "child_detention": 1,
+   "shared_responsibility": 1,
+   "climate_displacement": 1,
+   "data_borders": 1,
+   "sovereignty": 0
+  },
+  "MEX": {
+   "legal_pathways": 1,
+   "returns": 1,
+   "child_detention": 1,
+   "shared_responsibility": 1,
+   "climate_displacement": 1,
+   "data_borders": 1,
+   "sovereignty": 0
+  },
+  "TUR": {
+   "legal_pathways": 1,
+   "returns": 1,
+   "child_detention": 1,
+   "shared_responsibility": 1,
+   "climate_displacement": 1,
+   "data_borders": 1,
+   "sovereignty": 0
+  },
+  "NGA": {
+   "legal_pathways": 1,
+   "returns": 1,
+   "child_detention": 1,
+   "shared_responsibility": 1,
+   "climate_displacement": 1,
+   "data_borders": 1,
+   "sovereignty": 0
+  },
+  "MAR": {
+   "legal_pathways": 1,
+   "returns": 1,
+   "child_detention": 1,
+   "shared_responsibility": 1,
+   "climate_displacement": 1,
+   "data_borders": 1,
+   "sovereignty": 0
+  },
+  "BGD": {
+   "legal_pathways": 1,
+   "returns": 1,
+   "child_detention": 1,
+   "shared_responsibility": 1,
+   "climate_displacement": 1,
+   "data_borders": 1,
+   "sovereignty": 0
+  },
+  "ZAF": {
+   "legal_pathways": 1,
+   "returns": 1,
+   "child_detention": 1,
+   "shared_responsibility": 1,
+   "climate_displacement": 1,
+   "data_borders": 1,
+   "sovereignty": 0
+  },
+  "CHN": {
+   "legal_pathways": 1,
+   "returns": -1,
+   "child_detention": 1,
+   "shared_responsibility": 1,
+   "climate_displacement": 1,
+   "data_borders": 1,
+   "sovereignty": 1
+  },
+  "RUS": {
+   "legal_pathways": 1,
+   "returns": 1,
+   "child_detention": 1,
+   "shared_responsibility": -1,
+   "climate_displacement": -1,
+   "data_borders": 1,
+   "sovereignty": 0
+  },
+  "FJI": {
+   "legal_pathways": 1,
+   "returns": 1,
+   "child_detention": 1,
+   "shared_responsibility": 1,
+   "climate_displacement": 2,
+   "data_borders": 1,
+   "sovereignty": 1
+  },
+  "USA": {
+   "legal_pathways": -1,
+   "child_detention": -1,
+   "shared_responsibility": -1,
+   "climate_displacement": -1,
+   "sovereignty": 2
+  },
+  "HUN": {
+   "legal_pathways": -1,
+   "child_detention": -1,
+   "shared_responsibility": -2,
+   "climate_displacement": -1,
+   "sovereignty": 2
+  },
+  "POL": {
+   "legal_pathways": -1,
+   "child_detention": -2,
+   "data_borders": -1,
+   "shared_responsibility": -1,
+   "climate_displacement": -1,
+   "sovereignty": 1
+  },
+  "CZE": {
+   "legal_pathways": -1,
+   "returns": 1,
+   "child_detention": -1,
+   "shared_responsibility": -1,
+   "climate_displacement": -1
+  },
+  "ISR": {
+   "legal_pathways": -1,
+   "child_detention": -1,
+   "shared_responsibility": -1,
+   "sovereignty": 1
+  },
+  "AUS": {
+   "returns": -1,
+   "sovereignty": 1
+  },
+  "AUT": {
+   "legal_pathways": -1,
+   "child_detention": -1,
+   "sovereignty": 1
+  },
+  "CHL": {
+   "returns": -1,
+   "sovereignty": 1
+  },
+  "ITA": {
+   "legal_pathways": 0,
+   "returns": 0,
+   "child_detention": 0,
+   "shared_responsibility": 0,
+   "climate_displacement": 0,
+   "data_borders": 0,
+   "sovereignty": 0
+  },
+  "CHE": {
+   "legal_pathways": 0,
+   "returns": 0,
+   "child_detention": 0,
+   "shared_responsibility": 0,
+   "climate_displacement": 0,
+   "data_borders": 0,
+   "sovereignty": 0
+  },
+  "SGP": {
+   "legal_pathways": 0,
+   "returns": 0,
+   "child_detention": 0,
+   "shared_responsibility": 0,
+   "climate_displacement": 0,
+   "data_borders": 0,
+   "sovereignty": 0
+  },
+  "DZA": {
+   "legal_pathways": 0,
+   "returns": 0,
+   "child_detention": 0,
+   "shared_responsibility": 0,
+   "climate_displacement": 0,
+   "data_borders": 0,
+   "sovereignty": 0
+  }
+ },
+ "sources": {
+  "IND": "https://un-project.org/votes/resolution/A-RES-73-195/",
+  "IDN": "https://un-project.org/meeting/A-73-PV-60/",
+  "PHL": "https://un-project.org/meeting/A-73-PV-60/",
+  "DEU": "https://un-project.org/votes/resolution/A-RES-73-195/",
+  "FRA": "https://un-project.org/votes/resolution/A-RES-73-195/",
+  "GBR": "https://un-project.org/votes/resolution/A-RES-73-195/",
+  "CAN": "https://un-project.org/meeting/A-73-PV-60/",
+  "MEX": "https://un-project.org/votes/resolution/A-RES-73-195/",
+  "TUR": "https://un-project.org/votes/resolution/A-RES-73-195/",
+  "NGA": "https://un-project.org/votes/resolution/A-RES-73-195/",
+  "MAR": "https://un-project.org/votes/resolution/A-RES-73-195/",
+  "BGD": "https://un-project.org/votes/resolution/A-RES-73-195/",
+  "ZAF": "https://un-project.org/votes/resolution/A-RES-73-195/",
+  "CHN": "https://un-project.org/meeting/A-73-PV-60/",
+  "RUS": "https://un-project.org/meeting/A-73-PV-60/",
+  "FJI": "https://un-project.org/meeting/A-73-PV-60/",
+  "USA": "https://un-project.org/meeting/A-73-PV-60/",
+  "HUN": "https://un-project.org/meeting/A-73-PV-60/",
+  "POL": "https://un-project.org/meeting/A-73-PV-60/",
+  "CZE": "https://un-project.org/meeting/A-73-PV-60/",
+  "ISR": "https://en.wikipedia.org/wiki/Global_Compact_for_Migration",
+  "AUS": "https://en.wikipedia.org/wiki/Global_Compact_for_Migration",
+  "AUT": "https://un-project.org/meeting/A-73-PV-60/",
+  "CHL": "https://un-project.org/meeting/A-73-PV-60/",
+  "ITA": "https://un-project.org/votes/resolution/A-RES-73-195/",
+  "CHE": "https://un-project.org/votes/resolution/A-RES-73-195/",
+  "SGP": "https://un-project.org/meeting/A-73-PV-60/",
+  "DZA": "https://un-project.org/votes/resolution/A-RES-73-195/"
+ },
+ "news": [],
+ "author": "Claude Sonnet (delegated), 4 Nov 2026; to be checked by B. Gough"
+}

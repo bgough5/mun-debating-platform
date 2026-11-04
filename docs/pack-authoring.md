@@ -45,7 +45,7 @@ This guide is written so that anyone, including another AI model, can write a pa
 | `resolution.preambular` | 1–8 clauses `{"text": ..., "tags": [...]}`. Each ends with a comma. | 20–400 each |
 | `resolution.operative` | 2–12 clauses. Each ends with a semicolon; the last may end with a full stop. Each has at least one tag. | 20–400 each |
 | `positions` | `{"ISO3": {"tag": -2..2}}`: −2 strongly oppose, −1 oppose, 0 neutral, 1 support, 2 strongly support. Only the pack's countries and tags. | whole numbers only |
-| `sources` | `{"ISO3": "https://..."}`. Required for every positioned country when `fictional` is false. Leave `{}` when fictional. | one link each |
+| `sources` | `{"ISO3": "https://..."}`, or a list of up to four links when one page doesn't cover all of a country's positions. Required for every positioned country when `fictional` is false. Leave `{}` when fictional. | 1–4 links each |
 | `news` | Up to 8 invented updates `{"headline", "body"}`, in the order the Chair will send them. Fictional only. | headline 5–100, body 20–400 |
 | `author` | Who wrote it and when: "Claude Haiku, 5 Nov 2026" or a teacher's name. | 2–80 |
 
@@ -59,6 +59,7 @@ This guide is written so that anyone, including another AI model, can write a pa
 
 **Clauses read like a real resolution.**
 - Preambular clauses start with an italicised-style participle and end with a comma: *Recalling*, *Reaffirming*, *Expressing grave concern*, *Welcoming*, *Noting with regret*.
+- **Preambular clauses are low stakes.** They recall agreed facts, earlier texts and shared principles that almost every country accepts (the Charter, an earlier resolution, a well-known report). Nothing in the preamble should be worth fighting over: put every contested idea in an operative clause. Give preambular clauses no tags (`"tags": []`).
 - Operative clauses start with a verb and end with a semicolon: *Calls upon*, *Demands* (Security Council only), *Decides* (binding, Security Council), *Requests*, *Encourages*, *Urges*, *Authorises*.
 - Keep each clause to one idea, so an amendment can change one thing.
 
@@ -66,6 +67,13 @@ This guide is written so that anyone, including another AI model, can write a pa
 - Spread them: some countries for, some against, some neutral on each tag. If everyone supports everything, the vote is boring.
 - Keep each country consistent with its general outlook (a country that values sovereignty is cautious about sanctions and missions), but remember it is invented for a fictional crisis.
 - You don't need a position for every country. Unlisted countries vote from the platform's general model of them.
+
+**Real topics (`"fictional": false`).**
+- The draft resolution is a practice text written for class. Say so in `committee.notes` ("A practice draft written for class; not an adopted UN text"), and never present a clause as quoting a real resolution.
+- Positions must come from something you have actually opened and read. The best sources are recorded UN votes: the UN Digital Library voting record for a resolution, or the UN press release (press.un.org) for the meeting, which lists how each country voted. One page can support many countries, so the same link may appear for several of them in `sources`.
+- Map a vote to tags carefully. A country voting yes on a resolution that does X supports X (+1; use +2 only where its statement says it strongly supports it). A no is −1 or −2, and an abstention is 0 or −1. Only set the tags that the source actually covers.
+- If you can't open a source that shows a country's stance, leave that country out of `positions`. Never guess, and never write a link you haven't opened.
+- A Security Council pack uses the Council's current 15 members. Positions can still come from votes those countries cast elsewhere, such as in the General Assembly.
 
 **News should change the debate.** Each update should give a reason to amend or to vote differently: a ceasefire collapses, a convoy is blocked, mediators offer talks on a condition. Two or three sentences, no graphic detail, no real places.
 

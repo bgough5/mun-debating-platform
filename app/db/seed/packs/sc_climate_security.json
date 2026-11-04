@@ -1,0 +1,194 @@
+{
+ "format": 1,
+ "code": "sc_climate_security",
+ "title": "Climate change and international security",
+ "summary": "Should the Security Council treat climate change as a threat to peace? Envoys, reports, mission mandates, early warning and sovereignty split the permanent members.",
+ "level": "senior",
+ "fictional": false,
+ "committee": {
+  "type": "sc",
+  "name": "Security Council: climate change and security (practice)",
+  "conference": "Practice: climate change and security",
+  "notes": "A practice draft written for class; not an adopted UN text. Council membership as the platform knows it for 2026; check before use. Positions are estimates from the linked UN records."
+ },
+ "topic": {
+  "code": "SC_CLIMATE_SECURITY",
+  "name": "Climate change as a threat to international peace and security",
+  "notes": "Real topic. Positions are estimates from the linked UN records; countries without a position are treated as unknown."
+ },
+ "tags": {
+  "council_forum": "Keeps climate change and security on the Security Council's own agenda",
+  "sg_reports": "Asks the Secretary-General for regular reports on climate-related security risks",
+  "mission_mandates": "Requires peacekeeping and political missions to assess climate risk",
+  "special_envoy": "Appoints a UN Special Envoy on climate and security",
+  "early_warning": "Builds early-warning systems and shared climate data to prevent conflict",
+  "host_consent": "Limits climate-risk work in a country to what its government agrees to",
+  "climate_finance": "Links the Council's work to climate finance for vulnerable countries"
+ },
+ "countries": [
+  "CHN",
+  "FRA",
+  "RUS",
+  "GBR",
+  "USA",
+  "DNK",
+  "GRC",
+  "PAK",
+  "PAN",
+  "SOM",
+  "BHR",
+  "COL",
+  "COD",
+  "LVA",
+  "LBR"
+ ],
+ "resolution": {
+  "title": "Climate change and the maintenance of international peace and security",
+  "preambular": [
+   {
+    "text": "Recalling the Charter of the United Nations and the primary responsibility of the Security Council for the maintenance of international peace and security,",
+    "tags": []
+   },
+   {
+    "text": "Recalling the Paris Agreement and the United Nations Framework Convention on Climate Change,",
+    "tags": []
+   },
+   {
+    "text": "Noting that droughts, floods, rising seas and food shortages affect communities in many parts of the world,",
+    "tags": []
+   },
+   {
+    "text": "Reaffirming that Member States shall settle their disputes by peaceful means,",
+    "tags": []
+   }
+  ],
+  "operative": [
+   {
+    "text": "Decides to keep climate change and its effects on peace and security as a regular item on the agenda of the Council;",
+    "tags": [
+     "council_forum"
+    ]
+   },
+   {
+    "text": "Requests the Secretary-General to report to the Council every year on climate-related risks to peace and security in the situations on its agenda;",
+    "tags": [
+     "sg_reports"
+    ]
+   },
+   {
+    "text": "Decides that peacekeeping operations and special political missions shall assess climate-related risks and include them in their planning and reports;",
+    "tags": [
+     "mission_mandates"
+    ]
+   },
+   {
+    "text": "Requests the Secretary-General to appoint a Special Envoy on climate and security, who will advise the Council and brief it twice a year;",
+    "tags": [
+     "special_envoy"
+    ]
+   },
+   {
+    "text": "Encourages the United Nations to build early-warning systems and share climate data openly, so that tensions can be spotted before they turn violent;",
+    "tags": [
+     "early_warning"
+    ]
+   },
+   {
+    "text": "Decides that any assessment of climate-related security risks in a country shall be carried out only with the consent of its government;",
+    "tags": [
+     "host_consent"
+    ]
+   },
+   {
+    "text": "Calls upon developed countries to keep their climate finance promises to the countries most exposed to climate risks, including those affected by conflict.",
+    "tags": [
+     "climate_finance"
+    ]
+   }
+  ]
+ },
+ "positions": {
+  "USA": {
+   "council_forum": -1
+  },
+  "GBR": {
+   "council_forum": 2,
+   "sg_reports": 1,
+   "mission_mandates": 1,
+   "early_warning": 1,
+   "climate_finance": 1
+  },
+  "FRA": {
+   "mission_mandates": 2,
+   "sg_reports": 1,
+   "council_forum": 1
+  },
+  "RUS": {
+   "council_forum": -2,
+   "sg_reports": -2,
+   "mission_mandates": -2,
+   "host_consent": 2,
+   "climate_finance": 1,
+   "early_warning": 0
+  },
+  "CHN": {
+   "council_forum": -1,
+   "sg_reports": -1,
+   "climate_finance": 2,
+   "special_envoy": 0,
+   "mission_mandates": 0
+  },
+  "DNK": {
+   "council_forum": 2,
+   "mission_mandates": 2
+  },
+  "GRC": {
+   "council_forum": 1,
+   "climate_finance": 1
+  },
+  "PAN": {
+   "council_forum": 1,
+   "mission_mandates": 2,
+   "climate_finance": 1
+  },
+  "PAK": {
+   "council_forum": -1,
+   "mission_mandates": 1,
+   "climate_finance": 2
+  },
+  "SOM": {
+   "council_forum": 1,
+   "early_warning": 1,
+   "climate_finance": 1
+  },
+  "LVA": {
+   "council_forum": 1,
+   "sg_reports": 1,
+   "mission_mandates": 1,
+   "early_warning": 1
+  },
+  "COL": {
+   "council_forum": 1
+  },
+  "BHR": {
+   "council_forum": 0
+  }
+ },
+ "sources": {
+  "USA": "https://digitallibrary.un.org/record/4095051/files/S_PV.10035-EN.pdf",
+  "GBR": ["https://digitallibrary.un.org/record/3951616/files/S_PV.8926-EN.pdf", "https://digitallibrary.un.org/record/4095051/files/S_PV.10035-EN.pdf"],
+  "FRA": "https://digitallibrary.un.org/record/4095051/files/S_PV.10035-EN.pdf",
+  "RUS": "https://digitallibrary.un.org/record/3951616/files/S_PV.8926-EN.pdf",
+  "CHN": "https://digitallibrary.un.org/record/3951616/files/S_PV.8926-EN.pdf",
+  "DNK": "https://digitallibrary.un.org/record/4095051/files/S_PV.10035-EN.pdf",
+  "GRC": "https://digitallibrary.un.org/record/4095051/files/S_PV.10035-EN.pdf",
+  "PAN": "https://digitallibrary.un.org/record/4095051/files/S_PV.10035-EN.pdf",
+  "PAK": "https://digitallibrary.un.org/record/4095051/files/S_PV.10035-EN.pdf",
+  "SOM": "https://digitallibrary.un.org/record/4095051/files/S_PV.10035-EN.pdf",
+  "LVA": "https://digitallibrary.un.org/record/3951616/files/S_PV.8926-EN.pdf",
+  "COL": "https://digitallibrary.un.org/record/3990924/files/S_PV.9150-EN.pdf",
+  "BHR": "https://digitallibrary.un.org/record/3951331/files/S_PV.8923_%28Resumption_1%29-EN.pdf"
+ },
+ "news": [],
+ "author": "Claude Sonnet (delegated), 4 Nov 2026; to be checked by B. Gough"
+}

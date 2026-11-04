@@ -26,8 +26,8 @@
  "resolution": {
   "title": "REPLACE: The water crisis in Tarsany",
   "preambular": [
-   {"text": "REPLACE: Reaffirming its commitment to the sovereignty and territorial integrity of Tarsany,", "tags": ["replace_tag_four"]},
-   {"text": "REPLACE: Expressing grave concern at the shortage of safe drinking water in the northern districts,", "tags": ["replace_tag_two"]}
+   {"text": "REPLACE: Reaffirming its commitment to the sovereignty and territorial integrity of Tarsany,", "tags": []},
+   {"text": "REPLACE: Expressing grave concern at the shortage of safe drinking water in the northern districts,", "tags": []}
   ],
   "operative": [
    {"text": "REPLACE: Calls upon all parties to cease hostilities around the Aral dam immediately;", "tags": ["replace_tag_one"]},
