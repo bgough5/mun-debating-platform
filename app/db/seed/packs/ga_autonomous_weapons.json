@@ -104,5 +104,25 @@
   "ARE": "https://un-project.org/votes/resolution/A-RES-79-62/"
  },
  "news": [],
+ "campaign": {
+  "cards": [
+   {"text": "Requests the Secretary-General to hold consultations with Member States on whether and how a legally binding instrument could be negotiated;", "tags": ["binding_treaty"]},
+   {"text": "Decides that the negotiations shall aim to finish within four years, with a progress review after two years;", "tags": ["deadline"]},
+   {"text": "Encourages the negotiating process to finish its work within a reasonable time, without a fixed date;", "tags": ["deadline"]},
+   {"text": "Decides that the negotiations shall take place in the General Assembly, drawing on the findings of the Group of Governmental Experts and inviting its chair to report to each session;", "tags": ["un_forum", "ccw_forum"]},
+   {"text": "Encourages States to adopt national rules on meaningful human control and to share them voluntarily while negotiations continue;", "tags": ["human_control", "moratorium"]},
+   {"text": "Calls upon States to review every new weapon for compliance with international humanitarian law before use, and to publish how they carry out the review;", "tags": ["prohibitions", "human_control"]},
+   {"text": "Urges States to refrain from developing autonomous weapons systems designed to select and attack human beings;", "tags": ["target_people", "moratorium"]},
+   {"text": "Decides that the instrument shall use a definition of meaningful human control prepared with technical experts and humanitarian organisations;", "tags": ["human_control", "binding_treaty"]}
+  ],
+  "events": [
+   {"title": "A regional group meets before the vote", "body": "Delegates from one region meet to compare positions. Whoever has been working with them most finds a warmer welcome when they speak.", "teaches": "Regional groups often settle on a common line before the formal meeting, so time spent with them pays off.", "effect": {"region_mood": 0.15}},
+   {"title": "New instructions from a capital on the forum", "body": "A capital sends fresh instructions about where the talks should be held. Delegations that want an open General Assembly process speak up more firmly.", "teaches": "Delegates act on instructions from their capitals, and those can change during a negotiation.", "effect": {"spotlight": {"tag": "un_forum", "amount": 0.15}}},
+   {"title": "A technical expert briefs delegates on human control", "body": "A technical expert explains how different systems keep a person in the decision. Delegates ask what counts as meaningful control, and the question dominates the room.", "teaches": "Experts help delegates understand what a text would mean in practice, though they do not decide the vote.", "effect": {"spotlight": {"tag": "human_control", "amount": 0.2}}},
+   {"title": "An NGO side event on systems that target people", "body": "A non-governmental organisation holds a side event on weapons that select people as targets. Delegates return to the negotiation with the question on their minds.", "teaches": "Side events let delegations hear arguments away from formal meetings, which can shift where attention lands.", "effect": {"spotlight": {"tag": "target_people", "amount": 0.15}}},
+   {"title": "A co-sponsor hesitates over the deadline", "body": "A co-sponsor says it cannot support a fixed deadline without more time to consult its capital. You must spend more effort to keep your group together.", "teaches": "Co-sponsors can waver late, so holding a group together is a continuing job.", "effect": {"lobby_cost": 1}},
+   {"title": "A revised draft circulates in the room", "body": "The facilitators hand round a revised draft with small changes in many clauses. Delegations stop to read it before they will talk about anything else.", "teaches": "Revised drafts reset the conversation, because each delegation must check every change against its instructions.", "effect": {"ap": -1}}
+  ]
+ },
  "author": "Claude Sonnet (delegated), 4 Nov 2026; to be checked by B. Gough"
 }

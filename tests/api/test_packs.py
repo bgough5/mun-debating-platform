@@ -103,3 +103,22 @@ def test_teachers_can_pick_a_pack_on_start(app, coord):
     sid = int(r.headers["location"].rsplit("/", 1)[1])
     com = db_one(app, "SELECT cm.name FROM committee cm JOIN live_session s ON s.committee_id = cm.id WHERE s.id = ?", (sid,))
     assert com["name"].startswith("Security Council: the situation in Veloria (demo)")
+
+
+def test_the_validator_checks_the_campaign_section():
+    """D-101 phase 5: extra clause cards and the scenario's own events for The Session."""
+    good = json.loads((PF.PACK_DIR / "veloria.json").read_text(encoding="utf-8"))
+    tag = sorted(good["tags"])[0]
+
+    def with_campaign(c):
+        return " ".join(PF.validate({**good, "campaign": c}, "veloria"))
+    ok = {"cards": [{"text": "Calls upon all parties to agree a ceasefire within one week;", "tags": [tag]}],
+          "events": [{"title": "A regional group meets", "body": "The group's ministers meet on the sidelines and compare instructions.",
+                      "teaches": "Regional groups coordinate positions before big votes.", "effect": {"spotlight": {"tag": tag, "amount": 0.15}}}]}
+    assert with_campaign(ok) == ""
+    assert "one to three of the pack's tags" in with_campaign({"cards": [{"text": ok["cards"][0]["text"], "tags": ["nope"]}]})
+    assert "ends with ; or ." in with_campaign({"cards": [{"text": "Calls upon all parties to agree a ceasefire", "tags": [tag]}]})
+    assert "exactly one of" in with_campaign({"events": [{**ok["events"][0], "effect": {"ap": 1, "influence": 2}}]})
+    assert "0.1 to 0.25" in with_campaign({"events": [{**ok["events"][0], "effect": {"spotlight": {"tag": tag, "amount": 0.9}}}]})
+    assert "(not 0)" in with_campaign({"events": [{**ok["events"][0], "effect": {"ap": 0}}]})
+    assert "isn't an effect" in with_campaign({"events": [{**ok["events"][0], "effect": {"win": 1}}]})

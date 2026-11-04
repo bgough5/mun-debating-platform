@@ -314,5 +314,122 @@
    "body": "Mission planners say a deflection rocket must leave within five months to have a good chance. Every month of delay makes it more likely the nuclear option will be needed."
   }
  ],
+ "campaign": {
+  "cards": [
+   {
+    "text": "Urges every Member State with an observatory to share each new Halcyon-7 reading within seven days, and requests help for States that lack equipment;",
+    "tags": [
+     "data_sharing"
+    ]
+   },
+   {
+    "text": "Encourages Member States to share tracking data on Halcyon-7 voluntarily, and invites them to do so when they are able;",
+    "tags": [
+     "data_sharing"
+    ]
+   },
+   {
+    "text": "Requests the Secretary-General to appoint an independent panel of scientists to review every deflection plan before launch and to report to the Assembly;",
+    "tags": [
+     "deflection",
+     "un_command"
+    ]
+   },
+   {
+    "text": "Decides that a nuclear device may be used in space only with the further agreement of the Assembly and under inspection by international experts;",
+    "tags": [
+     "nuclear_option",
+     "un_command"
+    ]
+   },
+   {
+    "text": "Calls upon Member States to keep nuclear devices out of the mission and to concentrate on non-nuclear methods of deflection;",
+    "tags": [
+     "nuclear_option",
+     "deflection"
+    ]
+   },
+   {
+    "text": "Decides that contributions to the relief fund shall follow a sliding scale, with the poorest States exempt and launching States paying a larger share;",
+    "tags": [
+     "relief_fund",
+     "liability"
+    ]
+   },
+   {
+    "text": "Invites private companies to contribute to the mission and to the relief fund, on condition that they make no claim to the fragment or its material;",
+    "tags": [
+     "relief_fund",
+     "no_claims"
+    ]
+   },
+   {
+    "text": "Decides that scientific samples taken from the fragment shall be shared with all Member States for research and shall not be sold;",
+    "tags": [
+     "no_claims",
+     "data_sharing"
+    ]
+   }
+  ],
+  "events": [
+   {
+    "title": "A small observatory publishes all its readings",
+    "body": "An observatory in a small State posts every Halcyon-7 reading online and invites others to do the same. Delegates start asking who is still holding data back.",
+    "teaches": "Open data lets others check your work, which is why shared evidence builds trust between States.",
+    "effect": {
+     "spotlight": {
+      "tag": "data_sharing",
+      "amount": 0.15
+     }
+    }
+   },
+   {
+    "title": "Marelle families wait on the quay",
+    "body": "Reporters describe families on the Marelle Islands packing what they can carry and waiting for ships that have not been promised. Delegates feel pressure to say who will pay.",
+    "teaches": "Humanitarian needs often move a debate faster than legal arguments, because delegates must answer to their own public.",
+    "effect": {
+     "spotlight": {
+      "tag": "relief_fund",
+      "amount": 0.2
+     }
+    }
+   },
+   {
+    "title": "Starward Minerals tests its probe",
+    "body": "Starward Minerals announces a test flight of its probe. Lawyers in several capitals ask whether the company could keep what the probe collects.",
+    "teaches": "Space law was written for States, so new private activity can open gaps that only new agreements can close.",
+    "effect": {
+     "spotlight": {
+      "tag": "no_claims",
+      "amount": 0.15
+     }
+    }
+   },
+   {
+    "title": "The Pacific group meets in the corridor",
+    "body": "Island delegations meet to compare notes on Halcyon-7. They are warm to any delegate who listens to their concerns rather than just their votes.",
+    "teaches": "Regional groups often agree a shared line before a vote, so time spent listening to them can matter more than a speech.",
+    "effect": {
+     "region_mood": 0.15
+    }
+   },
+   {
+    "title": "The Marelle delegate asks to speak",
+    "body": "The delegate of the Marelle Islands asks for the floor and describes plans for the evacuation in plain terms. Several delegates say afterwards that it changed how they saw the draft.",
+    "teaches": "A State with little power can still gain influence by speaking clearly about what is at stake for its people.",
+    "effect": {
+     "influence": 2
+    }
+   },
+   {
+    "title": "Mission planners offer an early briefing",
+    "body": "Engineers from the planning team offer to brief delegates before the next session. Those who attend can plan their time better.",
+    "teaches": "Technical experts help diplomats understand what is possible, so agreements are built on facts rather than guesses.",
+    "effect": {
+     "ap": 1
+    }
+   }
+  ]
+ },
  "author": "Claude (build session) as the example pack, 4 Nov 2026"
 }

@@ -158,8 +158,58 @@ def validate(pack: dict, filename_code: str | None = None) -> list[str]:
     for i, n in enumerate(news, 1):
         _text((n or {}).get("headline"), f"news[{i}].headline", 5, 100, e)
         _text((n or {}).get("body"), f"news[{i}].body", 20, 400, e)
+    _campaign(pack.get("campaign"), tags, e)
     _text(pack.get("author"), "author", 2, 80, e)
     return e
+
+
+EFFECTS = {"ap": (-1, 1), "lobby_cost": (-1, 1), "influence": (1, 3), "region_mood": (0.1, 0.2)}
+
+
+def _campaign(c, tags: dict, e: list) -> None:
+    """The Session (D-101): optional extra clause cards and the scenario's own events. On a real topic an event is
+    something that happens inside the negotiation, never an invented real-world event, and the game labels it
+    "Hypothetical"."""
+    if c is None:
+        return
+    if not isinstance(c, dict) or set(c) - {"cards", "events"}:
+        e.append("campaign: an object with \"cards\" and \"events\" (both optional).")
+        return
+    cards = c.get("cards") or []
+    if not isinstance(cards, list) or len(cards) > 10:
+        e.append("campaign.cards: at most 10 extra clause cards.")
+        cards = []
+    for i, cd in enumerate(cards, 1):
+        text = _text((cd or {}).get("text"), f"campaign.cards[{i}].text", 20, 400, e)
+        if text and not text.endswith((";", ".")):
+            e.append(f"campaign.cards[{i}].text: an operative clause ends with ; or .")
+        ct = (cd or {}).get("tags")
+        if not isinstance(ct, list) or not 1 <= len(ct) <= 3 or any(t not in tags for t in ct):
+            e.append(f"campaign.cards[{i}].tags: one to three of the pack's tags.")
+    events = c.get("events") or []
+    if not isinstance(events, list) or len(events) > 8:
+        e.append("campaign.events: at most 8 events.")
+        events = []
+    for i, ev in enumerate(events, 1):
+        ev = ev or {}
+        _text(ev.get("title"), f"campaign.events[{i}].title", 5, 80, e)
+        _text(ev.get("body"), f"campaign.events[{i}].body", 20, 300, e)
+        _text(ev.get("teaches"), f"campaign.events[{i}].teaches", 20, 200, e)
+        eff = ev.get("effect")
+        if not isinstance(eff, dict) or len(eff) != 1:
+            e.append(f"campaign.events[{i}].effect: exactly one of ap, lobby_cost, influence, region_mood or spotlight.")
+            continue
+        (k, v), = eff.items()
+        if k == "spotlight":
+            if not isinstance(v, dict) or v.get("tag") not in tags or not isinstance(v.get("amount"), (int, float)) \
+                    or not 0.1 <= v["amount"] <= 0.25:
+                e.append(f"campaign.events[{i}].effect.spotlight: {{\"tag\": one of the pack's tags, \"amount\": 0.1 to 0.25}}.")
+        elif k in EFFECTS:
+            lo, hi = EFFECTS[k]
+            if isinstance(v, bool) or not isinstance(v, (int, float)) or not lo <= v <= hi or (k in ("ap", "lobby_cost") and v == 0):
+                e.append(f"campaign.events[{i}].effect.{k}: from {lo} to {hi}" + (" (not 0)" if k in ("ap", "lobby_cost") else "") + ".")
+        else:
+            e.append(f"campaign.events[{i}].effect: {k} isn't an effect (ap, lobby_cost, influence, region_mood or spotlight).")
 
 
 def load(code: str) -> dict:

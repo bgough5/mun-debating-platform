@@ -464,6 +464,20 @@ There is no interface yet. Phase 2 waits for Ben's calls on scenario labels, a S
 - **Presidential Statement (Council):** a failed resolution offers a statement with the commitments ticked.
 - **The result:** the medal for the chosen path, the grade on all four paths, the predictions, the promises, the endorsements, Respect and Expertise. The full debrief is phase 6.
 
+**Phase 5, scenario content (5 Nov 2026).**
+- **The format:** a pack may have a `campaign` section with up to 10 extra clause cards (1–3 of the pack's tags each, written as operative clauses) and up to 8 events of its own.
+  - Each event has one effect: `ap`, `lobby_cost`, `influence`, `region_mood`, or the new `spotlight` (delegations that support a commitment warm to whoever champions it).
+  - The validator, `_template.json` and `docs/pack-authoring.md` cover it.
+  - A plain commitment card is added only for a tag no card offers.
+  - A scenario's events come up about as often as the general ones.
+- **Real topics:**
+  - On a real topic an event happens inside the negotiation (a regional group meets, a capital's instructions, an expert briefing, a side event, a co-sponsor wavers). It never invents a real-world event, figure or person, and it is labelled "Hypothetical".
+  - The pack guide's ban on invented news for real topics stands.
+- **Content:** all eight scenarios have 8 cards and 6 events each.
+  - Six were written by helper agents (Sonnet) and two by Claude after an agent's edits didn't land.
+  - Every event was read for invented facts.
+- **Balance:** re-measured with the content (section 19 of the design doc).
+
 ### D-100 The speech coach beside every speech box — Decided (5 Nov 2026, Ben)
 Ben: "there should be some stats and visual add-ins that makes speeches easier to write. some things such as word count, expected speaking time, repetitive language indicators, lists of persuasive techniques … keep the platform clean, easily set-up and intuitive … as pretty and fun/interactive/clear as possible." He chose:
 - every speech box, "togglable so it doesn't feel like a constant tutorial", plus Model UN phrases to click in ("addressing other honourable delegates etc.");

@@ -262,5 +262,122 @@
    "body": "The parties will hold fire for three days to let aid through, if the Council guarantees independent monitors. The offer expires at midnight."
   }
  ],
+ "campaign": {
+  "cards": [
+   {
+    "text": "Welcomes the offer of regional mediators and urges all parties to attend talks in good faith, with the Council to review progress after thirty days;",
+    "tags": [
+     "sovereignty",
+     "ceasefire"
+    ]
+   },
+   {
+    "text": "Urges all parties to observe a pause in fighting of seventy-two hours so that aid can pass, to be extended if monitors confirm it is respected;",
+    "tags": [
+     "ceasefire",
+     "humanitarian_access"
+    ]
+   },
+   {
+    "text": "Demands that all parties give independent monitors immediate access to every checkpoint on aid routes and allow convoys to pass without delay;",
+    "tags": [
+     "humanitarian_access"
+    ]
+   },
+   {
+    "text": "Decides that the arms embargo shall apply to armed groups outside government control, and shall be reviewed after six months;",
+    "tags": [
+     "arms_embargo",
+     "sovereignty"
+    ]
+   },
+   {
+    "text": "Requests the Secretary-General to send unarmed civilian monitors, with the consent of Veloria's government, to observe the ceasefire and the movement of aid;",
+    "tags": [
+     "peacekeeping",
+     "sovereignty"
+    ]
+   },
+   {
+    "text": "Encourages the regional organisation, with United Nations support, to set up an inquiry led by Velorian and regional jurists into alleged violations;",
+    "tags": [
+     "accountability",
+     "sovereignty"
+    ]
+   },
+   {
+    "text": "Decides that targeted sanctions shall be suspended while the parties take part in talks, and shall be restored if the talks are abandoned;",
+    "tags": [
+     "sanctions",
+     "sovereignty"
+    ]
+   },
+   {
+    "text": "Calls upon neighbouring States to keep their borders open to civilians and requests donors to give emergency funding to the States hosting them;",
+    "tags": [
+     "humanitarian_access"
+    ]
+   }
+  ],
+  "events": [
+   {
+    "title": "A convoy reaches Marrow Ford",
+    "body": "After a long delay, a convoy of aid trucks is waved through the checkpoint and arrives at Marrow Ford. Delegates ask how to make sure the next one is not stopped.",
+    "teaches": "Small steps on the ground can show what is possible, and diplomats use them as a base for firmer agreements.",
+    "effect": {
+     "spotlight": {
+      "tag": "humanitarian_access",
+      "amount": 0.2
+     }
+    }
+   },
+   {
+    "title": "Veloria's government writes to the Council",
+    "body": "A letter from Veloria's government says it will accept outside observers if it keeps a say in who they are and where they go. Delegations read it closely.",
+    "teaches": "A State's consent is central to how the UN works, and many missions only go ahead because the host State agrees.",
+    "effect": {
+     "spotlight": {
+      "tag": "sovereignty",
+      "amount": 0.2
+     }
+    }
+   },
+   {
+    "title": "Independent researchers confirm the border images",
+    "body": "The research group that published the border images says experts have now checked them. Delegates debate what the Council should do with confirmed information.",
+    "teaches": "Reliable evidence changes diplomatic debates, which is why checking facts before acting is such an important habit.",
+    "effect": {
+     "spotlight": {
+      "tag": "arms_embargo",
+      "amount": 0.15
+     }
+    }
+   },
+   {
+    "title": "The regional organisation briefs delegates",
+    "body": "Representatives of the regional organisation visit the Council corridors and explain what a neutral capital could offer. They warm to those who ask about their plan.",
+    "teaches": "Regional bodies know the parties well, and the UN often works alongside them rather than in their place.",
+    "effect": {
+     "region_mood": 0.15
+    }
+   },
+   {
+    "title": "Capitals ask for new instructions",
+    "body": "Several delegations say their capitals are still reviewing the latest news, so side talks take longer to arrange this turn.",
+    "teaches": "Diplomats act on instructions from home, so they cannot always agree to a change at once, even when they want to.",
+    "effect": {
+     "lobby_cost": 1
+    }
+   },
+   {
+    "title": "A respected mediator briefs the Council",
+    "body": "A senior mediator with long experience of peace talks speaks to the Council and answers questions. Her calm manner is noted by many delegates.",
+    "teaches": "Respected mediators help parties find common ground, because both sides can trust a person who is not seen as taking sides.",
+    "effect": {
+     "influence": 2
+    }
+   }
+  ]
+ },
  "author": "Ben Gough and the build session (D-063)"
 }

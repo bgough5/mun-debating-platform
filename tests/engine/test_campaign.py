@@ -170,3 +170,37 @@ def test_no_statement_outside_the_council(scenarios):
     g = _to_final(scn, g)
     g, out = E.apply(scn, g, {"do": "final", "vote": "no"})
     assert g["phase"] == "done" and "statement" not in out
+
+
+def test_a_scenarios_own_events_come_up_labelled_and_a_spotlight_warms_its_champions(scenarios):
+    scn = scenarios["sc_climate_security"]
+    me = next(i for i in scn.isos if i not in scn.rule.veto)
+    g = E.new_game(scn, me, seed=21)
+    must = max(scn.tags, key=lambda t: sum(1 for i in scn.isos if (scn.positions.get(i, {}).get(t) or 0) >= 1))
+    g["mandate"]["must"] = must                         # the commitment most delegations support, so the spotlight has fans
+    scn.events = [{"id": "s1", "title": "A capital changes its mind", "body": "New instructions arrive for several delegations.",
+                   "teaches": "Delegates act on instructions from their capitals.", "effect": {"spotlight": {"tag": must, "amount": 0.2}},
+                   "scenario": True}]
+    seen = None
+    for _ in range(60):                                   # deal turns until the scenario's event comes up
+        before = {i: g["sway"]["you"][i] for i in scn.isos if i not in E._others(g)}
+        g2 = E.apply(scn, g, {"do": "end_turn"})[0]
+        if g2["phase"] != "chapter":
+            break
+        if g2["event"]["id"] == "s1":
+            seen = (g, g2)
+            break
+        g = g2
+    assert seen, "the scenario's event never came up"
+    g, g2 = seen
+    assert g2["event"]["hypothetical"] is True                                    # a real topic: labelled
+    fans = [i for i in scn.isos if i not in E._others(g) and ((scn.positions.get(i, {}).get(must) or 0) >= 1 or scn.dist([must])[i][0] >= 0.4)]
+    assert fans and all(g2["sway"]["you"][i] > g["sway"]["you"][i] - 0.001 for i in fans)
+    others = [i for i in scn.isos if i not in E._others(g) and i not in fans]
+    assert all(abs(g2["sway"]["you"][i] - g["sway"]["you"][i]) < 0.31 for i in others)   # only the usual pulls, no spotlight
+
+
+def test_every_commitment_can_be_proposed(scenarios):
+    for scn in scenarios.values():
+        offered = {t for c in scn.cards for t in c["tags"]} | {t for c in scn.draft for t in c["tags"]}
+        assert offered == set(scn.tags), scn.code

@@ -77,6 +77,49 @@ This guide is written so that anyone, including another AI model, can write a pa
 
 **News should change the debate.** Each update should give a reason to amend or to vote differently: a ceasefire collapses, a convoy is blocked, mediators offer talks on a condition. Two or three sentences, no graphic detail, no real places.
 
+## The Session: clause cards and events (optional `campaign`)
+
+The Session (the hour-long solo campaign) plays every pack. The optional `campaign` section gives your scenario
+its own flavour. Without it, the campaign uses the draft's later clauses as cards and general committee events.
+
+```json
+"campaign": {
+  "cards": [ {"text": "Calls upon States to ... ;", "tags": ["tag_a"]} ],
+  "events": [ {"title": "...", "body": "...", "teaches": "...", "effect": {"spotlight": {"tag": "tag_a", "amount": 0.15}}} ]
+}
+```
+
+**Cards (up to 10).** Extra operative clauses a student can propose during the campaign, beyond the draft's own.
+- Write each as a real operative clause: it starts with a verb and ends with `;` or `.`.
+- Give each one to three of the pack's tags, and tag what the clause actually does.
+- Offer real choices: a stronger and a weaker version of the same idea, a compromise that bundles two tags, and a
+  clause that would win over a group that opposes the draft. Write 5 to 8.
+- Make sure every tag appears on at least one card or draft clause.
+
+**Events (up to 8).** Drawn at the start of a turn, about as often as the general events. Each has:
+- `title`: 5 to 80 characters;
+- `body`: 20 to 300 characters, saying what happens;
+- `teaches`: 20 to 200 characters, the true thing about diplomacy it shows;
+- exactly one `effect`:
+
+| Effect | What it does | Values |
+|---|---|---|
+| `ap` | Action points this turn | -1 or 1 |
+| `lobby_cost` | Lobbying is cheaper or dearer this turn | -1 or 1 |
+| `influence` | Extra Influence | 1 to 3 |
+| `region_mood` | A regional group warms to whoever worked hardest with it | 0.1 to 0.2 |
+| `spotlight` | Attention turns to one commitment: delegations that support it warm to whoever champions it | `{"tag": ..., "amount": 0.1 to 0.25}` |
+
+Rules for events:
+- **On a real topic (`"fictional": false`)**, an event happens *inside the negotiation*: a regional group meets, a
+  capital sends new instructions, an expert briefs delegates, an NGO hosts a side event, a co-sponsor wavers. It
+  never invents a real-world event, statistic, quote or person, and the game labels it "Hypothetical".
+- **On a fictional crisis**, an event may move the crisis on (in invented places, as for `news`).
+- **Every event is about this scenario.** General ones (a quiet morning, the speakers list closing) are already built in.
+- No real people, nothing graphic, and nothing that tells students what to say.
+
+Write 4 to 6 events, then run the validator.
+
 ## Before it goes live
 
 A teacher reads the whole pack and checks:

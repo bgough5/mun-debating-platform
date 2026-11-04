@@ -290,5 +290,116 @@
   "CRI": "https://www.arabnews.com/node/2613132/amp"
  },
  "news": [],
+ "campaign": {
+  "cards": [
+   {
+    "text": "Invites States to share, on a voluntary basis, how they test the most powerful AI systems for safety, and requests the scientific panel to summarise these reports each year;",
+    "tags": [
+     "un_science_panel"
+    ]
+   },
+   {
+    "text": "Requests the Secretary-General to explore whether existing United Nations bodies could cover advanced AI before any new agency is proposed;",
+    "tags": [
+     "global_agency"
+    ]
+   },
+   {
+    "text": "Decides that the most powerful AI systems may not be released until they have passed an independent safety test agreed by States;",
+    "tags": [
+     "binding_rules",
+     "global_agency"
+    ]
+   },
+   {
+    "text": "Requests the scientific panel to include in each report advice on how developing countries can use AI safely, and calls upon donors to fund a shared training programme;",
+    "tags": [
+     "un_science_panel",
+     "ai_capacity"
+    ]
+   },
+   {
+    "text": "Encourages States to build on their existing national safety guidelines and to share what works, leaving each State free to choose how to apply them;",
+    "tags": [
+     "binding_rules"
+    ]
+   },
+   {
+    "text": "Calls upon companies to be open about the kinds of books, art and posts used to train AI systems, and to let creators opt out;",
+    "tags": [
+     "copyright_data"
+    ]
+   },
+   {
+    "text": "Urges States to teach students and parents how to spot AI-made content and how to report harmful material, alongside labels used during elections;",
+    "tags": [
+     "election_safeguards",
+     "child_safety"
+    ]
+   },
+   {
+    "text": "Calls upon States to publish a list of AI uses they have stopped because they conflict with human rights law, and to review that list every two years;",
+    "tags": [
+     "banned_uses"
+    ]
+   }
+  ],
+  "events": [
+   {
+    "title": "A regional group meets over the draft",
+    "body": "A regional group meets to compare its views on the draft. Delegates who have spent time with them come away feeling listened to.",
+    "teaches": "Regional groups coordinate their positions before votes, and delegates who listen to them often earn their trust.",
+    "effect": {
+     "region_mood": 0.15
+    }
+   },
+   {
+    "title": "A delegation describes its skills gap",
+    "body": "A delegation from a small island state tells the room how hard it is to train engineers for AI. Delegates who back sharing skills are keener to talk.",
+    "teaches": "Personal accounts in the chamber can move a debate more than general principles do.",
+    "effect": {
+     "spotlight": {
+      "tag": "ai_capacity",
+      "amount": 0.15
+     }
+    }
+   },
+   {
+    "title": "An expert explains voluntary versus binding rules",
+    "body": "An invited expert explains to delegates how voluntary guidelines differ from legally binding treaties, and how long each takes to agree.",
+    "teaches": "Treaties bind only the States that join them and take years to agree; voluntary guidelines are faster but depend on goodwill.",
+    "effect": {
+     "spotlight": {
+      "tag": "binding_rules",
+      "amount": 0.2
+     }
+    }
+   },
+   {
+    "title": "A capital sends new instructions overnight",
+    "body": "A capital sends fresh instructions to its delegation overnight, and several delegates must rework their plans before they can meet you.",
+    "teaches": "Delegates represent their governments, so instructions from a capital can change a position at short notice.",
+    "effect": {
+     "ap": -1
+    }
+   },
+   {
+    "title": "A co-sponsor offers a joint meeting",
+    "body": "A co-sponsor of an earlier AI resolution invites delegates to a joint meeting just outside the chamber. Talking to others is easier this turn.",
+    "teaches": "Informal meetings outside the chamber are where much of the real bargaining at the UN takes place.",
+    "effect": {
+     "lobby_cost": -1
+    }
+   },
+   {
+    "title": "An NGO hosts a side event on children and AI",
+    "body": "A children's rights organisation hosts a side event in the lobby. Delegates who attend thank you for raising the issue, and your standing grows.",
+    "teaches": "NGOs cannot vote, but they brief delegates and can shape what ends up on the table.",
+    "effect": {
+     "influence": 1
+    }
+   }
+  ]
+ },
  "author": "Claude Sonnet (delegated), 4 Nov 2026; to be checked by B. Gough"
 }

@@ -77,5 +77,117 @@
   "COD": "https://un-project.org/votes/resolution/A-RES-80-58/"
  },
  "news": [],
+ "campaign": {
+  "cards": [
+   {
+    "text": "Demands that States immediately stop all cyberattacks on hospitals and power grids, and decides that the Council will keep the matter under review;",
+    "tags": [
+     "infrastructure_protection",
+     "council_briefings"
+    ]
+   },
+   {
+    "text": "Encourages States to share good practice on protecting hospitals and water systems from cyberattack, on a voluntary basis;",
+    "tags": [
+     "infrastructure_protection"
+    ]
+   },
+   {
+    "text": "Urges States to respond promptly when another State asks for help because its critical infrastructure is under cyberattack, and to cooperate in investigations;",
+    "tags": [
+     "infrastructure_protection",
+     "state_responsibility"
+    ]
+   },
+   {
+    "text": "Encourages nuclear-armed States to discuss, in whatever forum they choose, how human judgement is kept in decisions about the use of nuclear weapons;",
+    "tags": [
+     "nuclear_human_control"
+    ]
+   },
+   {
+    "text": "Calls upon nuclear-armed States to declare that artificial intelligence will never make or carry out a decision to use nuclear weapons without human approval;",
+    "tags": [
+     "nuclear_human_control"
+    ]
+   },
+   {
+    "text": "Requests States to report voluntarily to the Secretary-General on the steps they take against cyberattacks launched from their territory, without any finding of blame;",
+    "tags": [
+     "state_responsibility",
+     "council_briefings"
+    ]
+   },
+   {
+    "text": "Requests the Secretary-General to include in his briefings advice on how United Nations talks on military AI could inform the Council's work, without creating a new body;",
+    "tags": [
+     "ai_military_talks",
+     "council_briefings"
+    ]
+   },
+   {
+    "text": "Urges States to support independent fact-checking and media literacy, so that false AI-made content is less likely to inflame armed conflict;",
+    "tags": [
+     "disinformation"
+    ]
+   }
+  ],
+  "events": [
+   {
+    "title": "An expert briefs delegates on Council briefings",
+    "body": "A technical expert gives delegates a closed briefing on how regular Council briefings on cyber threats could work alongside the General Assembly's own processes.",
+    "teaches": "The Council and the General Assembly have different roles, and good drafting avoids repeating work done elsewhere.",
+    "effect": {
+     "spotlight": {
+      "tag": "council_briefings",
+      "amount": 0.15
+     }
+    }
+   },
+   {
+    "title": "Delegates ask what human control really means",
+    "body": "In consultations, delegates ask what human control of a launch decision would require in practice. Supporters of the clause press the point.",
+    "teaches": "Words in resolutions get tested for precise meaning, and vague terms are often where agreement or disagreement hides.",
+    "effect": {
+     "spotlight": {
+      "tag": "nuclear_human_control",
+      "amount": 0.2
+     }
+    }
+   },
+   {
+    "title": "A permanent member's capital sends new instructions",
+    "body": "A permanent member's capital sends fresh instructions, and its delegation asks for a pause to study them. Your plans for this turn must wait.",
+    "teaches": "The five permanent members can veto, so their capitals' instructions matter to every deal in the Council.",
+    "effect": {
+     "ap": -1
+    }
+   },
+   {
+    "title": "Closed consultations run long",
+    "body": "Closed consultations overrun their time and delegates drift away to other meetings. Reaching people is harder this turn.",
+    "teaches": "Much Council work happens in closed consultations, and time is one of the scarcest things a delegation has.",
+    "effect": {
+     "lobby_cost": 1
+    }
+   },
+   {
+    "title": "Elected members agree to speak together",
+    "body": "Several elected members meet and agree to speak with one voice. They credit you with clarifying the text, and your standing grows.",
+    "teaches": "Elected members have no veto, but acting together gives them a louder voice in the Council.",
+    "effect": {
+     "influence": 2
+    }
+   },
+   {
+    "title": "A regional group meets on the draft",
+    "body": "A regional group meets to consider the draft and invites you to explain it. Delegates who have worked with them hear you out.",
+    "teaches": "Members often consult their regional groups, and trust built there carries into Council votes.",
+    "effect": {
+     "region_mood": 0.15
+    }
+   }
+  ]
+ },
  "author": "Claude Sonnet (delegated), 4 Nov 2026; to be checked by B. Gough"
 }

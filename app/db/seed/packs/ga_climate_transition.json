@@ -25,55 +25,198 @@
   "displaced_people": "Gives people displaced by climate change a legal status and safe ways to move",
   "state_duties": "Backs the climate duties of States set out by the International Court of Justice"
  },
- "countries": ["USA", "CHN", "IND", "RUS", "JPN", "BRA", "IDN", "DEU", "FRA", "GBR", "CAN", "AUS", "SAU", "ARE", "QAT", "NGA", "NOR", "TUR", "VUT", "TUV", "MHL", "FJI", "MWI", "BGD", "SLE", "COL", "ZAF", "BLZ", "NLD"],
+ "countries": [
+  "USA",
+  "CHN",
+  "IND",
+  "RUS",
+  "JPN",
+  "BRA",
+  "IDN",
+  "DEU",
+  "FRA",
+  "GBR",
+  "CAN",
+  "AUS",
+  "SAU",
+  "ARE",
+  "QAT",
+  "NGA",
+  "NOR",
+  "TUR",
+  "VUT",
+  "TUV",
+  "MHL",
+  "FJI",
+  "MWI",
+  "BGD",
+  "SLE",
+  "COL",
+  "ZAF",
+  "BLZ",
+  "NLD"
+ ],
  "resolution": {
   "title": "The transition away from fossil fuels and shared responsibility for its cost",
   "preambular": [
-   {"text": "Recalling the Charter of the United Nations and its purpose of achieving international cooperation in solving international problems of an economic, social or humanitarian character,", "tags": []},
-   {"text": "Reaffirming the Paris Agreement and its agreed goal of holding the rise in global average temperature to well below 2 degrees Celsius above pre-industrial levels and pursuing efforts to limit it to 1.5 degrees,", "tags": []},
-   {"text": "Recalling the finding of the Intergovernmental Panel on Climate Change that it is unequivocal that human influence has warmed the atmosphere, the oceans and the land,", "tags": []},
-   {"text": "Recalling also General Assembly resolution 77/276 of 2023, adopted without a vote, which asked the International Court of Justice for an advisory opinion on the obligations of States in respect of climate change,", "tags": []},
-   {"text": "Taking note of the advisory opinion delivered by the International Court of Justice on 23 July 2025,", "tags": []}
+   {
+    "text": "Recalling the Charter of the United Nations and its purpose of achieving international cooperation in solving international problems of an economic, social or humanitarian character,",
+    "tags": []
+   },
+   {
+    "text": "Reaffirming the Paris Agreement and its agreed goal of holding the rise in global average temperature to well below 2 degrees Celsius above pre-industrial levels and pursuing efforts to limit it to 1.5 degrees,",
+    "tags": []
+   },
+   {
+    "text": "Recalling the finding of the Intergovernmental Panel on Climate Change that it is unequivocal that human influence has warmed the atmosphere, the oceans and the land,",
+    "tags": []
+   },
+   {
+    "text": "Recalling also General Assembly resolution 77/276 of 2023, adopted without a vote, which asked the International Court of Justice for an advisory opinion on the obligations of States in respect of climate change,",
+    "tags": []
+   },
+   {
+    "text": "Taking note of the advisory opinion delivered by the International Court of Justice on 23 July 2025,",
+    "tags": []
+   }
   ],
   "operative": [
-   {"text": "Calls upon all States to publish national plans for a just and orderly transition away from fossil fuels, ending unabated coal power by 2040 and the use of oil and gas by 2050;", "tags": ["fossil_phaseout"]},
-   {"text": "Decides that all States will end government subsidies for coal, oil and gas by 2030, while protecting poorer households that depend on cheap fuel;", "tags": ["subsidy_end"]},
-   {"text": "Requests developed States to double their contributions to the Fund for responding to Loss and Damage within five years;", "tags": ["loss_damage"]},
-   {"text": "Urges developed States to raise climate finance for developing countries to at least 1.3 trillion United States dollars a year by 2035, well above the goal of 300 billion dollars a year agreed in 2024;", "tags": ["finance_goal"]},
-   {"text": "Encourages States to place a carbon charge on imports from countries with weaker climate rules, in line with trade law, so that emissions do not simply move abroad;", "tags": ["border_tax"]},
-   {"text": "Requests the drafting of a framework that gives people displaced by climate change a legal status and safe ways to move, while helping them to stay in their homelands where possible;", "tags": ["displaced_people"]},
-   {"text": "Calls upon all States to comply with the obligations identified by the Court, including the duty to act with due diligence to prevent significant harm to the climate system;", "tags": ["state_duties"]},
-   {"text": "Requests the Secretary-General to prepare a report, in consultation with Member States, on ways to help States meet those obligations.", "tags": ["state_duties"]}
+   {
+    "text": "Calls upon all States to publish national plans for a just and orderly transition away from fossil fuels, ending unabated coal power by 2040 and the use of oil and gas by 2050;",
+    "tags": [
+     "fossil_phaseout"
+    ]
+   },
+   {
+    "text": "Decides that all States will end government subsidies for coal, oil and gas by 2030, while protecting poorer households that depend on cheap fuel;",
+    "tags": [
+     "subsidy_end"
+    ]
+   },
+   {
+    "text": "Requests developed States to double their contributions to the Fund for responding to Loss and Damage within five years;",
+    "tags": [
+     "loss_damage"
+    ]
+   },
+   {
+    "text": "Urges developed States to raise climate finance for developing countries to at least 1.3 trillion United States dollars a year by 2035, well above the goal of 300 billion dollars a year agreed in 2024;",
+    "tags": [
+     "finance_goal"
+    ]
+   },
+   {
+    "text": "Encourages States to place a carbon charge on imports from countries with weaker climate rules, in line with trade law, so that emissions do not simply move abroad;",
+    "tags": [
+     "border_tax"
+    ]
+   },
+   {
+    "text": "Requests the drafting of a framework that gives people displaced by climate change a legal status and safe ways to move, while helping them to stay in their homelands where possible;",
+    "tags": [
+     "displaced_people"
+    ]
+   },
+   {
+    "text": "Calls upon all States to comply with the obligations identified by the Court, including the duty to act with due diligence to prevent significant harm to the climate system;",
+    "tags": [
+     "state_duties"
+    ]
+   },
+   {
+    "text": "Requests the Secretary-General to prepare a report, in consultation with Member States, on ways to help States meet those obligations.",
+    "tags": [
+     "state_duties"
+    ]
+   }
   ]
  },
  "positions": {
-  "USA": {"state_duties": -2, "fossil_phaseout": -2},
-  "RUS": {"state_duties": -2, "fossil_phaseout": -1},
-  "SAU": {"state_duties": -2, "fossil_phaseout": -1},
-  "CHN": {"border_tax": -2},
-  "ZAF": {"border_tax": -2},
-  "BRA": {"border_tax": -2},
-  "IND": {"finance_goal": 2, "border_tax": -1},
-  "NGA": {"finance_goal": 2},
-  "MWI": {"finance_goal": 2},
-  "QAT": {"state_duties": 0},
-  "TUR": {"state_duties": 0},
-  "JPN": {"loss_damage": 1},
-  "CAN": {"loss_damage": 1},
-  "DEU": {"loss_damage": 1},
-  "NOR": {"loss_damage": 1},
-  "ARE": {"loss_damage": 1},
-  "FRA": {"fossil_phaseout": 1},
-  "GBR": {"border_tax": 1},
-  "AUS": {"displaced_people": 1},
-  "VUT": {"fossil_phaseout": 2},
-  "TUV": {"fossil_phaseout": 2},
-  "COL": {"fossil_phaseout": 2},
-  "MHL": {"subsidy_end": 2},
-  "NLD": {"subsidy_end": 2},
-  "BLZ": {"state_duties": 2},
-  "SLE": {"state_duties": 1},
-  "FJI": {"fossil_phaseout": 1}
+  "USA": {
+   "state_duties": -2,
+   "fossil_phaseout": -2
+  },
+  "RUS": {
+   "state_duties": -2,
+   "fossil_phaseout": -1
+  },
+  "SAU": {
+   "state_duties": -2,
+   "fossil_phaseout": -1
+  },
+  "CHN": {
+   "border_tax": -2
+  },
+  "ZAF": {
+   "border_tax": -2
+  },
+  "BRA": {
+   "border_tax": -2
+  },
+  "IND": {
+   "finance_goal": 2,
+   "border_tax": -1
+  },
+  "NGA": {
+   "finance_goal": 2
+  },
+  "MWI": {
+   "finance_goal": 2
+  },
+  "QAT": {
+   "state_duties": 0
+  },
+  "TUR": {
+   "state_duties": 0
+  },
+  "JPN": {
+   "loss_damage": 1
+  },
+  "CAN": {
+   "loss_damage": 1
+  },
+  "DEU": {
+   "loss_damage": 1
+  },
+  "NOR": {
+   "loss_damage": 1
+  },
+  "ARE": {
+   "loss_damage": 1
+  },
+  "FRA": {
+   "fossil_phaseout": 1
+  },
+  "GBR": {
+   "border_tax": 1
+  },
+  "AUS": {
+   "displaced_people": 1
+  },
+  "VUT": {
+   "fossil_phaseout": 2
+  },
+  "TUV": {
+   "fossil_phaseout": 2
+  },
+  "COL": {
+   "fossil_phaseout": 2
+  },
+  "MHL": {
+   "subsidy_end": 2
+  },
+  "NLD": {
+   "subsidy_end": 2
+  },
+  "BLZ": {
+   "state_duties": 2
+  },
+  "SLE": {
+   "state_duties": 1
+  },
+  "FJI": {
+   "fossil_phaseout": 1
+  }
  },
  "sources": {
   "USA": "https://insideclimatenews.org/news/20052026/un-endorses-international-court-climate-opinion/",
@@ -105,5 +248,116 @@
   "FJI": "https://earth.org/83-countries-join-call-to-end-fossil-fuels-at-cop30/"
  },
  "news": [],
+ "campaign": {
+  "cards": [
+   {
+    "text": "Calls upon all States to set national dates for leaving unabated coal power, taking account of their own circumstances and capacities;",
+    "tags": [
+     "fossil_phaseout"
+    ]
+   },
+   {
+    "text": "Encourages States, on a voluntary basis, to share their plans for moving away from fossil fuels and to learn from one another;",
+    "tags": [
+     "fossil_phaseout"
+    ]
+   },
+   {
+    "text": "Urges States to phase out inefficient fossil fuel subsidies over time while protecting the poorest households from higher prices;",
+    "tags": [
+     "subsidy_end"
+    ]
+   },
+   {
+    "text": "Invites States in a position to do so to contribute voluntarily to the Fund for responding to Loss and Damage;",
+    "tags": [
+     "loss_damage"
+    ]
+   },
+   {
+    "text": "Decides to link a larger climate finance goal for developing countries to clear national plans for moving away from fossil fuels;",
+    "tags": [
+     "finance_goal",
+     "fossil_phaseout"
+    ]
+   },
+   {
+    "text": "Calls upon States considering carbon charges on imports to consult developing countries first and to use part of the revenue for climate finance;",
+    "tags": [
+     "border_tax",
+     "finance_goal"
+    ]
+   },
+   {
+    "text": "Invites States to cooperate on safe and regular ways for people displaced by climate change to move, in line with their national laws;",
+    "tags": [
+     "displaced_people"
+    ]
+   },
+   {
+    "text": "Requests the Secretary-General to report on how States can meet the climate obligations identified by the International Court of Justice, with support for developing countries;",
+    "tags": [
+     "state_duties",
+     "finance_goal"
+    ]
+   }
+  ],
+  "events": [
+   {
+    "title": "Small island States appeal together",
+    "body": "The small island developing States speak as one in the chamber and ask for a clear timeline to move away from fossil fuels.",
+    "teaches": "Small island developing States often negotiate as a group so that their voices carry further on climate change.",
+    "effect": {
+     "spotlight": {
+      "tag": "fossil_phaseout",
+      "amount": 0.2
+     }
+    }
+   },
+   {
+    "title": "A regional group compares instructions",
+    "body": "Delegates from one regional group meet over lunch to compare their instructions and look for a shared line on the draft.",
+    "teaches": "The five UN regional groups help their members coordinate positions before important votes.",
+    "effect": {
+     "region_mood": 0.15
+    }
+   },
+   {
+    "title": "Your capital asks for a report",
+    "body": "Your foreign ministry wants a full report on the finance talks before you agree to anything, and drafting it takes up your morning.",
+    "teaches": "Delegates report back to their capitals and must wait for instructions on sensitive points.",
+    "effect": {
+     "ap": -1
+    }
+   },
+   {
+    "title": "A legal expert briefs delegates",
+    "body": "An international lawyer explains to delegates what the International Court of Justice said about the climate duties of States.",
+    "teaches": "Advisory opinions of the International Court of Justice are not binding, but they carry great legal weight.",
+    "effect": {
+     "spotlight": {
+      "tag": "state_duties",
+      "amount": 0.15
+     }
+    }
+   },
+   {
+    "title": "A side event on climate displacement",
+    "body": "A non-governmental organisation hosts a side event where delegates talk informally about planning for people forced to move.",
+    "teaches": "Side events let civil society inform delegates outside the formal meetings.",
+    "effect": {
+     "lobby_cost": -1
+    }
+   },
+   {
+    "title": "A co-sponsor hesitates",
+    "body": "A co-sponsor says it may withdraw its name unless the wording on border taxes is softened, and delegates ask you to help find a compromise.",
+    "teaches": "Co-sponsors can withdraw their support, so drafters must work to keep their coalition together.",
+    "effect": {
+     "influence": 2
+    }
+   }
+  ]
+ },
  "author": "Claude Sonnet (delegated), 4 Nov 2026; to be checked by B. Gough"
 }

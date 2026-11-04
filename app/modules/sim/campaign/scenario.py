@@ -44,6 +44,7 @@ class Scenario:
     positions: dict[str, dict[str, int]]       # iso3 -> tag -> the pack's stated position (-2..2), for country files
     sources: dict[str, list[str]]              # iso3 -> source links (real-issue packs)
     news: list[dict]
+    events: list[dict]                         # the scenario's own events (pack "campaign.events")
     c_yes: float
     c_no: float
     _dist: dict = field(default_factory=dict, repr=False)
@@ -102,14 +103,19 @@ def load(conn, committee_id: int, code: str) -> Scenario:
     operative = [{"text": p["text"], "tags": list(p["tags"])} for p in pack["resolution"]["operative"]]
     zero = operative[:ZERO_DRAFT]
     cards = [{"id": f"c{i + 1}", "text": p["text"], "tags": p["tags"], "kind": "pack"} for i, p in enumerate(operative[ZERO_DRAFT:])]
-    covered = {t for p in operative for t in p["tags"]}
-    for t, label in sorted(pack["tags"].items()):          # one plain card per commitment, so every one can be proposed
-        cards.append({"id": f"t-{t}", "text": f"{label}.", "tags": [t], "kind": "commitment" if t in covered else "new"})
+    camp = pack.get("campaign") or {}
+    cards += [{"id": f"k{i + 1}", "text": c["text"], "tags": list(c["tags"]), "kind": "campaign"} for i, c in enumerate(camp.get("cards") or [])]
+    covered = {t for c in cards for t in c["tags"]}
+    for t, label in sorted(pack["tags"].items()):          # a plain card for any commitment no card offers, so every one can be proposed
+        if t not in covered:
+            cards.append({"id": f"t-{t}", "text": f"{label}.", "tags": [t], "kind": "commitment"})
+    events = [{"id": f"s{i + 1}", "title": ev["title"], "body": ev["body"], "teaches": ev["teaches"], "effect": dict(ev["effect"]),
+               "scenario": True} for i, ev in enumerate(camp.get("events") or [])]
     scn = Scenario(code=code, title=pack["title"], fictional=bool(pack.get("fictional")), committee_id=committee_id,
                    resolution_id=res["id"], rule=rule, members=members, tags=dict(pack["tags"]), draft=zero, cards=cards,
                    positions={iso: dict(v) for iso, v in pack["positions"].items()},
                    sources={iso: list(v) if isinstance(v, list) else [v] for iso, v in (pack.get("sources") or {}).items()},
-                   news=list(pack.get("news") or []), c_yes=params.c_yes, c_no=params.c_no)
+                   news=list(pack.get("news") or []), events=events, c_yes=params.c_yes, c_no=params.c_no)
     scn._loader = loader
     scn._conn_holder = conn_holder
     return scn

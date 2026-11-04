@@ -336,3 +336,20 @@ Ben's calls:
 The bots hardly use constructive abstentions: you have to have built trust with a permanent member first, and the
 bots rarely do. A thoughtful student will; the next balance pass should give the bots that plan, to measure how
 much it helps.
+
+## 19. Scenario content, re-measured (phase 5, 5 Nov 2026)
+
+Every scenario now has its own clause cards and events (8 and 6 each). A commitment card is added only for a tag that no card offers. A `spotlight` event warms the supporters of one commitment towards whoever champions it.
+
+2,400 games, 20 per cell:
+
+| Target | v0.3 | With content |
+|---|---|---|
+| Standard: silver or better | 63% | 65.5% |
+| Gold on own path: hardliner / analyst / broker / drafter | 33 / 37 / 41 / 50% | 35 / 46 / 42 / 64% |
+| Highest action share among winners | 19% | 18% |
+| Hardest scenario on Standard | 24% | **26%** (target met) |
+| Random player, silver or better | 25% | 19% |
+| Stuck games | 0 | 0 |
+
+The scenario labels still match: Comet Halcyon-7 is at 97% (Beginner). The Standard scenarios are at 56–84%. The two Security Council scenarios are at 26% and 41% (Expert).

@@ -251,7 +251,7 @@ def _when(g: dict) -> str:
 
 def _start_turn(scn: Scenario, g: dict) -> None:
     rng = _rng(g)
-    deck = K.EVENTS
+    deck = K.EVENTS + scn.events + scn.events       # the scenario's own events come up about as often as the general ones
     ev = rng.choice(deck)
     g["mods"] = {}
     eff = ev["effect"]
@@ -260,7 +260,7 @@ def _start_turn(scn: Scenario, g: dict) -> None:
     if eff.get("influence"):
         g["influence"] += eff["influence"]
     card = {"id": ev["id"], "title": ev["title"], "body": ev["body"], "teaches": ev["teaches"],
-            "hypothetical": False}      # the built-in events are about the committee itself; scenario news on a real issue will be
+            "hypothetical": bool(ev.get("scenario")) and not scn.fictional}   # a scenario's own event on a real issue is labelled
     if eff.get("region_mood"):
         regions = sorted({m.region for m in scn.members if m.region in REGIONS})
         if regions:
@@ -272,6 +272,15 @@ def _start_turn(scn: Scenario, g: dict) -> None:
                 for iso in _region_members(scn, reg):
                     if iso not in _others(g):
                         _sway(g, actor, iso, eff["region_mood"])
+    if eff.get("spotlight"):
+        # The news turns attention to one commitment: delegations that support it warm to whoever is championing it.
+        tag, amount = eff["spotlight"]["tag"], eff["spotlight"]["amount"]
+        champions = (["you"] if tag in (g["mandate"]["must"], g["mandate"].get("also")) else []) + \
+            [r["iso3"] for r in g["rivals"] if r["want"] == tag]
+        for iso in scn.isos:
+            if iso not in _others(g) and ((scn.positions.get(iso, {}).get(tag) or 0) >= 1 or scn.dist([tag]).get(iso, (0, 1))[0] >= 0.4):
+                for actor in champions:
+                    _sway(g, actor, iso, amount)
     if eff.get("question"):
         left = [q for q in K.QUESTIONS if q["id"] not in g["asked"]] or K.QUESTIONS
         q = rng.choice(left)

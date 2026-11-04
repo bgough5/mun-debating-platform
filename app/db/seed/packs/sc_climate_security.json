@@ -176,7 +176,10 @@
  },
  "sources": {
   "USA": "https://digitallibrary.un.org/record/4095051/files/S_PV.10035-EN.pdf",
-  "GBR": ["https://digitallibrary.un.org/record/3951616/files/S_PV.8926-EN.pdf", "https://digitallibrary.un.org/record/4095051/files/S_PV.10035-EN.pdf"],
+  "GBR": [
+   "https://digitallibrary.un.org/record/3951616/files/S_PV.8926-EN.pdf",
+   "https://digitallibrary.un.org/record/4095051/files/S_PV.10035-EN.pdf"
+  ],
   "FRA": "https://digitallibrary.un.org/record/4095051/files/S_PV.10035-EN.pdf",
   "RUS": "https://digitallibrary.un.org/record/3951616/files/S_PV.8926-EN.pdf",
   "CHN": "https://digitallibrary.un.org/record/3951616/files/S_PV.8926-EN.pdf",
@@ -190,5 +193,119 @@
   "BHR": "https://digitallibrary.un.org/record/3951331/files/S_PV.8923_%28Resumption_1%29-EN.pdf"
  },
  "news": [],
+ "campaign": {
+  "cards": [
+   {
+    "text": "Requests the Secretary-General to include climate-related security risks in the existing reports on each country, rather than in a separate report;",
+    "tags": [
+     "sg_reports"
+    ]
+   },
+   {
+    "text": "Requests the Secretary-General to appoint a Special Envoy on climate and security, who will work only with the consent of the countries concerned;",
+    "tags": [
+     "special_envoy",
+     "host_consent"
+    ]
+   },
+   {
+    "text": "Encourages peacekeeping operations to include climate advisers where the host government agrees;",
+    "tags": [
+     "mission_mandates",
+     "host_consent"
+    ]
+   },
+   {
+    "text": "Decides that the mandates of all peacekeeping operations shall include an assessment of climate-related security risks;",
+    "tags": [
+     "mission_mandates"
+    ]
+   },
+   {
+    "text": "Calls upon regional organisations to share early-warning information on drought, floods and food insecurity with the United Nations;",
+    "tags": [
+     "early_warning"
+    ]
+   },
+   {
+    "text": "Decides to hold an open debate on climate change and security once a year;",
+    "tags": [
+     "council_forum"
+    ]
+   },
+   {
+    "text": "Encourages States in a position to do so to support climate adaptation in fragile and conflict-affected countries;",
+    "tags": [
+     "climate_finance"
+    ]
+   },
+   {
+    "text": "Requests that climate early-warning data be shared with host governments first, respecting their decisions on how it is used;",
+    "tags": [
+     "early_warning",
+     "host_consent"
+    ]
+   }
+  ],
+  "events": [
+   {
+    "title": "A permanent member sets out its red line",
+    "body": "One permanent member tells colleagues it cannot accept any climate work in a country without that government's agreement.",
+    "teaches": "Because of the veto, each permanent member's red lines shape every Security Council text.",
+    "effect": {
+     "spotlight": {
+      "tag": "host_consent",
+      "amount": 0.15
+     }
+    }
+   },
+   {
+    "title": "Elected members speak together",
+    "body": "The ten elected members agree a joint statement asking the Council to keep climate risks on its agenda.",
+    "teaches": "Elected members serve two-year terms and often coordinate to increase their influence on the Council.",
+    "effect": {
+     "spotlight": {
+      "tag": "council_forum",
+      "amount": 0.2
+     }
+    }
+   },
+   {
+    "title": "Small island States address the Council",
+    "body": "Small island developing States ask to speak in an open debate and describe what rising seas mean for their security.",
+    "teaches": "Countries that aren't members can be invited to speak at the Council under its rules of procedure.",
+    "effect": {
+     "region_mood": 0.15
+    }
+   },
+   {
+    "title": "A scientist briefs Council members",
+    "body": "A climate scientist explains to Council members how early warnings could reduce the risk of disputes over water and food.",
+    "teaches": "The Council often hears expert briefers, including in informal Arria-formula meetings.",
+    "effect": {
+     "spotlight": {
+      "tag": "early_warning",
+      "amount": 0.15
+     }
+    }
+   },
+   {
+    "title": "Closed consultations run late",
+    "body": "Council members spend the afternoon in closed consultations, leaving little time for meetings with other delegations.",
+    "teaches": "Much Security Council negotiation happens in closed consultations, away from the public chamber.",
+    "effect": {
+     "ap": -1
+    }
+   },
+   {
+    "title": "A co-sponsor wavers over host consent",
+    "body": "A co-sponsor of the draft hesitates over the host consent wording and asks you to help find language it can defend at home.",
+    "teaches": "Drafters keep a coalition together by finding wording each co-sponsor can defend to its government.",
+    "effect": {
+     "influence": 2
+    }
+   }
+  ]
+ },
  "author": "Claude Sonnet (delegated), 4 Nov 2026; to be checked by B. Gough"
 }

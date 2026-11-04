@@ -381,5 +381,117 @@
   "DZA": "https://un-project.org/votes/resolution/A-RES-73-195/"
  },
  "news": [],
+ "campaign": {
+  "cards": [
+   {
+    "text": "Urges States to create regular routes for work, study and family reunion with published criteria and fair processing times, and to review them every two years;",
+    "tags": [
+     "legal_pathways"
+    ]
+   },
+   {
+    "text": "Encourages States to consider small trial work and study schemes with partner countries, at a pace each State chooses;",
+    "tags": [
+     "legal_pathways",
+     "sovereignty"
+    ]
+   },
+   {
+    "text": "Requests States to use detention of children only as a last resort and for the shortest time, while building community-based care with the aim of ending the practice;",
+    "tags": [
+     "child_detention"
+    ]
+   },
+   {
+    "text": "Calls upon States to agree return and readmission arrangements that include individual checks, safe conditions and support to settle back home, paid for by the partners who ask for them;",
+    "tags": [
+     "returns",
+     "shared_responsibility"
+    ]
+   },
+   {
+    "text": "Encourages States to work with their regional groups on planned relocation and temporary stay for communities affected by floods, drought and rising seas;",
+    "tags": [
+     "climate_displacement",
+     "shared_responsibility"
+    ]
+   },
+   {
+    "text": "Requests States to share anonymised migration statistics only, and to keep personal data and identity records under national law;",
+    "tags": [
+     "data_borders",
+     "sovereignty"
+    ]
+   },
+   {
+    "text": "Decides that every step in this resolution is voluntary and is carried out in line with each State's own laws and priorities;",
+    "tags": [
+     "sovereignty"
+    ]
+   },
+   {
+    "text": "Invites States to contribute to a voluntary shared fund that supports host countries, with a public report each year on how the money was spent;",
+    "tags": [
+     "shared_responsibility"
+    ]
+   }
+  ],
+  "events": [
+   {
+    "title": "A regional group meets over lunch",
+    "body": "Delegates from one region compare notes in a side room. Whoever has been working with them most finds a warmer welcome when they speak.",
+    "teaches": "Regional groups often agree a shared line before the formal meeting, so time spent with them pays off.",
+    "effect": {
+     "region_mood": 0.15
+    }
+   },
+   {
+    "title": "New instructions from a capital on sovereignty",
+    "body": "A capital sends fresh instructions to its delegate: it wants the text to state clearly that each State decides who may enter and stay. Other delegations take note.",
+    "teaches": "Delegates act on instructions from their capitals, and those instructions can change in the middle of a negotiation.",
+    "effect": {
+     "spotlight": {
+      "tag": "sovereignty",
+      "amount": 0.15
+     }
+    }
+   },
+   {
+    "title": "A humanitarian organisation briefs delegates on child care",
+    "body": "A humanitarian organisation briefs delegates on community-based care for children. Several delegations ask how it would work in their own country.",
+    "teaches": "Expert briefings do not decide votes, but they change what delegates think is practical.",
+    "effect": {
+     "spotlight": {
+      "tag": "child_detention",
+      "amount": 0.2
+     }
+    }
+   },
+   {
+    "title": "A co-sponsor hesitates over the return wording",
+    "body": "A co-sponsor says it may withdraw unless the wording on returns is clearer. You must spend more effort to keep your group together.",
+    "teaches": "Co-sponsors can leave a draft until the last moment, so holding a group together is ongoing work.",
+    "effect": {
+     "lobby_cost": 1
+    }
+   },
+   {
+    "title": "A revised draft circulates in the room",
+    "body": "The facilitators hand round a revised draft with many small changes. Delegations stop to read it before they will talk about anything else.",
+    "teaches": "Revised drafts reset the conversation, because each delegation must check every change against its instructions.",
+    "effect": {
+     "ap": -1
+    }
+   },
+   {
+    "title": "An NGO side event on legal pathways",
+    "body": "A non-governmental organisation holds a side event on regular routes for work and study. Delegates who attend come away with ideas they can use in the negotiation.",
+    "teaches": "Side events let delegates hear new ideas away from the pressure of the formal meeting.",
+    "effect": {
+     "influence": 1
+    }
+   }
+  ]
+ },
  "author": "Claude Sonnet (delegated), 4 Nov 2026; to be checked by B. Gough"
 }
