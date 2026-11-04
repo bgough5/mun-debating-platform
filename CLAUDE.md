@@ -18,7 +18,7 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
   - one front door for setup, a rebuilt demo, and single player on the board for students and guests (D-099);
   - the speech coach beside every speech box (D-100).
 
-  The main deck was rewritten for leadership on 4 Nov ("From Engagement to the Classroom"); 22 slides since 5 Nov (the speech coach, and solo play on the board).
+  The main deck was rewritten for leadership on 4 Nov ("From Engagement to the Classroom"); 23 slides since 5 Nov (setup in three steps, the speech coach, and solo play on the board).
 - Verified on Ben's laptop (Windows 10, 28 Oct 2026): `tools/windows_smoke.ps1 -Browser` passed: 620 engine and API tests, all 33 browser and axe tests, and start-up in 3.3 s. Not yet re-run on the laptop: the 90-minute soak (`python tools/loadtest.py --minutes 90`; memory now records on Windows, D-081).
 - Local backups from the 28 Oct sync, safe to delete once Ben is happy: branch `backup/local-phase7-2026-10-23` and `stash@{0}` (superseded duplicates of Phase 7 items 1, 5–8).
 - Guides: `docs/staff-guide.md`, `docs/privacy-summary.md` (for school sign-off), `docs/permissions.md` (generated), `docs/backup-restore.md`, `docs/pilot-checklist.md`.
