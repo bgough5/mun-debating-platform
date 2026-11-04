@@ -175,22 +175,49 @@ def view(scn: Scenario, g: dict) -> dict:
     L = E.LENGTHS[g["length"]]
     q = next((x for x in K.QUESTIONS if x["id"] == g.get("question")), None)
     final = {"id": "final", "tags": list(dict.fromkeys(t for c in g["draft"] for t in c["tags"])), "author": "draft"}
+    chapters = g["phase"] == "chapter"
     tokens = {}
+    open_promise = {pr["iso3"] for pr in g["promises"] if pr["kept"] is None}
     for iso in scn.isos:
+        m = scn.member(iso)
+        base = {"name": m.name, "p5": m.p5, "veto": iso in scn.rule.veto, "region": REGIONS.get(m.region, ""), "group": m.group}
         if iso == g["iso3"]:
-            tokens[iso] = {"you": True}
+            tokens[iso] = {**base, "you": True}
             continue
         rival = any(r["iso3"] == iso for r in g["rivals"])
-        tokens[iso] = {"rival": rival, "trust": g["trust"].get(iso, 0), "lean": round(E.lean(scn, g, "you", iso), 2),
-                       "sway": round(g["sway"]["you"].get(iso, 0.0), 2), "read": iso in g["read"],
-                       "signed": "sponsor" if iso in g["sponsors"] else "signatory" if iso in g["signatories"] else None,
-                       "pledged": iso in g.get("pledges", []), "favour": iso in g["favours"],
-                       "est": None if rival or not final["tags"] else E.vote_of(scn, E.latent(scn, g, iso, final, mood=False))}
+        t = {**base, "rival": rival, "trust": g["trust"].get(iso, 0), "lean": round(E.lean(scn, g, "you", iso), 2),
+             "sway": round(g["sway"]["you"].get(iso, 0.0), 2), "read": iso in g["read"],
+             "signed": "sponsor" if iso in g["sponsors"] else "signatory" if iso in g["signatories"] else None,
+             "pledged": iso in g.get("pledges", []), "favour": iso in g["favours"], "promised": iso in open_promise,
+             "predicted": g["whip"].get(iso),
+             "est": None if rival or not final["tags"] else E.vote_of(scn, E.latent(scn, g, iso, final, mood=False))}
+        if not rival and chapters:
+            t["lobby_cost"] = E.lobby_cost(scn, g, iso)
+            t["promise_on"] = [c["id"] for c in g["draft"] if scn.dist(c["tags"]).get(iso, (0, 1))[0] >= 0.4]
+        if iso in g["read"]:
+            t["file"] = E.country_file(scn, g, iso)
+        tokens[iso] = t
     draft = []
     for c in g["draft"]:
         draft.append({"id": c["id"], "text": c["text"], "tags": [{"code": t, "label": tags[t]} for t in c["tags"]],
                       "author": _name(scn, g, c["author"]), "mine": c["author"] == "you",
-                      "amended_by": [_name(scn, g, a) for a in c["amended_by"]], "stance": E.stance(scn, g, "you", c)})
+                      "amended_by": [_name(scn, g, a) for a in c["amended_by"]], "stance": E.stance(scn, g, "you", c),
+                      "own_words": bool(c.get("own_words")),
+                      "chance": E.chance(scn, g, c, runs=200)["p_pass"] if chapters else None})
+    regions = []
+    for code, name in REGIONS.items():
+        members = [i for i in scn.isos if scn.member(i).region == code]
+        if not members:
+            continue
+        voters = [i for i in members if i not in E._others(g)]
+        owner = g["endorse"].get(code)
+        regions.append({"code": code, "name": name, "members": members, "owner": owner, "owner_name": _name(scn, g, owner) if owner else None,
+                        "leaning": sum(1 for i in voters if E.lean(scn, g, "you", i) > E.R["lean_min"]), "voters": len(voters)})
+    skills = [{"code": k, **v, "have": k in g["skills"],
+               "can": k not in g["skills"] and g["xp"] >= K.SKILL_COST and (not v["needs"] or v["needs"] in g["skills"])}
+              for k, v in K.SKILLS.items()]
+    blocs = sorted({m.group for m in scn.members if m.group})
+    last = g["chapter"] == E.LENGTHS[g["length"]]["chapters"]
     return {
         "v": E.VERSION, "pack": g["pack"], "title": scn.title, "fictional": scn.fictional, "phase": g["phase"],
         "chapter": g["chapter"], "turn": g["turn"], "chapters": L["chapters"], "turns": L["turns"],
@@ -210,6 +237,11 @@ def view(scn: Scenario, g: dict) -> dict:
         "sponsors": len(g["sponsors"]), "signatories": len(g["signatories"]), "signers_needed": E._signers_needed(scn),
         "summit": _summit_view(scn, g), "result": g.get("result"), "tags": tags,
         "veto": sorted(scn.rule.veto), "rule": scn.rule.name,
+        "regions": regions, "skill_list": skills, "skill_cost": K.SKILL_COST, "blocs": blocs, "last_chapter": last,
+        "costs": {"propose": 0 if g["respect"] >= 8 else E.R["propose_cost"], "amend": 0 if "friendly" in g["skills"] else E.R["amend_cost"],
+                  "strike": E.R["strike_cost"], "side_event": E.R["side_event_cost"], "abstain": E.R["abstain_cost"],
+                  "draft_max": E.R["draft_max"], "sponsors": E.R["sponsors"], "favour_trust": E.R["favour_trust"]},
+        "draft_ok": {"clauses": len(g["draft"]), "mine": sum(1 for c in g["draft"] if c["author"] == "you")},
     }
 
 

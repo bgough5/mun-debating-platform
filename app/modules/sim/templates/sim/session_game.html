@@ -26,19 +26,55 @@
 
   <main class="b-table" id="main" tabindex="-1">
     {% include "chair/_board_map.html" %}
-    <aside class="b-rail s-rail" id="s-rail" aria-label="The session" tabindex="0">
-      <section class="b-card" id="c-chapter"><h2 id="c-chapter-h">Chapter</h2><p class="s-goal" id="c-goal"></p><p class="s-small" id="c-turn"></p></section>
-      <section class="b-card" id="c-event" hidden><h2>News</h2><div id="c-event-body"></div></section>
-      <section class="b-card" id="c-instr"><h2>Your instructions</h2>
-        <p class="s-small">Secret, from your capital. Rivals have their own.</p><ul class="s-instr" id="c-instr-list"></ul>
-        <p class="s-small" id="c-aim"></p></section>
-      <section class="b-card" id="c-draft"><h2>The draft</h2><ol class="s-clauses" id="c-clauses"></ol></section>
-      <section class="b-card" id="c-rivals"><h2>Rivals</h2><ul class="s-log" id="c-rival-list"></ul></section>
-      <section class="b-card" id="c-record"><h2>The record</h2><ol class="s-log" id="c-log" reversed></ol></section>
+    <aside class="b-rail s-rail" id="s-rail" aria-label="The session">
+      <div class="s-tabs" role="tablist" aria-label="The session">
+        <button type="button" role="tab" id="t-brief" aria-controls="p-brief" aria-selected="true" data-tab="brief">Brief</button>
+        <button type="button" role="tab" id="t-draft" aria-controls="p-draft" aria-selected="false" tabindex="-1" data-tab="draft">Draft <span class="s-n" id="n-draft"></span></button>
+        <button type="button" role="tab" id="t-dele" aria-controls="p-dele" aria-selected="false" tabindex="-1" data-tab="dele">Delegations</button>
+        <button type="button" role="tab" id="t-record" aria-controls="p-record" aria-selected="false" tabindex="-1" data-tab="record">Record</button>
+      </div>
+      <div class="s-panes" tabindex="0" aria-label="Your move">
+      <div class="s-pane" role="tabpanel" id="p-brief" aria-labelledby="t-brief">
+        <section class="b-card" id="c-chapter"><h2 id="c-chapter-h">Chapter</h2><p class="s-goal" id="c-goal"></p><ul class="s-checks" id="c-progress"></ul><p class="s-small" id="c-turn"></p></section>
+        <section class="b-card" id="c-event" hidden><h2>News</h2><div id="c-event-body"></div></section>
+        <section class="b-card" id="c-instr"><h2>Your instructions</h2>
+          <p class="s-small">Secret, from your capital. Rivals have their own.</p><ul class="s-instr" id="c-instr-list"></ul>
+          <p class="s-small" id="c-aim"></p></section>
+        <section class="b-card" id="c-regions"><h2>Regional groups</h2>
+          <p class="s-small">Win most of a group and it endorses your draft: a bonus each turn, and its members lean your way at the vote.</p>
+          <ul class="s-regions" id="c-region-list"></ul></section>
+      </div>
+      <div class="s-pane" role="tabpanel" id="p-draft" aria-labelledby="t-draft" hidden>
+        <section class="b-card"><h2>The draft</h2>
+          <p class="s-small">The working group only changes someone else's clause if the room supports the change, and only strikes a clause it wouldn't pass now.</p>
+          <ol class="s-clauses" id="c-clauses"></ol></section>
+        <section class="b-card"><h2>The drafting table</h2>
+          <p class="s-small">Propose a clause from a card. You may put it in your own words; it's judged only by what it commits countries to.</p>
+          <ul class="s-cards" id="c-cards"></ul></section>
+      </div>
+      <div class="s-pane" role="tabpanel" id="p-dele" aria-labelledby="t-dele" hidden>
+        <section class="b-card"><h2><label for="s-pick-country">Delegation</label></h2>
+          <select id="s-pick-country"></select>
+          <div id="c-country"><p class="s-small">Click a country on the map, or choose one here.</p></div></section>
+        <section class="b-card" id="c-heard" hidden><h2>They said</h2><blockquote class="s-quote" id="c-heard-text"></blockquote></section>
+        <section class="b-card"><h2>Side event</h2>
+          <p class="s-small">Host a regional group: every delegation in it warms to you a little. 2 actions.</p>
+          <div class="s-row"><label class="visually-hidden" for="s-region-pick">Regional group</label><select id="s-region-pick"></select>
+            <button type="button" class="s-btn small" id="s-side-event">Host</button></div></section>
+        <section class="b-card" id="c-bloc" hidden><h2>Bloc whip</h2>
+          <div class="s-row"><label class="visually-hidden" for="s-bloc-pick">Bloc</label><select id="s-bloc-pick"></select>
+            <button type="button" class="s-btn small" id="s-bloc-whip">Whip the bloc</button></div></section>
+      </div>
+      <div class="s-pane" role="tabpanel" id="p-record" aria-labelledby="t-record" hidden>
+        <section class="b-card" id="c-rivals"><h2>Rivals</h2><ul class="s-log" id="c-rival-list"></ul></section>
+        <section class="b-card" id="c-record"><h2>The record</h2><ol class="s-log" id="c-log" reversed></ol></section>
+      </div>
+      </div>
     </aside>
   </main>
   <footer class="b-bottom s-bar">
     <button type="button" class="s-btn ghost small" data-open="s-pause">Menu</button>
+    <button type="button" class="s-btn ghost small" data-open="s-skills" id="s-skills-btn">Skills</button>
     <p class="p-msg" id="p-msg" role="status"></p>
     <button type="button" class="s-btn" id="s-end-turn">End turn</button>
   </footer>
@@ -55,6 +91,16 @@
       <a class="s-btn ghost" href="/session" hx-boost="false">Save and leave</a>
       <button type="button" class="s-btn ghost" id="s-abandon">Abandon this session</button>
     </div>
+  </div>
+  <div class="s-overlay" id="s-file" hidden role="dialog" aria-modal="true" aria-labelledby="s-file-h">
+    <div class="s-doc wide s-dossier"><p class="s-eyebrow">Country file</p><h2 id="s-file-h">–</h2><div id="s-file-body"></div>
+      <div class="s-row"><button type="button" class="s-btn" data-close="s-file">Close the file</button></div></div>
+  </div>
+  <div class="s-overlay" id="s-skills" hidden role="dialog" aria-modal="true" aria-labelledby="s-skills-h">
+    <div class="s-doc wide"><h2 id="s-skills-h">Diplomatic skills</h2>
+      <p class="s-sub" id="s-skills-note">Earn Expertise by reading country files and getting procedure right. Each skill costs 3.</p>
+      <div class="s-tree" id="s-tree"></div>
+      <div class="s-row"><button type="button" class="s-btn" data-close="s-skills">Done</button></div></div>
   </div>
   {{ settings_panel() }}
   <div class="b-overlay" id="b-overlay"></div>

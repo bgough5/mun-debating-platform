@@ -233,8 +233,12 @@ def _region_members(scn: Scenario, region: str) -> list[str]:
 
 # ---------------------------------------------------------------- turns
 
-def _log(g: dict, who: str, text: str, kind: str = "info") -> None:
-    g["log"].append({"when": _when(g), "who": who, "text": text, "kind": kind})
+def _log(g: dict, who: str, text: str, kind: str = "info", at: str | None = None) -> None:
+    """`at`: the country (or regional group) the line is about, so the board can light it up."""
+    e = {"when": _when(g), "who": who, "text": text, "kind": kind}
+    if at:
+        e["at"] = at
+    g["log"].append(e)
 
 
 def _when(g: dict) -> str:
@@ -361,7 +365,7 @@ def a_lobby(scn, g, a):
         moved = _sway(g, "you", iso, R["lobby_step_read"] if iso in g["read"] else R["lobby_step"])
         heard = LINES[bucket(mu + g["sway"]["you"][iso])]
     g["region_last"][scn.member(iso).region] = "you"
-    _log(g, "you", f"You lobbied {scn.member(iso).name}.", "action")
+    _log(g, "you", f"You lobbied {scn.member(iso).name}.", "action", iso)
     return {"heard": heard, "moved": round(moved, 2), "cost": cost, "red_line": mu <= R["redline"]}
 
 
@@ -374,7 +378,7 @@ def a_read(scn, g, a):
     g["read"].append(iso)
     g["expertise"] += 1
     g["xp"] += 1
-    _log(g, "you", f"You read the file on {scn.member(iso).name}.", "action")
+    _log(g, "you", f"You read the file on {scn.member(iso).name}.", "action", iso)
     return {"file": country_file(scn, g, iso)}
 
 
@@ -485,7 +489,7 @@ def a_promise(scn, g, a):
     g["promises"].append({"iso3": iso, "clause": c["id"], "kept": None})
     g["trust"][iso] = min(R["trust_max"], g["trust"][iso] + 1)
     _sway(g, "you", iso, R["promise_sway"] * (2 if "back_channel" in g["skills"] else 1))
-    _log(g, "you", f"You promised {scn.member(iso).name} to back a clause.", "action")
+    _log(g, "you", f"You promised {scn.member(iso).name} to back a clause.", "action", iso)
     return {}
 
 
@@ -498,7 +502,7 @@ def a_side_event(scn, g, a):
     for iso in members:
         _sway(g, "you", iso, R["side_event_step"])
     g["region_last"][reg] = "you"
-    _log(g, "you", f"You hosted a side event for the {REGIONS[reg]}.", "action")
+    _log(g, "you", f"You hosted a side event for the {REGIONS[reg]}.", "action", reg)
     return {"reached": members}
 
 
@@ -543,7 +547,7 @@ def a_sign(scn, g, a):
         raise GameError("They don't want this draft debated at all.")
     _spend(g, 1)
     g["sponsors" if role == "sponsor" else "signatories"].append(iso)
-    _log(g, "you", f"{scn.member(iso).name} signed as a {role}.", "action")
+    _log(g, "you", f"{scn.member(iso).name} signed as a {role}.", "action", iso)
     return {}
 
 
@@ -713,7 +717,7 @@ def rivals_move(scn: Scenario, g: dict) -> None:
                     role = "sponsor" if len(rv["sponsors"]) < R["sponsors"] and lean(scn, g, rv["iso3"], who) >= R["sponsor_lean"] else "signatory"
                     if lean(scn, g, rv["iso3"], who) >= 0:
                         rv["sponsors" if role == "sponsor" else "signatories"].append(who)
-                        _log(g, rv["iso3"], f"{scn.member(who).name} signed {name}'s draft as a {role}.", "rival")
+                        _log(g, rv["iso3"], f"{scn.member(who).name} signed {name}'s draft as a {role}.", "rival", who)
                         continue
             # lobby the delegation where its goodwill matters most: closest to the middle, in a group it could win
             targets = []
@@ -728,7 +732,7 @@ def rivals_move(scn: Scenario, g: dict) -> None:
                 iso = sorted(targets)[0][1]
                 _sway(g, rv["iso3"], iso, d["step"])
                 g["region_last"][scn.member(iso).region] = rv["iso3"]
-                _log(g, rv["iso3"], f"{name} lobbied {scn.member(iso).name}.", "rival")
+                _log(g, rv["iso3"], f"{name} lobbied {scn.member(iso).name}.", "rival", iso)
 
 
 # ---------------------------------------------------------------- upkeep and chapters

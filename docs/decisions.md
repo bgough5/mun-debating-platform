@@ -434,6 +434,19 @@ There is no interface yet. Phase 2 waits for Ben's calls on scenario labels, a S
 - **Links:** "Play solo" in the student menu, the sign-in page and the landing page now open The Session; Quick vote (`/play`) stays alongside.
 - **Not yet:** the actions (lobby, propose, amend and the rest, phase 3) and the summit screens (phase 4).
 
+**Phase 3, the moves (5 Nov 2026).**
+- **The side panel has four tabs:**
+  - **Brief:** the chapter's goal as a checklist, the news, your instructions, and each regional group with how many lean your way.
+  - **Draft:** each clause with its chance of passing now, Amend (tick commitments: one addition and one removal at a time), Strike, and Divide and Merge once unlocked. The drafting table lists the clause cards, which can be proposed in the student's own words.
+  - **Delegations:** a country chosen from the map or a list. It shows its lean, Trust, goodwill and whether it has signed, with Lobby (the reply appears as a quote), Read the file, Promise, Call in a favour, Ask to abstain (permanent members in the Council), Ask to sponsor or sign (last chapter), and Predict their vote. Side events and Bloc whip are here too.
+  - **Record:** the rivals and every move.
+- **Two new panels:**
+  - **Country file:** each commitment with the country's position, its red lines and its sources. It says "estimates from the sources" for real issues and "invented for practice" for fictional scenarios.
+  - **Skills tree:** four branches.
+- **The map:** tokens light up as you and the rivals lobby them (moves record the country they're about), show Trust as a green or red frame, and show your endorsed groups.
+- **Feedback:** each move has a sound. A group won or lost plays a fanfare or a sting.
+- **Not yet:** the summit (phase 4).
+
 ### D-100 The speech coach beside every speech box — Decided (5 Nov 2026, Ben)
 Ben: "there should be some stats and visual add-ins that makes speeches easier to write. some things such as word count, expected speaking time, repetitive language indicators, lists of persuasive techniques … keep the platform clean, easily set-up and intuitive … as pretty and fun/interactive/clear as possible." He chose:
 - every speech box, "togglable so it doesn't feel like a constant tutorial", plus Model UN phrases to click in ("addressing other honourable delegates etc.");
