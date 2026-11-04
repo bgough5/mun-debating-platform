@@ -478,6 +478,23 @@ There is no interface yet. Phase 2 waits for Ben's calls on scenario labels, a S
   - Every event was read for invented facts.
 - **Balance:** re-measured with the content (section 19 of the design doc).
 
+**Phase 6, learning and the debrief (5 Nov 2026).** Ben: "make it as fun, deep and enjoyable as possible … really lean on the Civ but MUN with old school Monopoly graphics and animations. 60 min game should be dynamic".
+- **The Almanac** (`/session/almanac/<scenario>`, open to all; from the title screen and the pause menu): how a vote is decided (the model's position from each country's stated positions, the goodwill pulls, endorsements and the hidden mood), procedure, the four paths, the skills, and every country file with its sources or its "invented" label.
+- **Tips:** each part of the game is explained the first time it's met: instructions, meters, the map, a delegation, the draft, regional groups, ending a turn, skills, the summit. They're on by default ("Show me how to play as I go" at the briefing, and in Settings), can be turned off, and the ones seen are remembered on the laptop.
+- **The debrief dossier:**
+  - **Rank:** a diplomatic rank from the four grades together, Attaché to Special Envoy of the Secretary-General, with the points to the next.
+  - **Medals:** the four paths as coins.
+  - **The session in numbers:** a graph of Influence, Respect and support, turn by turn (the engine now records a snapshot each turn).
+  - **Title deeds:** each clause as a Monopoly-style deed, held by its author, with its vote and stamped Adopted or Struck off.
+  - **Turning points:** taken from the record.
+  - **What your diplomacy did:** the delegations whose vote your goodwill turned.
+  - **Why each delegation voted as it did:** the model's position, your pull, the rivals' pull, the group's pull and the mood, all as pushes on the same scale.
+  - **What to try next time:** for each path.
+- **The board:**
+  - **Spheres of influence:** each delegation's land takes your colour when it's likely to back your draft, or red when it's likely against and leaning to a rival.
+  - **Envoys:** a brass token (red for a rival's) travels across the map from whoever made a move to the delegation it was about.
+- **Teachers:** Model UN → "See their results" (`/session/results`) lists their students' finished sessions: scenario, country, path, the grade on each path, the result and predictions. Never their words.
+
 ### D-100 The speech coach beside every speech box — Decided (5 Nov 2026, Ben)
 Ben: "there should be some stats and visual add-ins that makes speeches easier to write. some things such as word count, expected speaking time, repetitive language indicators, lists of persuasive techniques … keep the platform clean, easily set-up and intuitive … as pretty and fun/interactive/clear as possible." He chose:
 - every speech box, "togglable so it doesn't feel like a constant tutorial", plus Model UN phrases to click in ("addressing other honourable delegates etc.");

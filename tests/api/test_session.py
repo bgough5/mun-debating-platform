@@ -98,3 +98,35 @@ def test_a_guest_plays_a_quick_session_to_the_end(app):
     assert set(r["view"]["result"]["paths"]) == {"mandate", "consensus", "architect", "kingmaker"}
     after = api(c, {"do": "move", "state": st, "sig": sig, "action": {"do": "end_turn"}})
     assert after.status_code == 400 and "over" in after.json()["error"]
+
+
+def test_the_almanac_the_debrief_and_teachers_results(app, coord):
+    """Phase 6: the Almanac is open to all; a finished session has a debrief; teachers see paths and grades, not words."""
+    c = guest(app)
+    assert "Comet Halcyon-7" in c.get("/session/almanac").text
+    alm = c.get("/session/almanac/ga_migration").text
+    assert "How a vote is decided" in alm and "estimates from the linked sources" in alm and "Country files" in alm
+    assert "invented for practice" in c.get("/session/almanac/comet_halcyon").text
+    assert c.get("/session/almanac/nope").status_code == 404
+    st = db_one(app, "SELECT id FROM student WHERE active = 1 ORDER BY id DESC LIMIT 1")["id"]
+    a = join_as(app, st)
+    j = api(a, {"do": "new", "pack": "comet_halcyon", "iso3": "NZL", "length": "quick", "difficulty": "easy", "path": "kingmaker"}).json()
+    sid = int(j["url"].rsplit("/", 1)[1])
+    body = {"do": "move", "save_id": sid}
+    a_text = "Calls on every observatory to publish its readings at once, a private sentence of mine;"
+    card = j["view"]["cards"][0]["id"]
+    api(a, {**body, "action": {"do": "propose", "card": card, "text": a_text}})
+    for _ in range(4):
+        r = api(a, {**body, "action": {"do": "end_turn"}}).json()
+    r = api(a, {**body, "action": {"do": "speech", "stance": "open"}}).json()
+    while r["view"]["summit"]["step"] == "clause":
+        r = api(a, {**body, "action": {"do": "decide", "choice": "stand", "vote": "yes"}}).json()
+    r = api(a, {**body, "action": {"do": "final", "vote": "yes"}}).json()
+    d = r["view"]["debrief"]
+    assert d and {t["path"] for t in d["tips"]} == {"mandate", "consensus", "architect", "kingmaker"}
+    if r["view"]["summit"]["final"]["tags"]:
+        row = d["countries"][0]
+        assert {"model", "yours", "rivals", "group", "mood", "vote", "turned"} <= set(row)
+    page = coord.get("/session/results").text
+    assert "New Zealand" in page and "Kingmaker" in page and "private sentence" not in page
+    assert guest(app).get("/session/results", follow_redirects=False).status_code in (302, 303, 401, 403)

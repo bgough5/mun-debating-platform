@@ -34,6 +34,7 @@
         ("motion", "Motion", "Animations. Auto follows this computer's setting.", [("auto", "Auto"), ("on", "On"), ("off", "Off")]),
         ("text", "Text size", "Larger text on the cards.", [("normal", "Normal"), ("large", "Large")]),
         ("timer", "Summit timer", "Twenty seconds for each decision at the summit.", [(True, "On"), (False, "Off")]),
+        ("tips", "Tips", "Each part of the game explained the first time you meet it.", [(True, "On"), (False, "Off")]),
       ] %}
       <div class="s-setting"><b id="set-{{ key }}">{{ name }}</b><span>{{ what }}</span>
         <div class="s-switch" role="group" aria-labelledby="set-{{ key }}">{% for v, label in opts %}<button type="button" data-set="{{ key }}" data-value="{{ 'true' if v is sameas true else ('false' if v is sameas false else v) }}" aria-pressed="false">{{ label }}</button>{% endfor %}</div></div>

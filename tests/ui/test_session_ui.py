@@ -164,10 +164,58 @@ def test_a_quick_session_reaches_the_summit_and_ends_with_medals(browser, live):
     page.wait_for_selector("#c-summit h2:has-text('The resolution as a whole')")
     page.click("#c-summit .s-votes button:has-text('Yes')")
     page.wait_for_selector("#s-result:not([hidden])", timeout=15000)
-    assert page.locator("#s-result .s-paths-table tr").count() == 5
+    assert page.locator("#s-result .s-medal").count() == 4                     # the four paths as medals (phase 6)
     assert any(m in page.inner_text("#s-result-h") for m in ("Gold", "Silver", "Bronze", "No medal"))
     assert not axe(page, "session_result")
     page.click("#s-result [data-close]")
     assert page.is_visible("#c-summit button:has-text('See your results')")
+    assert not errors, errors
+    ctx.close()
+
+
+def test_the_almanac_and_the_debrief_in_the_browser(browser, live):
+    """Phase 6: the Almanac reads cleanly; a finished Quick session opens its dossier at the top, with no tip over it."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 900})
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(live.url + "/session/almanac/ga_migration")
+    page.wait_for_selector("#a-countries details")
+    assert not axe(page, "session_almanac")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({timer: false, tips: true}))")
+    page.goto(live.url + "/session/new")
+    page.click('[data-pick="pack"][data-value="comet_halcyon"]')
+    page.click('[data-step="1"] [data-next]')
+    page.wait_for_selector("#s-seats-box .s-seat")
+    page.click('.s-seat[data-value="NZL"]')
+    page.click('[data-step="2"] [data-next]')
+    page.click('[data-pick="length"][data-value="quick"]')
+    for n in (3, 4, 5):
+        page.click(f'[data-step="{n}"] [data-next]')
+    page.click("#s-begin")
+    page.wait_for_selector("#s-chapter-card:not([hidden])")
+    page.click("#s-chapter-card [data-close]")
+    page.wait_for_selector(".s-tip")                                          # tips on: the first one appears
+    assert "Your instructions" in page.inner_text(".s-tip")
+    page.click(".s-tip button:has-text('No more tips')")
+    for _ in range(4):
+        page.click("#s-end-turn")
+        page.wait_for_timeout(600)
+    page.wait_for_selector("#s-chapter-card:not([hidden])")
+    page.click("#s-chapter-card [data-close]")
+    page.click(".s-stance:has-text('Open')")
+    page.wait_for_selector("#c-summit .s-votes")
+    while page.locator("#c-summit h2:has-text('Clause')").count():
+        n = page.locator("#c-result-list li").count()
+        page.click("#c-summit .s-votes button:has-text('Yes')")
+        page.wait_for_function(f"document.querySelectorAll('#c-result-list li').length === {n + 1}")
+    page.click("#c-summit .s-votes button:has-text('Yes')")
+    page.wait_for_selector("#s-result:not([hidden]) .s-plaque", timeout=15000)
+    assert page.locator(".s-tip").count() == 0
+    assert page.evaluate("document.querySelector('#s-result .s-final').scrollTop") == 0
+    assert page.locator("#s-result .s-medal").count() == 4 and page.locator("#s-result .s-deed").count() >= 1
+    assert "What to try next time" in page.inner_text("#s-result")
+    page.wait_for_timeout(2500)                                               # let the deeds and medals land
+    assert not axe(page, "session_debrief")
     assert not errors, errors
     ctx.close()

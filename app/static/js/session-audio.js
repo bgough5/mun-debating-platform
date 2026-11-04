@@ -7,7 +7,7 @@
 (function () {
   "use strict";
   var KEY = "soc-session-settings";
-  var DEFAULTS = { sound: false, music: false, murmur: false, motion: "auto", text: "normal", timer: true };
+  var DEFAULTS = { sound: false, music: false, murmur: false, motion: "auto", text: "normal", timer: true, tips: true };
   var ctx = null, master = null, musicBus = null, musicTimer = null, murmurNode = null;
 
   function settings() {

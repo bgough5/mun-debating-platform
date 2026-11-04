@@ -346,3 +346,110 @@
 .s-paths-table th { text-align: left; font-family: var(--serif); background: var(--maroon); color: var(--white); padding: 6px 10px; }
 .s-paths-table td { padding: 6px 10px; border-bottom: 1px solid var(--parchment-dk); }
 .s-paths-table tr.chosen td { background: var(--lit); font-weight: 700; }
+
+/* ---------- phase 6: the Almanac, tips and the debrief ---------- */
+.b-stage main.s-almanac-main { max-width: none; margin: 0; }
+.s-almanac-main { position: relative; z-index: 2; display: grid; grid-template-columns: 300px 1fr; gap: 30px; padding: 22px 60px 0; min-height: 0; }
+.s-alm-nav { display: flex; flex-direction: column; gap: 10px; align-self: start; }
+.s-alm-nav a:not(.s-btn) { color: var(--lit); font-family: var(--serif); font-size: 20px; letter-spacing: .04em; text-decoration: none; border-left: 3px solid var(--brass); padding: 4px 12px; }
+.s-alm-nav a:not(.s-btn):hover, .s-alm-nav a:not(.s-btn):focus-visible { background: rgb(244 215 122 / 12%); }
+.s-alm-body { overflow-y: auto; display: grid; gap: 22px; padding: 0 12px 30px 0; min-height: 0; max-height: 790px; }
+.s-alm-dl { display: grid; grid-template-columns: 300px 1fr; gap: 10px 20px; margin: 10px 0; font-size: 18px; }
+.s-alm-dl dt { font-family: var(--serif); font-weight: 700; color: var(--maroon); }
+.s-alm-dl dd { margin: 0; }
+.s-alm-list { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 10px; font-size: 20px; }
+.s-alm-file { border-top: 1px solid var(--parchment-dk); padding: 8px 0; }
+.s-alm-file summary { cursor: pointer; font-family: var(--serif); font-size: 20px; color: var(--ink); }
+.s-alm-table { width: 100%; border-collapse: collapse; font-size: 17px; margin: 8px 0; }
+.s-alm-table th { text-align: left; background: var(--maroon); color: var(--white); padding: 5px 10px; font-family: var(--serif); }
+.s-alm-table td { padding: 5px 10px; border-bottom: 1px solid var(--parchment-dk); }
+.s-alm-file a { word-break: break-all; }
+
+/* tips: a parchment note pinned beside what it explains */
+.s-tip { position: absolute; z-index: 40; width: 440px; padding: 16px 18px; color: var(--ink); background: linear-gradient(180deg, var(--parchment), var(--parchment-dk));
+  border: 2px solid var(--brass-dk); box-shadow: 8px 10px 0 rgb(0 0 0 / 35%); animation: s-card .6s cubic-bezier(.2, 1.2, .35, 1) both; }
+.s-tip[hidden] { display: none; }
+.s-tip h2 { font-family: var(--serif); font-size: 22px; color: var(--maroon); margin: 0 0 6px; }
+.s-tip p { font-size: 18px; line-height: 1.45; margin: 0 0 10px; }
+.s-tip .s-row { margin-top: 6px; }
+.s-tip-target { outline: 4px solid var(--lit); outline-offset: 4px; box-shadow: 0 0 0 10px rgb(244 215 122 / 25%); }
+
+/* the debrief dossier */
+.s-final { max-height: 900px; overflow-y: auto; }
+.s-debrief h3 { font-family: var(--serif); font-size: 22px; color: var(--maroon); margin: 18px 0 6px; }
+.s-why { width: 100%; border-collapse: collapse; font-size: 16px; }
+.s-why th { text-align: left; background: var(--maroon); color: var(--white); padding: 5px 8px; font-family: var(--serif); position: sticky; top: 0; }
+.s-why td { padding: 5px 8px; border-bottom: 1px solid var(--parchment-dk); vertical-align: top; }
+.s-why tr.turned td { background: var(--yes-bg); }
+.s-why .v-yes { color: var(--green-dk); font-weight: 700; } .s-why .v-no { color: var(--stamp); font-weight: 700; } .s-why .v-abstain { color: var(--muted); font-weight: 700; }
+.s-why .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.s-badge { display: inline-block; font: 700 12px var(--sans); letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; background: var(--green); color: var(--white); }
+.s-tips-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.s-tips-list div { background: var(--white); border: 1px solid var(--walnut); padding: 10px 12px; }
+.s-tips-list b { font-family: var(--serif); color: var(--maroon); }
+.s-tips-list ul { margin: 6px 0 0; padding-left: 20px; font-size: 16px; }
+
+/* ---------- the debrief dossier: rank, medals, the ledger graph, title deeds, turning points ---------- */
+.s-final { width: 1500px !important; }
+.s-center { text-align: center; }
+.s-plaque { display: grid; justify-items: center; gap: 2px; margin: 4px auto 14px; padding: 12px 40px; width: max-content; color: var(--walnut-dk);
+  background: linear-gradient(180deg, var(--lit), var(--brass) 55%, var(--brass-dk)); border: 3px solid var(--walnut-dk);
+  box-shadow: inset 0 2px 0 rgb(255 255 255 / 45%), 5px 6px 0 rgb(0 0 0 / 35%); animation: s-card .8s cubic-bezier(.2, 1.3, .35, 1) both; }
+.s-plaque .s-plaque-k { font: 700 14px var(--sans); letter-spacing: .3em; text-transform: uppercase; }
+.s-plaque b { font: 700 38px var(--serif); letter-spacing: .04em; }
+.s-plaque span { font-size: 16px; }
+.s-medals { display: flex; justify-content: center; gap: 40px; margin: 8px 0 6px; }
+.s-medal { display: grid; justify-items: center; gap: 6px; }
+.s-medal i { width: 104px; height: 104px; border-radius: 50%; display: grid; place-items: center; font: 700 15px var(--serif); font-style: normal; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--walnut-dk); border: 4px solid var(--walnut-dk); box-shadow: 0 6px 0 rgb(0 0 0 / 35%), inset 0 0 0 6px rgb(255 255 255 / 25%);
+  animation: s-coin .9s cubic-bezier(.2, 1.4, .35, 1) both; }
+.s-medal i.g3 { background: radial-gradient(circle at 35% 30%, var(--lit), var(--brass) 60%, var(--brass-dk)); }
+.s-medal i.g2 { background: radial-gradient(circle at 35% 30%, var(--white), var(--grey) 55%, var(--control)); }
+.s-medal i.g1 { background: radial-gradient(circle at 35% 30%, var(--parchment), var(--reg-apg) 60%, var(--wood)); color: var(--white); }
+.s-medal i.g0 { background: var(--parchment-dk); color: var(--muted); }
+.s-medal b { font: 700 18px var(--serif); color: var(--ink); }
+.s-medal span { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--stamp); min-height: 16px; }
+.s-medal.chosen i { box-shadow: 0 0 0 6px var(--lit), 0 6px 0 rgb(0 0 0 / 35%); }
+@keyframes s-coin { 0% { opacity: 0; transform: translateY(-60px) rotateY(180deg); } 70% { transform: translateY(6px) rotateY(0); } 100% { opacity: 1; transform: none; } }
+
+.s-chart { width: 100%; height: auto; background: var(--white); border: 1px solid var(--walnut); }
+.s-chart .s-grid { stroke: var(--parchment-dk); stroke-width: 1; }
+.s-chart .s-tick { font: 700 14px var(--sans); fill: var(--muted); text-anchor: middle; letter-spacing: .06em; }
+.s-chart .s-line { fill: none; stroke-width: 4; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 3000; stroke-dashoffset: 3000; animation: s-draw 1.6s ease forwards; }
+.s-chart .s-end { font: 700 15px var(--sans); }
+.s-l-support { stroke: var(--green); fill: var(--green); } .s-l-influence { stroke: var(--brass-dk); fill: var(--brass-dk); } .s-l-respect { stroke: var(--maroon); fill: var(--maroon); }
+.s-chart .s-line.s-l-support, .s-chart .s-line.s-l-influence, .s-chart .s-line.s-l-respect { fill: none; }
+@keyframes s-draw { to { stroke-dashoffset: 0; } }
+
+.s-deeds { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.s-deed { position: relative; background: var(--white); border: 2px solid var(--walnut-dk); box-shadow: 4px 5px 0 rgb(0 0 0 / 25%); padding: 0 0 12px;
+  animation: s-deal .6s cubic-bezier(.2, 1.2, .35, 1) both; }
+.s-deed-band { display: grid; justify-items: center; padding: 8px 6px; margin: 8px 8px 8px; border: 2px solid var(--walnut-dk); color: var(--white); }
+.s-deed-band span { font: 700 11px var(--sans); letter-spacing: .3em; text-transform: uppercase; }
+.s-deed-band b { font: 700 22px var(--serif); letter-spacing: .06em; text-transform: uppercase; }
+.own-you .s-deed-band { background: var(--green); } .own-rival .s-deed-band { background: var(--stamp); } .own-draft .s-deed-band { background: var(--un-blue); }
+.s-deed-what { margin: 4px 14px 8px; font: 700 16px var(--book); text-align: center; color: var(--ink); min-height: 44px; }
+.s-deed-rows { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0 14px; font-size: 14px; border-top: 1px solid var(--parchment-dk); padding-top: 6px; }
+.s-deed-rows dt { color: var(--muted); } .s-deed-rows dd { margin: 0; text-align: right; font-weight: 700; color: var(--ink); }
+.s-deed-stamp { position: absolute; right: 10px; bottom: 54px; font: 700 18px var(--serif); text-transform: uppercase; letter-spacing: .1em; padding: 2px 8px;
+  border: 3px double currentColor; transform: rotate(-12deg); color: var(--green-dk); background: rgb(255 255 255 / 80%); }
+.s-deed.struck .s-deed-stamp { color: var(--stamp); }
+.s-deed.struck .s-deed-what, .s-deed.struck .s-deed-rows { opacity: .6; }
+@keyframes s-deal { 0% { opacity: 0; transform: translate(-120px, -40px) rotate(-14deg); } 100% { opacity: 1; transform: none; } }
+
+.s-moments { list-style: none; margin: 4px 0; padding: 0; display: grid; gap: 6px; }
+.s-moments li { padding: 6px 10px 6px 34px; position: relative; font-size: 16px; background: var(--white); border-left: 5px solid var(--line); }
+.s-moments li::before { position: absolute; left: 10px; top: 5px; font-size: 16px; }
+.s-moments li.good { border-left-color: var(--green); } .s-moments li.good::before { content: "\2726"; color: var(--green); }
+.s-moments li.bad { border-left-color: var(--stamp); } .s-moments li.bad::before { content: "\2715"; color: var(--stamp); }
+.s-moments .s-when { font: 700 12px var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-right: 10px; }
+
+/* the board: spheres of influence, and envoys travelling between delegations */
+.b-land { transition: fill .9s ease; }
+.b-land.terr-you { fill: var(--map-yes); }
+.b-land.terr-rival { fill: var(--map-no); }
+.s-envoy { fill: var(--lit); stroke: var(--walnut-dk); stroke-width: 2.5; transition: transform .9s cubic-bezier(.4, 0, .2, 1); pointer-events: none; }
+.s-envoy.rival { fill: var(--stamp); stroke: var(--parchment); }
+.s-deed { padding-bottom: 54px; }
+.s-deed-stamp { bottom: 12px; right: auto; left: 50%; transform: translateX(-50%) rotate(-6deg); }
+.s-deed-stamp { white-space: nowrap; }

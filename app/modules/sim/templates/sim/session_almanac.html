@@ -1,0 +1,68 @@
+{% from "sim/_session_head.html" import head, emblem, settings_panel %}{{ head(title) }}
+{# The Almanac (D-101, phase 6): everything a delegate can look up. Open to everyone; nothing personal. #}
+<body class="board-body session-body" data-page="almanac">
+<a class="skip" href="#main">Skip to the Almanac</a>
+<div id="b-stage" class="b-stage s-stage">
+  <div class="b-lamp" aria-hidden="true"></div>
+  <header class="b-top">
+    {{ emblem() }}
+    <div class="b-titles">
+      <p class="b-kicker">The Session · the delegate's reference</p>
+      <h1 class="b-committee" id="b-committee">{{ title }}</h1>
+      <p class="b-ribbon"><span class="b-ribbon-text">{{ scn.title if scn else "Choose a scenario" }}</span></p>
+    </div>
+  </header>
+  <main class="s-almanac-main" id="main" tabindex="-1">
+    <nav class="s-alm-nav" aria-label="The Almanac">
+      <a class="s-btn ghost small" href="/session" hx-boost="false">Back to The Session</a>
+      {% if scn %}
+      <a href="#a-votes">How a vote is decided</a><a href="#a-procedure">Procedure</a><a href="#a-paths">Winning</a>
+      <a href="#a-skills">Skills</a><a href="#a-countries">Country files</a>
+      {% endif %}
+    </nav>
+    <div class="s-alm-body">
+    {% if not scn %}
+      <section class="s-doc"><h2>Choose a scenario</h2>
+        <ul class="s-alm-list">{% for s in scenarios %}<li><a href="/session/almanac/{{ s.code }}" hx-boost="false">{{ s.title }}</a> <span class="s-tag {{ s.level }}">{{ s.level_name }}</span></li>{% endfor %}</ul></section>
+    {% else %}
+      <section class="s-doc" id="a-votes"><h2>How a vote is decided</h2>
+        <p>Every delegation has a position on each commitment a clause makes. In this scenario those positions are
+          {{ "invented for practice: they are not any country's real position" if scn.fictional else "estimates from the sources in each country file below, not statements of fact" }}.
+          The platform's vote model turns them into a delegation's likely position on a whole clause.</p>
+        <p>On top of that position, three things count:</p>
+        <ul>
+          <li><b>Goodwill</b> you and the rival delegations build by lobbying, promises and side events. It pulls a delegation towards whatever its friend supports.</li>
+          <li><b>A regional group's endorsement</b>: when more than half of a group leans to one draft, the whole group leans a little further.</li>
+          <li><b>The mood on the day</b>: a hidden draw for each delegation, fixed for the whole session, shared a little within blocs. It is the real uncertainty of any vote, and why the chance dial is a chance, not a promise.</li>
+        </ul>
+        <p>A delegation votes yes when all of that adds up clearly for the text, no when clearly against, and abstains in between.
+          {{ "In the Security Council, a no from any of the five permanent members is a veto." if scn_veto else "In the General Assembly, a simple majority of those voting passes a text; abstentions don't count either way." }}</p>
+      </section>
+      <section class="s-doc" id="a-procedure"><h2>Procedure</h2>
+        <dl class="s-alm-dl">{% for q in questions %}<dt>{{ q.options[q.answer] }}</dt><dd>{{ q.why }} <span class="s-sub">({{ q.ask }})</span></dd>{% endfor %}</dl>
+      </section>
+      <section class="s-doc" id="a-paths"><h2>Four ways to win</h2>
+        <dl class="s-alm-dl">{% for code, p in paths.items() %}<dt>{{ p.name }} <span class="s-sub">· {{ p['for'] }}</span></dt><dd>{{ p.what }}</dd>{% endfor %}</dl>
+      </section>
+      <section class="s-doc" id="a-skills"><h2>Diplomatic skills</h2>
+        <p>Earn Expertise by reading country files and answering procedure moments correctly. Each skill costs {{ skill_cost }}; the second in a branch needs the first.</p>
+        <dl class="s-alm-dl">{% for code, k in skills.items() %}<dt>{{ k.name }} <span class="s-sub">· {{ k.branch }}</span></dt><dd>{{ k.what }}</dd>{% endfor %}</dl>
+      </section>
+      <section class="s-doc" id="a-countries"><h2>Country files</h2>
+        <p class="s-sub">{{ "Every position here is invented for practice." if scn.fictional else "Positions are estimates from the linked sources, not statements of fact. A country with no recorded position is left blank: the model treats it as unknown." }}</p>
+        {% for f in files %}
+        <details class="s-alm-file"><summary>{{ f.name }}{% if f.p5 %} ★{% endif %} <span class="s-sub">· {{ f.region }}</span></summary>
+          <table class="s-alm-table"><tr><th>Commitment</th><th>Position</th></tr>
+            {% for p in f.positions %}<tr><td>{{ p.label }}</td><td>{{ words[p.position] if p.position is not none else "Not recorded" }}</td></tr>{% endfor %}</table>
+          {% if f.red_lines %}<p>Red lines: {{ f.red_lines|join("; ") }}.</p>{% endif %}
+          {% if f.sources %}<p class="s-sub">Sources: {% for u in f.sources %}<a href="{{ u }}" target="_blank" rel="noopener">{{ u }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</p>{% endif %}
+        </details>{% endfor %}
+      </section>
+    {% endif %}
+    </div>
+  </main>
+  <footer class="b-bottom"><p class="p-msg" id="s-msg" role="status"></p></footer>
+  {{ settings_panel() }}
+</div>
+</body>
+</html>

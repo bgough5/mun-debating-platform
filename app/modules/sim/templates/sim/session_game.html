@@ -94,6 +94,7 @@
       <p class="s-sub" id="s-pause-note">{{ "Your session is saved after every move." if mode == "saved" else "Your session is kept on this laptop after every move." }}</p>
       <button type="button" class="s-btn" data-close="s-pause">Resume</button>
       <button type="button" class="s-btn ghost" data-open="s-settings">Settings</button>
+      <a class="s-btn ghost" href="/session/almanac/{{ pack }}" target="_blank" rel="noopener" hx-boost="false">The Almanac (opens a new tab)</a>
       <a class="s-btn ghost" href="/session" hx-boost="false">Save and leave</a>
       <button type="button" class="s-btn ghost" id="s-abandon">Abandon this session</button>
     </div>

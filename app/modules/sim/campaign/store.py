@@ -190,6 +190,7 @@ def view(scn: Scenario, g: dict) -> dict:
              "signed": "sponsor" if iso in g["sponsors"] else "signatory" if iso in g["signatories"] else None,
              "pledged": iso in g.get("pledges", []), "favour": iso in g["favours"], "promised": iso in open_promise,
              "predicted": g["whip"].get(iso),
+             "sphere": _sphere(scn, g, iso),
              "est": None if rival or not final["tags"] else E.vote_of(scn, E.latent(scn, g, iso, final, mood=False))}
         if not rival and chapters:
             t["lobby_cost"] = E.lobby_cost(scn, g, iso)
@@ -236,6 +237,7 @@ def view(scn: Scenario, g: dict) -> dict:
         "tokens": tokens, "log": g["log"][-14:], "skills": g["skills"], "objectives": g["objectives"],
         "sponsors": len(g["sponsors"]), "signatories": len(g["signatories"]), "signers_needed": E._signers_needed(scn),
         "summit": _summit_view(scn, g), "result": g.get("result"), "tags": tags,
+        "debrief": E.debrief(scn, g) if g["phase"] == "done" else None,
         "veto": sorted(scn.rule.veto), "rule": scn.rule.name,
         "regions": regions, "skill_list": skills, "skill_cost": K.SKILL_COST, "blocs": blocs, "last_chapter": last,
         "costs": {"propose": 0 if g["respect"] >= 8 else E.R["propose_cost"], "amend": 0 if "friendly" in g["skills"] else E.R["amend_cost"],
@@ -243,6 +245,17 @@ def view(scn: Scenario, g: dict) -> dict:
                   "draft_max": E.R["draft_max"], "sponsors": E.R["sponsors"], "favour_trust": E.R["favour_trust"]},
         "draft_ok": {"clauses": len(g["draft"]), "mine": sum(1 for c in g["draft"] if c["author"] == "you")},
     }
+
+
+def _sphere(scn: Scenario, g: dict, iso: str) -> str | None:
+    """Whose sphere of influence a delegation is in: yours, a rival's, or nobody's yet."""
+    mine = E.lean(scn, g, "you", iso)
+    theirs = max((E.lean(scn, g, r["iso3"], iso) for r in g["rivals"]), default=-9)
+    if mine > E.R["lean_min"] and mine >= theirs:
+        return "you"
+    if theirs > E.R["lean_min"]:
+        return "rival"
+    return None
 
 
 def _summit_view(scn: Scenario, g: dict) -> dict | None:
@@ -276,3 +289,24 @@ def _summit_view(scn: Scenario, g: dict) -> dict | None:
             "favours": [scn.member(i).name for i in g["favours"]], "po": "point_of_order" in g["skills"] and not s["po_used"],
             "offer_cost": E.R["offer_cost"], "influence": g["influence"],
             "names": {m.iso3: m.name for m in scn.members}}
+
+
+def results_for_staff(conn, class_ids) -> list[dict]:
+    """Finished sessions of the students a teacher can see (None: everyone): the scenario, the path, the grades. The
+    students' own words (reworded clauses) stay in the saved game and are never shown here."""
+    from app.modules.mun.packfile import available
+    from app.util import display_name
+    titles = {p["code"]: p["title"] for p in available()}
+    out = []
+    for r in rows(conn, "SELECT cs.id, cs.pack, cs.iso3, cs.length, cs.difficulty, cs.path, cs.grade, cs.updated_at, cs.state_json, "
+                        "st.first_name, st.last_initial, st.class_id, c.name AS country FROM campaign_save cs "
+                        "JOIN student st ON st.id = cs.student_id JOIN country c ON c.iso3 = cs.iso3 "
+                        "WHERE cs.phase = 'done' AND cs.deleted_at IS NULL AND st.deleted_at IS NULL ORDER BY cs.updated_at DESC LIMIT 300"):
+        if class_ids is not None and r["class_id"] not in class_ids:
+            continue
+        res = (json.loads(r["state_json"]).get("result") or {})
+        out.append({"student": display_name(r["first_name"], r["last_initial"]), "scenario": titles.get(r["pack"], r["pack"]),
+                    "country": r["country"], "length": r["length"], "difficulty": r["difficulty"], "path": r["path"],
+                    "grade": r["grade"], "paths": res.get("paths", {}), "passed": res.get("passed"),
+                    "whip": f"{res.get('whip_right', 0)} of {res.get('whip_judged', 0)}", "when": r["updated_at"]})
+    return out

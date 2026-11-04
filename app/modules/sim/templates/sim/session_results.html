@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb, empty_state %}
+{% block content %}
+{{ breadcrumb([("Model UN", "/mun"), (title, None)]) }}
+<h1>{{ icon("award") }} {{ title }}</h1>
+<p class="lede">Your students' finished sessions of The Session: the scenario, the path each chased and the grade on every path. What students wrote in a session is never shown here.</p>
+{% if results %}
+<div class="table-wrap"><table>
+  <caption class="visually-hidden">Finished sessions, newest first</caption>
+  <tr><th scope="col">Student</th><th scope="col">Scenario</th><th scope="col">Country</th><th scope="col">Aimed for</th>
+    {% for code, p in paths.items() %}<th scope="col">{{ p.name }}</th>{% endfor %}<th scope="col">Resolution</th><th scope="col">Predictions right</th><th scope="col">Finished</th></tr>
+  {% for r in results %}<tr><td>{{ r.student }}</td><td>{{ r.scenario }} <span class="small muted">({{ r.length }}, {{ r.difficulty }})</span></td><td>{{ r.country }}</td>
+    <td>{{ paths[r.path].name }}</td>{% for code in paths %}<td>{{ grades[r.paths.get(code, 0)] }}</td>{% endfor %}
+    <td>{{ "Adopted" if r.passed else "Failed" }}</td><td>{{ r.whip }}</td><td>{{ r.when|when }}</td></tr>{% endfor %}
+</table></div>
+{% else %}{{ empty_state("No finished sessions yet.", "Students play The Session from Play solo in their menu.", None, None, "award") }}{% endif %}
+{% endblock %}

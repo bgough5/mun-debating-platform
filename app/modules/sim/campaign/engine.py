@@ -117,7 +117,7 @@ def new_game(scn: Scenario, iso3: str, length: str = "standard", difficulty: str
         "promises": [], "favours": [], "whip": {}, "read": [], "skills": [], "sponsors": [], "signatories": [],
         "endorse": {}, "region_last": {}, "asked": [], "question": None, "event": None, "mods": {},
         "objectives": {}, "tabled_first": None, "summit": None, "result": None,
-        "stats": {}, "log": [],
+        "stats": {}, "log": [], "history": [],
     }
     _start_turn(scn, g)
     return g
@@ -776,8 +776,18 @@ def _objective(scn: Scenario, g: dict) -> bool:
     return {1: drafted, 2: endorsed, 3: tabled}[ch] if not (last and ch != 3) else tabled
 
 
+def snapshot(scn: Scenario, g: dict, label: str) -> None:
+    """Your standing at the end of a turn, for the debrief's graph."""
+    free = [i for i in scn.isos if i not in _others(g)]
+    g.setdefault("history", []).append({
+        "at": label, "influence": g["influence"], "respect": g["respect"], "expertise": g["expertise"],
+        "leaning": sum(1 for i in free if lean(scn, g, "you", i) > R["lean_min"]),
+        "endorse": sum(1 for v in g["endorse"].values() if v == "you"), "of": len(free)})
+
+
 def _upkeep(scn: Scenario, g: dict) -> None:
     _endorsements(scn, g)
+    snapshot(scn, g, ("W" if g["length"] == "quick" else f"C{g['chapter']}") + f".{g['turn']}")
     mine = sum(1 for v in g["endorse"].values() if v == "you")
     g["influence"] += R["income"] + mine * R["endorse_income"]
     for rv in g["rivals"]:
@@ -952,6 +962,7 @@ def s_final(scn, g, a):
     else:
         votes, passed, summary, counts = {}, False, "No clauses were adopted, so there is no resolution to vote on.", {"yes": 0, "no": 0, "abstain": 0}
     s["final"] = {"tags": tags, "votes": votes, "passed": passed, "summary": summary, **counts, "my_vote": my_vote}
+    snapshot(scn, g, "Summit")
     _log(g, "news", ("The resolution is adopted. " if passed else "The resolution fails. ") + summary, "vote")
     if not passed and scn.rule.veto:
         s["step"] = "statement"
@@ -1031,3 +1042,151 @@ CHAPTER = {"lobby": a_lobby, "read": a_read, "propose": a_propose, "amend": a_am
            "side_event": a_side_event, "favour": a_favour, "whip": a_whip, "sign": a_sign, "answer": a_answer, "skill": a_skill,
            "divide": a_divide, "merge": a_merge, "bloc_whip": a_bloc_whip, "abstain": a_abstain, "end_turn": a_end_turn}
 SUMMIT = {"speech": s_speech, "decide": s_decide, "final": s_final, "statement": s_statement, "skill": a_skill}
+
+
+# ---------------------------------------------------------------- the debrief (phase 6)
+
+WORD = {2: "strongly for", 1: "for", 0: "undecided", -1: "against", -2: "strongly against"}
+
+
+def debrief(scn: Scenario, g: dict) -> dict:
+    """Why each delegation voted as it did on the final resolution, how much of that was your doing, and what to try
+    next time. Every number here is the game's own: the model's position on the final text, the goodwill you and the
+    rivals built, a regional group's endorsement, and the delegation's hidden mood on the day (the vote's real
+    uncertainty)."""
+    s = g.get("summit") or {}
+    f = s.get("final") or {}
+    tags = f.get("tags") or []
+    res = g.get("result") or {}
+    total = sum(res.get("paths", {}).values())
+    out = {"countries": [], "turned": [], "lost": [], "tips": tips(scn, g), "clauses": [], "promises": [], "struck": [],
+           "rank": rank(total), "points": total, "history": g.get("history", []), "moments": moments(scn, g)}
+    draft = {c["id"]: c for c in g["draft"]}
+    for r in s.get("results", []):
+        c = draft.get(r["clause"], {})
+        who = c.get("author", "draft")
+        out["clauses"].append({"labels": [scn.tags[t] for t in r["tags"]], "passed": r["passed"], "summary": r["summary"],
+                               "text": c.get("text", ""), "yes": r["yes"], "no": r["no"], "abstain": r["abstain"],
+                               "owner": "you" if who == "you" else ("draft" if who == "draft" else "rival"),
+                               "owner_name": "You" if who == "you" else ("The original draft" if who == "draft" else scn.member(who).name),
+                               "amended": [("you" if a == "you" else scn.member(a).name) for a in c.get("amended_by", [])]})
+    for pr in g["promises"]:
+        out["promises"].append({"country": scn.member(pr["iso3"]).name, "kept": pr["kept"]})
+    for c in g["struck"]:
+        out["struck"].append({"labels": [scn.tags[t] for t in c["tags"]], "by": "you" if c["by"] == "you" else scn.member(c["by"]).name})
+    if not tags:
+        return out
+    final = {"id": "final", "tags": tags, "author": "draft"}
+    st = {a: stance(scn, g, a, final) for a in ["you", *[r["iso3"] for r in g["rivals"]]]}
+    st["you"] = {"yes": 1, "no": -1, "abstain": 0}[f.get("my_vote") or "abstain"]
+    for m in scn.members:
+        iso = m.iso3
+        if iso == g["iso3"] or iso in st:
+            continue
+        mu, sigma = scn.dist(tags).get(iso, (0.0, 1.5))
+        mood = sigma * g["moods"].get(iso, 0.0)
+        yours = g["sway"]["you"].get(iso, 0.0) * st["you"]
+        theirs = sum(g["sway"][r["iso3"]].get(iso, 0.0) * st[r["iso3"]] for r in g["rivals"])
+        owner = g["endorse"].get(m.region)
+        group = R["endorse_pull"] * st.get(owner, 0) if owner else 0.0
+        group_yours = group if owner == "you" else 0.0
+        actual = f["votes"].get(iso)
+        without = vote_of(scn, mu + mood + theirs + (group - group_yours))
+        pos = [scn.positions.get(iso, {}).get(t) for t in tags if scn.positions.get(iso, {}).get(t) is not None]
+        stated = round(sum(pos) / len(pos)) if pos else None
+        row = {"iso3": iso, "name": m.name, "vote": actual, "stated": WORD.get(stated) if stated is not None else "not recorded",
+               "model": round(mu, 2), "mood": round(mood, 2), "yours": round(yours, 2), "rivals": round(theirs, 2),
+               "group": round(group, 2), "group_owner": "you" if owner == "you" else (scn.member(owner).name if owner else None),
+               "without_you": without, "turned": without != actual, "predicted": g["whip"].get(iso),
+               "pledged": iso in g.get("pledges", []), "sources": scn.sources.get(iso, [])}
+        row["right"] = None if row["predicted"] is None else row["predicted"] == actual
+        out["countries"].append(row)
+        if row["turned"]:
+            better = {"no": 0, "abstain": 1, "yes": 2}
+            (out["turned"] if (better[actual] - better[without]) * (st["you"] or 1) > 0 else out["lost"]).append(m.name)
+    out["countries"].sort(key=lambda r: (not r["turned"], r["name"]))
+    return out
+
+
+RANKS = [(0, "Attaché"), (2, "Third Secretary"), (4, "Second Secretary"), (6, "First Secretary"), (8, "Counsellor"),
+         (10, "Ambassador"), (12, "Special Envoy of the Secretary-General")]
+
+
+def rank(points: int) -> dict:
+    """A diplomatic rank from the four grades together (0 to 12), and how far it is to the next."""
+    name, nxt = RANKS[0][1], None
+    for i, (need, title) in enumerate(RANKS):
+        if points >= need:
+            name = title
+            nxt = RANKS[i + 1] if i + 1 < len(RANKS) else None
+    return {"name": name, "points": points, "next": nxt[1] if nxt else None, "to_next": (nxt[0] - points) if nxt else 0}
+
+
+def moments(scn: Scenario, g: dict) -> list[dict]:
+    """The session's turning points, from the record."""
+    keep = []
+    for e in g["log"]:
+        t = e["text"]
+        if e["kind"] == "endorse" and "your draft" in t:
+            keep.append({"when": e["when"], "text": t, "kind": "good"})
+        elif e["kind"] == "endorse":
+            keep.append({"when": e["when"], "text": t, "kind": "bad"})
+        elif e["kind"] == "objective":
+            keep.append({"when": e["when"], "text": t, "kind": "good" if "met" in t else "bad"})
+        elif e["kind"] == "warning" and "promise" in t:
+            keep.append({"when": e["when"], "text": t, "kind": "bad"})
+        elif e["kind"] == "rival" and "struck" in t and "kept it" not in t:
+            keep.append({"when": e["when"], "text": t, "kind": "bad"})
+        elif e["kind"] == "learn" and t.startswith("You unlocked"):
+            keep.append({"when": e["when"], "text": t, "kind": "good"})
+        elif e["kind"] == "vote":
+            keep.append({"when": e["when"], "text": t, "kind": "good" if "adopted" in t.lower() or "agreed" in t else "bad"})
+    return keep[-12:]
+
+
+def tips(scn: Scenario, g: dict) -> list[dict]:
+    """What would have earned a better grade on each path, from what actually happened."""
+    r = g.get("result") or {}
+    paths = r.get("paths", {})
+    f = (g.get("summit") or {}).get("final") or {}
+    tags = f.get("tags") or []
+    must, also, red = g["mandate"]["must"], g["mandate"].get("also"), g["mandate"]["red"]
+    out = []
+    m = []
+    if must not in tags:
+        m.append(f"get “{scn.tags[must].lower()}” into a clause that passes")
+    if also and also not in tags:
+        m.append(f"also get “{scn.tags[also].lower()}” in")
+    if red in tags:
+        m.append(f"keep “{scn.tags[red].lower()}” out, by amending it away or voting its clause down")
+    if not f.get("passed"):
+        m.append("make sure the resolution as a whole passes")
+    out.append({"path": "mandate", "grade": paths.get("mandate", 0), "next": m or ["nothing: every instruction was met"]})
+    share, ends = r.get("share_yes", 0), r.get("endorsements", 0)
+    c = []
+    if not f.get("passed"):
+        c.append("pass the resolution first")
+    if share < 0.75:
+        c.append(f"win more yes votes ({round(share * 100)}% voted yes; gold needs 75%)")
+    if ends < 2:
+        c.append(f"win the endorsement of more regional groups ({ends} now; gold needs 2): side events and lobbying in one group")
+    out.append({"path": "consensus", "grade": paths.get("consensus", 0), "next": c or ["nothing: you had the room with you"]})
+    own = r.get("own_text", 0)
+    a = []
+    if own < 0.65:
+        a.append(f"write more of the final text ({round(own * 100)}% was yours; gold needs 65%): propose clause cards and protect them")
+    if not f.get("passed"):
+        a.append("your clauses only count in a resolution that passes")
+    out.append({"path": "architect", "grade": paths.get("architect", 0), "next": a or ["nothing: the text was yours"]})
+    k = []
+    judged, right = r.get("whip_judged", 0), r.get("whip_right", 0)
+    if judged < 4:
+        k.append(f"predict more delegations' final votes ({judged} judged; at least {min(5, max(3, len(scn.members) // 4))} needed)")
+    elif right / max(1, judged) < 0.8:
+        k.append(f"read the room more closely ({right} of {judged} right; gold needs 80%): read files before predicting")
+    if r.get("broken_promises"):
+        k.append("keep every promise: vote yes on the clauses you promised to back")
+    if r.get("respect", 0) < 7:
+        k.append(f"build Respect ({r.get('respect', 0)} now; gold needs 7): answer procedure moments, keep promises, accept friendly amendments")
+    out.append({"path": "kingmaker", "grade": paths.get("kingmaker", 0), "next": k or ["nothing: you read the room and kept your word"]})
+    return out

@@ -14,7 +14,7 @@ from app.errors import UserError
 from app.modules.sim.campaign import content as K
 from app.modules.sim.campaign import engine as E
 from app.modules.sim.campaign import store as S
-from app.web.auth import require_student
+from app.web.auth import require_staff, require_student
 from app.web.templating import render
 
 router = APIRouter()
@@ -154,3 +154,36 @@ def session_api(request: Request, payload: dict = Body(...)):
             w.soft_delete("campaign_save", r["id"])
         return {"ok": True}
     raise UserError("That isn't something The Session can do.")
+
+
+@router.get("/session/almanac")
+def session_almanac_index(request: Request):
+    return render(request, "sim/session_almanac.html", {"title": "The Almanac", "scn": None, "scenarios": S.scenario_cards()})
+
+
+@router.get("/session/almanac/{code}")
+def session_almanac(request: Request, code: str):
+    """Everything a delegate can look up for one scenario: how votes are decided, procedure, the paths, the skills,
+    and every country file with its sources. Open to everyone; nothing personal."""
+    db = request.app.state.db
+    with db.read() as conn:
+        with S.LOCK:
+            scn = S.scenario(db, conn, code)
+            files = [E.country_file(scn, {"skills": [], "moods": {}}, iso) for iso in scn.isos]
+            veto = bool(scn.rule.veto)
+    return render(request, "sim/session_almanac.html", {
+        "title": "The Almanac", "scn": scn, "scn_veto": veto, "files": sorted(files, key=lambda f: f["name"]),
+        "questions": K.QUESTIONS, "paths": K.PATHS, "skills": K.SKILLS, "skill_cost": K.SKILL_COST,
+        "words": {2: "Strongly for", 1: "For", 0: "Neutral", -1: "Against", -2: "Strongly against"}})
+
+
+@router.get("/session/results")
+def session_results(request: Request, sess=Depends(require_staff)):
+    """Teachers see their students' finished sessions: the scenario, the path chased and the grades. Never what a
+    student wrote (D-101: Ben's answer)."""
+    from app.web.auth import staff_class_ids
+    with request.app.state.db.read() as conn:
+        ids = staff_class_ids(conn, request.state.actor)
+        data = S.results_for_staff(conn, ids)
+    return render(request, "sim/session_results.html", {"title": "The Session: results", "results": data, "paths": K.PATHS,
+                                                        "grades": E.GRADES})

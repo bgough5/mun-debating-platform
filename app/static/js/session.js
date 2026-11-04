@@ -154,6 +154,8 @@
         box.querySelectorAll(".b-token").forEach(function (t) { t.setAttribute("tabindex", "-1"); });
       }).catch(function () { box.textContent = "The committee didn't load. Go back and try again."; });
     }
+    var tipBox = $("s-tips-on");
+    if (tipBox) { tipBox.checked = A.settings().tips !== false; tipBox.addEventListener("change", function () { A.set("tips", tipBox.checked); }); }
     $("s-begin").addEventListener("click", function () {
       var b = $("s-begin"); b.disabled = true; say("Taking your seat…");
       api({ do: "new", pack: choice.pack, iso3: choice.iso3, length: choice.length, difficulty: choice.difficulty, path: choice.path }).then(function (r) {
@@ -176,8 +178,9 @@
     var mode = document.body.getAttribute("data-mode"), saveId = document.body.getAttribute("data-save-id");
     var slot = +(new URLSearchParams(window.location.search).get("slot") || 0);
     var guest = null, V = null, busy = false, seenLog = 0, picked = null, amending = null;
-    var tokens = {};
+    var tokens = {}, lands = {};
     document.querySelectorAll("#b-map .b-token").forEach(function (g) { tokens[g.getAttribute("data-iso")] = g; });
+    document.querySelectorAll("#b-map .b-land").forEach(function (l) { (lands[l.getAttribute("data-iso")] = lands[l.getAttribute("data-iso")] || []).push(l); });
     var SOUND = { lobby: "paper", read: "flip", propose: "stamp", amend: "paper", strike: "stamp", promise: "coin", side_event: "chime",
                   favour: "coin", whip: "tick", sign: "stamp", skill: "chime", divide: "paper", merge: "stamp", bloc_whip: "chime", abstain: "stamp" };
     var POS = { "2": ["p2", "Strongly for"], "1": ["p1", "For"], "0": ["p0", "Neutral"], "-1": ["n1", "Against"], "-2": ["n2", "Strongly against"] };
@@ -219,7 +222,11 @@
       });
       if (focus) $("t-" + name).focus();
     }
-    document.querySelector(".s-tabs").addEventListener("click", function (e) { var b = e.target.closest("[data-tab]"); if (b) { setTab(b.getAttribute("data-tab")); A.play("flip"); } });
+    document.querySelector(".s-tabs").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-tab]"); if (!b) return;
+      setTab(b.getAttribute("data-tab")); A.play("flip");
+      if (V) { hideTip(); setTimeout(function () { nextTip(V); }, 300); }
+    });
     document.querySelector(".s-tabs").addEventListener("keydown", function (e) {
       var shown = TABS.filter(function (t) { return !$("t-" + t).hidden; });
       var i = shown.indexOf(document.activeElement.getAttribute("data-tab")); if (i < 0) return;
@@ -530,8 +537,16 @@
         var line = t.querySelector(".b-line");
         if (line) line.textContent = d.you ? "You" : d.rival ? "Rival" : d.est === "yes" ? "For" : d.est === "no" ? "Against" : d.est ? "Unsure" : "";
       });
+      // spheres of influence: like borders on a campaign map, the land of each delegation takes the colour of whoever it leans to
+      Object.keys(lands).forEach(function (iso) {
+        var d = v.tokens[iso] || {}, sph = d.you ? "you" : d.rival ? "rival" : d.est === "yes" ? "you" : (d.est === "no" && d.sphere === "rival") ? "rival" : null;
+        lands[iso].forEach(function (l) { l.classList.toggle("terr-you", sph === "you"); l.classList.toggle("terr-rival", sph === "rival"); });
+      });
+      // envoys: each move this turn travels across the map, from whoever made it to the delegation it was about
       news.forEach(function (x, k) {
-        if (x.at && tokens[x.at]) setTimeout(function () { restart(tokens[x.at], x.kind === "rival" ? "s-pulse-rival" : "s-pulse"); }, 250 * k);
+        if (!x.at || !tokens[x.at]) return;
+        var from = x.who === "you" ? v.you.iso3 : x.who;
+        setTimeout(function () { envoy(from, x.at, x.kind === "rival"); }, 380 * k);
       });
       if (news.some(function (x) { return x.kind === "rival"; })) setTimeout(function () { A.play("paper"); }, 300);
       if (prev) {
@@ -542,6 +557,7 @@
       $("s-end-turn").hidden = v.phase !== "chapter";
       summitTabs(v);
       summitPane(v, out);
+      setTimeout(function () { nextTip(V); }, 700);
       if (!prev ? (v.turn === 1 && v.phase === "chapter" && seenLogAtStart(v)) : (prev.chapter !== v.chapter || prev.phase !== v.phase)) chapterCard(v, prev);
     }
     function seenLogAtStart(v) { return v.log.filter(function (x) { return x.kind === "action"; }).length === 0; }
@@ -695,27 +711,208 @@
 
     function result(v) {
       var r = v.result; if (!r) return;
-      var p = v.path, grade = r.grade;
+      var d = v.debrief || {}, p = v.path, grade = r.grade;
       $("s-result-eyebrow").textContent = r.passed ? "The resolution was adopted" : r.statement ? "A Presidential Statement was agreed" : "The resolution failed";
       $("s-result-h").textContent = GRADE[grade] + " for " + p.name;
       var b = $("s-result-body"); b.textContent = "";
-      var mb = h("div", "s-medal-big shown"), medal = h("i", "g" + grade, GRADE[grade]);
-      mb.appendChild(medal); mb.appendChild(h("p", "", "You aimed for " + p.name + ": " + p.what));
-      b.appendChild(mb);
-      var t = h("table", "s-paths-table"), hr = h("tr");
-      ["Path", "What it rewards", "Your grade"].forEach(function (x) { hr.appendChild(h("th", "", x)); }); t.appendChild(hr);
-      Object.keys(r.paths).forEach(function (k) {
-        var tr = h("tr", k === p.code ? "chosen" : "");
-        var info = { mandate: "Your instructions in a resolution that passes", consensus: "Wide support across regional groups",
-                     architect: "Most of the final text is yours", kingmaker: "Accurate predictions, kept promises, high Respect" }[k];
-        tr.appendChild(h("td", "", k.charAt(0).toUpperCase() + k.slice(1))); tr.appendChild(h("td", "", info)); tr.appendChild(h("td", "", GRADE[r.paths[k]]));
-        t.appendChild(tr);
+      // the rank plaque and the four medals
+      if (d.rank) {
+        var pl = h("div", "s-plaque");
+        pl.appendChild(h("span", "s-plaque-k", "Your rank"));
+        pl.appendChild(h("b", "", d.rank.name));
+        pl.appendChild(h("span", "", d.points + " of 12 points" + (d.rank.next ? " · " + d.rank.to_next + " more to " + d.rank.next : " · the highest rank")));
+        b.appendChild(pl);
+      }
+      var row = h("div", "s-medals");
+      Object.keys(r.paths).forEach(function (k, i) {
+        var g = r.paths[k], m = h("div", "s-medal" + (k === p.code ? " chosen" : ""));
+        var coin = h("i", "g" + g, GRADE[g]); coin.style.animationDelay = (0.15 + i * 0.18) + "s";
+        m.appendChild(coin); m.appendChild(h("b", "", k.charAt(0).toUpperCase() + k.slice(1)));
+        m.appendChild(h("span", "", k === p.code ? "your aim" : ""));
+        row.appendChild(m);
       });
-      b.appendChild(t);
-      b.appendChild(h("p", "s-sub", "Predictions right: " + r.whip_right + " of " + r.whip_judged + " · promises kept " + r.kept_promises + ", broken " + r.broken_promises +
-                                   " · groups endorsing you: " + r.endorsements + " · Respect " + r.respect + " · Expertise " + r.expertise + ". The full debrief arrives in a later update."));
+      b.appendChild(row);
+      b.appendChild(h("p", "s-sub s-center", "You aimed for " + p.name + ": " + p.what + "  Predictions right: " + r.whip_right + " of " + r.whip_judged +
+                                             " · promises kept " + r.kept_promises + ", broken " + r.broken_promises + " · Respect " + r.respect + " · Expertise " + r.expertise + "."));
+      if (d.history && d.history.length > 1) b.appendChild(chart(d.history));
+      if (d.clauses && d.clauses.length) b.appendChild(deeds(d.clauses));
+      if (d.moments && d.moments.length) {
+        var mo = h("div", "s-debrief"); mo.appendChild(h("h3", "", "Turning points"));
+        var ul = h("ol", "s-moments");
+        d.moments.forEach(function (x) { var li = h("li", x.kind); li.appendChild(h("span", "s-when", x.when)); li.appendChild(document.createTextNode(x.text)); ul.appendChild(li); });
+        mo.appendChild(ul); b.appendChild(mo);
+      }
+      debriefInto(b, v);
+      hideTip();
       open("s-result");
-      A.play(grade >= 2 ? "fanfare" : grade === 1 ? "chime" : "sting");
+      var doc = document.querySelector("#s-result .s-final"); doc.scrollTop = 0;
+      var hd = $("s-result-h"); hd.tabIndex = -1; hd.focus();
+      A.play("stamp");
+      setTimeout(function () { A.play(grade >= 2 ? "fanfare" : grade === 1 ? "chime" : "sting"); }, 500);
+    }
+
+    // the session in numbers: your standing turn by turn, drawn like an old campaign ledger
+    function chart(hist) {
+      var box = h("div", "s-debrief"); box.appendChild(h("h3", "", "The session in numbers"));
+      var W = 1040, H = 230, L = 46, T = 14, n = hist.length;
+      var ns = "http://www.w3.org/2000/svg", svg = document.createElementNS(ns, "svg");
+      svg.setAttribute("viewBox", "0 0 " + W + " " + (H + 46)); svg.setAttribute("class", "s-chart"); svg.setAttribute("role", "img");
+      var last = hist[n - 1];
+      svg.setAttribute("aria-label", "Your standing turn by turn. At the end: " + last.leaning + " of " + last.of + " delegations leaning your way, Influence " + last.influence + ", Respect " + last.respect + ".");
+      function el(tag, attrs, text) { var e = document.createElementNS(ns, tag); Object.keys(attrs).forEach(function (k) { e.setAttribute(k, attrs[k]); }); if (text != null) e.textContent = text; svg.appendChild(e); return e; }
+      for (var gy = 0; gy <= 4; gy++) el("line", { x1: L, x2: W - 10, y1: T + gy * H / 4, y2: T + gy * H / 4, class: "s-grid" });
+      var maxI = 1.15 * Math.max.apply(null, hist.map(function (x) { return x.influence; }).concat([10]));
+      var series = [
+        ["Support", "s-l-support", function (x) { return x.of ? x.leaning / x.of : 0; }, function (x) { return x.leaning + " of " + x.of; }],
+        ["Influence", "s-l-influence", function (x) { return x.influence / maxI; }, function (x) { return String(x.influence); }],
+        ["Respect", "s-l-respect", function (x) { return x.respect / 10; }, function (x) { return String(x.respect); }]
+      ];
+      function X(i) { return L + (n === 1 ? 0 : i * (W - L - 190) / (n - 1)); }
+      hist.forEach(function (x, i) {
+        if (i === 0 || hist[i - 1].at.split(".")[0] !== x.at.split(".")[0]) el("text", { x: X(i), y: H + T + 22, class: "s-tick" }, x.at === "Summit" ? "Summit" : x.at.split(".")[0].replace("C", "Ch ").replace("W", "Work"));
+      });
+      var ends = [];
+      series.forEach(function (sr, k) {
+        var d = hist.map(function (x, i) { return (i ? "L" : "M") + X(i).toFixed(1) + " " + (T + H - Math.min(1, sr[2](x)) * H).toFixed(1); }).join(" ");
+        var path = el("path", { d: d, class: "s-line " + sr[1] });
+        path.style.animationDelay = (0.3 + k * 0.35) + "s";
+        var y = T + H - Math.min(1, sr[2](last)) * H;
+        el("circle", { cx: X(n - 1), cy: y, r: 6, class: "s-dot " + sr[1] });
+        ends.push([y, sr]);
+      });
+      ends.sort(function (a, b) { return a[0] - b[0]; });
+      var lastY = -99;
+      ends.forEach(function (e) { var y = Math.max(e[0] + 5, lastY + 20); lastY = y; el("text", { x: X(n - 1) + 12, y: y, class: "s-end " + e[1][1] }, e[1][0] + " " + e[1][3](last)); });
+      box.appendChild(svg);
+      box.appendChild(h("p", "s-sub", "Support: delegations leaning your way. Influence and Respect at the end of each turn."));
+      return box;
+    }
+
+    // every clause as a title deed: whose it was, and whether the committee granted it
+    function deeds(clauses) {
+      var box = h("div", "s-debrief"); box.appendChild(h("h3", "", "Title deeds: the resolution, clause by clause"));
+      var grid = h("div", "s-deeds");
+      clauses.forEach(function (c, i) {
+        var card = h("div", "s-deed own-" + c.owner + (c.passed ? "" : " struck"));
+        card.style.animationDelay = (0.2 + i * 0.12) + "s";
+        var band = h("div", "s-deed-band"); band.appendChild(h("span", "", "Title deed")); band.appendChild(h("b", "", "Clause " + (i + 1)));
+        card.appendChild(band);
+        card.appendChild(h("p", "s-deed-what", c.labels.join("; ")));
+        var dl = h("dl", "s-deed-rows");
+        [["Held by", c.owner_name], ["Amended by", c.amended.length ? c.amended.join(", ") : "nobody"], ["Yes", c.yes], ["No", c.no], ["Abstain", c.abstain]].forEach(function (x) {
+          dl.appendChild(h("dt", "", x[0])); dl.appendChild(h("dd", "", String(x[1])));
+        });
+        card.appendChild(dl);
+        card.appendChild(h("span", "s-deed-stamp", c.passed ? "Adopted" : "Struck off"));
+        grid.appendChild(card);
+      });
+      box.appendChild(grid);
+      return box;
+    }
+
+    function envoy(fromIso, toIso, rival) {
+      var a = tokens[fromIso], b = tokens[toIso];
+      var land = function () { restart(b, rival ? "s-pulse-rival" : "s-pulse"); };
+      if (!a || !b || a === b || !A.motionOn()) { if (b) land(); return; }
+      var ns = "http://www.w3.org/2000/svg", x1 = +a.getAttribute("data-x"), y1 = +a.getAttribute("data-y");
+      var c = document.createElementNS(ns, "circle");
+      c.setAttribute("r", "7"); c.setAttribute("cx", x1); c.setAttribute("cy", y1); c.setAttribute("class", "s-envoy" + (rival ? " rival" : ""));
+      $("b-tokens").appendChild(c);
+      requestAnimationFrame(function () { requestAnimationFrame(function () {
+        c.style.transform = "translate(" + (+b.getAttribute("data-x") - x1) + "px," + (+b.getAttribute("data-y") - y1) + "px)";
+      }); });
+      setTimeout(function () { c.remove(); land(); }, 1000);
+    }
+
+    // ---------- tips: each part of the game explained the first time you meet it ----------
+    var SEEN = "soc-session-tips-seen";
+    function seen() { try { return JSON.parse(window.localStorage.getItem(SEEN) || "[]") || []; } catch (e) { return []; } }
+    function markSeen(id) { var s = seen(); if (s.indexOf(id) < 0) s.push(id); try { window.localStorage.setItem(SEEN, JSON.stringify(s)); } catch (e) { /* this page only */ } }
+    function tabIs(name) { return $("t-" + name).getAttribute("aria-selected") === "true"; }
+    var TIPS = [
+      { id: "instr", at: "#c-instr", when: function (v) { return v.phase === "chapter" && tabIs("brief"); }, title: "Your instructions",
+        text: "Secret orders from your capital: two commitments to get into the final text, one to keep out. Rival delegations have their own orders, opposite to yours." },
+      { id: "meters", at: "#m-influence", when: function (v) { return v.phase === "chapter"; }, title: "Your standing",
+        text: "Influence pays for lobbying and side events. Respect lowers costs and opens doors. Expertise unlocks skills. The flags are the actions you have left this turn." },
+      { id: "map", at: "#b-board", when: function (v) { return v.phase === "chapter"; }, title: "The room",
+        text: "Each token is a delegation; the band is its regional group. Green means likely to back your draft, red likely against. Click a token to open that delegation." },
+      { id: "dele", at: "#c-country", when: function (v) { return v.phase === "chapter" && tabIs("dele") && picked; }, title: "Working a delegation",
+        text: "Read a file before you lobby: you learn its positions and red lines, and lobbying works better. Promises build trust, but only if you keep them at the summit." },
+      { id: "draft", at: "#c-clauses", when: function (v) { return v.phase === "chapter" && tabIs("draft"); }, title: "The draft",
+        text: "The dial is each clause's chance of passing now. Propose clause cards, amend one commitment at a time, or strike a clause the room doesn't want. The working group must agree to changes to others' text." },
+      { id: "regions", at: "#c-regions", when: function (v) { return v.phase === "chapter" && tabIs("brief") && (v.turn > 1 || v.chapter > 1); }, title: "Regional groups",
+        text: "Win more than half of a regional group and it endorses your draft: a bonus every turn, and its members lean your way at the vote. Side events work on a whole group at once." },
+      { id: "endturn", at: "#s-end-turn", when: function (v) { return v.phase === "chapter" && v.ap === 0; }, title: "Ending the turn",
+        text: "Out of actions? End the turn. Rivals move at the start of each turn, so you always have the last word in a chapter." },
+      { id: "skills", at: "#s-skills-btn", when: function (v) { return v.phase === "chapter" && v.xp >= v.skill_cost; }, title: "A skill to unlock",
+        text: "You have enough Expertise for a diplomatic skill. Each branch suits a different way of playing." },
+      { id: "summit", at: "#c-summit", when: function (v) { return v.phase === "summit"; }, title: "The Summit",
+        text: "Each clause is voted on separately: the division of the question. Decide first (a last offer, a favour, or what to do with a rival's amendment), then cast your vote." }
+    ];
+    var tipEl = null;
+    function tipsOn() { return A.settings().tips !== false; }
+    function hideTip() {
+      if (tipEl) { tipEl.remove(); tipEl = null; }
+      document.querySelectorAll(".s-tip-target").forEach(function (x) { x.classList.remove("s-tip-target"); });
+    }
+    function nextTip(v) {
+      if (!tipsOn() || tipEl || !v || v.phase === "done" || document.querySelector(".s-overlay:not([hidden])")) return;
+      var done = seen(), t = TIPS.filter(function (x) { return done.indexOf(x.id) < 0 && x.when(v) && document.querySelector(x.at); })[0];
+      if (!t) return;
+      var target = document.querySelector(t.at), sr = stage.getBoundingClientRect(), sc = sr.width / 1920, r = target.getBoundingClientRect();
+      var x = (r.left - sr.left) / sc, y = (r.top - sr.top) / sc, w = r.width / sc, hgt = r.height / sc;
+      tipEl = h("div", "s-tip"); tipEl.setAttribute("role", "dialog"); tipEl.setAttribute("aria-labelledby", "s-tip-h");
+      var hh = h("h2", "", t.title); hh.id = "s-tip-h"; tipEl.appendChild(hh); tipEl.appendChild(h("p", "", t.text));
+      var row = h("div", "s-row");
+      row.appendChild(btn("Got it", "s-btn small", function () { markSeen(t.id); hideTip(); A.play("flip"); nextTip(V); }));
+      row.appendChild(btn("No more tips", "s-btn ghost small", function () { A.set("tips", false); hideTip(); }));
+      tipEl.appendChild(row);
+      var left = x > 1100 ? x - 460 : Math.min(x + w + 20, 1460), top = Math.max(180, Math.min(y + (hgt > 300 ? 40 : 0), 760));
+      if (t.id === "meters") { left = x - 120; top = y + hgt + 18; }
+      if (t.id === "endturn") { left = x - 460; top = 780; }
+      tipEl.style.left = Math.max(20, left) + "px"; tipEl.style.top = top + "px";
+      stage.appendChild(tipEl);
+      target.classList.add("s-tip-target");
+      tipEl.querySelector("button").focus();
+    }
+
+    // ---------- the debrief dossier ----------
+    function debriefInto(b, v) {
+      var d = v.debrief; if (!d) return;
+      var box = h("div", "s-debrief");
+      box.appendChild(h("h3", "", "What your diplomacy did"));
+      var turned = d.turned.length ? "You turned " + d.turned.join(", ") + ": without your goodwill " + (d.turned.length === 1 ? "it" : "they") + " would have voted the other way." :
+        "No delegation's vote on the final text changed because of your goodwill alone.";
+      box.appendChild(h("p", "", turned + (d.lost.length ? " Your pull went the wrong way with " + d.lost.join(", ") + "." : "")));
+      if (d.countries.length) {
+        box.appendChild(h("h3", "", "Why each delegation voted as it did"));
+        box.appendChild(h("p", "s-sub", "Every number is a push towards yes (positive) or no (negative) on the final text. A delegation votes yes above +0.4 in total, no below −0.4, and abstains in between. The mood is its hidden draw on the day: the vote's real uncertainty."));
+        var t = h("table", "s-why"), hr = h("tr");
+        ["Delegation", "Vote", "Your call", "Its stated position", "Model", "You", "Rivals", "Group", "Mood"].forEach(function (x) { hr.appendChild(h("th", "", x)); });
+        t.appendChild(hr);
+        function num(x) { return (x > 0 ? "+" : "") + x.toFixed(2); }
+        d.countries.forEach(function (c) {
+          var tr = h("tr", c.turned ? "turned" : ""), td = h("td");
+          td.appendChild(document.createTextNode(c.name)); if (c.turned) { td.appendChild(document.createTextNode(" ")); td.appendChild(h("span", "s-badge", "you turned it")); }
+          tr.appendChild(td);
+          tr.appendChild(h("td", "v-" + c.vote, c.vote));
+          tr.appendChild(h("td", "", c.predicted ? c.predicted + (c.right ? " ✓" : " ✗") : "–"));
+          tr.appendChild(h("td", "", c.stated));
+          [c.model, c.yours, c.rivals, c.group, c.mood].forEach(function (x) { tr.appendChild(h("td", "num", num(x))); });
+          t.appendChild(tr);
+        });
+        box.appendChild(t);
+      }
+      box.appendChild(h("h3", "", "What to try next time"));
+      var grid = h("div", "s-tips-list");
+      d.tips.forEach(function (x) {
+        var c = h("div"); c.appendChild(h("b", "", x.path.charAt(0).toUpperCase() + x.path.slice(1) + ": " + GRADE[x.grade]));
+        var ul = h("ul"); x.next.forEach(function (n) { ul.appendChild(h("li", "", n.charAt(0).toUpperCase() + n.slice(1) + ".")); });
+        c.appendChild(ul); grid.appendChild(c);
+      });
+      box.appendChild(grid);
+      if (d.promises.length) box.appendChild(h("p", "s-sub", "Promises: " + d.promises.map(function (p) { return p.country + (p.kept === true ? " (kept)" : p.kept === false ? " (broken)" : " (the clause was struck)"); }).join("; ") + "."));
+      b.appendChild(box);
     }
 
     // the map is the way in to a delegation
@@ -724,6 +921,7 @@
       var iso = t.getAttribute("data-iso"); if (iso === V.you.iso3) return;
       pick(iso); setTab("dele"); A.play("flip");
     });
+    document.addEventListener("click", function (e) { if (e.target.closest("[data-close]")) setTimeout(function () { nextTip(V); }, 400); });
     $("s-side-event").addEventListener("click", function () { move({ do: "side_event", region: $("s-region-pick").value }); });
     $("s-bloc-whip").addEventListener("click", function () { move({ do: "bloc_whip", group: $("s-bloc-pick").value }); });
     $("s-end-turn").addEventListener("click", function () { amending = null; move({ do: "end_turn" }); });
