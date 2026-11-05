@@ -65,6 +65,9 @@ def test_a_guest_sets_up_and_continues_a_session(browser, live):
     assert not axe(page, "session_game")
     page.click("#s-end-turn")
     page.wait_for_function("document.getElementById('s-where').textContent.indexOf('turn 2') >= 0")
+    page.click("#t-brief")                                                   # a panel is open: Escape closes it first
+    page.keyboard.press("Escape")
+    assert page.is_hidden("#s-pause")
     page.keyboard.press("Escape")
     assert page.is_visible("#s-pause")
     page.click("#s-pause a:has-text('Save and leave')")
@@ -262,8 +265,7 @@ def test_the_chief_of_protocol_walks_a_new_player_through_the_session(browser, l
     page.click("#s-guide-next")
     assert "instructions" in page.inner_text("#s-guide-h").lower()
     assert page.get_attribute("#s-guide-face svg", "data-expression") == "eyebrow"   # the face changes with what's said
-    page.wait_for_timeout(100)
-    assert page.get_attribute("#s-spot", "style") != spot                    # the spotlight moved to the instructions
+    page.wait_for_function("s => document.getElementById('s-spot').getAttribute('style') !== s", arg=spot)   # the spotlight moved
     page.keyboard.press("ArrowLeft")
     assert "hour" in page.inner_text("#s-guide-h").lower()
     seen = set()
@@ -377,5 +379,44 @@ def test_the_deal_table_in_the_browser(browser, live):
     assert not axe(page, "session_deal_table")
     page.click("#s-deal-go")
     page.wait_for_function("document.getElementById('s-deal').hidden || document.getElementById('s-deal-verdict').textContent.indexOf('turned it down') >= 0")
+    assert not errors, errors
+    ctx.close()
+
+
+def test_the_session_is_drawn_at_real_size_on_a_small_laptop(browser, live):
+    """Phase 10: on a 1366x768 laptop (a 1366x657 browser window) The Session is not a shrunk picture: panel text is
+    at least 16 px, every command and the setup's Next button sit inside the window, the map dims behind an open
+    panel, and Escape closes the panel and returns focus to its icon."""
+    ctx = browser.new_context(viewport={"width": 1366, "height": 657})
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    inside = "s => { const r = document.querySelector(s).getBoundingClientRect(); return r.width > 0 && r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight + 1 && r.right <= innerWidth + 1; }"
+    page.goto(live.url + "/session/new")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false}))")
+    page.click('[data-pick="pack"][data-value="ga_climate_transition"]')
+    page.click('[data-step="1"] [data-next]')
+    page.wait_for_selector("#s-seats-box .s-seat")
+    page.click('.s-seat[data-value="FJI"]')
+    assert page.evaluate(inside, '[data-step="2"] [data-next]')                 # Next is in the window
+    for n in (2, 3, 4, 5):
+        page.click(f'[data-step="{n}"] [data-next]')
+    page.click("#s-begin")
+    page.wait_for_selector("#s-chapter-card:not([hidden])")
+    page.click("#s-chapter-card [data-close]")
+    assert page.evaluate("getComputedStyle(document.getElementById('b-stage')).transform") == "none"
+    assert min(page.evaluate("[...document.querySelectorAll('#p-brief .b-card p')].map(e => parseFloat(getComputedStyle(e).fontSize))")) >= 16
+    for sel in ("#t-brief", "#t-draft", "#t-dele", "#t-staff", "#t-record", "#s-end-turn", "#s-reserve", "#m-capital"):
+        assert page.evaluate(inside, sel), sel
+    page.click("#t-brief")
+    assert "s-panel-open" in page.get_attribute("body", "class")
+    assert page.evaluate("getComputedStyle(document.querySelector('#b-lands')).filter") != "none"   # the map dims behind the panel
+    page.click("#p-brief .b-card")
+    page.keyboard.press("Escape")
+    assert page.is_hidden("#s-pause") and "s-panel-open" not in (page.get_attribute("body", "class") or "")
+    page.click('#b-map .b-token[data-iso="NGA"]', force=True)
+    page.wait_for_selector("#c-country .s-acts-grid")
+    assert page.evaluate(inside, "#c-country .s-acts-grid button")              # the first action is in view
+    assert not axe(page, "session_real_size")
     assert not errors, errors
     ctx.close()

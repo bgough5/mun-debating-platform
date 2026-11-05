@@ -534,3 +534,33 @@ Ben asked to "trade agreements and things for influence etc, with each country h
 | Average session (minutes, estimated) | 55–64 | 41–62 |
 
 **Below target:** the hardest scenario, the Security Council climate one, is at 17.5% on Standard (phase 8: 23.7%; target 25%). It is labelled Expert. In it, the bots make 4–5 deals a game, and at two actions each those deals crowd out drafting: Drafter silver fell from 45% to 35%. A focused 8-game re-run with bots that deal only in the final chapter was too noisy to show a gain, so it was not kept. Rebalancing the two Council scenarios is a follow-up. The 41-minute low is the random bot on Hard, whose sessions often end early in a recall.
+
+## 23. Real size, a command bar and pop-out panels (phase 10, 5 Nov 2026)
+
+Ben: "the menu on the right hand side is hard to read without it popping out … I find myself often zooming in." The cause was measured.
+- **Before:** The Session was a fixed 1920×1080 picture shrunk to fit the window, so its text shrank with it. On a 1366×768 laptop (a 1366×657 browser window) the picture ran at 61% and the side menu's small text at about 9–10 px. Browser zoom couldn't help: the picture re-shrank to fit.
+- **Ben's choices:** real-size text plus pop-out panels; panels over a dimmed map whose tokens stay clickable.
+- **His phone session's proposal** (`session-progression.md`, section 3) adds two details: the map key folds into a button, and focus returns to a panel's icon when it closes.
+
+**Built:**
+- **Real size:**
+  - The stage is the window, never transformed; the map is the part that grows and shrinks.
+  - The header, meters, bar and every card are re-sized for real pixels.
+  - The title and setup screens fit the window, and their main area scrolls.
+  - The projector board keeps its fixed picture.
+- **The command bar:** Brief, Draft, Delegates, (Summit), Staff and Record as icons with labels and badges: the Brief shows offers and questions waiting, the Draft its clause count.
+- **Panels:**
+  - A panel opens over the map from the bar.
+  - Clicking a token opens its card on the side of the map away from the token, with its actions first and details and dossier below.
+  - The Summit opens centre stage.
+  - The countries dim while a panel is open; the tokens stay bright and clickable.
+  - The map is clear at the start of each turn; panels open on demand.
+  - The ✕, Escape, clicking the sea, or clicking the open icon again closes a panel. Escape closes a panel before it opens the pause menu.
+- **The walkthrough and advice** are positioned in real pixels. The guide sits beside its target (left, right, below or above, whichever fits) and is sized to the window.
+
+**Measured** (Playwright, at 1366×657, 1536×753 and 1920×969 windows):
+- **The smallest text** anywhere in the game is 13 px (meter labels and icon labels); panel text is at least 16 px.
+- **Every command,** End turn and setup's Next sit inside the window at all three sizes.
+- **The stage** is never transformed.
+
+A browser test pins the 1366×657 case (`test_the_session_is_drawn_at_real_size_on_a_small_laptop`). Zoom to 200% on a 1366 laptop leaves a 683-pixel-wide window, which the board doesn't lay out for. That case is not yet measured.

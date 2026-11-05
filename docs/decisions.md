@@ -533,6 +533,15 @@ Measured in section 21 of the design doc.
 
 Measured in section 22 of the design doc.
 
+
+**Phase 10, real size, a command bar and pop-out panels (5 Nov 2026).** Ben found the side menu hard to read and was zooming in. The Session was a 1920×1080 picture shrunk to fit, so its text was about 9–12 px on school laptops, and browser zoom couldn't help. He chose real-size text with pop-out panels over a dimmed, clickable map. The Session is now laid out at the window's real size, so text keeps its set size (panels at least 16 px), and the side menu is a command bar whose panels open over the map. The projector board keeps its fixed picture. Measured in section 23 of the design doc.
+
+**Ben's phone session (5 Nov 2026)** proposed stages with breakthroughs, a growing delegation and pop-out menus (`docs/design/session-progression.md`, branch `claude/kind-cori-1rh98q`, merged in). Its pop-out menus are phase 10; the rest is phase 11. Choices made since:
+- Quick sessions keep one combined stage.
+- The game is still in development, so no "what's new" tour.
+- Old saves finish under the new rules.
+- A third character, the President of the committee, announces the stages and presides at the Summit. He is drawn from a colleague's photo with that colleague's consent (Ben, 5 Nov 2026): a stylised likeness. The photo is not kept in the repo, and the character is not named after him.
+
 ### D-100 The speech coach beside every speech box — Decided (5 Nov 2026, Ben)
 Ben: "there should be some stats and visual add-ins that makes speeches easier to write. some things such as word count, expected speaking time, repetitive language indicators, lists of persuasive techniques … keep the platform clean, easily set-up and intuitive … as pretty and fun/interactive/clear as possible." He chose:
 - every speech box, "togglable so it doesn't feel like a constant tutorial", plus Model UN phrases to click in ("addressing other honourable delegates etc.");

@@ -28,6 +28,7 @@
   <main class="b-table" id="main" tabindex="-1">
     {% include "chair/_board_map.html" %}
     <div class="s-verdict" id="s-verdict" aria-hidden="true"><span></span></div>
+    <button type="button" class="s-btn ghost small s-key-btn" id="s-key-btn" aria-expanded="false" aria-controls="b-key">Map key</button>
     <div class="s-tug" id="s-tug" role="group" aria-labelledby="s-tug-h">
       <p class="s-tug-h" id="s-tug-h">The vote as it stands</p>
       <div class="s-tug-bar" aria-hidden="true"><i class="y"></i><i class="a"></i><i class="n"></i></div>
@@ -36,14 +37,15 @@
     </div>
     <aside class="b-rail s-rail" id="s-rail" aria-label="The session">
       <div class="s-tabs" role="tablist" aria-label="The session">
-        <button type="button" role="tab" id="t-brief" aria-controls="p-brief" aria-selected="true" data-tab="brief">Brief</button>
-        <button type="button" role="tab" id="t-draft" aria-controls="p-draft" aria-selected="false" tabindex="-1" data-tab="draft">Draft <span class="s-n" id="n-draft"></span></button>
-        <button type="button" role="tab" id="t-dele" aria-controls="p-dele" aria-selected="false" tabindex="-1" data-tab="dele">Delegates</button>
-        <button type="button" role="tab" id="t-summit" aria-controls="p-summit" aria-selected="false" tabindex="-1" data-tab="summit" hidden>The Summit</button>
-        <button type="button" role="tab" id="t-staff" aria-controls="p-staff" aria-selected="false" tabindex="-1" data-tab="staff">Staff</button>
-        <button type="button" role="tab" id="t-record" aria-controls="p-record" aria-selected="false" tabindex="-1" data-tab="record">Record</button>
+        <button type="button" role="tab" id="t-brief" aria-controls="p-brief" aria-selected="true" data-tab="brief">{{ icon("task") }}<span>Brief</span> <span class="s-n" id="n-brief"></span></button>
+        <button type="button" role="tab" id="t-draft" aria-controls="p-draft" aria-selected="false" tabindex="-1" data-tab="draft">{{ icon("resolution") }}<span>Draft</span> <span class="s-n" id="n-draft"></span></button>
+        <button type="button" role="tab" id="t-dele" aria-controls="p-dele" aria-selected="false" tabindex="-1" data-tab="dele">{{ icon("delegation") }}<span>Delegates</span></button>
+        <button type="button" role="tab" id="t-summit" aria-controls="p-summit" aria-selected="false" tabindex="-1" data-tab="summit" hidden>{{ icon("vote") }}<span>Summit</span></button>
+        <button type="button" role="tab" id="t-staff" aria-controls="p-staff" aria-selected="false" tabindex="-1" data-tab="staff">{{ icon("people") }}<span>Staff</span></button>
+        <button type="button" role="tab" id="t-record" aria-controls="p-record" aria-selected="false" tabindex="-1" data-tab="record">{{ icon("history") }}<span>Record</span></button>
       </div>
       <div class="s-panes" tabindex="0" aria-label="Your move">
+      <button type="button" class="s-panel-close" id="s-panel-close" aria-label="Close the panel">{{ icon("x") }}</button>
       <div class="s-pane" role="tabpanel" id="p-brief" aria-labelledby="t-brief">
         <section class="b-card" id="c-chapter"><h2 id="c-chapter-h">Chapter</h2><p class="s-goal" id="c-goal"></p><ul class="s-checks" id="c-progress"></ul><p class="s-small" id="c-turn"></p></section>
         <section class="b-card s-offers" id="c-offers" hidden><h2>At your door</h2>

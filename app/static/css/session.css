@@ -696,3 +696,140 @@
 .s-g-tray b { display: block; color: var(--parchment); font-family: var(--serif); font-size: 14px; letter-spacing: .1em; text-transform: uppercase; }
 .s-g-tray span { display: block; margin-top: 5px; padding: 3px 8px; background: var(--white); border: 1px solid var(--walnut); font-size: 15px; animation: s-in .45s both; }
 .s-g-hand { text-align: center; font-size: 32px; color: var(--brass-dk); }
+
+/* ---------- Phase 10: real size, a command bar and pop-out panels ----------
+   The Session is laid out at the screen's real size (the projector board keeps its fixed 1920x1080 picture): text
+   never shrinks below its set size, and browser zoom works. The side menu is a slim command bar; its panels open over
+   a dimmed map whose tokens stay clickable. */
+.b-stage.s-stage { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; transform: none; transform-origin: 0 0;
+  grid-template-rows: auto minmax(0, 1fr) auto; }
+.s-stage .b-top { grid-template-columns: 70px minmax(0, 1fr) auto; gap: 16px; padding: 10px 18px 8px; }
+.s-stage .b-roundel { width: 64px; height: 64px; }
+.s-stage .b-emblem { width: 54px; height: 54px; }
+.s-stage .b-kicker { font-size: 14px; letter-spacing: .2em; gap: 10px; }
+.s-stage .b-committee { font-size: 30px; }
+.s-stage .b-ribbon { height: 28px; padding: 0 22px; }
+.s-stage .b-ribbon-text { font-size: 16px; }
+.s-stage .s-meters { gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.s-stage .s-meter { min-width: 0; padding: 4px 10px 4px 6px; gap: 0 8px; }
+.s-stage .s-meter i { width: 30px; height: 30px; font-size: 15px; }
+.s-stage .s-meter b { font-size: 21px; }
+.s-stage .s-meter span { font-size: 13px; letter-spacing: .08em; }
+.s-stage .s-ap i { width: 14px; height: 14px; }
+.s-stage .b-table { grid-template-columns: minmax(0, 1fr) 96px; gap: 12px; padding: 10px 14px 4px; }
+.s-stage .b-frame { padding: 10px; }
+.s-stage .s-bar { gap: 12px; padding: 8px 14px 10px; }
+.session-body .s-stage .p-msg { font-size: 17px; padding: 8px 14px; }
+.s-stage .s-bar .s-btn { font-size: 16px; padding: 9px 16px; }
+.s-stage .s-btn.small { font-size: 15px; padding: 6px 12px; }
+.s-stage .b-key { width: 260px; padding: 8px 12px; }
+.s-stage .b-key li { font-size: 14px; }
+.s-stage .b-key-title, .s-stage .b-key-head { font-size: 13px; }
+.s-stage .b-key-note { font-size: 13px; }
+
+/* the command bar */
+.s-stage .s-rail { position: static; overflow: visible; padding: 0; gap: 0; }
+.s-stage .s-tabs { flex-direction: column; gap: 6px; border: 0; height: 100%; overflow-y: auto; }
+.s-stage .s-tabs button { flex: none; display: grid; justify-items: center; gap: 3px; padding: 10px 4px 8px; font-size: 13px; letter-spacing: .04em;
+  border: 2px solid var(--walnut-dk); position: relative; }
+.s-stage .s-tabs button + button { border-left: 2px solid var(--walnut-dk); }
+.s-stage .s-tabs .icon { width: 28px; height: 28px; }
+.s-stage .s-tabs .s-n { position: absolute; top: 4px; right: 6px; }
+.s-stage .s-rail:not(.open) .s-tabs button[aria-selected="true"] { background: var(--parchment); }
+
+/* the panel: docked beside the bar, beside a token, or centre stage at the summit */
+.s-stage .s-panes { position: absolute; z-index: 8; top: 10px; bottom: 6px; right: calc(96px + 26px); width: clamp(360px, 38vw, 600px);
+  overflow-y: auto; padding: 46px 14px 14px; background: linear-gradient(180deg, var(--wood), var(--walnut-dk));
+  border: 3px solid var(--brass-dk); box-shadow: 8px 10px 0 rgb(0 0 0 / 40%);
+  transition: opacity .22s ease, transform .22s ease, visibility 0s; }
+.s-stage .s-rail:not(.open) .s-panes { opacity: 0; visibility: hidden; transform: translateX(18px); pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease, visibility 0s .18s; }
+.s-stage .s-rail.dock-left .s-panes { right: auto; left: 24px; top: 96px; }
+.s-stage .s-rail.center .s-panes { right: auto; left: max(24px, calc((100% - 96px - min(960px, 78%)) / 2)); width: min(960px, 78%); }
+.s-panel-close { position: absolute; top: 8px; right: 10px; z-index: 2; width: 36px; height: 36px; padding: 0; display: grid; place-items: center;
+  border: 2px solid var(--walnut-dk); border-radius: 0; background: var(--parchment); color: var(--walnut-dk); cursor: pointer; }
+.s-panel-close:hover, .s-panel-close:focus-visible { background: var(--lit); color: var(--walnut-dk); }
+.s-panel-close .icon { width: 22px; height: 22px; }
+.s-panel-open .s-stage #b-map > :not(#b-tokens):not(defs) { filter: brightness(.55) saturate(.85); transition: filter .25s ease; }
+.s-stage #b-map > * { transition: filter .25s ease; }
+
+/* the vote bar, the advice corner and the cards, at real size */
+.s-stage .s-tug { top: 18px; left: 26px; width: min(520px, 46%); padding: 6px 12px 8px; }
+.s-stage .s-tug-n { font-size: 16px; }
+.s-stage .s-tug-stamp { font-size: 14px; }
+.s-stage .s-advice { left: 18px; bottom: 74px; width: min(620px, 56vw); grid-template-columns: 90px 1fr; }
+.s-stage .s-advice-face .g-face { width: 90px; height: 105px; }
+.s-stage .s-advice p { font-size: 17px; }
+.s-stage .s-overlay .s-doc { max-width: 94vw; max-height: 92vh; overflow-y: auto; }
+.s-stage .s-overlay .s-doc.wide { width: min(1180px, 94vw); }
+.s-stage .s-overlay .s-doc.s-dealdoc { width: min(1320px, 96vw); }
+.s-stage .s-chapter h2 { font-size: 52px; }
+.s-stage .s-guide { width: min(880px, 92vw); grid-template-columns: 160px minmax(0, 1fr); gap: 18px; }
+.s-stage .s-guide-face .g-face { width: 160px; height: 186px; }
+.s-stage .s-guide h2 { font-size: 28px; }
+.s-stage .s-guide-body p { font-size: 18px; }
+.s-stage .s-guide-list { font-size: 17px; }
+@media (max-width: 1150px) {
+  .s-stage .s-deal-cols { grid-template-columns: 1fr; }
+  .s-stage .s-guide { grid-template-columns: 110px minmax(0, 1fr); }
+  .s-stage .s-guide-face .g-face { width: 110px; height: 128px; }
+  .s-stage .s-meter span { display: none; }
+}
+@media (max-height: 760px) {
+  .s-stage .b-ribbon { display: none; }
+}
+/* the map key folds into a button */
+.s-stage .b-key { display: none; }
+.s-stage.s-key-open .b-key { display: block; bottom: 62px; }
+.s-key-btn { position: absolute; z-index: 5; left: 34px; bottom: 14px; }
+.s-key-btn[aria-expanded="true"] { background: var(--lit); }
+
+/* the title and setup screens at real size: the main area scrolls inside the window, the footer stays in view */
+.s-stage .s-title-main, .s-stage .s-setup-main { min-height: 0; overflow-y: auto; }
+.s-stage .s-title-main { grid-template-columns: minmax(300px, 520px) minmax(0, 1fr); gap: 32px; padding: 20px 32px 16px; }
+.s-stage .s-menu .s-btn { font-size: 19px; padding: 12px 18px; }
+.s-stage .s-menu .s-btn small { font-size: 15px; }
+.s-stage .s-hero { gap: 16px; }
+.s-stage .s-hero h2 { font-size: clamp(40px, 4.4vw, 68px); }
+.s-stage .s-hero .s-lede { font-size: 18px; }
+.s-stage .s-track li { width: 120px; font-size: 14px; }
+.s-stage .s-paths { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.s-stage .s-path b { font-size: 18px; }
+.s-stage .s-path span { font-size: 15px; }
+.s-stage .s-setup-main { padding: 14px 28px 0; gap: 12px; }
+.s-stage .s-steps li { font-size: 14px; padding: 0 10px; }
+.s-stage .s-steps .s-coin { width: 30px; height: 30px; font-size: 15px; }
+.s-stage .s-steps li + li::before { width: 20px; margin-right: 10px; }
+.s-stage .s-step { height: 100%; gap: 10px; }
+.s-stage .s-step > header h2 { font-size: 30px; }
+.s-stage .s-step > header p { font-size: 17px; }
+.s-stage .s-picks { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.s-stage .s-picks.three { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+.s-stage .s-pick { padding: 14px 16px 16px; }
+.s-stage .s-pick h3 { font-size: 20px; }
+.s-stage .s-pick p { font-size: 16px; }
+.s-stage .s-nav .s-note { font-size: 16px; }
+.s-stage .s-seats { grid-template-columns: minmax(0, 1fr) minmax(300px, 400px); gap: 16px; min-height: 0; }
+.s-stage .s-seats .b-frame { height: 100%; min-height: 240px; }
+.s-stage .s-seat b { font-size: 17px; }
+.s-stage .s-seat span { font-size: 14px; }
+.s-stage .s-summary dl { grid-template-columns: 180px 1fr; font-size: 18px; }
+.s-stage .s-check { font-size: 17px; }
+.s-stage .b-top { height: auto; min-height: 0; padding: 10px 18px 10px; }
+.s-stage .b-roundel { box-shadow: 0 0 0 3px var(--brass), 0 0 0 5px var(--brass-dk), 0 4px 8px rgb(0 0 0 / 50%); }
+.s-stage .s-tabs button[hidden] { display: none; }
+.s-stage .s-tabs button { padding: 8px 4px 6px; font-size: 13px; }
+.s-stage .s-tabs .icon { width: 26px; height: 26px; }
+@media (max-height: 700px) {
+  .s-stage .s-tabs button span:not(.s-n) { font-size: 12px; }
+  .s-stage .s-tabs .icon { width: 22px; height: 22px; }
+}
+.s-stage .s-step { grid-template-rows: auto minmax(0, 1fr) auto; }
+.s-stage .s-seats { overflow: hidden; }
+.s-stage .s-seats .b-frame { min-height: 0; }
+.s-stage .s-seat-list { min-height: 0; }
+.s-stage .b-bottom { padding: 6px 18px 8px; }
+.b-card .s-status { margin: 0 0 8px; font-size: 17px; color: var(--muted); }
+.s-country .s-facts { margin-top: 12px; }
+
+.s-stage .s-guide { width: clamp(520px, 50vw, 880px); }

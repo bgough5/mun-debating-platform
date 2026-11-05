@@ -14,17 +14,13 @@
   function say(t) { var m = $("p-msg") || $("s-msg"); if (m) m.textContent = t; var s = $("p-say"); if (s) s.textContent = t; }
   function restart(el, cls) { el.classList.remove(cls); void el.getBoundingClientRect(); el.classList.add(cls); }
 
-  // ---------- the 1920x1080 table, scaled to the screen ----------
-  function fit() {
-    var s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-    stage.style.transform = "translate(" + ((window.innerWidth - 1920 * s) / 2) + "px," + ((window.innerHeight - 1080 * s) / 2) + "px) scale(" + s + ")";
-  }
-  window.addEventListener("resize", fit); fit();
+  // ---------- the table at the screen's real size (phase 10): text never shrinks, and browser zoom works ----------
   function fitTitle() {
     var el = $("b-committee"); if (!el) return;
-    var size = 44; el.style.fontSize = size + "px";
-    while (el.scrollWidth > el.clientWidth && size > 26) { size -= 2; el.style.fontSize = size + "px"; }
+    var size = 30; el.style.fontSize = size + "px";
+    while (el.scrollWidth > el.clientWidth && size > 20) { size -= 1; el.style.fontSize = size + "px"; }
   }
+  window.addEventListener("resize", fitTitle);
   fitTitle();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitle);
 
@@ -71,6 +67,7 @@
     var w = $("s-walk"); if (w && !w.hidden) { var sk = $("s-guide-skip"); if (sk) sk.click(); return; }
     var shown = Array.prototype.filter.call(document.querySelectorAll(".s-overlay"), function (o) { return !o.hidden; });
     if (shown.length) { close(shown[shown.length - 1].id); return; }
+    if (window.socSessionPanel && window.socSessionPanel.close()) return;
     if (page === "game") open("s-pause");
   });
   function syncSettings() {
@@ -217,15 +214,35 @@
 
     // ---------- tabs ----------
     var TABS = ["brief", "draft", "dele", "summit", "staff", "record"];
-    function setTab(name, focus) {
+    var rail = $("s-rail");
+    function panelOpen() { return rail.classList.contains("open"); }
+    function setTab(name, focus, dock) {
       TABS.forEach(function (t) {
         var b = $("t-" + t), on = t === name;
         b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; $("p-" + t).hidden = !on;
       });
+      rail.classList.add("open"); document.body.classList.add("s-panel-open");
+      rail.classList.toggle("center", name === "summit");
+      rail.classList.toggle("dock-left", name === "dele" && dock === "left");
       if (focus) $("t-" + name).focus();
     }
+    function closePanel() {
+      if (!panelOpen()) return false;
+      var inside = rail.querySelector(".s-panes").contains(document.activeElement);
+      rail.classList.remove("open", "center", "dock-left"); document.body.classList.remove("s-panel-open");
+      if (inside) { var cur = rail.querySelector('[role="tab"][aria-selected="true"]'); if (cur) cur.focus(); }   // focus back to its icon
+      return true;
+    }
+    var keyBtn = $("s-key-btn");
+    if (keyBtn) keyBtn.addEventListener("click", function () {
+      var on = !stage.classList.contains("s-key-open");
+      stage.classList.toggle("s-key-open", on); keyBtn.setAttribute("aria-expanded", String(on)); A.play("flip");
+    });
+    window.socSessionPanel = { close: function () { var w = $("s-walk"); return w && !w.hidden ? false : closePanel(); } };
+    $("s-panel-close").addEventListener("click", function () { closePanel(); A.play("flip"); });
     document.querySelector(".s-tabs").addEventListener("click", function (e) {
       var b = e.target.closest("[data-tab]"); if (!b) return;
+      if (panelOpen() && b.getAttribute("aria-selected") === "true") { closePanel(); A.play("flip"); return; }
       setTab(b.getAttribute("data-tab")); A.play("flip");
     });
     document.querySelector(".s-tabs").addEventListener("keydown", function (e) {
@@ -406,8 +423,8 @@
       if (d.favour) flags.push("owes you a favour"); if (d.promised) flags.push("you've made it a promise");
       if (d.predicted) flags.push("you predicted: " + d.predicted);
       if (flags.length) fact("Also", flags.join("; "));
-      c.appendChild(dl);
-      if (d.dossier && d.dossier.known) c.appendChild(dossierBox(d.dossier, false));
+      c.appendChild(h("p", "s-status", (d.est === "yes" ? "Likely for" : d.est === "no" ? "Likely against" : d.est ? "Unsure" : "No draft yet") +
+        " · trust " + d.trust + " of 3" + (d.deal_vote ? " · deal: " + d.deal_vote : "") + (d.secured ? " · secured" : "")));
       var grid = h("div", "s-acts-grid"), noAp = !v.ap;
       grid.appendChild(btn("Lobby (" + d.lobby_cost + " Influence)", "s-btn small", function () { move({ do: "lobby", iso3: picked }); }, noAp || v.influence < d.lobby_cost));
       grid.appendChild(d.read ? btn("Open the file", "s-btn ghost small", function () { showFile(d.file); })
@@ -436,6 +453,8 @@
       });
       grid.appendChild(pr);
       c.appendChild(grid);
+      c.appendChild(dl);                                            // the details and the dossier below the actions
+      if (d.dossier && d.dossier.known) c.appendChild(dossierBox(d.dossier, false));
       box.appendChild(c);
     }
     function showFile(f) {
@@ -537,6 +556,8 @@
       $("c-aim").textContent = "Your aim: " + v.path.name + ". " + v.path.what;
       regions(v);
       tug(v, prev);
+      var nb = $("n-brief");                                          // what's waiting on the Brief: offers, a question
+      if (nb) nb.textContent = v.phase === "chapter" ? ((v.offers || []).length + (v.question ? 1 : 0) || "") : "";
       staff(v);
       pins(v);
       var rs = $("s-reserve");
@@ -924,7 +945,7 @@
     var G = window.socSession && window.socSession.guide;
     function guideOn() { return A.settings().tips !== false; }
     function stageBox(el) {
-      var sr = stage.getBoundingClientRect(), sc = sr.width / 1920, r = el.getBoundingClientRect();
+      var sr = stage.getBoundingClientRect(), sc = sr.width / stage.offsetWidth, r = el.getBoundingClientRect();
       return { x: (r.left - sr.left) / sc, y: (r.top - sr.top) / sc, w: r.width / sc, h: r.height / sc };
     }
     function visible(sel) { var e = sel && document.querySelector(sel); return e && e.getClientRects().length ? e : null; }
@@ -1103,29 +1124,32 @@
       var spot = $("s-spot"), target = visible(s.at);
       var panes = target && target.closest(".s-panes");
       if (panes) {
-        var sc0 = stage.getBoundingClientRect().width / 1920, pr = panes.getBoundingClientRect(), tr = target.getBoundingClientRect();
+        var sc0 = stage.getBoundingClientRect().width / stage.offsetWidth, pr = panes.getBoundingClientRect(), tr = target.getBoundingClientRect();
         if (tr.top < pr.top || tr.bottom > pr.bottom) panes.scrollTop += (tr.top - pr.top) / sc0 - 12;
       }
       requestAnimationFrame(function () {
-        var gw = guide.offsetWidth, gh = guide.offsetHeight, left, top;
+        var gw = guide.offsetWidth, gh = guide.offsetHeight, left, top, W0 = stage.clientWidth, H0 = stage.clientHeight;
         if (target) {
           var r = stageBox(target), pad = 10;
           spot.classList.remove("off");
           spot.style.left = (r.x - pad) + "px"; spot.style.top = (r.y - pad) + "px";
-          var bottom = panes ? stageBox(panes).y + stageBox(panes).h : 1080;
+          var bottom = panes ? stageBox(panes).y + stageBox(panes).h : H0;
           spot.style.width = (r.w + 2 * pad) + "px"; spot.style.height = Math.max(40, Math.min(r.h + 2 * pad, bottom - r.y + pad)) + "px";
-          if (r.x > 1100) { left = r.x - gw - 40; top = Math.min(Math.max(150, r.y), 1080 - gh - 40); }
-          else if (r.y < 200 && r.h < 200) { left = Math.min(Math.max(40, r.x + r.w / 2 - gw / 2), 1920 - gw - 40); top = r.y + r.h + 36; }
-          else if (r.w > 900) { left = 1920 - gw - 60; top = 1080 - gh - 130; }
-          else { left = Math.min(r.x + r.w + 40, 1920 - gw - 40); top = Math.min(Math.max(150, r.y), 1080 - gh - 40); }
+          // beside the target if there is room (left, right, below, above), so the guide never covers what it points at
+          var cy = function (y) { return Math.min(Math.max(12, y), H0 - gh - 12); }, cx = function (x) { return Math.min(Math.max(12, x), W0 - gw - 12); };
+          var tries = [[r.x - gw - 24, cy(r.y)], [r.x + r.w + 24, cy(r.y)], [cx(r.x + r.w / 2 - gw / 2), r.y + r.h + 20], [cx(r.x + r.w / 2 - gw / 2), r.y - gh - 20]];
+          var fit = tries.filter(function (q) { return q[0] >= 12 && q[1] >= 12 && q[0] + gw <= W0 - 12 && q[1] + gh <= H0 - 12; })[0];
+          if (fit) { left = fit[0]; top = fit[1]; }
+          else if (r.w > W0 * 0.45) { left = W0 - gw - 40; top = H0 - gh - 80; }           // a target as big as the map
+          else { left = r.x > W0 / 2 ? 12 : W0 - gw - 12; top = cy(r.y); }
         } else {
           spot.classList.add("off");
-          spot.style.left = "960px"; spot.style.top = "540px"; spot.style.width = "0px"; spot.style.height = "0px";
-          left = (1920 - gw) / 2; top = Math.max(60, (1080 - gh) / 2 - 20);
+          spot.style.left = (W0 / 2) + "px"; spot.style.top = (H0 / 2) + "px"; spot.style.width = "0px"; spot.style.height = "0px";
+          left = (W0 - gw) / 2; top = Math.max(20, (H0 - gh) / 2 - 20);
         }
-        guide.style.left = Math.max(30, left) + "px"; guide.style.top = Math.max(30, top) + "px";
+        guide.style.left = Math.max(12, left) + "px"; guide.style.top = Math.max(12, Math.min(top, H0 - gh - 12)) + "px";
         var X = parseFloat(spot.style.left), Y = parseFloat(spot.style.top), SW = parseFloat(spot.style.width), SH = parseFloat(spot.style.height);
-        var box = { t: [0, 0, 1920, Y], b: [0, Y + SH, 1920, 1080 - Y - SH], l: [0, Y, X, SH], r: [X + SW, Y, 1920 - X - SW, SH] };
+        var box = { t: [0, 0, W0, Y], b: [0, Y + SH, W0, H0 - Y - SH], l: [0, Y, X, SH], r: [X + SW, Y, W0 - X - SW, SH] };
         document.querySelectorAll("#s-walk .s-dim").forEach(function (d) {
           var q = box[d.getAttribute("data-dim")];
           d.style.left = q[0] + "px"; d.style.top = q[1] + "px"; d.style.width = Math.max(0, q[2]) + "px"; d.style.height = Math.max(0, q[3]) + "px";
@@ -1141,7 +1165,8 @@
       wrap.hidden = true;
       document.body.classList.remove("s-walking");
       setTab(W.tab);
-      var pn = document.querySelector(".s-panes"); if (pn) pn.scrollTop = 0;   // back to the top of the rail, where the turn starts
+      var pn = document.querySelector(".s-panes"); if (pn) pn.scrollTop = 0;
+      if (V && V.phase === "chapter") closePanel();                 // back to the map: the panels open from the bar
       var done = W.done; W.done = null;
       if (done) done(); else A.play("chime");
     }
@@ -1468,9 +1493,12 @@
 
     // the map is the way in to a delegation
     $("b-map").addEventListener("click", function (e) {
-      var t = e.target.closest(".b-token"); if (!t || !V) return;
+      var t = e.target.closest(".b-token");
+      if (!t) { if (V && V.phase === "chapter") closePanel(); return; }
+      if (!V) return;
       var iso = t.getAttribute("data-iso"); if (iso === V.you.iso3) return;
-      pick(iso); setTab("dele"); A.play("flip");
+      var mb = $("b-map").getBoundingClientRect(), tb = t.getBoundingClientRect();
+      pick(iso); setTab("dele", false, tb.left + tb.width / 2 > mb.left + mb.width * 0.55 ? "left" : "right"); A.play("flip");
     });
     document.addEventListener("click", function (e) { if (e.target.closest("[data-close]")) setTimeout(adviceNext, 500); });
     $("s-replay-walk").addEventListener("click", function () { close("s-pause"); if (V) walkStart(V, null, true); });
