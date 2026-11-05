@@ -31,7 +31,7 @@ def test_every_figure_has_a_year_and_a_source(scn):
 
 def _ready(scn, seed=4, difficulty="standard"):
     g = E.new_game(scn, scn.isos[seed % len(scn.isos)], seed=seed, difficulty=difficulty)
-    g["influence"], g["ap"] = 30, 3
+    g["influence"], g["ap"], g["chapter"] = 30, 3, 2             # the deal table opens in Bloc meetings (phase 12)
     free = [i for i in scn.isos if i not in E._others(g)]
     return g, free
 
@@ -41,8 +41,14 @@ def test_a_deal_buys_a_binding_vote(scn):
     iso = next(i for i in free if "yes" in E.deal_terms(scn, g, i)["get"])
     t = E.deal_terms(scn, g, iso)
     give = sorted(t["give"], key=lambda k: -t["give"][k])
-    g2, out = E.apply(scn, g, {"do": "deal", "iso3": iso, "give": give, "get": ["yes"]})
-    assert out["deal"] and g2["ap"] == g["ap"] - E.R["deal_ap"] and g2["deal_votes"][iso] == "yes"
+    g2, out = E.apply(scn, g, {"do": "deal", "stage": "open", "iso3": iso, "get": ["yes"]})
+    for _ in range(4):                                                   # pay their price (phase 12: haggling in rounds)
+        if not g2.get("talks"):
+            break
+        g2, out = E.apply(scn, g2, {"do": "deal", "stage": "offer", "give": g2["talks"]["asks"]})
+    if not out.get("deal"):
+        pytest.skip("they walked away")
+    assert g2["ap"] == g["ap"] - E.R["deal_ap"] and g2["deal_votes"][iso] == "yes"
     assert E.projection(scn, g2)["votes"][iso] == "yes"                  # the bar counts it
     final = E.final_clause(g2)
     if not E.red_line(scn, iso, final["tags"]):
@@ -56,19 +62,17 @@ def test_a_deal_buys_a_binding_vote(scn):
         E.apply(scn, g, {"do": "deal", "iso3": g["rivals"][0]["iso3"], "give": give, "get": ["yes"]})   # rivals don't deal
 
 
-def test_a_poor_offer_is_refused_with_a_counter_and_a_pledge_is_not_paid(scn):
+def test_a_poor_offer_is_countered_and_a_pledge_is_not_paid(scn):
     g, free = _ready(scn)
-    for iso in free:
-        t = E.deal_terms(scn, g, iso)
-        if "funding" in t["give"] and "sponsor" in t["get"] and t["give"]["funding"] + t["bonus"] < t["get"]["sponsor"]:
-            break
-    else:
-        pytest.skip("no costly ask in this game")
-    g2, out = E.apply(scn, g, {"do": "deal", "iso3": iso, "give": ["funding"], "get": ["sponsor"]})
-    assert not out["deal"] and out["verdict"] in ("more", "refuse")
-    assert g2["influence"] == g["influence"] and g2["pledged"] == 0 and g2["ap"] == g["ap"] - E.R["deal_ap"]
-    if out["counter"]:
-        assert out["counter"] in t["give"] and out["counter"] != "funding"
+    iso = next(i for i in free if "funding" in E.deal_terms(scn, g, i)["give"] and "sponsor" in E.deal_terms(scn, g, i)["get"])
+    g2, _ = E.apply(scn, g, {"do": "deal", "stage": "open", "iso3": iso, "get": ["sponsor"]})
+    t = g2["talks"]
+    low = min(t["give_vals"], key=lambda k: t["give_vals"][k])
+    if t["give_vals"][low] >= t["price"]:
+        pytest.skip("even the smallest item covers their price")
+    g3, out = E.apply(scn, g2, {"do": "deal", "stage": "offer", "give": [low]})
+    assert not out.get("deal") and (out.get("counter") is not None or out.get("walked") == "them")
+    assert g3["influence"] == g["influence"] and g3["pledged"] == 0 and g3["ap"] == g["ap"] - E.R["deal_ap"]   # nothing paid for a refusal
 
 
 def test_the_capital_objects_to_a_promise_on_your_red_line(scn):

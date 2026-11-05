@@ -199,3 +199,10 @@ STAGES_QUICK = {1: {"name": "Working session", "breakthrough": "your draft is re
                     "goal": "In one session: agree a zero draft, win a regional group and table your draft.",
                     "unlocks": "The Summit: the draft goes to the vote.",
                     "look": "Everything at once: draft, meet the regional groups, and gather sponsors."}}
+
+
+# Compromise with a rival (phase 12): what you can concede for peace.
+TRUCE_GIVE = {
+    "drop": {"name": "Drop the commitment it can't accept", "what": "Take its red line out of the draft, wherever it is."},
+    "include": {"name": "Let its wish into the text", "what": "Add a clause with what it came for."},
+}

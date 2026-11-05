@@ -9,6 +9,7 @@ import random
 from app.modules.mun.worldmap import REGIONS
 from app.modules.sim.campaign import content as K
 from app.modules.sim.campaign import engine as E
+from app.modules.sim.campaign import talks as T
 
 STYLES = {"hardliner": "mandate", "broker": "consensus", "drafter": "architect", "analyst": "kingmaker", "random": None}
 BRANCH = {"hardliner": ["point_of_order", "division", "bloc_whip"], "broker": ["bloc_whip", "back_channel", "friendly"],
@@ -61,6 +62,8 @@ class Bot:
         return self.est_yes(g, {**c, "tags": tags}, E.stance(self.scn, g, "you", {**c, "tags": tags})) <             self.est_yes(g, c, E.stance(self.scn, g, "you", c))
 
     def act(self, g, action) -> tuple[dict, bool]:
+        if action.get("do") == "lobby" and "args" not in action:      # a pitch: competent bots pick what will land
+            action = {**action, "args": T.bot_args(self.scn, g, action["iso3"], self.rng, self.style != "random")}
         if self.likely_refused(g, action):
             return g, False
         try:
@@ -83,6 +86,8 @@ class Bot:
                 g, _ = self.act(g, {"do": "secure", "iso3": friends[-1][1]})
         if g["phase"] == "chapter" and g["ap"] >= 2:
             g = self.try_deal(g)
+        if g["phase"] == "chapter" and g["ap"] >= 2:
+            g = self.try_peace(g)
         if g["phase"] != "chapter":
             return g
         for sk in BRANCH[self.style]:
@@ -126,7 +131,7 @@ class Bot:
         else:
             last = g["chapter"] == E.LENGTHS[g["length"]]["chapters"]
             p = E.projection(self.scn, g)
-            go = not last or (p["passed"] and p["yes"] - p["no"] >= 2)
+            go = not last or (p["passed"] and p["yes"] - p["no"] >= 2 and (self.style != "analyst" or len(g["whip"]) >= 8))
         g, _ = self.act(g, {"do": "advance" if go else "stay"})
         return g
 
@@ -140,7 +145,9 @@ class Bot:
                 if t["give"] and t["get"] and not t["done"]:
                     give = self.rng.sample(sorted(t["give"]), k=min(2, len(t["give"])))
                     get = [self.rng.choice(sorted(t["get"]))]
-                    g, _ = self.act(g, {"do": "deal", "iso3": iso, "give": give, "get": get})
+                    g, ok = self.act(g, {"do": "deal", "stage": "open", "iso3": iso, "get": get})
+                    if ok:
+                        g, _ = self.act(g, {"do": "deal", "stage": "offer", "give": give})
             return g
         proj = E.projection(self.scn, g)
         if proj["passed"] and proj["yes"] - proj["no"] > 2:
@@ -164,7 +171,36 @@ class Bot:
             if score >= 0.2 and (best is None or len(gives) < len(best[1])):
                 best = (iso, gives, ask)
         if best:
-            g, _ = self.act(g, {"do": "deal", "iso3": best[0], "give": best[1], "get": [best[2]]})
+            g = self.haggle(g, {"do": "deal", "stage": "open", "iso3": best[0], "get": [best[2]]})
+        return g
+
+    def haggle(self, g, opening):
+        """Open talks, then pay their price, or hold out once first (analysts and brokers), never with items the
+        capital minds."""
+        g, ok = self.act(g, opening)
+        for rnd in range(3):
+            t = g.get("talks")
+            if not ok or not t:
+                return g
+            safe = [k for k in t["asks"] if t["cap"].get(k, 0) >= 0]
+            if len(safe) < len(t["asks"]):
+                g, _ = self.act(g, {"do": opening["do"], "stage": "walk"})
+                return g
+            if rnd == 0 and len(safe) > 1 and self.style in ("analyst", "broker"):
+                safe = safe[:-1]                                  # hold out: offer a little less
+            g, ok = self.act(g, {"do": opening["do"], "stage": "offer", "give": safe})
+        return g
+
+    def try_peace(self, g):
+        """Brokers and analysts make peace with a rival when it costs the capital nothing."""
+        if self.style not in ("broker", "analyst") or g["ap"] < 2 or g.get("length") != "quick" and g["chapter"] < 2:
+            return g
+        for rv in g["rivals"]:
+            if rv.get("truce"):
+                continue
+            terms = T.compromise_terms(self.scn, g, rv)
+            if any(T._concession_cost(g, rv, k) >= 0 for k in terms):
+                return self.haggle(g, {"do": "compromise", "iso3": rv["iso3"]})
         return g
 
     def take(self, g, o) -> bool:
@@ -371,7 +407,7 @@ class Bot:
     def opt_analyst(self, g):
         out = self.sign_up(g)
         fc = self.final_clause(g)
-        last = g["chapter"] == E.LENGTHS[g["length"]]["chapters"] and g["turn"] >= E.LENGTHS[g["length"]]["turns"] - 1
+        last = g["chapter"] == E.LENGTHS[g["length"]]["chapters"] and g["turn"] >= E.turns_now(g) - 1
         unread = [i for i in self.free(g) if i not in g["read"]]
         if unread and len(g["read"]) < 8:
             out.append({"do": "read", "iso3": unread[0]})

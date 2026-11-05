@@ -106,6 +106,8 @@ R.update({"capital_start": 6, "capital_max": 10, "deal_funding": 2, "deal_influe
 # Phase 11: stages with breakthroughs, a growing delegation.
 R.update({"ap_base": 2, "overtime": [3, 4, 5], "attend_cost": 1, "attend_step": 0.15, "momentum_influence": 2,
           "momentum_respect": 1, "late_respect": 1})
+# Phase 12: pitches (lobbying is a choice of two arguments).
+R.update({"pitch_step": 0.55})
 PLAN = {"easy": {"noise": 0.4, "react": False, "poach": False},       # how rivals choose: easy ones blunder,
         "standard": {"noise": 0.0, "react": False, "poach": True},   # standard ones play the best move,
         "hard": {"noise": 0.0, "react": True, "poach": True}}        # hard ones also answer your last turn
@@ -360,6 +362,8 @@ def stance(scn: Scenario, g: dict, actor: str, clause: dict) -> int:
         mu = scn.dist(tags).get(g["iso3"], (0, 1))[0]
     else:
         rv = next(r for r in g["rivals"] if r["iso3"] == actor)
+        if rv.get("truce"):                                    # at peace: it backs the merged text, unless its red line is back in
+            return 0 if rv["block"] in tags else 1
         if clause.get("id") == "final" and rv["want"] in tags and rv["block"] in tags:
             return 0               # half a loaf: it won't vote down a text that carries what it came for
         if rv["block"] in tags:
@@ -469,6 +473,7 @@ def _when(g: dict) -> str:
 
 
 def _start_turn(scn: Scenario, g: dict) -> None:
+    g["talks"] = None
     rng = _rng(g)
     deck = K.EVENTS + scn.events + scn.events       # the scenario's own events come up about as often as the general ones
     ev = rng.choice(deck)
@@ -591,6 +596,9 @@ def apply(scn: Scenario, game: dict, action: dict) -> tuple[dict, dict]:
     do = action.get("do")
     if g["phase"] == "done":
         raise GameError("This session is over. Start a new one.")
+    why = T.locked(g, do)
+    if why:
+        raise GameError(why)
     handler = (CHAPTER if g["phase"] == "chapter" else SUMMIT).get(do)
     if not handler:
         raise GameError("That isn't something you can do now.")
@@ -644,6 +652,7 @@ def country_file(scn: Scenario, g: dict, iso: str) -> dict:
     out = {"iso3": iso, "name": scn.member(iso).name, "region": REGIONS.get(scn.member(iso).region, ""), "p5": scn.member(iso).p5,
            "positions": [{"tag": t, "label": scn.tags[t], "position": pos.get(t)} for t in sorted(scn.tags)],
            "red_lines": [scn.tags[t] for t in sorted(scn.tags) if (pos.get(t) or 0) <= -2],
+           "listens_to": T.listens_to(scn, g, iso) if "seed" in g else [],   # (the Almanac has no game to read)
            "sources": scn.sources.get(iso, []), "estimate": True, "fictional": scn.fictional,
            "shifts": [{"label": scn.tags[t], "dir": "warmer" if v > 0 else "cooler"}
                       for t, v in sorted(g.get("drift", {}).get(iso, {}).items()) if abs(v) >= 0.2]}
@@ -1116,7 +1125,7 @@ def rivals_move(scn: Scenario, g: dict) -> None:
     rng = _rng(g)
     cr = g.get("crisis") or {}
     g["moved"] = {}
-    for rv in g["rivals"]:
+    for rv in [r for r in g["rivals"] if not r.get("truce")]:
         extra = 1 if cr.get("id") == "partner" and cr.get("rival") == rv["iso3"] and cr.get("chapter") == g["chapter"] else 0
         tried: set = set()
         for _ in range(d["ap"] + extra):
@@ -1140,7 +1149,7 @@ def _intentions(scn: Scenario, g: dict) -> None:
     the rival's plans)."""
     plan = PLAN[g["difficulty"]]
     g["intent"] = {}
-    for rv in g["rivals"]:
+    for rv in [r for r in g["rivals"] if not r.get("truce")]:
         opts = [o for o in _rival_options(scn, g, rv, poach=plan["poach"]) if rv["influence"] + R["rival_income"] >= o[2]]
         if opts:
             alt = opts[1] if len(opts) > 1 else None
@@ -1240,7 +1249,7 @@ def _pending_amendment(scn: Scenario, g: dict) -> None:
     if s["i"] >= len(s["queue"]) or s["amendments_left"] <= 0:
         return
     c = _clause(g, s["queue"][s["i"]])
-    for rv in g["rivals"]:
+    for rv in [r for r in g["rivals"] if not r.get("truce")]:
         if rv["block"] in c["tags"] and len(c["tags"]) > 1:
             s["pending"] = {"by": rv["iso3"], "remove": rv["block"], "tags": [t for t in c["tags"] if t != rv["block"]]}
             return
@@ -1568,6 +1577,8 @@ def _staff_reports(scn: Scenario, g: dict) -> None:
             if s >= 2:
                 tag = max(scn.tags, key=lambda t: (mu_of(scn, g, iso, [t]), t))
                 parts.append(f"it most wants a clause that {_lc(scn.tags[tag]).rstrip('.')}")
+                lt = T.listens_to(scn, g, iso)
+                parts.append(f"pitch it {lt[0].lower()} and {lt[1].lower()}" if right else f"pitch it {lt[0].lower()}")
             if s >= 3:
                 courted = max(g["rivals"], key=lambda r: g["sway"][r["iso3"]].get(iso, 0.0), default=None)
                 if courted and g["sway"][courted["iso3"]].get(iso, 0.0) > 0.2:
@@ -1686,7 +1697,7 @@ def rival_outcomes(scn: Scenario, g: dict) -> list[dict]:
     out = []
     for rv in g["rivals"]:
         got, hit = rv["want"] in tags and passed, rv["block"] in tags and passed
-        verdict = ("got what it came for" if got and not hit else "won something, and lost something" if got else
+        verdict = "made peace with you, and co-sponsored the merged text" if rv.get("truce") else ("got what it came for" if got and not hit else "won something, and lost something" if got else
                    "lost: its red line is in the resolution" if hit else "went home with nothing")
         out.append({"name": scn.member(rv["iso3"]).name, "style": K.RIVAL_STYLES[rv.get("style", "hawk")]["name"],
                     "want": scn.tags[rv["want"]], "block": scn.tags[rv["block"]], "won": got and not hit, "verdict": verdict})
@@ -1745,66 +1756,6 @@ def deal_verdict(score: float) -> str:
 
 CAPITAL_WHY = {"trade": "You opened our market without asking us. Our producers are furious.",
                "clause": "You promised to back a clause that crosses our red line. That is not what we sent you to do."}
-
-
-def a_deal(scn, g, a):
-    iso = a.get("iso3")
-    _country(scn, g, iso)
-    name = scn.member(iso).name
-    give = [i for i in dict.fromkeys(a.get("give") or []) if isinstance(i, str)]
-    get = [i for i in dict.fromkeys(a.get("get") or []) if isinstance(i, str)]
-    if not give or not get:
-        raise GameError("A deal needs something on each side of the table.")
-    if iso in g.setdefault("dealt", []):
-        raise GameError(f"You've already made a deal with {name} this chapter.")
-    if g.get("deal_tick") == g.get("tick"):
-        raise GameError("You've already sat at the deal table this turn.")
-    t = deal_terms(scn, g, iso)
-    if any(i not in t["give"] for i in give) or any(i not in t["get"] for i in get):
-        raise GameError("Part of that deal isn't on the table any more.")
-    if "yes" in get and "abstain" in get:
-        get.remove("abstain")
-    _spend(g, R["deal_ap"], R["deal_funding"] if "funding" in give else 0)
-    g["deal_tick"] = g.get("tick")
-    score = round(sum(t["give"][i] for i in give) + t["bonus"] - sum(t["get"][i] for i in get), 2)
-    verdict = deal_verdict(score)
-    if score < 0:
-        if "funding" in give:
-            g["influence"] += R["deal_funding"]            # a refused pledge isn't paid
-        counter = next((i for i in sorted(t["give"], key=lambda i: (t["give"][i], i)) if i not in give and score + t["give"][i] >= 0), None)
-        _log(g, iso, f"{name} turned down your deal." + (" They might take it with more on the table." if verdict == "more" else ""), "deal", iso)
-        return {"deal": False, "verdict": verdict, "counter": counter, "score": score}
-    g["dealt"].append(iso)
-    for i in give:
-        if i == "funding":
-            g["pledged"] = g.get("pledged", 0) + 1
-        elif i == "trade":
-            g["trade_deals"] = g.get("trade_deals", 0) + 1
-        elif i == "candidacy":
-            g.setdefault("candidacies", []).append(iso)
-        elif i == "clause":
-            g["promises"].append({"iso3": iso, "clause": t["clause"], "kept": None})
-    for i in get:
-        if i in ("yes", "abstain"):
-            g.setdefault("deal_votes", {})[iso] = i
-        elif i == "sponsor":
-            g["sponsors"].append(iso)
-        elif i == "influence":
-            g["influence"] += R["deal_influence"]
-        elif i == "intel":
-            rv_iso, it = next((k, v) for k, v in g["intent"].items() if v)
-            _log(g, iso, f"{name} tells you: {scn.member(rv_iso).name} will go after "
-                         f"{_target_name(scn, g, it['kind'], it['target'])} next.", "intel", rv_iso)
-    g["trust"][iso] = min(R["trust_max"], g["trust"][iso] + 1)
-    _sway(g, "you", iso, 0.2)
-    g["deals"] = g.get("deals", 0) + 1
-    g["table_deals"] = g.get("table_deals", 0) + 1
-    _log(g, "you", f"You made a deal with {name}: " + ", ".join(K.DEAL_GIVE[i]["name"].lower() for i in give) + " for "
-         + ", ".join(K.DEAL_GET[i]["name"].lower() for i in get) + ".", "deal", iso)
-    for i in give:
-        if t["capital"].get(i):
-            _capital(scn, g, t["capital"][i], CAPITAL_WHY.get(i, "Your capital doesn't like that deal."))
-    return {"deal": True, "verdict": verdict, "score": score}
 
 
 def _deal_vote(scn: Scenario, g: dict, iso: str, clause: dict, vote: str) -> str:
@@ -1916,8 +1867,8 @@ def ap_sources(scn: Scenario, g: dict) -> list[dict]:
          "next": None if quick or stage_n >= 2 else ("+1 from Bloc meetings, +2 from Sponsors" if stage_n == 0 else "+2 from Sponsors")},
         {"code": "staff", "name": "Your staff", "n": stars // 4,
          "next": f"{4 - stars % 4} more adviser star{'s' if 4 - stars % 4 != 1 else ''} (hire or promote) for another"},
-        {"code": "experience", "name": "Your experience", "n": (xp >= 5) + (xp >= 10),
-         "next": "Expertise 5" if xp < 5 else "Expertise 10" if xp < 10 else None},
+        {"code": "experience", "name": "Your staff's know-how", "n": (xp >= 5) + (xp >= 10),
+         "next": "know-how 5 (read files, answer procedure)" if xp < 5 else "know-how 10" if xp < 10 else None},
         {"code": "respect", "name": "Respect", "n": (rs >= 5) + (rs >= 8),
          "next": "Respect 5" if rs < 5 else "Respect 8" if rs < 8 else None},
         {"code": "coalition", "name": "Coalition", "n": 1 if mine >= 2 else 0,
@@ -2017,10 +1968,12 @@ def _end_stage(scn: Scenario, g: dict, early: bool = False) -> None:
     _open_summit(scn, g)
 
 
-CHAPTER = {"lobby": a_lobby, "read": a_read, "propose": a_propose, "amend": a_amend, "strike": a_strike, "promise": a_promise,
+from app.modules.sim.campaign import talks as T  # noqa: E402  (talks uses the engine's primitives above)
+
+CHAPTER = {"lobby": T.a_lobby, "read": a_read, "propose": a_propose, "amend": a_amend, "strike": a_strike, "promise": a_promise,
            "side_event": a_side_event, "favour": a_favour, "whip": a_whip, "sign": a_sign, "answer": a_answer, "skill": a_skill,
            "divide": a_divide, "merge": a_merge, "bloc_whip": a_bloc_whip, "abstain": a_abstain, "offer": a_offer,
-           "hire": a_hire, "post": a_post, "reserve": a_reserve, "secure": a_secure, "deal": a_deal,
+           "hire": a_hire, "post": a_post, "reserve": a_reserve, "secure": a_secure, "deal": T.a_deal, "compromise": T.a_compromise,
            "attend": a_attend, "overtime": a_overtime, "advance": a_advance, "stay": a_stay, "end_turn": a_end_turn}
 SUMMIT = {"speech": s_speech, "decide": s_decide, "final": s_final, "statement": s_statement, "skill": a_skill, "post": a_post}
 
@@ -2061,6 +2014,7 @@ def debrief(scn: Scenario, g: dict) -> dict:
     out["capital"] = {"confidence": g.get("capital", R["capital_start"]), "of": R["capital_max"], "deals": g.get("deals", 0),
                       "recalled": bool((g.get("result") or {}).get("recalled"))}
     out["rivals"] = rival_outcomes(scn, g)
+    out["ledger"] = T.ledger(scn, g)
     out["staff"] = [{"name": a["name"], "kind": K.STAFF_KINDS[a["kind"]]["name"], "stars": a["stars"], "xp": a["xp"]} for a in g.get("staff", [])]
     if not tags:
         return out

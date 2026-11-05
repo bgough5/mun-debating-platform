@@ -23,6 +23,7 @@ from app.modules.mun.worldmap import REGIONS
 from app.modules.sim.campaign import content as K
 from app.modules.sim.campaign import econ as X
 from app.modules.sim.campaign import engine as E
+from app.modules.sim.campaign import talks as T
 from app.modules.sim.campaign.scenario import Scenario, load, rebind
 from app.util import now_iso
 
@@ -196,6 +197,15 @@ def view(scn: Scenario, g: dict) -> dict:
              "est": None if rival or not final["tags"] else E._deal_vote(scn, g, iso, final, E.vote_of(scn, E.latent(scn, g, iso, final, mood=False))),
              "deal_vote": (g.get("deal_votes") or {}).get(iso)}
         t["dossier"] = X.profile(iso)
+        rel = g["trust"].get(iso, 0) + 2 * g["sway"]["you"].get(iso, 0.0)
+        t["relation"] = 2 if rel >= 3 else 1 if rel >= 1 else 0 if rel > -1 else -1 if rel > -3 else -2
+        t["commitments"] = [c["what"] for c in T.ledger(scn, g, iso)]
+        if iso in g["read"]:
+            t["listens_to"] = T.listens_to(scn, g, iso)
+        if rival and chapters:
+            rv = next(r for r in g["rivals"] if r["iso3"] == iso)
+            t["truce"] = bool(rv.get("truce"))
+            t["peace_terms"] = list(T.compromise_terms(scn, g, rv)) if not rv.get("truce") else []
         if not rival and chapters:
             t["deal"] = E.deal_terms(scn, g, iso)
             t["lobby_cost"] = E.lobby_cost(scn, g, iso)
@@ -240,7 +250,7 @@ def view(scn: Scenario, g: dict) -> dict:
         "you": {"iso3": g["iso3"], "name": scn.member(g["iso3"]).name},
         "mandate": {k: {"code": v, "label": tags[v]} for k, v in g["mandate"].items()},
         "path": {"code": g["path"], **K.PATHS[g["path"]]}, "difficulty": g["difficulty"], "length": g["length"],
-        "rivals": [{"iso3": r["iso3"], "name": scn.member(r["iso3"]).name, "style": r.get("style", "hawk"),
+        "rivals": [{"iso3": r["iso3"], "name": scn.member(r["iso3"]).name, "style": r.get("style", "hawk"), "truce": bool(r.get("truce")),
                     "style_name": K.RIVAL_STYLES[r.get("style", "hawk")]["name"], "style_what": K.RIVAL_STYLES[r.get("style", "hawk")]["what"],
                     **({"want": tags[r["want"]], "block": tags[r["block"]]} if "rival_intel" in g["skills"] else {})} for r in g["rivals"]],
         "crisis": g.get("crisis"), "offers": [{**o, "name": scn.member(o["iso3"]).name} for o in g.get("offers", [])] if chapters else [],
@@ -254,6 +264,7 @@ def view(scn: Scenario, g: dict) -> dict:
         "capital": {"value": g.get("capital", E.R["capital_start"]), "max": E.R["capital_max"]},
         "budget": {"total": X.budget(g["iso3"]), "used": g.get("pledged", 0)},
         "deal_ready": g.get("deal_tick") != g.get("tick"), "deal_items": {"give": K.DEAL_GIVE, "get": K.DEAL_GET},
+        "talks": T.talks_view(scn, g), "args": T.ARGS, "unlock": {k: T.locked(g, k) for k in T.UNLOCK},
         "tug": _tug(scn, g),
         "event": g.get("event"), "question": {"ask": q["ask"], "options": q["options"]} if q else None,
         "draft": draft, "cards": [c for c in scn.cards if c["id"] in g["cards"]],

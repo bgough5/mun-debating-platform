@@ -31,7 +31,7 @@
           The platform's vote model turns them into a delegation's likely position on a whole clause.</p>
         <p>On top of that position, three things count:</p>
         <ul>
-          <li><b>Goodwill</b> you and the rival delegations build by lobbying, promises and side events. It pulls a delegation towards whatever its friend supports.</li>
+          <li><b>Goodwill</b> you and the rival delegations build by pitches, promises, deals and side events. It pulls a delegation towards whatever its friend supports.</li>
           <li><b>A regional group's endorsement</b>: when more than half of a group leans to one draft, the whole group leans a little further.</li>
           <li><b>The mood on the day</b>: a hidden draw for each delegation, fixed for the whole session, shared a little within blocs. It is the real uncertainty of any vote, and why the chance dial is a chance, not a promise.</li>
         </ul>
@@ -44,8 +44,18 @@
       <section class="s-doc" id="a-paths"><h2>Four ways to win</h2>
         <dl class="s-alm-dl">{% for code, p in paths.items() %}<dt>{{ p.name }} <span class="s-sub">· {{ p['for'] }}</span></dt><dd>{{ p.what }}</dd>{% endfor %}</dl>
       </section>
-      <section class="s-doc" id="a-skills"><h2>Diplomatic skills</h2>
-        <p>Earn Expertise by reading country files and answering procedure moments correctly. Each skill costs {{ skill_cost }}; the second in a branch needs the first.</p>
+      <section class="s-doc" id="a-talks"><h2>Pitches, deals and compromise</h2>
+        <p><b>A pitch</b> is two arguments: economic interest, security and stability, shared values, law and precedent, or regional solidarity.
+          Each delegation listens to two of them most, read in this game from its situation: its economy, its security, its region and its income.
+          These are the game's rules of thumb, not claims about any government. Its country file, or an adviser posted to it, tells you which.</p>
+        <p><b>The deal table</b> runs in rounds. A delegation names its price; offer less and it comes down towards the most it will give up (its
+          walk-away point), but each round tests its patience, and a rival courting it may outbid you. This is negotiation's real skill: knowing
+          your best alternative, and theirs.</p>
+        <p><b>Compromise with a rival</b>: drop the commitment it can't accept, or let its wish into the text, and it makes peace, brings part of its
+          support and co-sponsors a merged text. Giving something up to win the vote is how resolutions pass.</p>
+      </section>
+      <section class="s-doc" id="a-skills"><h2>Your staff's skills</h2>
+        <p>Your staff gain know-how when you read country files and answer procedure moments correctly. Each skill costs {{ skill_cost }}; the second in a branch needs the first.</p>
         <dl class="s-alm-dl">{% for code, k in skills.items() %}<dt>{{ k.name }} <span class="s-sub">· {{ k.branch }}</span></dt><dd>{{ k.what }}</dd>{% endfor %}</dl>
       </section>
       <section class="s-doc" id="a-countries"><h2>Country files</h2>

@@ -14,16 +14,41 @@ def _close_card(page):
     the Working group); close it as a player would, to reach the tokens."""
     page.click("#s-chapter-card [data-close]")
     page.wait_for_timeout(450)
+    _calm(page)                                                              # a stage's intro, the turn reel
     page.evaluate("document.getElementById('t-summit').hidden && window.socSessionPanel.close()")
+
+
+def _calm(page):
+    """Answer what comes between turns: the turn reel (skip the rest), a breakthrough (keep working) and advice."""
+    page.wait_for_timeout(700)
+    for _ in range(8):
+        if page.is_visible("#s-walk"):
+            page.click("#s-guide-skip" if page.is_visible("#s-guide-skip") else "#s-guide-next")
+        elif page.is_visible("#s-reel"):
+            page.click("#s-reel-skip" if page.is_visible("#s-reel-skip") else "#s-reel-next")
+        elif page.is_visible("#s-breakthrough"):
+            page.click("#s-bt-stay")
+        elif page.is_visible("#s-advice"):
+            page.click("#s-advice-ok")
+        else:
+            return
+        page.wait_for_timeout(300)
+
+
+def _end_turn(page, turn):
+    page.click("#s-end-turn")
+    page.wait_for_function(f"document.getElementById('s-where').textContent.indexOf('turn {turn}') >= 0")
+    _calm(page)
 
 
 def _to_the_summit(page):
     """End turns until the summit's card: four in a Quick session, or three if a crisis brought the deadline forward."""
-    for _ in range(6):
+    for _ in range(8):
         if page.is_visible("#s-chapter-card"):
             break
-        while page.is_visible("#s-advice"):
-            page.click("#s-advice-ok")
+        _calm(page)
+        if page.is_visible("#s-chapter-card"):
+            break
         page.click("#s-end-turn")
         page.wait_for_timeout(700)
     page.wait_for_selector("#s-chapter-card:not([hidden])")
@@ -73,6 +98,10 @@ def test_a_guest_sets_up_and_continues_a_session(browser, live):
     assert not axe(page, "session_game")
     page.click("#s-end-turn")
     page.wait_for_function("document.getElementById('s-where').textContent.indexOf('turn 2') >= 0")
+    page.wait_for_selector("#s-reel:not([hidden])")                          # the turn reel: one card at a time (phase 12)
+    assert page.inner_text("#s-reel-n").endswith(str(page.locator("#s-reel-n").inner_text().split(" of ")[-1]))
+    assert not axe(page, "session_reel")
+    _calm(page)
     page.click("#t-brief")                                                   # a panel is open: Escape closes it first
     page.keyboard.press("Escape")
     assert page.is_hidden("#s-pause")
@@ -105,15 +134,21 @@ def test_a_guest_makes_moves_on_the_board(browser, live):
     page.click("#s-begin")
     page.wait_for_selector("#s-chapter-card:not([hidden])")
     _close_card(page)
+    _calm(page)
     infl = int(page.inner_text("#m-influence b"))
     ap = page.locator("#s-ap i.on").count()            # 2 to 4: the opening news can change it
     ap_is = lambda k: page.wait_for_function(f"document.querySelectorAll('#s-ap i.on').length === {k}")
-    # Lobby from the map: the delegate answers, and an action point and some Influence are spent
+    # A pitch from the map (phase 12): two arguments; the delegate answers, and an action point and some Influence are spent
     page.click('#b-map .b-token[data-iso="IND"]')
     assert page.get_attribute("#t-dele", "aria-selected") == "true"
     page.wait_for_selector("#c-country h3:has-text('India')")
-    page.click("#c-country button:has-text('Lobby')")
+    assert page.is_disabled("#c-country .s-pitch button:has-text('Make the pitch')")   # two arguments first
+    page.locator("#c-country .s-arg").nth(0).click()
+    page.locator("#c-country .s-arg").nth(1).click()
+    assert page.locator("#c-country .s-arg[aria-pressed='true']").count() == 2
+    page.click("#c-country .s-pitch button:has-text('Make the pitch')")
     page.wait_for_selector("#c-heard:not([hidden]) blockquote")
+    assert "Your pitch:" in page.inner_text("#c-heard")
     ap_is(ap - 1)
     assert "India" in page.inner_text("#c-heard")
     assert int(page.inner_text("#m-influence b")) < infl
@@ -127,8 +162,7 @@ def test_a_guest_makes_moves_on_the_board(browser, live):
         page.click("#c-country .s-predict button:has-text('yes')")
         ap_is(ap - 3)
     assert not axe(page, "session_delegations")
-    page.click("#s-end-turn")
-    page.wait_for_function("document.getElementById('s-where').textContent.indexOf('turn 2') >= 0")
+    _end_turn(page, 2)
     # The draft: propose a clause in your own words, then amend another
     page.click("#t-draft")
     ap = page.locator("#s-ap i.on").count()
@@ -266,7 +300,7 @@ def test_the_chief_of_protocol_walks_a_new_player_through_the_session(browser, l
     page.wait_for_selector("#s-walk:not([hidden])")
     assert page.is_hidden("#s-chapter-card")                                 # the walkthrough comes before the session
     steps = page.locator("#s-guide-dots li").count()
-    assert steps >= 15 and "Welcome" in page.inner_text("#s-guide-h")
+    assert 7 <= steps <= 12 and "Welcome" in page.inner_text("#s-guide-h")       # a short tour (phase 12)
     assert page.locator("#s-guide-face svg.g-face").count() == 1
     page.wait_for_timeout(800)
     assert not axe(page, "session_walkthrough")
@@ -288,7 +322,7 @@ def test_the_chief_of_protocol_walks_a_new_player_through_the_session(browser, l
         if page.inner_text("#s-guide-next").lower() == "begin the session":
             break
         page.keyboard.press("ArrowRight")
-    for title in ("your rivals", "crises, news and offers", "then, the summit", "and the debrief", "the gavel is yours"):
+    for title in ("the president of the committee", "your secret instructions", "pitching a delegation", "the draft"):
         assert title in seen, (title, seen)
     page.check("#s-guide-off")                                               # don't show the tutorial again
     page.click("#s-guide-next")
@@ -302,18 +336,12 @@ def test_the_chief_of_protocol_walks_a_new_player_through_the_session(browser, l
     page.keyboard.press("Escape")
     assert page.is_hidden("#s-walk")
     page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: true}))")
-    for _ in range(4):                                                       # the Chief speaks up at key moments
-        page.click("#s-end-turn")
-        try:
-            page.wait_for_selector("#s-advice:not([hidden])", timeout=3000)
-            break
-        except Exception:
-            if page.is_visible("#s-chapter-card"):
-                _close_card(page)
-    assert page.is_visible("#s-advice") and page.inner_text("#s-advice-text")
-    assert not axe(page, "session_advice")
-    page.click("#s-advice-ok")
-    assert page.is_hidden("#s-advice")
+    page.click("#s-end-turn")                                                # the turn reel: the President, the Minister, advisers
+    page.wait_for_selector("#s-reel:not([hidden])")
+    assert page.inner_text("#s-reel-who") and page.locator("#s-reel-face svg").count() >= 1
+    while page.is_visible("#s-reel"):
+        page.click("#s-reel-next")
+    assert page.is_hidden("#s-reel")
     assert not errors, errors
     ctx.close()
 
@@ -332,7 +360,9 @@ def test_staff_the_vote_bar_and_the_reserve_in_the_browser(browser, live):
     page.click('[data-step="1"] [data-next]')
     page.wait_for_selector("#s-seats-box .s-seat")
     page.click('.s-seat[data-value="NZL"]')
-    for n in (2, 3, 4, 5):
+    page.click('[data-step="2"] [data-next]')
+    page.click('[data-pick="length"][data-value="quick"]')                   # every tool open from the start
+    for n in (3, 4, 5):
         page.click(f'[data-step="{n}"] [data-next]')
     page.click("#s-begin")
     page.wait_for_selector("#s-chapter-card:not([hidden])")
@@ -352,8 +382,7 @@ def test_staff_the_vote_bar_and_the_reserve_in_the_browser(browser, live):
     page.click("#s-reserve")
     page.wait_for_function("document.getElementById('s-reserve').textContent === 'Reserve ready'")
     assert page.locator("#s-ap i.on").count() == ap - 1 and page.is_disabled("#s-reserve")
-    page.click("#s-end-turn")
-    page.wait_for_function("document.getElementById('s-where').textContent.indexOf('turn 2') >= 0")
+    _end_turn(page, 2)
     page.wait_for_function("document.querySelector('#c-staff-list .s-report .s-sure') !== null")   # the first report arrives
     assert not errors, errors
     ctx.close()
@@ -361,8 +390,8 @@ def test_staff_the_vote_bar_and_the_reserve_in_the_browser(browser, live):
 
 
 def test_the_deal_table_in_the_browser(browser, live):
-    """Phase 9: a delegation's dossier, the deal table's trays and meter, your capital's reaction, a proposal; the deal
-    table passes axe."""
+    """Phases 9 and 12: a delegation's dossier; the deal table in rounds: choose what you ask for, open talks, hear
+    their price and patience, hold out with a smaller offer; the table passes axe."""
     ctx = browser.new_context(viewport={"width": 1600, "height": 900})
     page = ctx.new_page()
     errors = []
@@ -373,26 +402,33 @@ def test_the_deal_table_in_the_browser(browser, live):
     page.click('[data-step="1"] [data-next]')
     page.wait_for_selector("#s-seats-box .s-seat")
     page.click('.s-seat[data-value="NZL"]')
-    for n in (2, 3, 4, 5):
+    page.click('[data-step="2"] [data-next]')
+    page.click('[data-pick="length"][data-value="quick"]')
+    for n in (3, 4, 5):
         page.click(f'[data-step="{n}"] [data-next]')
     page.click("#s-begin")
     page.wait_for_selector("#s-chapter-card:not([hidden])")
     _close_card(page)
+    _calm(page)
     assert page.text_content("#m-capital b") == "6/10"
     page.click('#b-map .b-token[data-iso="IND"]', force=True)
     page.wait_for_selector("#c-country .s-dossier-box")
     assert "World Bank" in page.text_content("#c-country .s-dossier-box")
     page.click("#c-country .s-deal-btn")
     page.wait_for_selector("#s-deal:not([hidden]) .s-item")
-    assert page.is_disabled("#s-deal-go")                                    # nothing on the table yet
-    page.locator("#s-deal-give .s-item:not([disabled])").first.click()
+    assert page.is_disabled("#s-deal-go")                                    # choose what you ask for first
     page.locator("#s-deal-get .s-item:not([disabled])").first.click()
-    assert page.inner_text("#s-deal-verdict").startswith("They")
-    assert page.locator("#s-deal-capital p").count() == 1
+    assert page.inner_text("#s-deal-go").startswith("OPEN TALKS") or page.text_content("#s-deal-go").startswith("Open talks")
+    page.click("#s-deal-go")
+    page.wait_for_selector("#s-deal-fuse i")                                   # they name their price; their patience shows
+    assert page.locator("#s-deal-fuse i").count() == 5 and page.is_visible("#s-deal-accept") and page.is_visible("#s-deal-walk")
     page.wait_for_timeout(400)
     assert not axe(page, "session_deal_table")
+    on = page.locator("#s-deal-give .s-item.on")
+    if on.count() > 1:
+        on.last.click()                                                      # hold out: offer less than they ask
     page.click("#s-deal-go")
-    page.wait_for_function("document.getElementById('s-deal').hidden || document.getElementById('s-deal-verdict').textContent.indexOf('turned it down') >= 0")
+    page.wait_for_function("document.getElementById('s-deal').hidden || /came down|insult|walked|Deal/.test(document.getElementById('s-deal-verdict').textContent + document.getElementById('p-msg').textContent)")
     assert not errors, errors
     ctx.close()
 
@@ -413,7 +449,9 @@ def test_the_session_is_drawn_at_real_size_on_a_small_laptop(browser, live):
     page.wait_for_selector("#s-seats-box .s-seat")
     page.click('.s-seat[data-value="FJI"]')
     assert page.evaluate(inside, '[data-step="2"] [data-next]')                 # Next is in the window
-    for n in (2, 3, 4, 5):
+    page.click('[data-step="2"] [data-next]')
+    page.click('[data-pick="length"][data-value="quick"]')
+    for n in (3, 4, 5):
         page.click(f'[data-step="{n}"] [data-next]')
     page.click("#s-begin")
     page.wait_for_selector("#s-chapter-card:not([hidden])")

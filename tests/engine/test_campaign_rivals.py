@@ -33,7 +33,7 @@ def test_big_delegations_bring_more_but_greener_staff(scenarios):
 
 def test_hiring_and_posting_advisers(scenarios):
     scn = scenarios["comet_halcyon"]
-    g = E.new_game(scn, scn.isos[0], seed=3)
+    g = E.new_game(scn, scn.isos[0], seed=3, length="quick")   # every tool open at once
     g["influence"] = 40
     while len(g["staff"]) < E.R["staff_max"]:
         g, out = E.apply(scn, g, {"do": "hire", "kind": "legal"})
@@ -58,7 +58,7 @@ def test_hiring_and_posting_advisers(scenarios):
 def test_a_three_star_adviser_is_always_right_and_a_right_report_earns_promotion(scenarios):
     scn = scenarios["comet_halcyon"]
     for seed in range(1, 25):
-        g = E.new_game(scn, scn.isos[seed % len(scn.isos)], seed=seed)
+        g = E.new_game(scn, scn.isos[seed % len(scn.isos)], seed=seed, length="quick")
         adv = g["staff"][0]
         adv.update(stars=3, kind="analyst")
         rival = g["rivals"][0]["iso3"]
@@ -96,7 +96,7 @@ def test_rivals_plan_for_their_own_instructions_and_hard_ones_answer_your_last_t
 
 def test_a_reserve_answers_the_first_rival_move_against_you(scenarios):
     scn = scenarios["comet_halcyon"]
-    g = E.new_game(scn, scn.isos[0], seed=6)
+    g = E.new_game(scn, scn.isos[0], seed=6, length="quick")
     rv = g["rivals"][0]
     friend = next(i for i in scn.isos if i not in E._others(g))
     g["sway"]["you"][friend] = 1.0
@@ -113,7 +113,7 @@ def test_a_reserve_answers_the_first_rival_move_against_you(scenarios):
 
 def test_a_secured_delegation_is_twice_as_hard_to_move(scenarios):
     scn = scenarios["comet_halcyon"]
-    g = E.new_game(scn, scn.isos[0], seed=7)
+    g = E.new_game(scn, scn.isos[0], seed=7, length="quick")
     rv = g["rivals"][0]
     iso = next(i for i in scn.isos if i not in E._others(g))
     with pytest.raises(E.GameError):

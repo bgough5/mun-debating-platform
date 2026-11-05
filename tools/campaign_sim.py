@@ -29,7 +29,7 @@ sys.path.insert(0, str(ROOT))
 
 # Seconds a student would spend on each move: reading, thinking and the animation (a model, to be checked in a
 # real play test).
-SECONDS = {"attend": 30, "overtime": 10, "advance": 15, "stay": 5, "deal": 60, "hire": 20, "post": 15, "reserve": 10, "secure": 25, "offer": 30, "lobby": 45, "read": 60, "propose": 50, "amend": 40, "strike": 30, "promise": 30, "side_event": 30, "favour": 20,
+SECONDS = {"compromise": 50, "attend": 30, "overtime": 10, "advance": 15, "stay": 5, "deal": 60, "hire": 20, "post": 15, "reserve": 10, "secure": 25, "offer": 30, "lobby": 45, "read": 60, "propose": 50, "amend": 40, "strike": 30, "promise": 30, "side_event": 30, "favour": 20,
            "whip": 25, "sign": 25, "answer": 30, "skill": 30, "divide": 30, "merge": 30, "bloc_whip": 30, "end_turn": 40,
            "speech": 90, "decide": 60, "final": 60}
 FIXED = 6 * 60      # setup, the chapter cards and the debrief
@@ -82,7 +82,7 @@ def main() -> None:
                                         "rivals": len(g["rivals"]), "rivals_won": rivals_won,
                                         "rival_moves": sum(1 for x in g["log"] if x["kind"] == "rival"),
                                         "deals": g.get("table_deals", 0), "recalled": bool(g["result"].get("recalled")),
-                                        "capital": g.get("capital"), "breakthroughs": len(g.get("breakthroughs", {})),
+                                        "capital": g.get("capital"), "breakthroughs": len(g.get("breakthroughs", {})), "truces": g.get("truces", 0), "held_out": g.get("held_out", 0),
                                         "momentum": g.get("momentum", 0), "turns": len(g.get("history", [])),
                                         "ap_by_stage": g.get("ap_seen", {})})
             print(f"{code}: done ({time.time() - started:.0f}s)", flush=True)

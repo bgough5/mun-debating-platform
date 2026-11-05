@@ -17,9 +17,8 @@
       <p class="b-ribbon"><span class="b-ribbon-text" id="s-you">…</span></p>
     </div>
     <ul class="s-meters" aria-label="Your standing">
-      <li class="s-meter" id="m-influence" title="Influence: spent on lobbying, side events and favours"><i aria-hidden="true">₳</i><b>–</b><span>Influence</span></li>
+      <li class="s-meter" id="m-influence" title="Influence: spent on pitches, deals and side events"><i aria-hidden="true">₳</i><b>–</b><span>Influence</span></li>
       <li class="s-meter" id="m-respect" title="Respect: your standing in the room"><i aria-hidden="true">✦</i><b>–</b><span>Respect</span></li>
-      <li class="s-meter" id="m-expertise" title="Expertise: unlocks diplomatic skills"><i aria-hidden="true">✎</i><b>–</b><span>Expertise</span></li>
       <li class="s-meter" id="m-capital" title="Your capital's confidence in you: at zero you are recalled"><i aria-hidden="true">✉</i><b>–</b><span>Capital</span></li>
       <li class="s-meter" id="m-ap" title="Action points left this turn"><i aria-hidden="true">⚑</i><span class="s-ap" id="s-ap"></span><span>Actions</span></li>
     </ul>
@@ -119,7 +118,7 @@
   </main>
   <footer class="b-bottom s-bar">
     <button type="button" class="s-btn ghost small" data-open="s-pause">Menu</button>
-    <button type="button" class="s-btn ghost small" data-open="s-skills" id="s-skills-btn">Skills</button>
+    <button type="button" class="s-btn ghost small" data-open="s-skills" id="s-skills-btn">Staff skills</button>
     <p class="p-msg" id="p-msg" role="status"></p>
     <button type="button" class="s-btn ghost" id="s-reserve" title="Spend an action now to answer the first rival move against you before your next turn">Hold in reserve</button>
     <button type="button" class="s-btn" id="s-end-turn">End turn</button>
@@ -129,6 +128,12 @@
     <div class="s-doc s-chapter"><p class="s-eyebrow" id="s-cc-eyebrow">Chapter</p><div class="s-cc-pres" id="s-cc-pres" aria-hidden="true"></div><h2 id="s-cc-h">–</h2><p id="s-cc-goal"></p><p class="s-sub" id="s-cc-look"></p>
       <div class="s-cc-crisis" id="s-cc-crisis" hidden><span class="s-cc-stamp">Crisis</span><h3 id="s-cc-crisis-h"></h3><p id="s-cc-crisis-p"></p><p class="s-small" id="s-cc-crisis-t"></p></div>
       <div class="s-row s-center"><button type="button" class="s-btn" data-close="s-chapter-card">Begin</button></div></div>
+  </div>
+  <div class="s-overlay" id="s-reel" hidden role="dialog" aria-modal="true" aria-labelledby="s-reel-h">
+    <div class="s-doc s-reeldoc"><div class="s-reel-face" id="s-reel-face" aria-hidden="true"></div>
+      <div><p class="s-eyebrow" id="s-reel-who">–</p><h2 id="s-reel-h">–</h2><p id="s-reel-p"></p><ul class="s-reel-list" id="s-reel-list" hidden></ul>
+        <div class="s-row"><button type="button" class="s-btn" id="s-reel-next">Next</button>
+          <button type="button" class="s-btn ghost" id="s-reel-skip">Skip the rest</button><span class="s-sub" id="s-reel-n"></span></div></div></div>
   </div>
   <div class="s-overlay" id="s-breakthrough" hidden role="dialog" aria-modal="true" aria-labelledby="s-bt-h">
     <div class="s-doc s-btdoc"><div class="s-bt-pres" id="s-bt-pres" aria-hidden="true"></div>
@@ -159,16 +164,19 @@
         <div class="s-deal-mid">
           <div class="s-meter-dial" id="s-deal-dial" aria-hidden="true"><i></i></div>
           <p class="s-deal-verdict" id="s-deal-verdict" aria-live="polite">Choose what goes on the table.</p>
+          <div class="s-fuse" id="s-deal-fuse" role="img" aria-label="Their patience"></div>
           <div class="s-deal-capital" id="s-deal-capital"></div>
         </div>
         <section class="s-tray" aria-labelledby="s-get-h"><h3 id="s-get-h">You ask for</h3><div class="s-items" id="s-deal-get"></div></section>
       </div>
       <p class="s-small" id="s-deal-note"></p>
-      <div class="s-row"><button type="button" class="s-btn" id="s-deal-go">Propose the deal</button>
-        <button type="button" class="s-btn ghost" data-close="s-deal">Leave the table</button></div></div>
+      <div class="s-row"><button type="button" class="s-btn" id="s-deal-go">Open talks</button>
+        <button type="button" class="s-btn ghost" id="s-deal-accept" hidden>Accept their terms</button>
+        <button type="button" class="s-btn ghost" id="s-deal-walk" hidden>Walk away</button>
+        <button type="button" class="s-btn ghost" data-close="s-deal">Back to the map</button></div></div>
   </div>
   <div class="s-overlay" id="s-skills" hidden role="dialog" aria-modal="true" aria-labelledby="s-skills-h">
-    <div class="s-doc wide"><h2 id="s-skills-h">Diplomatic skills</h2>
+    <div class="s-doc wide"><h2 id="s-skills-h">What your staff know</h2>
       <p class="s-sub" id="s-skills-note">Earn Expertise by reading country files and getting procedure right. Each skill costs 3.</p>
       <div class="s-tree" id="s-tree"></div>
       <div class="s-row"><button type="button" class="s-btn" data-close="s-skills">Done</button></div></div>

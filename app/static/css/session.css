@@ -919,3 +919,44 @@
 .s-tug-aims { margin: 2px 0 0; font-size: 15px; color: var(--maroon); }
 .s-tug-aims:empty { display: none; }
 
+
+/* ---------- Phase 12: pitches, haggling, compromise, the turn reel, the ledger ---------- */
+.s-pitch { padding: 8px 10px; background: var(--white); border: 1px solid var(--walnut); display: grid; gap: 6px; }
+.b-card .s-pitch-h { margin: 0; font-size: 16px; }
+.b-card .s-pitch .s-small { margin: 0; }
+.s-args { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; }
+.s-arg { display: grid; gap: 2px; text-align: left; padding: 6px 8px; font: inherit; color: var(--ink); cursor: pointer; border-radius: 0;
+  background: var(--parchment); border: 2px solid var(--walnut); transition: transform .15s ease; }
+.s-arg:hover, .s-arg:focus-visible { background: var(--lit); color: var(--ink); }
+.s-arg.on { border-color: var(--maroon); background: var(--lit); transform: translateY(-2px); }
+.s-arg.known b::after { content: " ★"; color: var(--gold-text); }
+.s-arg b { font-family: var(--serif); font-size: 15px; color: var(--maroon); }
+.s-arg span { font-size: 13px; line-height: 1.3; }
+.b-card .s-pitch > .s-btn { justify-self: start; }
+.s-doc .s-listens { color: var(--green-dk); font-weight: 700; }
+.s-fuse { display: flex; gap: 6px; justify-content: center; margin: 4px 0 10px; }
+.s-fuse i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--stamp); }
+.s-fuse i.on { background: var(--stamp); }
+.s-fuse:empty { display: none; }
+.s-overlay .s-doc.s-reeldoc { width: min(820px, 94vw); display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 22px; align-items: center; }
+.s-reel-in { animation: s-card .6s cubic-bezier(.2, 1.2, .35, 1) both; }
+.s-reel-face .g-face { width: 140px; height: 163px; }
+.s-reel-face .s-ico { margin: 0 auto; }
+.s-reel-list { margin: 6px 0 10px; padding-left: 22px; font-size: 17px; line-height: 1.4; }
+.s-reel-list[hidden] { display: none; }
+.s-reel.tele #s-reel-p, #s-reel.tele #s-reel-p { font-family: "Courier New", Courier, monospace; text-transform: uppercase; font-size: 17px; }
+.s-reeldoc .s-row { align-items: center; gap: 12px; }
+.s-ledger { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.s-ledger li { padding: 4px 8px; border-left: 4px solid var(--walnut); font-size: 17px; }
+.s-ledger li.kept { border-left-color: var(--green); }
+.s-ledger li.broken { border-left-color: var(--stamp); }
+.b-token.committed .b-face { stroke: var(--brass); stroke-width: 2.5; }
+.b-token.truce .b-face { fill: var(--parchment); stroke: var(--green-dk); stroke-width: 2.5; }
+.s-g-pitch { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; }
+.s-g-pitch .s-arg { cursor: default; animation: s-in .45s both; }
+.s-g-pitch .s-arg.strong { background: var(--map-yes); }
+.s-g-pitch .s-arg.weak { opacity: .6; }
+.s-g-haggle { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 8px 0 12px; }
+.s-g-haggle div { text-align: center; padding: 6px; background: var(--white); border: 1px solid var(--walnut); animation: s-in .45s both; }
+.s-g-haggle b { display: block; font-family: var(--serif); font-size: 22px; color: var(--maroon); }
+.s-g-haggle span { font-size: 13px; }
