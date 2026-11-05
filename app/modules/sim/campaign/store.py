@@ -181,7 +181,7 @@ def view(scn: Scenario, g: dict) -> dict:
     open_promise = {pr["iso3"] for pr in g["promises"] if pr["kept"] is None}
     for iso in scn.isos:
         m = scn.member(iso)
-        base = {"name": m.name, "p5": m.p5, "veto": iso in scn.rule.veto, "region": REGIONS.get(m.region, ""), "group": m.group}
+        base = {"name": m.name, "p5": m.p5, "veto": iso in scn.rule.veto, "region": REGIONS.get(m.region, ""), "group": m.group, "rcode": m.region}
         if iso == g["iso3"]:
             tokens[iso] = {**base, "you": True, "dossier": X.profile(iso)}
             continue
@@ -227,9 +227,15 @@ def view(scn: Scenario, g: dict) -> dict:
     return {
         "v": E.VERSION, "pack": g["pack"], "title": scn.title, "fictional": scn.fictional, "phase": g["phase"],
         "chapter": g["chapter"], "turn": g["turn"], "chapters": L["chapters"], "turns": E.turns_now(g) if g["phase"] == "chapter" else L["turns"],
-        "chapter_name": K.CHAPTERS.get(g["chapter"] if g["length"] != "quick" else 1, {}).get("name", ""),
-        "goal": ("Build the draft (four clauses, one yours) and table it with sponsors and signatories." if g["length"] == "quick"
-                 else K.CHAPTERS.get(g["chapter"], {}).get("goal", "")),
+        "chapter_name": E.stage_names(g).get(g["chapter"], {}).get("name", ""),
+        "goal": E.stage_names(g).get(g["chapter"], {}).get("goal", ""),
+        "stage": _stage(scn, g), "stage_track": [{"n": n, "name": v["name"]} for n, v in E.stage_names(g).items()],
+        "ap_sources": E.ap_sources(scn, g) if g["phase"] == "chapter" else [],
+        "overtime_next": E.R["overtime"][g.get("overtime", 0)] if g["phase"] == "chapter" and g.get("overtime", 0) < len(E.R["overtime"]) else None,
+        "meeting": {"code": g["meeting"], "name": REGIONS[g["meeting"]], "attended": g.get("attended") == g.get("tick")}
+                   if g.get("meeting") and g["phase"] == "chapter" else None,
+        "rooms": _rooms(scn, g) if g["phase"] == "chapter" and (g["length"] == "quick" or g["chapter"] >= 2) else [],
+        "race": _race(scn, g) if g["phase"] == "chapter" and (g["length"] == "quick" or g["chapter"] >= 3) else [],
         "ap": g["ap"], "influence": g["influence"], "respect": g["respect"], "expertise": g["expertise"], "xp": g["xp"],
         "you": {"iso3": g["iso3"], "name": scn.member(g["iso3"]).name},
         "mandate": {k: {"code": v, "label": tags[v]} for k, v in g["mandate"].items()},
@@ -268,6 +274,59 @@ def view(scn: Scenario, g: dict) -> dict:
     }
 
 
+def _stage(scn: Scenario, g: dict) -> dict | None:
+    if g["phase"] != "chapter":
+        return None
+    st = E.stage_names(g)[g["chapter"]]
+    made = str(g["chapter"]) in g.get("breakthroughs", {})
+    left = max(0, E.turns_now(g) - g["turn"])
+    return {**st, "n": g["chapter"], "of": E.LENGTHS[g["length"]]["chapters"], "checklist": E.checklist(scn, g), "made": made,
+            "stayed": bool(g.get("stayed", {}).get(str(g["chapter"]))), "turns_left": left, "deadline": E.turns_now(g),
+            "momentum": {"respect": E.R["momentum_respect"], "influence": E.R["momentum_influence"] * left}}
+
+
+def _rooms(scn: Scenario, g: dict) -> list[dict]:
+    """Each regional group's meeting room: its members and where they lean, its coordinator, what an endorsement needs."""
+    out = []
+    for code, name in REGIONS.items():
+        members = [i for i in scn.isos if scn.member(i).region == code]
+        voters = [i for i in members if i not in E._others(g)]
+        if not voters:
+            continue
+        rows = []
+        for iso in members:
+            if iso == g["iso3"]:
+                rows.append({"iso3": iso, "name": scn.member(iso).name, "side": "self"})
+                continue
+            if any(r["iso3"] == iso for r in g["rivals"]):
+                rows.append({"iso3": iso, "name": scn.member(iso).name, "side": "rival-self"})
+                continue
+            mine = E.lean(scn, g, "you", iso)
+            best = max(g["rivals"], key=lambda r: E.lean(scn, g, r["iso3"], iso), default=None)
+            theirs = E.lean(scn, g, best["iso3"], iso) if best else -9
+            side = "you" if mine > E.R["lean_min"] and mine >= theirs else "rival" if theirs > E.R["lean_min"] else "undecided"
+            rows.append({"iso3": iso, "name": scn.member(iso).name, "side": side, "rival": scn.member(best["iso3"]).name if side == "rival" else None})
+        big = max(members, key=lambda i: ((X.data()["countries"].get(i, {}).get("gdp") or [0])[0], i))
+        courting = sorted({scn.member(r["iso3"]).name for r in g["rivals"] if g["region_last"].get(code) == r["iso3"]
+                           or sum(g["sway"][r["iso3"]].get(i, 0.0) for i in voters) > 0.3})
+        out.append({"code": code, "name": name, "members": rows, "coordinator": scn.member(big).name,
+                    "needed": len(voters) // 2 + 1, "yours": sum(1 for r in rows if r["side"] == "you"),
+                    "owner": _name(scn, g, g["endorse"][code]) if g["endorse"].get(code) else None,
+                    "owner_you": g["endorse"].get(code) == "you", "meeting": g.get("meeting") == code, "courting": courting})
+    return out
+
+
+def _race(scn: Scenario, g: dict) -> list[dict]:
+    """The clerk's sign-up sheets: yours beside each rival's, filling with flags."""
+    rows = [{"who": "You", "you": True, "sponsors": g["sponsors"], "signatories": g["signatories"]}]
+    rows += [{"who": scn.member(r["iso3"]).name, "you": False, "sponsors": r["sponsors"], "signatories": r["signatories"]} for r in g["rivals"]]
+    for r in rows:
+        r["sponsor_names"] = [scn.member(i).name for i in r["sponsors"]]
+        r["signatory_names"] = [scn.member(i).name for i in r["signatories"]]
+        r["tabled"] = len(r["sponsors"]) >= E.R["sponsors"] and len(r["sponsors"]) + len(r["signatories"]) >= E._signers_needed(scn)
+    return [{**r, "need_sponsors": E.R["sponsors"], "need_total": E._signers_needed(scn)} for r in rows]
+
+
 def _tug(scn: Scenario, g: dict) -> dict:
     """The tug-of-war bar: the vote on the whole draft as it stands, without the hidden moods."""
     if g["phase"] == "done":
@@ -275,8 +334,11 @@ def _tug(scn: Scenario, g: dict) -> dict:
         return {"yes": f.get("yes", 0), "no": f.get("no", 0), "abstain": f.get("abstain", 0), "passed": bool(f.get("passed")),
                 "summary": f.get("summary", ""), "of": len(scn.members), "final": True}
     p = E.projection(scn, g)
+    tags = set(E.final_clause(g)["tags"])
+    m = g["mandate"]
+    aims = (m["must"] in tags) + (m.get("also") in tags) + (m["red"] not in tags)
     return {"yes": p["yes"], "no": p["no"], "abstain": p["abstain"], "passed": p["passed"], "summary": p["summary"],
-            "of": len(scn.members), "final": False}
+            "of": len(scn.members), "final": False, "aims": aims}
 
 
 def _sphere(scn: Scenario, g: dict, iso: str) -> str | None:
@@ -302,6 +364,7 @@ def _summit_view(scn: Scenario, g: dict) -> dict | None:
         c = clauses[s["queue"][s["i"]]]
         cur = {"id": c["id"], "text": c["text"], "tags": [scn.tags[t] for t in c["tags"]], "n": s["i"] + 1, "of": len(s["queue"]),
                "chance": E.chance(scn, g, c), "stance": E.stance(scn, g, "you", c), "mine": c["author"] == "you",
+               "expected": _expected(scn, g, c),
                "author": _name(scn, g, c["author"]),
                "promised_to": [scn.member(pr["iso3"]).name for pr in g["promises"] if pr["clause"] == c["id"] and pr["kept"] is None]}
     atk = s.get("attack")
@@ -333,6 +396,15 @@ def _summit_view(scn: Scenario, g: dict) -> dict | None:
             "favours": [scn.member(i).name for i in g["favours"]], "po": "point_of_order" in g["skills"] and not s["po_used"],
             "offer_cost": E.R["offer_cost"], "influence": g["influence"],
             "names": {m.iso3: m.name for m in scn.members}}
+
+
+def _expected(scn: Scenario, g: dict, c: dict) -> dict:
+    """At the summit, every decision card shows the vote count you can expect (without the moods on the day)."""
+    st = {a: E.stance(scn, g, a, c) for a in ["you", *[r["iso3"] for r in g["rivals"]]]}
+    word = {1: "yes", -1: "no", 0: "abstain"}
+    votes = [word[st[m.iso3 if m.iso3 != g["iso3"] else "you"]] if (m.iso3 in st or m.iso3 == g["iso3"])
+             else E.vote_of(scn, E.latent(scn, g, m.iso3, c, st, mood=False)) for m in scn.members]
+    return {k: votes.count(k) for k in ("yes", "no", "abstain")}
 
 
 def results_for_staff(conn, class_ids) -> list[dict]:

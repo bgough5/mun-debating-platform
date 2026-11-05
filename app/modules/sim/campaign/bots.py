@@ -88,6 +88,14 @@ class Bot:
         for sk in BRANCH[self.style]:
             if g["xp"] >= K.SKILL_COST:
                 g, _ = self.act(g, {"do": "skill", "skill": sk})
+        g = self.stage_choice(g)
+        if g["phase"] != "chapter":
+            return g
+        if self.style != "random" and g["influence"] >= 10 and g.get("overtime", 0) == 0:
+            g, _ = self.act(g, {"do": "overtime"})            # money into time, when there is money to spare
+        m = g.get("meeting")
+        if m and g["ap"] >= 2 and g["influence"] >= 2 and g["endorse"].get(m) != "you" and                 (self.style in ("broker", "analyst") or self.rng.random() < 0.5):
+            g, _ = self.act(g, {"do": "attend"})
         tries = 0
         while g["ap"] > 0 and tries < 12:
             tries += 1
@@ -99,9 +107,27 @@ class Bot:
                     break
             if not done:
                 break
+        g = self.stage_choice(g)
+        if g["phase"] != "chapter":
+            return g
         if g["ap"] > 0 and self.style != "random" and not g.get("reserve"):
             g, _ = self.act(g, {"do": "reserve"})          # keep the last action back to answer a rival
         g, _ = self.act(g, {"do": "end_turn"})
+        return g
+
+    def stage_choice(self, g):
+        """At a breakthrough: move on now (momentum) or keep working. A competent bot moves on, except from the last
+        stage while the vote is still close; the random bot tosses a coin."""
+        ch = str(g["chapter"])
+        if g["phase"] != "chapter" or ch not in g.get("breakthroughs", {}) or g.get("stayed", {}).get(ch):
+            return g
+        if self.style == "random":
+            go = self.rng.random() < 0.5
+        else:
+            last = g["chapter"] == E.LENGTHS[g["length"]]["chapters"]
+            p = E.projection(self.scn, g)
+            go = not last or (p["passed"] and p["yes"] - p["no"] >= 2)
+        g, _ = self.act(g, {"do": "advance" if go else "stay"})
         return g
 
     def try_deal(self, g):

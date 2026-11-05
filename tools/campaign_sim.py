@@ -29,7 +29,7 @@ sys.path.insert(0, str(ROOT))
 
 # Seconds a student would spend on each move: reading, thinking and the animation (a model, to be checked in a
 # real play test).
-SECONDS = {"deal": 60, "hire": 20, "post": 15, "reserve": 10, "secure": 25, "offer": 30, "lobby": 45, "read": 60, "propose": 50, "amend": 40, "strike": 30, "promise": 30, "side_event": 30, "favour": 20,
+SECONDS = {"attend": 30, "overtime": 10, "advance": 15, "stay": 5, "deal": 60, "hire": 20, "post": 15, "reserve": 10, "secure": 25, "offer": 30, "lobby": 45, "read": 60, "propose": 50, "amend": 40, "strike": 30, "promise": 30, "side_event": 30, "favour": 20,
            "whip": 25, "sign": 25, "answer": 30, "skill": 30, "divide": 30, "merge": 30, "bloc_whip": 30, "end_turn": 40,
            "speech": 90, "decide": 60, "final": 60}
 FIXED = 6 * 60      # setup, the chapter cards and the debrief
@@ -82,7 +82,9 @@ def main() -> None:
                                         "rivals": len(g["rivals"]), "rivals_won": rivals_won,
                                         "rival_moves": sum(1 for x in g["log"] if x["kind"] == "rival"),
                                         "deals": g.get("table_deals", 0), "recalled": bool(g["result"].get("recalled")),
-                                        "capital": g.get("capital")})
+                                        "capital": g.get("capital"), "breakthroughs": len(g.get("breakthroughs", {})),
+                                        "momentum": g.get("momentum", 0), "turns": len(g.get("history", [])),
+                                        "ap_by_stage": g.get("ap_seen", {})})
             print(f"{code}: done ({time.time() - started:.0f}s)", flush=True)
     report = summarise(results)
     out = Path(args.out)
@@ -130,6 +132,10 @@ def summarise(results: list[dict]) -> dict:
                            for d in ("easy", "standard", "hard")},
         "random_recalled_hard": rate([r for r in ok if r["difficulty"] == "hard" and r["style"] == "random"], lambda r: r.get("recalled")),
         "deals_per_game": round(statistics.mean(r.get("deals", 0) for r in ok), 2) if ok else 0,
+        "breakthroughs_per_game": {s: round(statistics.mean(r.get("breakthroughs", 0) for r in ok if r["style"] == s and r["difficulty"] == "standard"), 2)
+                                   for s in styles},
+        "actions_per_turn_by_stage": {st: round(statistics.mean(v for r in ok if r["style"] != "random" for k, v in r.get("ap_by_stage", {}).items() if k == st), 2)
+                                      for st in ("1", "2", "3") if any(st in r.get("ap_by_stage", {}) for r in ok)},
         "rivals_win_share": {d: round(sum(r["rivals_won"] for r in ok if r["difficulty"] == d)
                                       / max(1, sum(r["rivals"] for r in ok if r["difficulty"] == d)), 3) for d in ("easy", "standard", "hard")},
     }

@@ -1,6 +1,6 @@
 # The Session: stages, breakthroughs and a growing delegation (proposal, 5 Nov 2026)
 
-Status: **proposed; Ben's choices made 5 Nov 2026; numbers to be measured.** Nothing in the engine changes until
+Status: **built** (phase 10: the pop-out menus; phase 11: everything else, 5 Nov 2026). Measured in sections 23 and 24 of `solo-campaign.md`. The original status line read: **proposed; Ben's choices made 5 Nov 2026; numbers to be measured.** Nothing in the engine changes until
 Ben's unpushed laptop work (phase 9) is on `main`, so this builds on it. When built, it becomes a section of
 `docs/design/solo-campaign.md` and a decision in `docs/decisions.md`.
 

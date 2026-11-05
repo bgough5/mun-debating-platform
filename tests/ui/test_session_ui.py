@@ -9,6 +9,14 @@ from tests.ui.conftest import axe
 pytestmark = pytest.mark.ui
 
 
+def _close_card(page):
+    """Close the stage card. In the chapters the stage's own panel then opens over the map (the Draft centre stage in
+    the Working group); close it as a player would, to reach the tokens."""
+    page.click("#s-chapter-card [data-close]")
+    page.wait_for_timeout(450)
+    page.evaluate("document.getElementById('t-summit').hidden && window.socSessionPanel.close()")
+
+
 def _to_the_summit(page):
     """End turns until the summit's card: four in a Quick session, or three if a crisis brought the deadline forward."""
     for _ in range(6):
@@ -59,7 +67,7 @@ def test_a_guest_sets_up_and_continues_a_session(browser, live):
     page.wait_for_url(re.compile(r"/session/guest/comet_halcyon\?slot=0$"))
     page.wait_for_selector("#s-chapter-card:not([hidden])")
     assert "working session" in page.inner_text("#s-cc-eyebrow").lower()
-    page.click("#s-chapter-card [data-close]")
+    _close_card(page)
     assert "New Zealand" in page.inner_text("#s-you") and page.locator("#c-instr-list li").count() == 3
     assert page.locator("#b-map .b-token.you").count() == 1
     assert not axe(page, "session_game")
@@ -96,7 +104,7 @@ def test_a_guest_makes_moves_on_the_board(browser, live):
         page.click(f'[data-step="{n}"] [data-next]')
     page.click("#s-begin")
     page.wait_for_selector("#s-chapter-card:not([hidden])")
-    page.click("#s-chapter-card [data-close]")
+    _close_card(page)
     infl = int(page.inner_text("#m-influence b"))
     ap = page.locator("#s-ap i.on").count()            # 2 to 4: the opening news can change it
     ap_is = lambda k: page.wait_for_function(f"document.querySelectorAll('#s-ap i.on').length === {k}")
@@ -131,6 +139,10 @@ def test_a_guest_makes_moves_on_the_board(browser, live):
     first.locator("button:has-text('Propose')").click()
     page.wait_for_function(f"document.querySelectorAll('#c-clauses > li').length === {n + 1}")
     assert "publish its comet data within a day" in page.inner_text("#c-clauses")
+    page.wait_for_timeout(1300)
+    if page.is_visible("#s-breakthrough"):                                   # the zero draft may already be agreed (phase 11)
+        assert "Breakthrough" in page.inner_text("#s-breakthrough")
+        page.click("#s-bt-stay")
     assert not axe(page, "session_draft")
     page.locator("#c-clauses > li").first.locator("button:has-text('Amend')").click()
     page.locator("#c-clauses .s-amend input:not(:checked)").first.check()
@@ -163,10 +175,10 @@ def test_a_quick_session_reaches_the_summit_and_ends_with_medals(browser, live):
         page.click(f'[data-step="{n}"] [data-next]')
     page.click("#s-begin")
     page.wait_for_selector("#s-chapter-card:not([hidden])")
-    page.click("#s-chapter-card [data-close]")
+    _close_card(page)
     _to_the_summit(page)
     assert page.inner_text("#s-cc-h") == "The Summit"
-    page.click("#s-chapter-card [data-close]")
+    _close_card(page)
     assert page.get_attribute("#t-summit", "aria-selected") == "true" and page.is_hidden("#t-draft")
     page.click(".s-stance:has-text('Open')")
     page.wait_for_selector("#c-summit .s-votes")
@@ -212,9 +224,9 @@ def test_the_almanac_and_the_debrief_in_the_browser(browser, live):
     page.wait_for_selector("#s-walk:not([hidden])")                          # the guide on: the walkthrough comes first
     page.click("#s-guide-skip")
     page.wait_for_selector("#s-chapter-card:not([hidden])")
-    page.click("#s-chapter-card [data-close]")
+    _close_card(page)
     _to_the_summit(page)
-    page.click("#s-chapter-card [data-close]")
+    _close_card(page)
     page.click(".s-stance:has-text('Open')")
     page.wait_for_selector("#c-summit .s-votes")
     while page.locator("#c-summit h2:has-text('Clause')").count():
@@ -261,13 +273,15 @@ def test_the_chief_of_protocol_walks_a_new_player_through_the_session(browser, l
     page.click("#s-guide-next")
     assert "New Zealand" in page.inner_text("#s-guide-h")
     spot = page.get_attribute("#s-spot", "style")
-    page.click("#s-guide-next")
-    page.click("#s-guide-next")
+    for _ in range(6):                                                         # on to the instructions
+        page.click("#s-guide-next")
+        if "instructions" in page.inner_text("#s-guide-h").lower():
+            break
     assert "instructions" in page.inner_text("#s-guide-h").lower()
     assert page.get_attribute("#s-guide-face svg", "data-expression") == "eyebrow"   # the face changes with what's said
     page.wait_for_function("s => document.getElementById('s-spot').getAttribute('style') !== s", arg=spot)   # the spotlight moved
     page.keyboard.press("ArrowLeft")
-    assert "hour" in page.inner_text("#s-guide-h").lower()
+    assert "instructions" not in page.inner_text("#s-guide-h").lower()
     seen = set()
     for _ in range(steps):
         seen.add(page.inner_text("#s-guide-h").lower())
@@ -281,7 +295,7 @@ def test_the_chief_of_protocol_walks_a_new_player_through_the_session(browser, l
     page.wait_for_selector("#s-chapter-card:not([hidden])")
     assert page.is_hidden("#s-walk")
     assert page.evaluate("JSON.parse(localStorage.getItem('soc-session-settings')).tips") is False
-    page.click("#s-chapter-card [data-close]")
+    _close_card(page)
     page.click("button:has-text('Menu')")
     page.click("#s-replay-walk")                                             # replay from the Menu at any time
     page.wait_for_selector("#s-walk:not([hidden])")
@@ -295,7 +309,7 @@ def test_the_chief_of_protocol_walks_a_new_player_through_the_session(browser, l
             break
         except Exception:
             if page.is_visible("#s-chapter-card"):
-                page.click("#s-chapter-card [data-close]")
+                _close_card(page)
     assert page.is_visible("#s-advice") and page.inner_text("#s-advice-text")
     assert not axe(page, "session_advice")
     page.click("#s-advice-ok")
@@ -322,7 +336,7 @@ def test_staff_the_vote_bar_and_the_reserve_in_the_browser(browser, live):
         page.click(f'[data-step="{n}"] [data-next]')
     page.click("#s-begin")
     page.wait_for_selector("#s-chapter-card:not([hidden])")
-    page.click("#s-chapter-card [data-close]")
+    _close_card(page)
     assert re.search(r"\d+ yes · \d+ abstain · \d+ no", page.inner_text("#s-tug-n"))
     assert page.text_content("#s-tug-stamp") in ("Would pass", "Would fail")
     page.click("#t-staff")
@@ -363,7 +377,7 @@ def test_the_deal_table_in_the_browser(browser, live):
         page.click(f'[data-step="{n}"] [data-next]')
     page.click("#s-begin")
     page.wait_for_selector("#s-chapter-card:not([hidden])")
-    page.click("#s-chapter-card [data-close]")
+    _close_card(page)
     assert page.text_content("#m-capital b") == "6/10"
     page.click('#b-map .b-token[data-iso="IND"]', force=True)
     page.wait_for_selector("#c-country .s-dossier-box")
@@ -403,7 +417,7 @@ def test_the_session_is_drawn_at_real_size_on_a_small_laptop(browser, live):
         page.click(f'[data-step="{n}"] [data-next]')
     page.click("#s-begin")
     page.wait_for_selector("#s-chapter-card:not([hidden])")
-    page.click("#s-chapter-card [data-close]")
+    _close_card(page)
     assert page.evaluate("getComputedStyle(document.getElementById('b-stage')).transform") == "none"
     assert min(page.evaluate("[...document.querySelectorAll('#p-brief .b-card p')].map(e => parseFloat(getComputedStyle(e).fontSize))")) >= 16
     for sel in ("#t-brief", "#t-draft", "#t-dele", "#t-staff", "#t-record", "#s-end-turn", "#s-reserve", "#m-capital"):

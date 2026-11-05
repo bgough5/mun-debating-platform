@@ -27,7 +27,8 @@
 
   function portrait(expression, variant) {
     var svg = el("svg", { viewBox: "0 0 240 280", class: "g-face" + (variant ? " " + variant : ""), role: "img",
-                          "aria-label": variant === "minister" ? "Your Foreign Minister" : "The Chief of Protocol" });
+                          "aria-label": variant === "minister" ? "Your Foreign Minister" : variant === "president" ? "The President of the committee" : "The Chief of Protocol" });
+    var pres = variant === "president";
     var defs = el("defs", {}, svg);
     var clip = el("clipPath", { id: "g-oval-" + Math.random().toString(36).slice(2, 8) }, defs);
     el("ellipse", { cx: 120, cy: 140, rx: 108, ry: 128 }, clip);
@@ -52,10 +53,18 @@
     el("ellipse", { cx: 161, cy: 142, rx: 9, ry: 14, class: "g-skin" }, bust);
     el("ellipse", { cx: 120, cy: 138, rx: 42, ry: 52, class: "g-skin" }, bust);
     // silver hair, swept back, with a touch of grey at the temples
-    el("path", { d: "M76 132 Q72 84 120 80 Q170 82 164 132 Q160 104 140 98 Q120 92 98 100 Q80 108 76 132 Z", class: "g-hair" }, bust);
-    el("path", { d: "M78 128 Q78 116 84 108", class: "g-hair-line" }, bust);
-    el("path", { d: "M162 128 Q162 116 156 108", class: "g-hair-line" }, bust);
-    el("path", { d: "M92 96 Q112 88 136 92", class: "g-hair-line" }, bust);
+    if (pres) {
+      // the President: short dark hair swept up at the front, short at the sides
+      el("path", { d: "M78 128 Q72 98 86 78 Q102 56 132 56 Q160 58 168 86 Q172 106 162 130 Q160 108 150 100 Q134 92 116 95 Q98 98 88 108 Q81 116 78 128 Z", class: "g-hair" }, bust);
+      el("path", { d: "M94 74 Q116 56 146 64", class: "g-hair-line" }, bust);
+      el("path", { d: "M90 86 Q112 70 140 76", class: "g-hair-line" }, bust);
+      el("path", { d: "M150 68 Q162 78 164 96", class: "g-hair-line" }, bust);
+    } else {
+      el("path", { d: "M76 132 Q72 84 120 80 Q170 82 164 132 Q160 104 140 98 Q120 92 98 100 Q80 108 76 132 Z", class: "g-hair" }, bust);
+      el("path", { d: "M78 128 Q78 116 84 108", class: "g-hair-line" }, bust);
+      el("path", { d: "M162 128 Q162 116 156 108", class: "g-hair-line" }, bust);
+      el("path", { d: "M92 96 Q112 88 136 92", class: "g-hair-line" }, bust);
+    }
     // the face: brows, eyes, nose, mouth and the half-moon glasses
     var face = el("g", { class: "g-features" }, bust);
     el("path", { class: "g-brow", "data-part": "browL" }, face);
@@ -67,6 +76,7 @@
     el("path", { d: "M133 132 Q139 125 145 132", class: "g-eye-happy", "data-part": "happyR" }, face);
     el("path", { d: "M120 136 Q114 152 118 156 Q122 158 126 155", class: "g-nose" }, face);
     el("path", { class: "g-mouth", "data-part": "mouth" }, face);
+    if (pres) el("path", { d: "M106 159 Q113 152 120 156 Q127 152 134 159 Q127 162 120 159 Q113 162 106 159 Z", class: "g-moustache" }, face);
     el("path", { d: "M86 136 Q101 150 116 136", class: "g-glasses" }, face);
     el("path", { d: "M124 136 Q139 150 154 136", class: "g-glasses" }, face);
     el("path", { d: "M86 136 L116 136 M124 136 L154 136 M116 137 Q120 133 124 137 M86 136 L78 132 M154 136 L162 132", class: "g-glasses-rim" }, face);

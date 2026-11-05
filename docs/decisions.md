@@ -542,6 +542,17 @@ Measured in section 22 of the design doc.
 - Old saves finish under the new rules.
 - A third character, the President of the committee, announces the stages and presides at the Summit. He is drawn from a colleague's photo with that colleague's consent (Ben, 5 Nov 2026): a stylised likeness. The photo is not kept in the repo, and the character is not named after him.
 
+
+**Phase 11, stages, breakthroughs and a growing delegation (5 Nov 2026).** Built from Ben's phone-session proposal:
+- **Stages:** three, each ending at a breakthrough (move on now with momentum, or keep working) or at a shortening deadline.
+- **Each stage's look:** the drafting table, then the meeting rooms on a map shaded by group, then the sign-up sheets.
+- **Actions per turn** grow from the stage, staff, experience, Respect and a coalition, plus overtime bought with Influence.
+- **Intel per move** grows by stage.
+- **The President of the committee** announces it all.
+- **Quick** sessions keep one combined stage.
+
+Measured in section 24 of the design doc.
+
 ### D-100 The speech coach beside every speech box — Decided (5 Nov 2026, Ben)
 Ben: "there should be some stats and visual add-ins that makes speeches easier to write. some things such as word count, expected speaking time, repetitive language indicators, lists of persuasive techniques … keep the platform clean, easily set-up and intuitive … as pretty and fun/interactive/clear as possible." He chose:
 - every speech box, "togglable so it doesn't feel like a constant tutorial", plus Model UN phrases to click in ("addressing other honourable delegates etc.");

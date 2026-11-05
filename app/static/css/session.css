@@ -833,3 +833,89 @@
 .s-country .s-facts { margin-top: 12px; }
 
 .s-stage .s-guide { width: clamp(520px, 50vw, 880px); }
+
+/* ---------- Phase 11: stages, the President, a growing delegation, meeting rooms and sign-up sheets ---------- */
+.s-stagebar { display: inline-flex; gap: 4px; margin-right: 12px; vertical-align: middle; }
+.s-sb { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px 1px 2px; border: 1px solid rgb(201 162 39 / 45%); color: var(--parchment);
+  letter-spacing: .08em; font-size: 12px; }
+.s-sb i { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 11px; background: var(--brass-dk); color: var(--parchment); }
+.s-sb b { font-weight: 700; }
+.s-sb.done { opacity: .7; }
+.s-sb.now { background: var(--lit); color: var(--walnut-dk); border-color: var(--lit); }
+.s-sb.now i { background: var(--maroon); color: var(--white); }
+@media (max-width: 1500px) { .s-sb:not(.now) b { display: none; } }
+
+.s-sources { list-style: none; padding: 0; margin: 6px 0; display: grid; gap: 6px; }
+.s-sources li { display: grid; grid-template-columns: auto 1fr; gap: 0 10px; align-items: center; }
+.s-sources li .s-small { grid-column: 2; margin: 0; }
+.s-sources li.off b { color: var(--muted); font-weight: 400; }
+.s-pips { display: inline-flex; gap: 4px; min-width: 40px; }
+.s-pips i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--brass-dk); }
+.s-pips i.on { background: var(--brass); }
+.s-pips i.locked { border-style: dashed; }
+
+.s-rooms, .s-sheets { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.b-card .s-room { padding: 8px 10px; background: var(--white); border: 1px solid var(--walnut); }
+.b-card .s-room.meeting { border: 3px solid var(--lit); }
+.b-card .s-room.yours { border-left: 6px solid var(--green); }
+.b-card .s-room.theirs { border-left: 6px solid var(--stamp); }
+.b-card .s-room-h { margin: 0; display: flex; gap: 10px; align-items: center; font-family: var(--serif); font-size: 18px; }
+.b-card .s-room .s-small { margin: 3px 0 6px; }
+.s-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.s-chip-m { font-size: 14px; padding: 2px 8px; border: 1px solid var(--walnut); background: var(--parchment); }
+.s-chip-m.you { background: var(--map-yes); }
+.s-chip-m.rival { background: var(--map-no); }
+.s-chip-m.self { background: var(--lit); font-weight: 700; }
+.s-chip-m.rival-self { background: var(--stamp); color: var(--white); }
+.b-card .s-sheet { position: relative; padding: 8px 10px; background: var(--white); border: 1px solid var(--walnut); }
+.b-card .s-sheet.yours { border: 2px solid var(--maroon); }
+.b-card .s-sheet b { font-family: var(--serif); font-size: 18px; }
+.s-sheet-bar { height: 10px; margin: 5px 0; background: var(--parchment-dk); border: 1px solid var(--walnut); }
+.s-sheet-bar i { display: block; height: 100%; background: var(--green); transition: width .6s ease; }
+.s-sheet.tabled .s-sheet-bar i { background: var(--brass); }
+.s-sheet-stamp { position: absolute; right: 10px; top: 6px; font-family: var(--serif); letter-spacing: .14em; text-transform: uppercase; color: var(--stamp);
+  border: 2px solid var(--stamp); padding: 0 8px; transform: rotate(-4deg); animation: s-stamp-in .5s both; }
+.s-quote .s-intel { display: block; margin-top: 6px; font-style: normal; font-size: 16px; color: var(--un-blue-dk); }
+.b-card .s-expect { margin: 4px 0 8px; font-size: 17px; color: var(--un-blue-dk); font-weight: 700; }
+
+/* the President: dark hair swept up, strong brows, a moustache and an open smile; a navy jacket over a light-blue shirt */
+.g-face.president .g-backdrop { fill: var(--un-blue-lt); }
+.g-face.president .g-laurel { fill: var(--white); opacity: .3; }
+.g-face.president .g-hair { fill: var(--wood); }
+.g-face.president .g-hair-line { stroke: var(--walnut-dk); }
+.g-face.president .g-brow { stroke: var(--walnut-dk); stroke-width: 6.5; }
+.g-face.president .g-glasses, .g-face.president .g-glasses-rim, .g-face.president .g-tie { display: none; }
+.g-face.president .g-shirt { fill: var(--shirt); }
+.g-face.president .g-moustache { fill: var(--wood); }
+.g-face.president .g-pin { fill: var(--brass); }
+.s-cc-pres { width: 120px; margin: 0 auto 6px; }
+.s-cc-pres .g-face { width: 120px; height: 140px; }
+.s-overlay .s-doc.s-btdoc { width: min(860px, 94vw); display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 22px; align-items: center; }
+.s-btdoc.shown { animation: s-card .8s cubic-bezier(.2, 1.2, .35, 1) both; }
+.s-bt-pres .g-face { width: 170px; height: 198px; }
+.s-btdoc .s-row { flex-wrap: wrap; gap: 10px; }
+.s-g-pres { display: flex; align-items: center; gap: 16px; margin: 6px 0 10px; }
+.s-g-pres .g-face { width: 110px; height: 128px; }
+.s-g-gavel { font-family: var(--serif); font-size: 18px; color: var(--maroon); }
+.s-g-rooms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0 12px; }
+.s-g-room { padding: 6px 8px; background: var(--white); border: 1px solid var(--walnut); animation: s-in .45s both; }
+.s-g-room b { display: block; font-family: var(--serif); font-size: 14px; }
+.s-g-room span { display: flex; gap: 4px; margin-top: 4px; }
+.s-g-room i { width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--walnut); background: var(--map-abstain); }
+.s-g-room i.you { background: var(--map-yes); } .s-g-room i.rival { background: var(--map-no); }
+.s-g-sheet { padding: 6px 8px; background: var(--parchment); border: 2px solid var(--maroon); display: grid; align-content: center; justify-items: center; }
+.s-g-sheet b { font-family: var(--serif); font-size: 22px; color: var(--stamp); }
+.s-g-sheet span { font-size: 14px; }
+
+/* each stage has its own look: the regional groups on the map in Bloc meetings */
+.s-stage-2 #b-lands .b-land.rg-afr:not(.terr-you):not(.terr-rival) { fill: var(--reg-afr); }
+.s-stage-2 #b-lands .b-land.rg-apg:not(.terr-you):not(.terr-rival) { fill: var(--reg-apg); }
+.s-stage-2 #b-lands .b-land.rg-eeg:not(.terr-you):not(.terr-rival) { fill: var(--reg-eeg); }
+.s-stage-2 #b-lands .b-land.rg-grulac:not(.terr-you):not(.terr-rival) { fill: var(--reg-grulac); }
+.s-stage-2 #b-lands .b-land.rg-weog:not(.terr-you):not(.terr-rival) { fill: var(--reg-weog); }
+.s-stage-3 .b-token.signed .b-face { stroke: var(--maroon); stroke-width: 3; }
+.s-stage .b-kicker { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; display: block; }
+@media (max-width: 1700px) { .s-sb:not(.now) b { display: none; } }
+.s-tug-aims { margin: 2px 0 0; font-size: 15px; color: var(--maroon); }
+.s-tug-aims:empty { display: none; }
+

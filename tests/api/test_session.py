@@ -142,7 +142,7 @@ def test_the_view_shows_the_crisis_offers_and_rival_personalities(app):
         v = j["view"]
         assert v["crisis"]["chapter"] == 1 and v["crisis"]["title"] and v["crisis"]["teaches"]
         assert all(r["style_name"] and r["style_what"] for r in v["rivals"]) and len({r["style"] for r in v["rivals"]}) == 3
-        assert v["turns"] in (4, 5)                                                   # a deadline crisis takes a turn off
+        assert v["turns"] in (5, 6)                                                   # stage 1 lasts 6 turns; a deadline crisis takes one off
         if v["offers"]:
             break
     o = v["offers"][0]

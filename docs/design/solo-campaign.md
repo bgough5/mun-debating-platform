@@ -564,3 +564,67 @@ Ben: "the menu on the right hand side is hard to read without it popping out …
 - **The stage** is never transformed.
 
 A browser test pins the 1366×657 case (`test_the_session_is_drawn_at_real_size_on_a_small_laptop`). Zoom to 200% on a 1366 laptop leaves a 683-pixel-wide window, which the board doesn't lay out for. That case is not yet measured.
+
+## 24. Stages, breakthroughs and a growing delegation (phase 11, 5 Nov 2026)
+
+Built from Ben's phone-session proposal (`session-progression.md`, sections 1, 2 and 4). His choices since:
+- Quick keeps one combined stage;
+- nothing for players yet (in development);
+- old saves continue under the new rules;
+- a third character, the President.
+
+**Stages** (`content.STAGES`, `engine.checklist`, `_check_breakthrough`, `_end_stage`, `a_advance`, `a_stay`).
+- **Working group:** four clauses, one of them yours, and a text that would pass as it stands.
+- **Bloc meetings:** a regional group endorses your draft (two on Full).
+- **Sponsors:** your draft tabled as L.1.
+- **Quick:** one Working session with all of these as one checklist.
+- **Deadlines** (`LENGTHS[...]["deadlines"]`): Standard 6, 5 and 4 turns; Full 7, 6 and 5; Quick 5. A "deadline brought forward" crisis takes a turn off the stage.
+- **A breakthrough** is checked after every move and at the start of every turn; once made it stays made. The President's card offers:
+  - **Move on now:** +1 Respect and +2 Influence for each turn left, and the rivals lose those turns;
+  - **Keep working.**
+- **The stage ends** at the breakthrough (if you move on) or at its deadline.
+  - Made: the old chapter bonus, +3 Influence and +1 Respect.
+  - Missed: −1 Respect and the Chair moves on.
+  - Either way your capital judges it.
+
+**Each stage's look:**
+- the Working group opens the Draft centre stage;
+- Bloc meetings shade the map by regional group, open the meeting rooms and have one group meet each turn;
+- Sponsors open the sign-up sheets, yours beside each rival's, racing to be tabled.
+
+A stage track in the header shows all of them.
+
+**A growing delegation** (`ap_sources`). Actions are the sum of:
+- your delegation, 2;
+- the stage reached: +1 in Bloc meetings, +2 in Sponsors;
+- your staff: +1 for every 4 adviser stars;
+- your experience: +1 at Expertise 5 and again at 10;
+- Respect: +1 at 5 and again at 8, replacing the old +1 at 7;
+- a coalition of two regional groups: +1.
+
+**Overtime** buys +1 action for 3, then 4, then 5 Influence in a turn. The Brief's "Your delegation" card shows every source as pips, and how to earn the next one.
+
+**More intel per move:**
+- In Bloc meetings, lobbying also shows the delegation's lean towards each rival, and an adviser posted to a member of the meeting group reads it a star better.
+- In Sponsors, lobbying shows how the delegation would vote on the whole text now.
+- At the Summit, every decision card shows the expected count.
+
+The vote bar adds "your instructions: n of 3 in the text".
+
+**The President of the committee:**
+- **The character:** a third painted character (`portrait(expr, "president")`), drawn from a colleague's photo with his consent: short dark hair swept up, strong brows, a moustache, an open smile, and a navy jacket over a light-blue shirt.
+- **His role:** he opens each stage, announces breakthroughs and last turns, invites delegates to the meeting group, and presides at the Summit. The photo is not kept anywhere in the project.
+
+**Measured** (2,400 games, 20 per cell; bots move on at a breakthrough except from the last stage while the vote is close, buy overtime with Influence to spare, and attend meetings):
+
+| Target | Phase 9 | Phase 11 |
+|---|---|---|
+| Standard: silver or better | 66.9% | 55.5% |
+| Gold on own path: hardliner / analyst / broker / drafter | 39.4 / 40 / 42.5 / 68.1% | 29.4% / 11.3% / 28.1% / 57.5% |
+| Hardest scenario on Standard | 17.5% | 26.3% |
+| Random player, silver or better | 14% | 18.1% |
+| Rivals get what they came for: Easy / Standard / Hard | 10.4 / 22.4 / 30% | 11.1% / 19.9% / 26.5% |
+| Breakthroughs per Standard game (of 3), by style | — | analyst 2.31, broker 2.53, drafter 1.94, hardliner 2.01, random 1.38 |
+| Average actions per turn, stage 1 / 2 / 3 (competent bots) | 3 | 3.12 / 5.25 / 6.66 |
+| Average session (minutes, estimated; competent bots) | 41–62 | 41–55 |
+| Stuck games | 0 | 0 |

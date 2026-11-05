@@ -42,8 +42,8 @@
       <header><h2 id="h-st3">How long?</h2><p>You can save and come back between turns.</p></header>
       <div class="s-picks three">
         {% for code, name, what in [("quick", "Quick", "One working session, then the summit. About 25 minutes."),
-                                    ("standard", "Standard", "Three chapters and the summit. About an hour."),
-                                    ("full", "Full", "Three longer chapters and the summit. About 80 minutes.")] %}
+                                    ("standard", "Standard", "Three stages, each to a breakthrough or a deadline, then the summit. About an hour."),
+                                    ("full", "Full", "Three stages with longer deadlines, then the summit. About 80 minutes.")] %}
         <button type="button" class="s-pick" data-pick="length" data-value="{{ code }}" data-label="{{ name }}" aria-pressed="{{ 'true' if code == 'standard' else 'false' }}"><h3>{{ name }}</h3><p>{{ what }}</p></button>{% endfor %}
       </div>
       <div class="s-nav"><button type="button" class="s-btn ghost" data-back>Back</button><button type="button" class="s-btn" data-next>Next: rivals</button></div>

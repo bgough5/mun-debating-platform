@@ -130,16 +130,16 @@ CRISES = [
      "body": "Newspapers in many capitals attack any clause that {tag}. Delegations become warier of it.",
      "teaches": "Public opinion at home limits what delegates can agree to abroad."},
     {"id": "deadline", "title": "The deadline is brought forward",
-     "body": "The President of the committee announces that this chapter will close a turn early. Work fast.",
+     "body": "The President of the committee announces that this stage's deadline comes a turn early. Work fast.",
      "teaches": "Negotiations run to the clock: deadlines force compromises, or leave texts unfinished."},
     {"id": "partner", "title": "{rival} gains a partner",
-     "body": "A like-minded delegation joins {rival} and lends it staff for this chapter. It can do more each turn.",
+     "body": "A like-minded delegation joins {rival} and lends it staff for this stage. It can do more each turn.",
      "teaches": "Delegations pool their staff and their votes: small countries gain weight by working together."},
     {"id": "donor", "title": "A donor conference",
-     "body": "Several capitals pledge money for the issue. Every delegation, rivals included, has more to work with this chapter.",
+     "body": "Several capitals pledge money for the issue. Every delegation, rivals included, has more to work with this stage.",
      "teaches": "Funding pledges change what a resolution can promise, and who can afford to lobby for it."},
     {"id": "regional_summit", "title": "The {region} holds a summit",
-     "body": "Leaders of the {region} meet in the middle of the session. The group is ready to back a draft more readily this chapter.",
+     "body": "Leaders of the {region} meet in the middle of the session. The group is ready to back a draft more readily this stage.",
      "teaches": "Regional groups and organisations shape positions before they reach the UN."},
 ]
 
@@ -178,3 +178,24 @@ DEAL_GET = {
     "influence": {"name": "Influence", "what": "They put 3 Influence behind your work."},
     "intel": {"name": "Intelligence", "what": "What they know about a rival's next move."},
 }
+
+
+# Stages (phase 11): each ends at a breakthrough (move on now, or keep working) or at its deadline.
+STAGES = {
+    1: {"name": "Working group", "breakthrough": "zero draft agreed",
+        "goal": "Agree a zero draft: four clauses or more, one of them yours, and a text that would pass as it stands.",
+        "unlocks": "Bloc meetings open: the regional groups meet, one each turn.",
+        "look": "The drafting table is open: build the text."},
+    2: {"name": "Bloc meetings", "breakthrough": "a regional group endorses your draft",
+        "goal": "Win a regional group's endorsement for your draft.",
+        "unlocks": "Sponsors: the sign-up sheet opens, and the race to table first begins.",
+        "look": "The map shows the regional groups. One group meets each turn: attend, and work its members."},
+    3: {"name": "Sponsors", "breakthrough": "your draft is tabled as L.1",
+        "goal": "Table your draft as L.1: three sponsors and enough signatories, before a rival tables theirs.",
+        "unlocks": "The Summit: the draft goes to the vote.",
+        "look": "The sign-up sheets are out: yours and each rival's fill with flags as you race."},
+}
+STAGES_QUICK = {1: {"name": "Working session", "breakthrough": "your draft is ready and tabled",
+                    "goal": "In one session: agree a zero draft, win a regional group and table your draft.",
+                    "unlocks": "The Summit: the draft goes to the vote.",
+                    "look": "Everything at once: draft, meet the regional groups, and gather sponsors."}}

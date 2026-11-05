@@ -23,7 +23,8 @@ from app.modules.sim.campaign import econ as X
 from app.modules.sim.campaign.scenario import Scenario
 
 VERSION = 1
-LENGTHS = {"quick": {"chapters": 1, "turns": 4}, "standard": {"chapters": 3, "turns": 5}, "full": {"chapters": 3, "turns": 6}}
+LENGTHS = {"quick": {"chapters": 1, "turns": 5, "deadlines": [5]}, "standard": {"chapters": 3, "turns": 6, "deadlines": [6, 5, 4]},
+           "full": {"chapters": 3, "turns": 7, "deadlines": [7, 6, 5]}}   # each stage's deadline: negotiating time runs out
 DIFFICULTIES = {"easy": {"rivals": 1, "ap": 1, "step": 0.2}, "standard": {"rivals": 2, "ap": 2, "step": 0.3},
                 "hard": {"rivals": 3, "ap": 3, "step": 0.4}}
 STANCES = ("firm", "open", "bridge")
@@ -102,6 +103,9 @@ R.update({"hire_cost": 4, "staff_max": 5, "secure_cost": 2, "secure_max": 3, "po
           "reply_respect": 5, "attack": 0.12, "golden_respect": 2, "architect_gold": 0.7})
 # Phase 9: the deal table and your capital.
 R.update({"capital_start": 6, "capital_max": 10, "deal_funding": 2, "deal_influence": 3, "candidacy_max": 2, "deal_ap": 2})
+# Phase 11: stages with breakthroughs, a growing delegation.
+R.update({"ap_base": 2, "overtime": [3, 4, 5], "attend_cost": 1, "attend_step": 0.15, "momentum_influence": 2,
+          "momentum_respect": 1, "late_respect": 1})
 PLAN = {"easy": {"noise": 0.4, "react": False, "poach": False},       # how rivals choose: easy ones blunder,
         "standard": {"noise": 0.0, "react": False, "poach": True},   # standard ones play the best move,
         "hard": {"noise": 0.0, "react": True, "poach": True}}        # hard ones also answer your last turn
@@ -189,7 +193,9 @@ def mu_of(scn: Scenario, g: dict, iso: str, tags) -> float:
 
 def turns_now(g: dict) -> int:
     """The turns in the current chapter: one fewer when the deadline has been brought forward."""
-    t = LENGTHS[g["length"]]["turns"]
+    L = LENGTHS[g["length"]]
+    dl = L.get("deadlines") or [L["turns"]]
+    t = dl[min(g["chapter"], len(dl)) - 1]
     c = g.get("crisis") or {}
     return t - 1 if c.get("id") == "deadline" and c.get("chapter") == g["chapter"] else t
 
@@ -459,7 +465,7 @@ def _when(g: dict) -> str:
         return "Summit"
     if g["phase"] == "done":
         return "Result"
-    return f"Chapter {g['chapter']}, turn {g['turn']}"
+    return f"Turn {g['turn']}" if g.get("length") == "quick" else f"Stage {g['chapter']}, turn {g['turn']}"
 
 
 def _start_turn(scn: Scenario, g: dict) -> None:
@@ -468,7 +474,12 @@ def _start_turn(scn: Scenario, g: dict) -> None:
     ev = rng.choice(deck)
     g["mods"] = {}
     eff = ev["effect"]
-    g["ap"] = R["ap"] + (1 if g["respect"] >= R["ap_respect"] else 0) + eff.get("ap", 0)
+    g["ap"] = sum(x["n"] for x in ap_sources(scn, g)) + eff.get("ap", 0)
+    g["overtime"] = 0
+    seen = g.setdefault("ap_seen", {})                      # average actions per turn in each stage, for the balance harness
+    k = str(g["chapter"])
+    seen[k] = round((seen.get(k, 0) * g.get("ap_turns", {}).get(k, 0) + g["ap"]) / (g.get("ap_turns", {}).get(k, 0) + 1), 2)
+    g.setdefault("ap_turns", {})[k] = g.get("ap_turns", {}).get(k, 0) + 1
     g["mods"]["lobby_cost"] = eff.get("lobby_cost", 0)
     if eff.get("influence"):
         g["influence"] += eff["influence"]
@@ -508,9 +519,11 @@ def _start_turn(scn: Scenario, g: dict) -> None:
     if g.get("reserve"):
         g["reserve"] = 0
         _log(g, "you", "Your reserve wasn't needed this time.", "info")
+    _meeting(scn, g)
     _make_offers(scn, g)
     _intentions(scn, g)
     _staff_reports(scn, g)
+    _check_breakthrough(scn, g)
     if g.get("recall"):
         g["recall"] = 0
         g["ap"] = 0
@@ -585,6 +598,8 @@ def apply(scn: Scenario, game: dict, action: dict) -> tuple[dict, dict]:
     g["stats"][do] = g["stats"].get(do, 0) + 1
     if isinstance(action.get("iso3"), str) and do not in ("post", "end_turn"):
         g.setdefault("touched", []).append(action["iso3"])
+    if do not in ("end_turn", "advance") and _check_breakthrough(scn, g):
+        out["breakthrough"] = True
     return g, out
 
 
@@ -603,7 +618,12 @@ def a_lobby(scn, g, a):
         heard = LINES[bucket(mu + g["sway"]["you"][iso])]
     g["region_last"][scn.member(iso).region] = "you"
     _log(g, "you", f"You lobbied {scn.member(iso).name}.", "action", iso)
-    return {"heard": heard, "moved": round(moved, 2), "cost": cost, "red_line": mu <= R["redline"]}
+    out = {"heard": heard, "moved": round(moved, 2), "cost": cost, "red_line": mu <= R["redline"]}
+    if g["length"] != "quick" and g["chapter"] >= 2:          # from Bloc meetings: its lean towards each rival
+        out["leans"] = {scn.member(r["iso3"]).name: round(lean(scn, g, r["iso3"], iso), 2) for r in g["rivals"]}
+    if g["length"] != "quick" and g["chapter"] >= 3 and final_clause(g)["tags"]:   # in Sponsors: how it would vote now
+        out["would_vote"] = vote_of(scn, latent(scn, g, iso, final_clause(g), mood=False))
+    return out
 
 
 def a_read(scn, g, a):
@@ -1152,16 +1172,6 @@ def _endorsements(scn: Scenario, g: dict) -> None:
                 g["endorse"].pop(reg, None)
 
 
-def _objective(scn: Scenario, g: dict) -> bool:
-    ch, last = g["chapter"], g["chapter"] == LENGTHS[g["length"]]["chapters"]
-    drafted = len(g["draft"]) >= 4 and any(c["author"] == "you" for c in g["draft"])
-    endorsed = "you" in g["endorse"].values()
-    tabled = len(g["sponsors"]) >= R["sponsors"] and len(g["sponsors"]) + len(g["signatories"]) >= _signers_needed(scn)
-    if g["length"] == "quick":
-        return drafted and tabled
-    return {1: drafted, 2: endorsed, 3: tabled}[ch] if not (last and ch != 3) else tabled
-
-
 def snapshot(scn: Scenario, g: dict, label: str) -> None:
     """Your standing at the end of a turn, for the debrief's graph."""
     free = [i for i in scn.isos if i not in _others(g)]
@@ -1184,23 +1194,7 @@ def _upkeep(scn: Scenario, g: dict) -> None:
         g["turn"] += 1
         _start_turn(scn, g)
         return
-    met = _objective(scn, g)
-    g["objectives"][str(g["chapter"])] = met
-    if met:
-        g["influence"] += R["objective_influence"]
-        g["respect"] = min(R["respect_max"], g["respect"] + 1)
-    _log(g, "you", f"Chapter {g['chapter']} " + ("goal met." if met else "goal missed."), "objective")
-    _capital_chapter(scn, g, met)
-    if g["phase"] == "done":
-        return
-    if g["chapter"] < L["chapters"]:
-        g["chapter"] += 1
-        g["turn"] = 1
-        _open_chapter(scn, g)
-        _start_turn(scn, g)
-        return
-    g["tabled_first"] = bool(met) if g["length"] == "quick" or g["chapter"] == 3 else None
-    _open_summit(scn, g)
+    _end_stage(scn, g)
 
 
 # ---------------------------------------------------------------- the summit
@@ -1495,6 +1489,8 @@ def _eff_stars(scn: Scenario, g: dict, adv: dict, iso: str) -> int:
         s -= 1
     if adv["kind"] == "regional" and not rival and scn.member(iso).region == adv.get("region"):
         s += 1
+    if g.get("meeting") and not rival and scn.member(iso).region == g["meeting"]:
+        s += 1                                                   # a group in session is easier to read
     if "rival_intel" in g["skills"]:
         s += 1
     return max(1, min(3, s))
@@ -1854,7 +1850,7 @@ def _capital_chapter(scn: Scenario, g: dict, met: bool) -> None:
     """At the end of each chapter your capital judges your progress: the goal, and what's in the draft."""
     tags = {t for c in g["draft"] for t in c["tags"]}
     m = g["mandate"]
-    delta, notes = (1, ["Good work on the chapter's goal."]) if met else (-1, ["You missed the chapter's goal."])
+    delta, notes = (1, ["Good work: the breakthrough is made."]) if met else (-1, ["The deadline passed without a breakthrough."])
     if m["red"] in tags:
         delta -= 1
         notes.append("Our red line is in the draft. Get it out.")
@@ -1866,10 +1862,166 @@ def _capital_chapter(scn: Scenario, g: dict, met: bool) -> None:
     _capital(scn, g, max(-2, min(2, delta)), " ".join(notes))
 
 
+# ---------------------------------------------------------------- stages, breakthroughs and a growing delegation (phase 11)
+
+def stage_names(g: dict) -> dict:
+    return K.STAGES_QUICK if g["length"] == "quick" else K.STAGES
+
+
+def checklist(scn: Scenario, g: dict) -> list[dict]:
+    """The current stage's breakthrough, item by item, as the Brief and the stage track show it."""
+    mine = sum(1 for c in g["draft"] if c["author"] == "you")
+    endorsed = sum(1 for v in g["endorse"].values() if v == "you")
+    need_groups = 2 if g["length"] == "full" else 1
+    signers = len(g["sponsors"]) + len(g["signatories"])
+    passes = projection(scn, g)["passed"]
+    items = {
+        1: [("Four clauses in the draft", len(g["draft"]) >= 4, f"{len(g['draft'])} of 4"),
+            ("At least one of them yours", mine >= 1, f"{mine}"),
+            ("The whole text would pass as it stands", passes, "yes" if passes else "not yet")],
+        2: [(f"{'Two regional groups endorse' if need_groups == 2 else 'A regional group endorses'} your draft", endorsed >= need_groups,
+             f"{endorsed} of {need_groups}")],
+        3: [(f"{R['sponsors']} sponsors", len(g["sponsors"]) >= R["sponsors"], f"{len(g['sponsors'])} of {R['sponsors']}"),
+            ("Enough sponsors and signatories to table it", signers >= _signers_needed(scn), f"{signers} of {_signers_needed(scn)}")],
+    }
+    stages = [1, 2, 3] if g["length"] == "quick" else [g["chapter"]]
+    return [{"label": a, "done": b, "count": c} for s in stages for a, b, c in items[s]]
+
+
+def _objective(scn: Scenario, g: dict) -> bool:
+    return all(x["done"] for x in checklist(scn, g))
+
+
+def _check_breakthrough(scn: Scenario, g: dict) -> bool:
+    """The first time a stage's breakthrough is met it's recorded (and stays met): the player may move on at once."""
+    if g["phase"] != "chapter" or str(g["chapter"]) in g.setdefault("breakthroughs", {}) or not _objective(scn, g):
+        return False
+    g["breakthroughs"][str(g["chapter"])] = g["turn"]
+    st = stage_names(g)[g["chapter"]]
+    _log(g, "news", f"Breakthrough: {st['breakthrough']}. {st['unlocks']}", "breakthrough")
+    return True
+
+
+def ap_sources(scn: Scenario, g: dict) -> list[dict]:
+    """Where this turn's actions come from, like resources and units in Civ: a bigger, more experienced, more respected
+    delegation has more to do as the session nears its end. `next` says how to earn the next one."""
+    stars = sum(a["stars"] for a in g.get("staff", []))
+    xp, rs = g.get("expertise", 0), g["respect"]
+    mine = sum(1 for v in g["endorse"].values() if v == "you")
+    quick = g["length"] == "quick"
+    stage_n = 0 if quick else {1: 0, 2: 1, 3: 2}.get(g["chapter"], 0)
+    return [
+        {"code": "base", "name": "Your delegation", "n": R["ap_base"], "next": None},
+        {"code": "stage", "name": "Stage reached", "n": stage_n,
+         "next": None if quick or stage_n >= 2 else ("+1 from Bloc meetings, +2 from Sponsors" if stage_n == 0 else "+2 from Sponsors")},
+        {"code": "staff", "name": "Your staff", "n": stars // 4,
+         "next": f"{4 - stars % 4} more adviser star{'s' if 4 - stars % 4 != 1 else ''} (hire or promote) for another"},
+        {"code": "experience", "name": "Your experience", "n": (xp >= 5) + (xp >= 10),
+         "next": "Expertise 5" if xp < 5 else "Expertise 10" if xp < 10 else None},
+        {"code": "respect", "name": "Respect", "n": (rs >= 5) + (rs >= 8),
+         "next": "Respect 5" if rs < 5 else "Respect 8" if rs < 8 else None},
+        {"code": "coalition", "name": "Coalition", "n": 1 if mine >= 2 else 0,
+         "next": None if mine >= 2 else "two regional groups endorsing your draft"},
+    ]
+
+
+def _meeting(scn: Scenario, g: dict) -> None:
+    """In Bloc meetings (and in a Quick session) one regional group meets each turn, in turn."""
+    g["meeting"] = None
+    if not (g["length"] == "quick" or g["chapter"] == 2):
+        return
+    regions = sorted(r for r in {m.region for m in scn.members if m.region in REGIONS}
+                     if sum(1 for i in _region_members(scn, r) if i not in _others(g)) >= 2)
+    if not regions:
+        return
+    start = random.Random(f"{g['seed']}:meet").randrange(len(regions))
+    reg = regions[(start + g["turn"] - 1) % len(regions)]
+    g["meeting"] = reg
+    _log(g, "news", f"The {REGIONS[reg]} meets this turn. You can attend.", "meeting")
+
+
+def a_attend(scn, g, a):
+    reg = g.get("meeting")
+    if not reg:
+        raise GameError("No regional group is meeting this turn.")
+    if g.get("attended") == g.get("tick"):
+        raise GameError(f"You've already attended the {REGIONS[reg]} this turn.")
+    _spend(g, 1, R["attend_cost"])
+    g["attended"] = g.get("tick")
+    for iso in _region_members(scn, reg):
+        if iso not in _others(g):
+            _sway(g, "you", iso, R["attend_step"])
+    g["region_last"][reg] = "you"
+    _log(g, "you", f"You attended the meeting of the {REGIONS[reg]}.", "action")
+    return {}
+
+
+def a_overtime(scn, g, a):
+    n = g.get("overtime", 0)
+    if n >= len(R["overtime"]):
+        raise GameError("Your staff can't work any later this turn.")
+    _spend(g, 0, R["overtime"][n])
+    g["overtime"] = n + 1
+    g["ap"] += 1
+    _log(g, "you", f"Your staff worked late: one more action for {R['overtime'][n]} Influence.", "action")
+    return {}
+
+
+def a_advance(scn, g, a):
+    """Move on now: the breakthrough is met, and every turn left becomes momentum."""
+    if str(g["chapter"]) not in g.get("breakthroughs", {}):
+        raise GameError("Meet this stage's breakthrough first.")
+    left = max(0, turns_now(g) - g["turn"])
+    g["respect"] = min(R["respect_max"], g["respect"] + R["momentum_respect"])
+    g["influence"] += R["momentum_influence"] * left
+    g["momentum"] = g.get("momentum", 0) + left
+    _log(g, "you", f"You moved on with {left} turn{'s' if left != 1 else ''} in hand: +{R['momentum_respect']} Respect, "
+                   f"+{R['momentum_influence'] * left} Influence. Rivals lose those turns too.", "good")
+    g["offers"] = []
+    _endorsements(scn, g)
+    _end_stage(scn, g, early=True)
+    return {"advanced": True, "turns_left": left}
+
+
+def a_stay(scn, g, a):
+    if str(g["chapter"]) not in g.get("breakthroughs", {}):
+        raise GameError("There's no breakthrough to decide on yet.")
+    g.setdefault("stayed", {})[str(g["chapter"])] = True
+    return {}
+
+
+def _end_stage(scn: Scenario, g: dict, early: bool = False) -> None:
+    """A stage ends at its breakthrough (if you move on) or at its deadline. Missing the breakthrough costs Respect,
+    and your capital judges the stage."""
+    L = LENGTHS[g["length"]]
+    met = str(g["chapter"]) in g.get("breakthroughs", {}) or _objective(scn, g)
+    g["objectives"][str(g["chapter"])] = met
+    if met:
+        g["influence"] += R["objective_influence"]
+        g["respect"] = min(R["respect_max"], g["respect"] + 1)
+    else:
+        g["respect"] = max(0, g["respect"] - R["late_respect"])
+    name = stage_names(g)[g["chapter"]]["name"]
+    _log(g, "you", f"{name}: " + ("breakthrough made." if met else "the deadline passed without a breakthrough; the Chair moves on."),
+         "objective")
+    _capital_chapter(scn, g, met)
+    if g["phase"] == "done":
+        return
+    if g["chapter"] < L["chapters"]:
+        g["chapter"] += 1
+        g["turn"] = 1
+        _open_chapter(scn, g)
+        _start_turn(scn, g)
+        return
+    g["tabled_first"] = bool(met) if g["length"] == "quick" or g["chapter"] == 3 else None
+    _open_summit(scn, g)
+
+
 CHAPTER = {"lobby": a_lobby, "read": a_read, "propose": a_propose, "amend": a_amend, "strike": a_strike, "promise": a_promise,
            "side_event": a_side_event, "favour": a_favour, "whip": a_whip, "sign": a_sign, "answer": a_answer, "skill": a_skill,
            "divide": a_divide, "merge": a_merge, "bloc_whip": a_bloc_whip, "abstain": a_abstain, "offer": a_offer,
-           "hire": a_hire, "post": a_post, "reserve": a_reserve, "secure": a_secure, "deal": a_deal, "end_turn": a_end_turn}
+           "hire": a_hire, "post": a_post, "reserve": a_reserve, "secure": a_secure, "deal": a_deal,
+           "attend": a_attend, "overtime": a_overtime, "advance": a_advance, "stay": a_stay, "end_turn": a_end_turn}
 SUMMIT = {"speech": s_speech, "decide": s_decide, "final": s_final, "statement": s_statement, "skill": a_skill, "post": a_post}
 
 
@@ -1904,6 +2056,8 @@ def debrief(scn: Scenario, g: dict) -> dict:
     for c in g["struck"]:
         out["struck"].append({"labels": [scn.tags[t] for t in c["tags"]], "by": "you" if c["by"] == "you" else scn.member(c["by"]).name})
     out["half_loaf"] = half_loaf(scn, g)
+    out["stages"] = {"made": sum(1 for v in g.get("objectives", {}).values() if v), "of": LENGTHS[g["length"]]["chapters"],
+                     "momentum": g.get("momentum", 0)}
     out["capital"] = {"confidence": g.get("capital", R["capital_start"]), "of": R["capital_max"], "deals": g.get("deals", 0),
                       "recalled": bool((g.get("result") or {}).get("recalled"))}
     out["rivals"] = rival_outcomes(scn, g)

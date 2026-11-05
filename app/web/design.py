@@ -52,7 +52,7 @@ TOKENS = {
     # The speech coach (D-100): pale marks behind the student's own (ink) text, so the writing stays readable.
     "hl-repeat": "#FCE8A6", "hl-filler": "#F9D3D0", "hl-long": "#DCE8FA", "hl-tech": "#CDEBD5",
     # The Chief of Protocol, The Session's guide (D-101): a painted portrait. Fills only; no text sits on these.
-    "skin": "#E2B48C", "skin-dk": "#B9825A", "hair": "#D3D6DB", "hair-dk": "#8E939B", "navy": "#1B2A45", "navy-lt": "#2E4268",
+    "skin": "#E2B48C", "skin-dk": "#B9825A", "hair": "#D3D6DB", "hair-dk": "#8E939B", "navy": "#1B2A45", "navy-lt": "#2E4268", "shirt": "#C9DDF2",
 }
 
 TEXT, LARGE, UI = 4.5, 3.0, 3.0

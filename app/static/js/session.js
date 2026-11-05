@@ -37,7 +37,7 @@
     try { window.localStorage.setItem(GUEST, JSON.stringify(list.slice(0, SLOTS))); return true; }
     catch (e) { say("This browser won't keep the session (private window or storage blocked): it will end when you close the tab."); return false; }
   }
-  function where(v) { return v.phase === "done" ? "Finished" : v.phase === "summit" ? "The Summit" : "Chapter " + v.chapter + ", turn " + v.turn; }
+  function where(v) { return v.phase === "done" ? "Finished" : v.phase === "summit" ? "The Summit" : (v.chapter_name || "Stage " + v.chapter) + ", turn " + v.turn; }
 
   // ---------- overlays: the chapter card, pause and settings ----------
   var lastFocus = null;
@@ -181,7 +181,8 @@
     document.querySelectorAll("#b-map .b-land").forEach(function (l) { (lands[l.getAttribute("data-iso")] = lands[l.getAttribute("data-iso")] || []).push(l); });
     var SOUND = { lobby: "paper", read: "flip", propose: "stamp", amend: "paper", strike: "stamp", promise: "coin", side_event: "chime",
                   favour: "coin", whip: "tick", sign: "stamp", skill: "chime", divide: "paper", merge: "stamp", bloc_whip: "chime", abstain: "stamp",
-                  hire: "coin", post: "flip", reserve: "tick", secure: "stamp", offer: "paper", deal: "stamp" };
+                  hire: "coin", post: "flip", reserve: "tick", secure: "stamp", offer: "paper", deal: "stamp",
+                  attend: "chime", overtime: "coin", stay: "flip" };
     var POS = { "2": ["p2", "Strongly for"], "1": ["p1", "For"], "0": ["p0", "Neutral"], "-1": ["n1", "Against"], "-2": ["n2", "Strongly against"] };
 
     function body(extra) {
@@ -213,7 +214,7 @@
     function opt(sel, value, text) { var o = h("option", "", text); o.value = value; sel.appendChild(o); return o; }
 
     // ---------- tabs ----------
-    var TABS = ["brief", "draft", "dele", "summit", "staff", "record"];
+    var TABS = ["brief", "draft", "dele", "blocs", "sponsors", "summit", "staff", "record"];
     var rail = $("s-rail");
     function panelOpen() { return rail.classList.contains("open"); }
     function setTab(name, focus, dock) {
@@ -222,7 +223,7 @@
         b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; $("p-" + t).hidden = !on;
       });
       rail.classList.add("open"); document.body.classList.add("s-panel-open");
-      rail.classList.toggle("center", name === "summit");
+      rail.classList.toggle("center", name === "summit" || dock === "center");
       rail.classList.toggle("dock-left", name === "dele" && dock === "left");
       if (focus) $("t-" + name).focus();
     }
@@ -278,23 +279,35 @@
       if (old !== "–" && old !== String(value)) { restart(li, "bump"); if (id === "m-influence" && +value > +old) A.play("coin"); }
     }
     function chapterCard(v, prev) {
-      var summit = v.phase === "summit";
+      if (v.phase === "done") return;                              // the results take over
+      var summit = v.phase !== "chapter";
       var was = prev && prev.objectives && v.objectives[String(prev.chapter)];
-      $("s-cc-eyebrow").textContent = summit ? "The final act" : (v.length === "quick" ? "The working session" : "Chapter " + v.chapter + " of " + v.chapters);
+      $("s-cc-eyebrow").textContent = summit ? "The final act" : (v.length === "quick" ? "One working session" : "Stage " + v.chapter + " of " + v.chapters);
       $("s-cc-h").textContent = summit ? "The Summit" : v.chapter_name;
-      var pre = prev && prev.phase === "chapter" ? ("Chapter " + prev.chapter + ": goal " + (was ? "met. +3 Influence, +1 Respect. " : "missed. ")) : "";
-      $("s-cc-goal").textContent = pre + (summit ? "The draft goes to the vote, clause by clause, then as a whole." : v.goal);
+      var pre = prev && prev.phase === "chapter" ? (prev.chapter_name + ": " + (was ? "breakthrough made. +3 Influence, +1 Respect. " : "the deadline passed without a breakthrough. −1 Respect. ")) : "";
+      $("s-cc-goal").textContent = pre + (summit ? "The draft goes to the vote, clause by clause, then as a whole." :
+        "Breakthrough: " + v.stage.goal + " Deadline: " + v.stage.deadline + " turns.");
+      $("s-cc-look").textContent = summit ? "I'll preside. Every clause is voted on, then the whole text." : v.stage.look;
+      var pf = $("s-cc-pres"); pf.textContent = ""; if (G) pf.appendChild(G.portrait(summit ? "eyebrow" : "delighted", "president"));
+      stagePanel = summit ? null : (v.length === "quick" || v.chapter === 1 ? "draft" : v.chapter === 2 ? "blocs" : "sponsors");
       var cr = !summit && v.crisis && v.crisis.chapter === v.chapter ? v.crisis : null;
       $("s-cc-crisis").hidden = !cr;
       if (cr) { $("s-cc-crisis-h").textContent = cr.title; $("s-cc-crisis-p").textContent = cr.body; $("s-cc-crisis-t").textContent = cr.teaches; }
       open("s-chapter-card");
       restart(document.querySelector("#s-chapter-card .s-doc"), "shown");
-      A.play(v.chapter === 1 && !summit && !prev ? "open" : "chime");
+      A.play(v.chapter === 1 && !summit && !prev ? "open" : "gavel");
     }
+    var stagePanel = null;
 
     // ---------- the Brief tab ----------
     function progress(v) {
       var ul = $("c-progress"); ul.textContent = "";
+      if (v.stage) {
+        v.stage.checklist.forEach(function (x) { ul.appendChild(h("li", x.done ? "done" : "", x.label + " (" + x.count + ")")); });
+        var adv = $("c-advance"); adv.textContent = "";
+        if (v.stage.made) adv.appendChild(btn("Move on now: +" + v.stage.momentum.respect + " Respect, +" + v.stage.momentum.influence + " Influence", "s-btn small", function () { move({ do: "advance" }); }));
+        return;
+      }
       var items = [], c1 = v.draft_ok.clauses >= 4, mine = v.draft_ok.mine >= 1;
       var endorsed = v.regions.some(function (r) { return r.owner === "you"; });
       var sp = v.sponsors >= v.costs.sponsors, sig = v.sponsors + v.signatories >= v.signers_needed;
@@ -510,7 +523,9 @@
     // ---------- drawing everything ----------
     function draw(v, out, action) {
       var prev = V; V = v;
-      $("s-where").textContent = v.phase === "done" ? "Finished" : v.phase === "summit" ? "The Summit" : (v.length === "quick" ? "Working session" : "Chapter " + v.chapter + " of " + v.chapters) + " · turn " + v.turn + " of " + v.turns;
+      $("s-where").textContent = v.phase === "done" ? "Finished" : v.phase === "summit" ? "The Summit" :
+        v.chapter_name + " · turn " + v.turn + " of " + v.turns + (v.stage ? " · " + (v.stage.made ? "breakthrough made" : v.stage.turns_left + " left") : "");
+      stageBar(v, prev);
       $("s-you").textContent = "You are " + v.you.name + " · " + v.rule + " · aiming for " + v.path.name;
       meter("m-influence", v.influence); meter("m-respect", v.respect); meter("m-expertise", v.expertise);
       meter("m-capital", v.capital.value + "/" + v.capital.max);
@@ -518,9 +533,11 @@
       var ap = $("s-ap"); ap.textContent = "";
       for (var i = 0; i < Math.max(v.ap, 0); i++) ap.appendChild(h("i", "on"));
       $("m-ap").setAttribute("aria-label", v.ap + " actions left this turn");
-      $("c-chapter-h").textContent = v.phase === "summit" ? "The Summit" : (v.length === "quick" ? "Working session" : "Chapter " + v.chapter + ": " + v.chapter_name);
+      $("c-chapter-h").textContent = v.phase === "summit" ? "The Summit" : (v.length === "quick" ? "Working session" : "Stage " + v.chapter + ": " + v.chapter_name);
       $("c-goal").textContent = v.phase === "chapter" ? v.goal : "The draft goes to the vote, clause by clause, then as a whole.";
-      $("c-turn").textContent = v.phase === "chapter" ? "Turn " + v.turn + " of " + v.turns + "." : "";
+      $("c-turn").textContent = v.phase === "chapter" ? "Turn " + v.turn + " of " + v.turns + ". " + (v.stage && v.stage.made ? "Breakthrough made: move on, or keep working until the deadline." :
+        "The Chair moves on after turn " + v.turns + ", breakthrough or not.") : "";
+      sources(v); rooms(v); sheets(v); stageLook(v); breakthroughCard(v, prev);
       if (v.phase === "chapter") progress(v); else $("c-progress").textContent = "";
       // news
       var ev = v.event, box = $("c-event-body"); box.textContent = "";
@@ -573,6 +590,8 @@
         var q = $("c-heard-text"); q.textContent = "";
         q.appendChild(document.createTextNode("“" + out.heard + "”"));
         q.appendChild(h("cite", "", "The delegate of " + (v.tokens[action.iso3] || {}).name + (out.red_line ? " (a red line: they barely moved)" : "")));
+        if (out.leans) q.appendChild(h("span", "s-intel", "Leaning towards each rival: " + Object.keys(out.leans).map(function (k) { return k + " " + (out.leans[k] > 0.3 ? "warm" : out.leans[k] < -0.3 ? "cold" : "neutral"); }).join(", ") + "."));
+        if (out.would_vote) q.appendChild(h("span", "s-intel", "On the whole text as it stands, it would vote " + out.would_vote + "."));
         restart(q, "s-in");
       }
       if (out && out.file) showFile(out.file);
@@ -645,7 +664,8 @@
 
     function summitTabs(v) {
       var summit = v.phase !== "chapter";
-      ["brief", "draft", "dele"].forEach(function (t) { $("t-" + t).hidden = summit; });
+      ["brief", "draft", "dele", "blocs", "sponsors"].forEach(function (t) { if (summit) $("t-" + t).hidden = true; });
+      if (!summit) ["brief", "draft", "dele"].forEach(function (t) { $("t-" + t).hidden = false; });
       $("t-summit").hidden = !summit;
       if (summit && $("t-summit").getAttribute("aria-selected") !== "true" && $("t-record").getAttribute("aria-selected") !== "true") setTab("summit");
     }
@@ -683,6 +703,7 @@
         box.appendChild(dial);
         box.appendChild(h("p", "s-clause-big", cur.text));
         box.appendChild(h("p", "s-small", (cur.mine ? "Your clause" : cur.author) + " · commits countries to: " + cur.tags.join("; ").toLowerCase()));
+        if (cur.expected) box.appendChild(h("p", "s-expect", "Expected, as things stand: " + cur.expected.yes + " yes · " + cur.expected.no + " no · " + cur.expected.abstain + " abstain"));
         if (cur.promised_to.length) box.appendChild(h("p", "s-small", "You promised " + cur.promised_to.join(", ") + " to back this clause: vote yes to keep your word."));
         if (S.pending) {
           var am = h("div", "s-amendment");
@@ -955,14 +976,29 @@
     // little pictures for the steps that look ahead: the shape of the hour, the paths, the summit, the debrief
     function artTimeline(v) {
       var row = h("ol", "s-g-time"), quick = v.length === "quick";
-      var stops = quick ? [["Working session", v.turns + " turns"], ["The Summit", "the votes"], ["Debrief", "your medals"]] :
-        [1, 2, 3].slice(0, v.chapters).map(function (n) { return ["Chapter " + n, ["Working group", "Blocs", "Sponsors"][n - 1]]; })
+      var stops = quick ? [["Working session", "one stage"], ["The Summit", "the votes"], ["Debrief", "your medals"]] :
+        [1, 2, 3].slice(0, v.chapters).map(function (n) { return ["Stage " + n, ["Working group", "Bloc meetings", "Sponsors"][n - 1]]; })
           .concat([["The Summit", "the votes"], ["Debrief", "your medals"]]);
       stops.forEach(function (x, i) {
         var li = h("li", i === 0 ? "now" : ""); li.style.animationDelay = (0.15 + i * 0.18) + "s";
         li.appendChild(h("b", "", x[0])); li.appendChild(h("span", "", x[1])); row.appendChild(li);
       });
       return row;
+    }
+    function artPresident() {
+      var d = h("div", "s-g-pres"); if (G) d.appendChild(G.portrait("delighted", "president"));
+      d.appendChild(h("span", "s-g-gavel", "The President of the committee")); return d;
+    }
+    function artRooms() {
+      var t = h("div", "s-g-rooms");
+      [["African Group", "you", 4], ["Asia-Pacific Group", "rival", 3], ["Western Europe and Others", "undecided", 5]].forEach(function (r, i) {
+        var c = h("div", "s-g-room " + r[1]); c.style.animationDelay = (0.2 + i * 0.25) + "s";
+        c.appendChild(h("b", "", r[0])); var dots = h("span", "");
+        for (var k = 0; k < 6; k++) dots.appendChild(h("i", k < r[2] ? r[1] : ""));
+        c.appendChild(dots); t.appendChild(c);
+      });
+      var sheet = h("div", "s-g-sheet"); sheet.appendChild(h("b", "", "L.1")); sheet.appendChild(h("span", "", "3 of 3 sponsors")); t.appendChild(sheet);
+      return t;
     }
     function artPaths(v) {
       var g = h("div", "s-g-paths");
@@ -999,9 +1035,12 @@
                  sc ? "Five permanent members hold a veto: one no from any of them sinks a resolution, however many others vote yes. An abstention is not a veto." :
                       "Every delegation has one vote. Abstentions don't count towards the majority, so turning a no into an abstention helps you."] },
         { face: "thinking", title: "How the hour will run", art: artTimeline,
-          text: [(quick ? "This is a Quick session: one working session of " + v.turns + " turns" : v.chapters + " chapters of " + v.turns + " turns each") + ", then the Summit, then your debrief.",
-                 "Each turn you have a few actions. When they're spent, you end the turn: rivals answer, news arrives, and the next turn begins." +
-                 (quick ? "" : " Every chapter has its own goal; meet it for a bonus of Influence and Respect.")] },
+          text: [(quick ? "This is a Quick session: one working session, then the Summit, then your debrief." :
+                   "Three stages, each with its own look: the Working group drafts, Bloc meetings win regional groups, Sponsors table the draft. Then the Summit, then your debrief."),
+                 "Each stage ends at a breakthrough (shown on its checklist) or at its deadline, whichever comes first. Make the breakthrough and choose: move on now, and every turn left becomes Respect and Influence (your rivals lose those turns too), or keep working to strengthen your hand. Miss it, and the Chair moves on without you: −1 Respect."] },
+        { face: "delighted", title: "The President of the committee", art: artPresident,
+          text: ["The President presides over the committee. He'll open each stage, announce your breakthroughs, and chair the Summit.",
+                 "I'm here to guide you; he keeps the time. Watch the stage track at the top of the screen: it shows where you are, and how many turns are left."] },
         { at: "#c-instr", tab: "brief", face: "eyebrow", title: "Your secret instructions",
           text: [list([["Get in: ", "a clause that " + lc(v.mandate.must.label) + "."], ["Also get in: ", "a clause that " + lc(v.mandate.also.label) + "."],
                        ["Keep out: ", "anything that " + lc(v.mandate.red.label) + ". That is your red line."]]),
@@ -1011,11 +1050,21 @@
                  "But a gold on any path is a gold. If the session turns against your plan, change it."] },
         { at: ".s-meters", face: "calm", title: "Your standing",
           text: [list([["Influence ₳ ", "is your currency: lobbying, side events and favours cost it. You earn " + E_INCOME + " a turn, more with a regional group behind you."],
-                       ["Respect ✦ ", "is your standing in the room. At 7 you get an extra action each turn; at 8 proposing clauses is free."],
+                       ["Respect ✦ ", "is your standing in the room. At 5 and again at 8 it adds an action each turn; at 8 proposing clauses is free."],
                        ["Expertise ✎ ", "comes from reading country files and knowing procedure. Spend it on diplomatic skills."],
-                       ["Actions ⚑ ", "are your moves this turn. Most things cost one."]])] },
+                       ["Actions ⚑ ", "are your moves this turn. Most things cost one."],
+                       ["Capital ✉ ", "is your government's confidence in you."]])] },
+        { at: "#c-ap", tab: "brief", face: "wry", title: "A delegation that grows",
+          text: ["You start with about three actions a turn. More come from the stage you've reached, your staff (every four adviser stars), your experience (Expertise 5 and 10), Respect (5 and 8), and a coalition of two regional groups.",
+                 "When you need one more, your staff can work late: overtime costs Influence, more each time in a turn. By the Sponsors stage you'll have five or six actions a turn, and less time to use them, as in a real negotiation."] },
+        { at: ".s-tabs", face: "calm", title: "The command bar",
+          text: ["Every panel opens from here, over the map: the Brief, the Draft, Delegates, your Staff and the Record. Blocs open in the Bloc meetings stage and Sponsors in the Sponsors stage.",
+                 "Click a token on the map to open its card beside it. Click the sea, the ✕ or press Escape to close a panel."] },
+        { face: "thinking", title: "Bloc meetings and the sign-up sheets", art: artRooms,
+          text: ["In Bloc meetings the map shows the regional groups. One group meets each turn: attend its meeting (1 action) to work all its members at once. Each room shows who leans your way, who leans to a rival, and how many you need.",
+                 "In Sponsors, the clerk's sign-up sheets race side by side: yours and each rival's. The first draft tabled, as L.1, is voted on first."] },
         { at: "#m-capital", face: "concerned", title: "Your capital",
-          text: ["Your Foreign Minister is watching. This is their confidence in you, out of " + v.capital.max + ". It rises when you meet a chapter's goal and get your aims into the text.",
+          text: ["Your Foreign Minister is watching. This is their confidence in you, out of " + v.capital.max + ". It rises when you make a stage's breakthrough and get your aims into the text.",
                  "It falls when you miss a goal, let your red line into the draft, or make a deal that goes too far: trading away your instructions, or promising to back your red line. Telegrams tell you why. At zero you are recalled for consultations: " +
                  (v.difficulty === "hard" ? "on Hard, that ends your session." : "you lose a turn.")] },
         { at: "#b-board", face: "calm", title: "The room", demo: function () { if (sample) setTimeout(function () { envoy(v.you.iso3, sample, false); }, 500); },
@@ -1068,7 +1117,7 @@
           text: ["Spend Expertise on skills (" + v.skill_cost + " each) in four branches: Procedure, Diplomacy, Drafting and Analysis.",
                  "Each branch suits a different way of playing: points of order, bloc whips, friendly amendments, rival intelligence and more."] },
         { at: "#s-end-turn", face: "calm", title: "Ending a turn",
-          text: ["When your actions are spent, end the turn. Offers lapse, Influence comes in, rivals move and the next turn opens. At the end of a chapter you'll see whether you met its goal.",
+          text: ["When your actions are spent, end the turn. Offers lapse, Influence comes in, rivals move and the next turn opens. When a stage's deadline arrives, the President moves the committee on.",
                  "Menu, or Escape, pauses the game. Your session is kept after every move, so you can stop and come back."] },
         { face: "eyebrow", title: "The first rule of the UN",
           text: ["Don't say no to something just because it isn't exactly what you wanted. A resolution that carries some of your aims is better than no resolution at all: half a loaf is better than none.",
@@ -1204,7 +1253,11 @@
       var x = queue.shift();
       var holder = $("s-advice-face");
       a.classList.toggle("s-telegram", !!x.tele);
-      if (x.tele) {
+      if (x.pres) {
+        holder.textContent = ""; adviceFace = null;
+        holder.appendChild(G.portrait(x.face, "president"));
+        $("s-advice-h").textContent = "The President of the committee";
+      } else if (x.tele) {
         holder.textContent = ""; adviceFace = null;
         holder.appendChild(G.portrait(x.face, "minister"));
         $("s-advice-h").textContent = "Telegram from your capital";
@@ -1226,7 +1279,16 @@
     $("s-advice-ok").addEventListener("click", function () { hideAdvice(); setTimeout(adviceNext, 300); });
 
     // what's worth a remark: new chapters and their crises, deals at the door, intelligence, lost clauses, groups won and lost
+    function president(face, text, once) {
+      if (!G || !guideOn()) return;
+      if (once) { if (said[once]) return; said[once] = true; }
+      queue.push({ pres: true, face: face, text: text }); if (queue.length > 3) queue.shift();
+      setTimeout(adviceNext, 900);
+    }
     function moments(v, prev, news, won, lost) {
+      if (v.stage && !v.stage.made && v.stage.turns_left === 1 && prev && prev.turn !== v.turn)
+        president("eyebrow", "Delegates, this is the last turn of " + v.chapter_name + ". After it, the committee moves on, breakthrough or not.");
+      if (v.meeting && prev && prev.turn !== v.turn) president("calm", "The " + v.meeting.name + " meets this turn. Delegates are welcome to attend.", "meet" + v.chapter + "." + v.turn);
       if (v.phase === "chapter" && prev.chapter !== v.chapter && v.crisis && v.crisis.chapter === v.chapter)
         advise("concerned", "A crisis: " + v.crisis.title + ". " + v.crisis.teaches);
       if (prev.phase === "chapter" && v.phase === "summit") advise("eyebrow", "The Summit is open. Choose how to open your speech: firm to rally your friends, open for Respect, bridge for the undecided.");
@@ -1243,7 +1305,7 @@
       });
       if (v.phase === "chapter" && prev.chapter !== v.chapter && prev.objectives) {
         var met = v.objectives[String(prev.chapter)];
-        if (met !== undefined) advise(met ? "delighted" : "concerned", met ? "Chapter goal met. The committee has noticed." : "We missed the chapter's goal. No matter: what counts is the final vote.");
+        if (met !== undefined) advise(met ? "delighted" : "concerned", met ? "Breakthrough made. The committee has noticed." : "We missed that breakthrough. No matter: what counts is the final vote.");
       }
       if (v.phase === "chapter" && v.ap === 0) advise("calm", "Your actions are spent. End the turn when you're ready.", "ap0");
       if (v.phase === "chapter" && v.xp >= v.skill_cost) advise("wry", "You have Expertise enough for a diplomatic skill. Open Skills to choose one.", "skill");
@@ -1287,6 +1349,7 @@
       $("s-tug-n").textContent = t.yes + " yes · " + t.abstain + " abstain · " + t.no + " no" + (veto ? " · vetoed by " + veto[1].trim() : "");
       var st = $("s-tug-stamp");
       st.textContent = t.passed ? "Would pass" : "Would fail"; st.className = "s-tug-stamp " + (t.passed ? "pass" : "fail");
+      var ai = $("s-tug-aims"); if (ai) ai.textContent = t.aims !== undefined ? "Your instructions: " + t.aims + " of 3 in the text" : "";
       box.setAttribute("aria-label", "If the vote were now: " + t.summary);
       if (prev && prev.tug && (prev.tug.yes !== t.yes || prev.tug.no !== t.no)) restart(box, "s-tug-move");
       if (prev && prev.tug && prev.tug.passed !== t.passed && v.phase === "chapter") {
@@ -1452,6 +1515,98 @@
       if (!$("s-deal").hidden) renderDeal();
     }
 
+    // ---------- phase 11: stages, breakthroughs, the President, a growing delegation, rooms and sheets ----------
+    function stageBar(v) {
+      var bar = $("s-stagebar"); if (!bar) return;
+      bar.textContent = "";
+      var stops = (v.stage_track || []).map(function (s) { return [s.n, s.name]; }).concat([["★", "Summit"]]);
+      stops.forEach(function (x, i) {
+        var n = x[0], done = v.phase !== "chapter" ? n !== "★" || v.phase === "done" : n !== "★" && n < v.chapter;
+        var now = v.phase === "chapter" ? n === v.chapter : v.phase === "summit" && n === "★";
+        var c = h("span", "s-sb" + (now ? " now" : done ? " done" : ""));
+        c.appendChild(h("i", "", done && !now ? "✓" : String(n))); c.appendChild(h("b", "", x[1]));
+        bar.appendChild(c);
+      });
+    }
+    function sources(v) {
+      var ul = $("c-ap-list"); if (!ul) return;
+      ul.textContent = "";
+      (v.ap_sources || []).forEach(function (x) {
+        var li = h("li", x.n ? "on" : "off");
+        var pips = h("span", "s-pips"); for (var i = 0; i < Math.max(x.n, x.next ? 1 : 0); i++) pips.appendChild(h("i", i < x.n ? "on" : "locked"));
+        li.appendChild(pips); li.appendChild(h("b", "", x.name + (x.n ? " +" + x.n : "")));
+        if (x.next) li.appendChild(h("span", "s-small", "Next: " + x.next + "."));
+        ul.appendChild(li);
+      });
+      var ot = $("c-overtime"); ot.textContent = "";
+      if (v.overtime_next) ot.appendChild(btn("Overtime: +1 action for " + v.overtime_next + " Influence", "s-btn ghost small", function () { move({ do: "overtime" }); }, v.influence < v.overtime_next));
+      else if (v.phase === "chapter") ot.appendChild(h("p", "s-small", "Your staff can't work any later this turn."));
+    }
+    var SIDE = { you: "leans your way", rival: "leans to a rival", undecided: "undecided", self: "you", "rival-self": "a rival" };
+    function rooms(v) {
+      var ul = $("c-rooms"); if (!ul) return;
+      ul.textContent = "";
+      var mb = $("c-meeting-body"); mb.textContent = "";
+      if (v.meeting) {
+        mb.appendChild(h("p", "s-goal", "This turn the " + v.meeting.name + " meets."));
+        mb.appendChild(h("p", "s-small", "Attend (1 action, " + 1 + " Influence) to work every member at once. Advisers read its members one star better while it meets."));
+        mb.appendChild(btn(v.meeting.attended ? "You attended this turn" : "Attend the meeting", "s-btn small", function () { move({ do: "attend" }); },
+                           v.meeting.attended || !v.ap || v.influence < 1));
+      } else mb.appendChild(h("p", "s-small", "No group meets this turn."));
+      (v.rooms || []).forEach(function (r) {
+        var li = h("li", "s-room" + (r.meeting ? " meeting" : "") + (r.owner_you ? " yours" : r.owner ? " theirs" : ""));
+        var hd = h("p", "s-room-h"); hd.appendChild(h("b", "", r.name)); if (r.meeting) hd.appendChild(h("span", "s-style", "In session"));
+        li.appendChild(hd);
+        li.appendChild(h("p", "s-small", (r.owner ? "Endorses " + (r.owner_you ? "your draft" : r.owner + "'s") : "No endorsement yet") + " · " + r.yours + " of " + r.needed + " needed lean your way · coordinator: " + r.coordinator +
+                         (r.courting.length ? " · courted by " + r.courting.join(", ") : "")));
+        var chips = h("div", "s-chips");
+        r.members.forEach(function (m) { var c = h("span", "s-chip-m " + m.side, m.name); c.title = m.name + ": " + (m.rival ? "leans to " + m.rival : SIDE[m.side]); chips.appendChild(c); });
+        li.appendChild(chips); ul.appendChild(li);
+      });
+      var nb = $("n-blocs"); if (nb) nb.textContent = v.meeting && !v.meeting.attended ? "!" : "";
+    }
+    function sheets(v) {
+      var ul = $("c-sheets"); if (!ul) return;
+      ul.textContent = "";
+      (v.race || []).forEach(function (r) {
+        var li = h("li", "s-sheet" + (r.you ? " yours" : "") + (r.tabled ? " tabled" : ""));
+        li.appendChild(h("b", "", r.you ? "Your draft" : r.who + "'s draft"));
+        var bar = h("div", "s-sheet-bar"), f = h("i");
+        f.style.width = Math.min(100, 100 * (r.sponsors.length + r.signatories.length) / Math.max(1, r.need_total)) + "%"; bar.appendChild(f); li.appendChild(bar);
+        li.appendChild(h("p", "s-small", "Sponsors " + r.sponsors.length + " of " + r.need_sponsors + (r.sponsor_names.length ? " (" + r.sponsor_names.join(", ") + ")" : "") +
+                         " · with signatories " + (r.sponsors.length + r.signatories.length) + " of " + r.need_total));
+        if (r.tabled) li.appendChild(h("span", "s-sheet-stamp", "Tabled"));
+        ul.appendChild(li);
+      });
+    }
+    var landsTagged = false;
+    function stageLook(v) {
+      var b = document.body;
+      ["1", "2", "3", "summit"].forEach(function (k) { b.classList.remove("s-stage-" + k); });
+      b.classList.add("s-stage-" + (v.phase === "chapter" ? (v.length === "quick" ? "1" : String(v.chapter)) : "summit"));
+      if (!landsTagged) {
+        Object.keys(lands).forEach(function (iso) { var t = v.tokens[iso]; if (t && t.rcode) lands[iso].forEach(function (l) { l.classList.add("rg-" + t.rcode.toLowerCase()); }); });
+        landsTagged = true;
+      }
+      if (v.phase === "chapter") { $("t-blocs").hidden = !(v.rooms || []).length; $("t-sponsors").hidden = !(v.race || []).length; }
+    }
+    var btShown = {};
+    function breakthroughCard(v, prev) {
+      if (!v.stage || !v.stage.made || v.stage.stayed || btShown[v.chapter]) return;
+      btShown[v.chapter] = true;
+      $("s-bt-h").textContent = "Breakthrough: " + v.stage.breakthrough;
+      $("s-bt-p").textContent = "Well done, delegates. " + (v.stage.turns_left ? "You have " + v.stage.turns_left + " turn" + (v.stage.turns_left === 1 ? "" : "s") + " left in " + v.chapter_name +
+        ". Move on now, and that time becomes momentum; or keep working to strengthen your hand." : "This is the stage's last turn.");
+      $("s-bt-unlocks").textContent = v.stage.unlocks;
+      $("s-bt-go").textContent = "Move on now: +" + v.stage.momentum.respect + " Respect, +" + v.stage.momentum.influence + " Influence";
+      $("s-bt-stay").textContent = v.stage.turns_left ? "Keep working (" + v.stage.turns_left + " turn" + (v.stage.turns_left === 1 ? "" : "s") + " left)" : "Finish this turn";
+      var pf = $("s-bt-pres"); pf.textContent = ""; if (G) pf.appendChild(G.portrait("delighted", "president"));
+      setTimeout(function () {
+        if (document.querySelector(".s-overlay:not([hidden])") || !$("s-walk").hidden) { btShown[v.chapter] = false; return; }
+        open("s-breakthrough"); restart(document.querySelector("#s-breakthrough .s-doc"), "shown"); A.play("fanfare");
+      }, 900);
+    }
+
     // ---------- the debrief dossier ----------
     function debriefInto(b, v) {
       var d = v.debrief; if (!d) return;
@@ -1506,6 +1661,14 @@
     $("s-bloc-whip").addEventListener("click", function () { move({ do: "bloc_whip", group: $("s-bloc-pick").value }); });
     $("s-end-turn").addEventListener("click", function () { amending = null; move({ do: "end_turn" }); });
     $("s-reserve").addEventListener("click", function () { move({ do: "reserve" }); });
+    $("s-bt-go").addEventListener("click", function () { close("s-breakthrough"); move({ do: "advance" }); });
+    $("s-bt-stay").addEventListener("click", function () { close("s-breakthrough"); move({ do: "stay" }); });
+    document.querySelector("#s-chapter-card [data-close]").addEventListener("click", function () {
+      if (stagePanel && V && V.phase === "chapter") {
+        var p = stagePanel; stagePanel = null;
+        setTimeout(function () { if (!panelOpen() && $("s-walk").hidden) setTab(p, false, p === "draft" ? "center" : null); }, 250);   // unless you've already opened one
+      }
+    });
     $("s-deal-go").addEventListener("click", function () {
       if (!DEAL.iso) return;
       move({ do: "deal", iso3: DEAL.iso, give: Object.keys(DEAL.give), get: Object.keys(DEAL.get) });
