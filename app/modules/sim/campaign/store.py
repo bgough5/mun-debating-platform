@@ -21,6 +21,7 @@ from app.db import SYSTEM, one, rows, scalar
 from app.errors import UserError
 from app.modules.mun.worldmap import REGIONS
 from app.modules.sim.campaign import content as K
+from app.modules.sim.campaign import econ as X
 from app.modules.sim.campaign import engine as E
 from app.modules.sim.campaign.scenario import Scenario, load, rebind
 from app.util import now_iso
@@ -182,7 +183,7 @@ def view(scn: Scenario, g: dict) -> dict:
         m = scn.member(iso)
         base = {"name": m.name, "p5": m.p5, "veto": iso in scn.rule.veto, "region": REGIONS.get(m.region, ""), "group": m.group}
         if iso == g["iso3"]:
-            tokens[iso] = {**base, "you": True}
+            tokens[iso] = {**base, "you": True, "dossier": X.profile(iso)}
             continue
         rival = any(r["iso3"] == iso for r in g["rivals"])
         t = {**base, "rival": rival, "trust": g["trust"].get(iso, 0), "lean": round(E.lean(scn, g, "you", iso), 2),
@@ -192,8 +193,11 @@ def view(scn: Scenario, g: dict) -> dict:
              "predicted": g["whip"].get(iso), "secured": iso in g.get("secured", []),
              "studied_by": next((a["name"] for a in g.get("staff", []) if a.get("post") == iso), None),
              "sphere": _sphere(scn, g, iso),
-             "est": None if rival or not final["tags"] else E.vote_of(scn, E.latent(scn, g, iso, final, mood=False))}
+             "est": None if rival or not final["tags"] else E._deal_vote(scn, g, iso, final, E.vote_of(scn, E.latent(scn, g, iso, final, mood=False))),
+             "deal_vote": (g.get("deal_votes") or {}).get(iso)}
+        t["dossier"] = X.profile(iso)
         if not rival and chapters:
+            t["deal"] = E.deal_terms(scn, g, iso)
             t["lobby_cost"] = E.lobby_cost(scn, g, iso)
             t["promise_on"] = [c["id"] for c in g["draft"] if E.mu_of(scn, g, iso, c["tags"]) >= 0.4]
         if iso in g["read"]:
@@ -241,6 +245,9 @@ def view(scn: Scenario, g: dict) -> dict:
                    "report": a.get("report"), "starts": a.get("post") and g.get("tick", 0) <= a.get("since", 0)} for a in g.get("staff", [])],
         "staff_kinds": [{"code": k, **v} for k, v in K.STAFF_KINDS.items()],
         "reserve": g.get("reserve", 0), "secured": len(g.get("secured", [])),
+        "capital": {"value": g.get("capital", E.R["capital_start"]), "max": E.R["capital_max"]},
+        "budget": {"total": X.budget(g["iso3"]), "used": g.get("pledged", 0)},
+        "deal_ready": g.get("deal_tick") != g.get("tick"), "deal_items": {"give": K.DEAL_GIVE, "get": K.DEAL_GET},
         "tug": _tug(scn, g),
         "event": g.get("event"), "question": {"ask": q["ask"], "options": q["options"]} if q else None,
         "draft": draft, "cards": [c for c in scn.cards if c["id"] in g["cards"]],
@@ -255,7 +262,8 @@ def view(scn: Scenario, g: dict) -> dict:
                   "strike": E.R["strike_cost"], "side_event": E.R["side_event_cost"], "abstain": E.R["abstain_cost"],
                   "draft_max": E.R["draft_max"], "sponsors": E.R["sponsors"], "favour_trust": E.R["favour_trust"],
                   "hire": E.R["hire_cost"], "staff_max": E.R["staff_max"], "secure": E.R["secure_cost"], "secure_max": E.R["secure_max"],
-                  "reply_respect": E.R["reply_respect"]},
+                  "reply_respect": E.R["reply_respect"], "deal_ap": E.R["deal_ap"], "deal_funding": E.R["deal_funding"],
+                  "candidacy_max": E.R["candidacy_max"]},
         "draft_ok": {"clauses": len(g["draft"]), "mine": sum(1 for c in g["draft"] if c["author"] == "you")},
     }
 

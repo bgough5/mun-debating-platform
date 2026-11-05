@@ -525,6 +525,14 @@ Measured in section 21 of the design doc.
 - **Your capital's confidence:** being recalled ends the session on Hard; on Easy and Standard it costs a turn.
 - **The deal table:** trade votes, sponsorships, abstentions, funding pledges (Influence), trade terms, candidacy support and intelligence.
 
+
+**Phase 9, dossiers, the deal table and your capital (5 Nov 2026).** Built as decided under phase 8:
+- **Dossiers:** real World Bank figures (World Development Indicators, CC BY 4.0 as the World Bank's data catalogue lists it), fetched with Ben's approval by `tools/build_econ.py`. Each figure is shown with its year and source; anything more than 15 years old is left out. Fictional scenarios use the same real figures for their real countries rather than invented ones, because inventing figures for real countries would be inventing facts.
+- **The deal table:** six things to offer or ask for on each side, a meter, a counter-offer, and your capital's reaction before you commit. Two actions; one deal a turn.
+- **Your capital:** confidence from 0 to 10, with telegrams. At 0 you are recalled: on Hard the session ends; otherwise you lose a turn.
+
+Measured in section 22 of the design doc.
+
 ### D-100 The speech coach beside every speech box — Decided (5 Nov 2026, Ben)
 Ben: "there should be some stats and visual add-ins that makes speeches easier to write. some things such as word count, expected speaking time, repetitive language indicators, lists of persuasive techniques … keep the platform clean, easily set-up and intuitive … as pretty and fun/interactive/clear as possible." He chose:
 - every speech box, "togglable so it doesn't feel like a constant tutorial", plus Model UN phrases to click in ("addressing other honourable delegates etc.");

@@ -38,7 +38,9 @@ see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun
   Summit voted clause by clause, then a debrief. Each chapter has a crisis; delegations bring offers; rivals have
   personalities and play to win, with hidden plans that your advisers (posted, hired, promoted) find out; you
   answer them by holding an action in reserve, securing delegations and replying at the summit; positions shift. The
-  golden rule (half a loaf is better than none) is in the scoring. The Chief of Protocol walks new players through the
+  golden rule (half a loaf is better than none) is in the scoring. Every country has a dossier of real World
+  Bank figures; you trade at the deal table (funding, trade terms, candidacies, clauses for votes, sponsorship,
+  Influence or intelligence), and your capital's confidence answers by telegram: lose it and you are recalled. The Chief of Protocol walks new players through the
   whole session first, and speaks up at key moments.
 - **People:** one student list with year levels, saved groups (for example "Debating Jr BGO", ticked in one go; D-085),
   teacher access (which teachers see whom), staff, student pathways and milestones.

@@ -463,3 +463,74 @@ Ben: "make sure there is counter play and that the cpu does try and win, while a
 | Average session (minutes, estimated) | 55–63 | 55–64 |
 
 By scenario, silver or better on Standard: comet_halcyon 97.5%, ga_ai_governance 76.2%, ga_autonomous_weapons 80%, ga_climate_transition 56.2%, ga_migration 70%, sc_ai_cyber 46.3%, sc_climate_security 23.7%, veloria 83.8%.
+
+## 22. Dossiers, the deal table and your capital (phase 9, 5 Nov 2026)
+
+Ben asked to "trade agreements and things for influence etc, with each country having their economic / trade / other relevant information available to deal with", and for "the leaders of the country [to] get mad if you make deals they think go too far etc or don't meet the mandate". His choices:
+- real figures, cited;
+- a recall ends the session on Hard; on Easy and Standard it costs a turn.
+
+**Dossiers** (`econ.py`, `econ.json` from `tools/build_econ.py`).
+- **Source:** the World Bank's World Development Indicators, which the World Bank's data catalogue lists under CC BY 4.0. They were fetched on 5 Nov 2026 for 217 countries.
+- **Contents:** each country's most recent economy size, GDP per person, population, income group, exports as a share of GDP, main goods export, the farming share, and development aid received.
+- **Age:** a figure more than 15 years old is left out. Aid is shown only if it is from the last ten years.
+- **Display:** every figure is shown with its year and the source.
+- **Fictional scenarios** use the same real figures, because their delegations are real countries. Inventing figures for real countries would be inventing facts. *This departs from the original plan ("invented profiles"), for that reason.*
+- **What a delegation asks for**, read from its figures (rules of thumb, not claims about governments):
+  - development money, if it receives aid or has a low income;
+  - market access, if trade or commodities matter to it;
+  - backing for a candidacy, about 30% of the time (seeded);
+  - always its favourite clause.
+- **Your budget of funding pledges** is your economy's size tier (1–4), plus 2 if high income or 1 if upper middle income.
+
+**The deal table** (`deal_terms`, `a_deal`).
+- **You offer:**
+  - a funding pledge (2 Influence and one pledge from your budget);
+  - trade terms (your capital minds, −1, unless trade matters to your own economy);
+  - backing for their candidacy (two a session);
+  - backing for their favourite clause (a promise; −3 confidence if that clause carries your red line).
+- **You ask for:**
+  - their yes on the whole text (binding, unless the text crosses their own red line);
+  - an abstention (a permanent member: no veto);
+  - sponsorship;
+  - 3 Influence;
+  - intelligence on a rival's next move.
+- **How a proposal is judged:**
+  - What you give counts at its value to them, more if it is something they want.
+  - Each ask costs them by how far it moves them: a yes costs (0.4 − their position) × 2.5 + 0.5, at least 0.5.
+  - Trust adds 0.5 a point.
+  - The meter reads: refuse below −1.5, want more below 0, accept from 0, delighted from 1.5.
+  - A refusal names the cheapest addition that would have closed the deal, and an unpaid pledge is not charged.
+- **Limits:** a deal takes 2 actions; one deal a turn; one a chapter with each delegation; never with rivals.
+
+**Your capital** (`_capital`, `_capital_chapter`, `_recall`). Confidence starts at 6 and runs from 0 to 10, and every change arrives as a telegram from your Foreign Minister.
+- **At the end of each chapter:**
+  - goal met +1, missed −1;
+  - your red line in the draft −1;
+  - your main aim missing from chapter 2 onwards −1.
+- **Deals that go too far:**
+  - trade terms when trade doesn't matter to your economy −1;
+  - a promise to back your red line −2 (−3 at the deal table);
+  - trading away your main aim −2, or your second aim −1.
+- **At the final vote:** breaking the golden rule −2.
+- **Warnings and recall:** a warning comes at 2. At 0 you are recalled for consultations: on Hard the session ends (no medals; the debrief explains); on Easy and Standard you lose your next turn and confidence resets to 3.
+
+**The Chief's walkthrough** gains two steps: your capital, and dossiers with the deal table. Telegrams appear in the advice corner, typed out.
+
+**Measured** (2,400 games, 20 per cell; bots deal only when the vote is close or failing, and only on terms their capital accepts; the random bot makes random deals):
+
+| Target | Phase 8 | Phase 9 |
+|---|---|---|
+| Standard: silver or better | 66.7% | 66.9% |
+| Gold on own path: hardliner / analyst / broker / drafter | 40.6 / 39.4 / 41.9 / 70.6% | 39.4% / 40.0% / 42.5% / 68.1% |
+| Highest action share among winners | 22.4% | 23.8% |
+| Hardest scenario on Standard | 23.7% | 17.5% |
+| Random player, silver or better | 18.3% | 14.0% |
+| Rivals get what they came for: Easy / Standard / Hard | 9.5 / 22.5 / 42.6% | 10.4% / 22.4% / 30.0% |
+| Deals at the table per game | none | 2.61 |
+| Competent bots recalled: Easy / Standard / Hard | none | 0.0% / 0.0% / 5.8% |
+| Random bot recalled on Hard | none | 73.8% |
+| Stuck games | 0 | 0 |
+| Average session (minutes, estimated) | 55–64 | 41–62 |
+
+**Below target:** the hardest scenario, the Security Council climate one, is at 17.5% on Standard (phase 8: 23.7%; target 25%). It is labelled Expert. In it, the bots make 4–5 deals a game, and at two actions each those deals crowd out drafting: Drafter silver fell from 45% to 35%. A focused 8-game re-run with bots that deal only in the final chapter was too noisy to show a gain, so it was not kept. Rebalancing the two Council scenarios is a follow-up. The 41-minute low is the random bot on Hard, whose sessions often end early in a recall.

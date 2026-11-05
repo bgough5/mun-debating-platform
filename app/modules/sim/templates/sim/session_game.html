@@ -20,6 +20,7 @@
       <li class="s-meter" id="m-influence" title="Influence: spent on lobbying, side events and favours"><i aria-hidden="true">₳</i><b>–</b><span>Influence</span></li>
       <li class="s-meter" id="m-respect" title="Respect: your standing in the room"><i aria-hidden="true">✦</i><b>–</b><span>Respect</span></li>
       <li class="s-meter" id="m-expertise" title="Expertise: unlocks diplomatic skills"><i aria-hidden="true">✎</i><b>–</b><span>Expertise</span></li>
+      <li class="s-meter" id="m-capital" title="Your capital's confidence in you: at zero you are recalled"><i aria-hidden="true">✉</i><b>–</b><span>Capital</span></li>
       <li class="s-meter" id="m-ap" title="Action points left this turn"><i aria-hidden="true">⚑</i><span class="s-ap" id="s-ap"></span><span>Actions</span></li>
     </ul>
   </header>
@@ -123,6 +124,22 @@
   <div class="s-overlay" id="s-file" hidden role="dialog" aria-modal="true" aria-labelledby="s-file-h">
     <div class="s-doc wide s-dossier"><p class="s-eyebrow">Country file</p><h2 id="s-file-h">–</h2><div id="s-file-body"></div>
       <div class="s-row"><button type="button" class="s-btn" data-close="s-file">Close the file</button></div></div>
+  </div>
+  <div class="s-overlay" id="s-deal" hidden role="dialog" aria-modal="true" aria-labelledby="s-deal-h">
+    <div class="s-doc wide s-dealdoc"><p class="s-eyebrow">The deal table</p><h2 id="s-deal-h">–</h2>
+      <p class="s-sub" id="s-deal-sub"></p>
+      <div class="s-deal-cols">
+        <section class="s-tray" aria-labelledby="s-give-h"><h3 id="s-give-h">You offer</h3><div class="s-items" id="s-deal-give"></div></section>
+        <div class="s-deal-mid">
+          <div class="s-meter-dial" id="s-deal-dial" aria-hidden="true"><i></i></div>
+          <p class="s-deal-verdict" id="s-deal-verdict" aria-live="polite">Choose what goes on the table.</p>
+          <div class="s-deal-capital" id="s-deal-capital"></div>
+        </div>
+        <section class="s-tray" aria-labelledby="s-get-h"><h3 id="s-get-h">You ask for</h3><div class="s-items" id="s-deal-get"></div></section>
+      </div>
+      <p class="s-small" id="s-deal-note"></p>
+      <div class="s-row"><button type="button" class="s-btn" id="s-deal-go">Propose the deal</button>
+        <button type="button" class="s-btn ghost" data-close="s-deal">Leave the table</button></div></div>
   </div>
   <div class="s-overlay" id="s-skills" hidden role="dialog" aria-modal="true" aria-labelledby="s-skills-h">
     <div class="s-doc wide"><h2 id="s-skills-h">Diplomatic skills</h2>

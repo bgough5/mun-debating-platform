@@ -341,3 +341,41 @@ def test_staff_the_vote_bar_and_the_reserve_in_the_browser(browser, live):
     page.wait_for_function("document.querySelector('#c-staff-list .s-report .s-sure') !== null")   # the first report arrives
     assert not errors, errors
     ctx.close()
+
+
+
+def test_the_deal_table_in_the_browser(browser, live):
+    """Phase 9: a delegation's dossier, the deal table's trays and meter, your capital's reaction, a proposal; the deal
+    table passes axe."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 900})
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(live.url + "/session/new")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false}))")
+    page.click('[data-pick="pack"][data-value="comet_halcyon"]')
+    page.click('[data-step="1"] [data-next]')
+    page.wait_for_selector("#s-seats-box .s-seat")
+    page.click('.s-seat[data-value="NZL"]')
+    for n in (2, 3, 4, 5):
+        page.click(f'[data-step="{n}"] [data-next]')
+    page.click("#s-begin")
+    page.wait_for_selector("#s-chapter-card:not([hidden])")
+    page.click("#s-chapter-card [data-close]")
+    assert page.text_content("#m-capital b") == "6/10"
+    page.click('#b-map .b-token[data-iso="IND"]', force=True)
+    page.wait_for_selector("#c-country .s-dossier-box")
+    assert "World Bank" in page.text_content("#c-country .s-dossier-box")
+    page.click("#c-country .s-deal-btn")
+    page.wait_for_selector("#s-deal:not([hidden]) .s-item")
+    assert page.is_disabled("#s-deal-go")                                    # nothing on the table yet
+    page.locator("#s-deal-give .s-item:not([disabled])").first.click()
+    page.locator("#s-deal-get .s-item:not([disabled])").first.click()
+    assert page.inner_text("#s-deal-verdict").startswith("They")
+    assert page.locator("#s-deal-capital p").count() == 1
+    page.wait_for_timeout(400)
+    assert not axe(page, "session_deal_table")
+    page.click("#s-deal-go")
+    page.wait_for_function("document.getElementById('s-deal').hidden || document.getElementById('s-deal-verdict').textContent.indexOf('turned it down') >= 0")
+    assert not errors, errors
+    ctx.close()

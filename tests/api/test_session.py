@@ -180,3 +180,24 @@ def test_the_view_shows_the_vote_as_it_stands_your_staff_and_counter_moves(app):
     v = move({"do": "end_turn"})
     assert v["staff"][0]["report"]["text"] and v["staff"][0]["report"]["sure"]
     assert v["reserve"] == 0                                       # used against a rival, or lapsed
+
+
+
+def test_the_view_shows_dossiers_the_deal_table_and_the_capital(app):
+    """Phase 9: every delegation's dossier (real figures with years and the source), the deal terms, your capital's
+    confidence and your budget; a deal made through the API."""
+    c = guest(app)
+    j = api(c, {"do": "new", "pack": "comet_halcyon", "iso3": "NZL", "length": "quick", "difficulty": "easy", "path": "mandate"}).json()
+    v = j["view"]
+    assert v["capital"] == {"value": 6, "max": 10} and v["budget"]["total"] >= 1 and v["deal_ready"]
+    you = v["tokens"]["NZL"]["dossier"]
+    assert you["known"] and "World Bank" in you["source"] and any(r["label"] == "Economy (GDP)" for r in you["rows"])
+    free = [i for i, t in v["tokens"].items() if t.get("deal")]
+    assert free and all(not v["tokens"][r["iso3"]].get("deal") for r in v["rivals"])          # no deals with rivals
+    iso = next(i for i in free if "influence" in v["tokens"][i]["deal"]["get"])
+    t = v["tokens"][iso]["deal"]
+    give = sorted(t["give"], key=lambda k: -t["give"][k])
+    r = api(c, {"do": "move", "state": j["state"], "sig": j["sig"], "action": {"do": "deal", "iso3": iso, "give": give, "get": ["influence"]}})
+    assert r.status_code == 200, r.text
+    out, v2 = r.json()["out"], r.json()["view"]
+    assert "deal" in out and not v2["deal_ready"] and v2["ap"] == v["ap"] - v["costs"]["deal_ap"]

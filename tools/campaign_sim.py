@@ -29,7 +29,7 @@ sys.path.insert(0, str(ROOT))
 
 # Seconds a student would spend on each move: reading, thinking and the animation (a model, to be checked in a
 # real play test).
-SECONDS = {"hire": 20, "post": 15, "reserve": 10, "secure": 25, "offer": 30, "lobby": 45, "read": 60, "propose": 50, "amend": 40, "strike": 30, "promise": 30, "side_event": 30, "favour": 20,
+SECONDS = {"deal": 60, "hire": 20, "post": 15, "reserve": 10, "secure": 25, "offer": 30, "lobby": 45, "read": 60, "propose": 50, "amend": 40, "strike": 30, "promise": 30, "side_event": 30, "favour": 20,
            "whip": 25, "sign": 25, "answer": 30, "skill": 30, "divide": 30, "merge": 30, "bloc_whip": 30, "end_turn": 40,
            "speech": 90, "decide": 60, "final": 60}
 FIXED = 6 * 60      # setup, the chapter cards and the debrief
@@ -74,13 +74,15 @@ def main() -> None:
                             results.append({"pack": code, "difficulty": diff, "style": style, "stuck": True})
                             continue
                         secs = FIXED + sum(SECONDS.get(a, 30) * n for a, n in g["stats"].items())
-                        fin = g["summit"]["final"]
+                        fin = (g.get("summit") or {}).get("final") or {"passed": False, "tags": []}
                         rivals_won = sum(1 for rv in g["rivals"] if fin["passed"] and rv["want"] in fin["tags"] and rv["block"] not in fin["tags"])
                         results.append({"pack": code, "difficulty": diff, "style": style, "iso3": iso, "path": g["path"],
                                         "grade": g["result"]["grade"], "paths": g["result"]["paths"], "passed": g["result"]["passed"],
                                         "stats": g["stats"], "minutes": round(secs / 60, 1), "objectives": g["objectives"],
                                         "rivals": len(g["rivals"]), "rivals_won": rivals_won,
-                                        "rival_moves": sum(1 for x in g["log"] if x["kind"] == "rival")})
+                                        "rival_moves": sum(1 for x in g["log"] if x["kind"] == "rival"),
+                                        "deals": g.get("table_deals", 0), "recalled": bool(g["result"].get("recalled")),
+                                        "capital": g.get("capital")})
             print(f"{code}: done ({time.time() - started:.0f}s)", flush=True)
     report = summarise(results)
     out = Path(args.out)
@@ -124,6 +126,10 @@ def summarise(results: list[dict]) -> dict:
         "hardest_pack_standard_ge_25": min((p["standard"] for p in packs.values()), default=0),
         "stuck_games": sum(1 for r in results if r.get("stuck")),
         "random_silver_plus": rate([r for r in ok if r["style"] == "random"], lambda r: r["grade"] >= 2),
+        "recalled_share": {d: rate([r for r in ok if r["difficulty"] == d and r["style"] != "random"], lambda r: r.get("recalled"))
+                           for d in ("easy", "standard", "hard")},
+        "random_recalled_hard": rate([r for r in ok if r["difficulty"] == "hard" and r["style"] == "random"], lambda r: r.get("recalled")),
+        "deals_per_game": round(statistics.mean(r.get("deals", 0) for r in ok), 2) if ok else 0,
         "rivals_win_share": {d: round(sum(r["rivals_won"] for r in ok if r["difficulty"] == d)
                                       / max(1, sum(r["rivals"] for r in ok if r["difficulty"] == d)), 3) for d in ("easy", "standard", "hard")},
     }

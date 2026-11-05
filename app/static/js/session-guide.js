@@ -25,8 +25,9 @@
     return e;
   }
 
-  function portrait(expression) {
-    var svg = el("svg", { viewBox: "0 0 240 280", class: "g-face", role: "img", "aria-label": "The Chief of Protocol" });
+  function portrait(expression, variant) {
+    var svg = el("svg", { viewBox: "0 0 240 280", class: "g-face" + (variant ? " " + variant : ""), role: "img",
+                          "aria-label": variant === "minister" ? "Your Foreign Minister" : "The Chief of Protocol" });
     var defs = el("defs", {}, svg);
     var clip = el("clipPath", { id: "g-oval-" + Math.random().toString(36).slice(2, 8) }, defs);
     el("ellipse", { cx: 120, cy: 140, rx: 108, ry: 128 }, clip);

@@ -81,6 +81,10 @@ class Bot:
                              if g["trust"].get(i, 0) >= 1 and i not in g.get("secured", []))
             if friends:
                 g, _ = self.act(g, {"do": "secure", "iso3": friends[-1][1]})
+        if g["phase"] == "chapter" and g["ap"] >= 2:
+            g = self.try_deal(g)
+        if g["phase"] != "chapter":
+            return g
         for sk in BRANCH[self.style]:
             if g["xp"] >= K.SKILL_COST:
                 g, _ = self.act(g, {"do": "skill", "skill": sk})
@@ -98,6 +102,43 @@ class Bot:
         if g["ap"] > 0 and self.style != "random" and not g.get("reserve"):
             g, _ = self.act(g, {"do": "reserve"})          # keep the last action back to answer a rival
         g, _ = self.act(g, {"do": "end_turn"})
+        return g
+
+    def try_deal(self, g):
+        """Buy a wavering delegation's yes at the deal table with what costs the capital nothing. The random bot
+        makes random deals, so the capital's anger is exercised too."""
+        if self.style == "random":
+            if self.rng.random() < 0.25:
+                iso = self.rng.choice(self.free(g))
+                t = E.deal_terms(self.scn, g, iso)
+                if t["give"] and t["get"] and not t["done"]:
+                    give = self.rng.sample(sorted(t["give"]), k=min(2, len(t["give"])))
+                    get = [self.rng.choice(sorted(t["get"]))]
+                    g, _ = self.act(g, {"do": "deal", "iso3": iso, "give": give, "get": get})
+            return g
+        proj = E.projection(self.scn, g)
+        if proj["passed"] and proj["yes"] - proj["no"] > 2:
+            return g                                          # no need to buy votes
+        best = None
+        veto = set(self.scn.rule.veto)
+        for iso in self.free(g):
+            t = E.deal_terms(self.scn, g, iso)
+            ask = "abstain" if iso in veto and proj["votes"].get(iso) == "no" and "abstain" in t["get"] else "yes"
+            cost = t["get"].get(ask)
+            if t["done"] or not cost or cost <= 0.6 or cost > 3.5:
+                continue
+            gives, score = [], t["bonus"] - cost
+            for item in sorted(t["give"], key=lambda i: (-t["give"][i], i)):
+                if t["capital"].get(item, 0) < 0 or (item == "funding" and g["influence"] < 5):
+                    continue
+                gives.append(item)
+                score += t["give"][item]
+                if score >= 0.2:
+                    break
+            if score >= 0.2 and (best is None or len(gives) < len(best[1])):
+                best = (iso, gives, ask)
+        if best:
+            g, _ = self.act(g, {"do": "deal", "iso3": best[0], "give": best[1], "get": [best[2]]})
         return g
 
     def take(self, g, o) -> bool:

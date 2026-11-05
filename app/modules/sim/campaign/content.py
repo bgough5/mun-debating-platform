@@ -162,3 +162,19 @@ STAFF_NAMES = ["Reyes", "Lindqvist", "Tanaka", "Asante", "Okafor", "Haddad", "No
                "Nguyen", "Mensah", "Costa", "Ibrahim", "Larsen"]
 STAFF_RANKS = {1: "Junior adviser", 2: "Senior adviser", 3: "Principal adviser"}
 SURE = {1: "a hunch", 2: "fairly sure", 3: "certain"}
+
+
+# The deal table (phase 9): what you can offer a delegation, and what you can ask of it.
+DEAL_GIVE = {
+    "funding": {"name": "A funding pledge", "what": "Your government funds a programme they care about: 2 Influence and one pledge from your budget."},
+    "trade": {"name": "Trade terms", "what": "Easier access to your market for their exports. Your capital minds unless trade matters to your own economy."},
+    "candidacy": {"name": "Backing for their candidacy", "what": "Your vote for their candidate at the next UN election (two a session at most)."},
+    "clause": {"name": "Backing for their clause", "what": "A promise to vote yes on the clause they like best."},
+}
+DEAL_GET = {
+    "yes": {"name": "Their yes", "what": "A yes vote on the whole resolution, unless it crosses their own red line."},
+    "abstain": {"name": "An abstention", "what": "They abstain rather than vote against (for a permanent member: no veto)."},
+    "sponsor": {"name": "Sponsorship", "what": "They sponsor your draft."},
+    "influence": {"name": "Influence", "what": "They put 3 Influence behind your work."},
+    "intel": {"name": "Intelligence", "what": "What they know about a rival's next move."},
+}

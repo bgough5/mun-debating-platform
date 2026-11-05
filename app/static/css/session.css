@@ -642,3 +642,57 @@
 .s-rival-out li { padding: 6px 0; font-size: 18px; }
 .s-rival-out li b { margin-right: 8px; }
 .s-rival-out li.won b { color: var(--stamp); }
+
+/* ---------- Phase 9: dossiers, the deal table, your capital ---------- */
+#m-capital.low b { color: var(--stamp); animation: s-bump 1.2s ease infinite; }
+.s-dossier-box { margin: 8px 0; border: 1px solid var(--walnut); background: var(--white); padding: 6px 10px; }
+.s-dossier-box summary { cursor: pointer; font-family: var(--serif); font-weight: 700; color: var(--maroon); }
+.s-dossier { margin: 6px 0 4px; }
+.b-card .s-source, .s-doc .s-source { margin: 2px 0 0; font-size: 14px; }
+
+/* the Foreign Minister: the same painted style as the Chief, darker hair, no glasses, a maroon backdrop */
+.g-face.minister .g-backdrop { fill: var(--maroon); }
+.g-face.minister .g-laurel { fill: var(--gold-lt); opacity: .35; }
+.g-face.minister .g-hair { fill: var(--wood); }
+.g-face.minister .g-hair-line { stroke: var(--walnut-dk); }
+.g-face.minister .g-brow { stroke: var(--walnut-dk); }
+.g-face.minister .g-glasses, .g-face.minister .g-glasses-rim { display: none; }
+.g-face.minister .g-tie { fill: var(--un-blue); }
+
+/* telegrams from your capital */
+.s-advice.s-telegram { background: var(--parchment); border: 3px double var(--stamp); }
+.s-advice.s-telegram h2.s-eyebrow { color: var(--stamp); letter-spacing: .3em; }
+.s-advice.s-telegram p { font-family: "Courier New", Courier, monospace; font-size: 18px; text-transform: uppercase; letter-spacing: .04em; }
+
+/* the deal table: two trays on green felt, a dial between them */
+.s-overlay .s-doc.s-dealdoc { width: 1320px; }
+.s-deal-cols { display: grid; grid-template-columns: 1fr 250px 1fr; gap: 18px; align-items: start; margin: 10px 0; }
+.s-tray { background: var(--felt); border: 6px solid var(--wood); box-shadow: inset 0 0 0 2px var(--felt-dk); padding: 10px 12px 12px; }
+.s-doc .s-tray h3 { color: var(--parchment); font-size: 20px; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 4px; }
+.s-item { display: block; width: 100%; text-align: left; margin: 7px 0 0; padding: 8px 12px; border-radius: 0; font: inherit; color: var(--ink); cursor: pointer;
+  background: var(--white); border: 2px solid var(--walnut); box-shadow: 2px 3px 0 rgb(0 0 0 / 30%); transition: transform .2s ease, box-shadow .2s ease; }
+.s-item:hover, .s-item:focus-visible { background: var(--parchment); color: var(--ink); transform: translateY(-1px); }
+.s-item:focus-visible { outline: 3px solid var(--un-blue-lt); outline-offset: 2px; }
+.s-item.on { border-color: var(--maroon); box-shadow: 0 0 0 3px var(--lit), 3px 5px 0 rgb(0 0 0 / 30%); transform: translateY(-3px) rotate(-.6deg); }
+.s-item[disabled] { opacity: .55; cursor: default; transform: none; }
+.s-item b { display: block; font-family: var(--serif); font-size: 18px; color: var(--maroon); }
+.s-item span { display: block; font-size: 15px; line-height: 1.35; }
+.s-item em { display: block; margin-top: 3px; font-size: 14px; font-style: normal; color: var(--muted); }
+.s-deal-mid { text-align: center; padding-top: 18px; }
+.s-meter-dial { position: relative; width: 210px; height: 105px; margin: 0 auto 8px; border: 3px solid var(--brass-dk); border-bottom: 0;
+  border-radius: 105px 105px 0 0; background: conic-gradient(from -90deg at 50% 100%, var(--map-no) 0deg 45deg, var(--map-abstain) 45deg 90deg,
+  var(--map-yes) 90deg 180deg, transparent 180deg); }
+.s-meter-dial i { position: absolute; left: calc(50% - 2px); bottom: 0; width: 4px; height: 92px; background: var(--walnut-dk); transform-origin: 50% 100%;
+  transition: transform .55s cubic-bezier(.3, 1.4, .5, 1); }
+.s-meter-dial::after { content: ""; position: absolute; left: calc(50% - 9px); bottom: -9px; width: 18px; height: 18px; border-radius: 50%; background: var(--brass); }
+.s-doc .s-deal-verdict { font-family: var(--serif); font-size: 22px; font-weight: 700; margin: 14px 0 8px; }
+.s-deal-capital { display: flex; gap: 10px; align-items: center; justify-content: center; text-align: left; }
+.s-deal-capital .g-face { width: 64px; height: 75px; flex: none; }
+.s-doc .s-deal-capital p { font-size: 16px; margin: 0; }
+.s-deal-btn { background: var(--lit); }
+/* the walkthrough's picture of the table */
+.s-g-deal { display: grid; grid-template-columns: 1fr 50px 1fr; gap: 8px; align-items: center; margin: 8px 0 12px; }
+.s-g-tray { background: var(--felt); border: 4px solid var(--wood); padding: 6px 8px; }
+.s-g-tray b { display: block; color: var(--parchment); font-family: var(--serif); font-size: 14px; letter-spacing: .1em; text-transform: uppercase; }
+.s-g-tray span { display: block; margin-top: 5px; padding: 3px 8px; background: var(--white); border: 1px solid var(--walnut); font-size: 15px; animation: s-in .45s both; }
+.s-g-hand { text-align: center; font-size: 32px; color: var(--brass-dk); }

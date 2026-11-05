@@ -184,7 +184,7 @@
     document.querySelectorAll("#b-map .b-land").forEach(function (l) { (lands[l.getAttribute("data-iso")] = lands[l.getAttribute("data-iso")] || []).push(l); });
     var SOUND = { lobby: "paper", read: "flip", propose: "stamp", amend: "paper", strike: "stamp", promise: "coin", side_event: "chime",
                   favour: "coin", whip: "tick", sign: "stamp", skill: "chime", divide: "paper", merge: "stamp", bloc_whip: "chime", abstain: "stamp",
-                  hire: "coin", post: "flip", reserve: "tick", secure: "stamp", offer: "paper" };
+                  hire: "coin", post: "flip", reserve: "tick", secure: "stamp", offer: "paper", deal: "stamp" };
     var POS = { "2": ["p2", "Strongly for"], "1": ["p1", "For"], "0": ["p0", "Neutral"], "-1": ["n1", "Against"], "-2": ["n2", "Strongly against"] };
 
     function body(extra) {
@@ -250,7 +250,7 @@
           return;
         }
         draw(r.view, r.out, action);
-        if (r.view.phase === "done" && action.do === "statement") setTimeout(function () { result(r.view); }, 600);
+        if (r.view.phase === "done") setTimeout(function () { result(r.view); }, action.do === "statement" ? 600 : 1800);
         if (action.do === "end_turn") A.play("gavel"); else if (SOUND[action.do]) A.play(SOUND[action.do]);
       }).catch(function (e) { say(e.message); A.play("tick"); });
     }
@@ -398,6 +398,8 @@
       fact("Trust", tr);
       fact("Goodwill", d.sway > 0 ? "+" + d.sway.toFixed(2) + " towards you" : d.sway < 0 ? d.sway.toFixed(2) : "none yet");
       if (d.secured) fact("Secured", "signed a commitment: rivals find it twice as hard to move");
+      if (d.deal_vote) fact("Your deal", d.deal_vote === "yes" ? "it will vote yes on the whole text, unless it crosses its red line" : "it will abstain rather than vote no");
+      if (d.deal && d.deal.asks) fact("Wants in a deal", d.deal.asks.map(function (k) { return ASK[k]; }).join(", "));
       if (d.studied_by) fact("Studied by", d.studied_by);
       var flags = [];
       if (d.signed) flags.push("signed as your " + d.signed); if (d.pledged) flags.push("pledged to abstain");
@@ -405,6 +407,7 @@
       if (d.predicted) flags.push("you predicted: " + d.predicted);
       if (flags.length) fact("Also", flags.join("; "));
       c.appendChild(dl);
+      if (d.dossier && d.dossier.known) c.appendChild(dossierBox(d.dossier, false));
       var grid = h("div", "s-acts-grid"), noAp = !v.ap;
       grid.appendChild(btn("Lobby (" + d.lobby_cost + " Influence)", "s-btn small", function () { move({ do: "lobby", iso3: picked }); }, noAp || v.influence < d.lobby_cost));
       grid.appendChild(d.read ? btn("Open the file", "s-btn ghost small", function () { showFile(d.file); })
@@ -417,6 +420,8 @@
         grid.appendChild(row);
       }
       grid.appendChild(btn("Call in a favour", "s-btn ghost small", function () { move({ do: "favour", iso3: picked }); }, noAp || d.trust < v.costs.favour_trust));
+      if (d.deal) grid.appendChild(btn("The deal table (" + v.costs.deal_ap + " actions)", "s-btn small s-deal-btn", function () { dealTable(picked); },
+                                       d.deal.done || !v.deal_ready || v.ap < v.costs.deal_ap));
       if (!d.secured) grid.appendChild(btn("Secure (" + v.costs.secure + " Influence)", "s-btn ghost small", function () { move({ do: "secure", iso3: picked }); },
                                           noAp || d.trust < 1 || d.est !== "yes" || v.secured >= v.costs.secure_max || v.influence < v.costs.secure));
       if (d.veto && v.veto.length) grid.appendChild(btn("Ask to abstain, not veto", "s-btn ghost small", function () { move({ do: "abstain", iso3: picked }); }, noAp || d.pledged || d.trust < 1));
@@ -449,6 +454,8 @@
       });
       b.appendChild(t);
       if (f.shifts && f.shifts.length) b.appendChild(h("p", "s-shifted", "Since the session began: " + f.shifts.map(function (x) { return x.dir + " towards anything that " + lc(x.label); }).join("; ") + "."));
+      var dz = V && V.tokens[f.iso3] && V.tokens[f.iso3].dossier;
+      if (dz && dz.known) b.appendChild(dossierBox(dz, true));
       if (f.red_lines.length) b.appendChild(h("p", "", "Red lines (they say they can never accept): " + f.red_lines.join("; ") + "."));
       if (f.sources.length) {
         var s = h("div", "s-sources"); s.appendChild(h("p", "s-sub", "Sources:"));
@@ -487,6 +494,8 @@
       $("s-where").textContent = v.phase === "done" ? "Finished" : v.phase === "summit" ? "The Summit" : (v.length === "quick" ? "Working session" : "Chapter " + v.chapter + " of " + v.chapters) + " · turn " + v.turn + " of " + v.turns;
       $("s-you").textContent = "You are " + v.you.name + " · " + v.rule + " · aiming for " + v.path.name;
       meter("m-influence", v.influence); meter("m-respect", v.respect); meter("m-expertise", v.expertise);
+      meter("m-capital", v.capital.value + "/" + v.capital.max);
+      $("m-capital").classList.toggle("low", v.capital.value <= 2);
       var ap = $("s-ap"); ap.textContent = "";
       for (var i = 0; i < Math.max(v.ap, 0); i++) ap.appendChild(h("i", "on"));
       $("m-ap").setAttribute("aria-label", v.ap + " actions left this turn");
@@ -546,7 +555,8 @@
         restart(q, "s-in");
       }
       if (out && out.file) showFile(out.file);
-      if (out && action && action.do === "offer") say(out.refused_by_room ? "The working group wouldn't make the change, so the deal fell through." : out.accepted ? "Deal done." : "You turned the offer down.");
+      if (out && action && action.do === "deal") dealAnswer(v, out);
+      else if (out && action && action.do === "offer") say(out.refused_by_room ? "The working group wouldn't make the change, so the deal fell through." : out.accepted ? "Deal done." : "You turned the offer down.");
       else if (out && out.accepted === false) say(action.do === "strike" ? "The working group wants that clause, so it stays. Your Influence is returned." : "The working group didn't accept that amendment: it would lose support. Your Influence is returned.");
       else if (out && out.right !== undefined) say((out.right ? "Right. " : "Not quite. ") + out.why);
       else if (action && action.do === "end_turn") say(v.phase === "summit" ? "The summit opens." : "Rivals have moved: see the Record.");
@@ -761,8 +771,9 @@
     function result(v) {
       var r = v.result; if (!r) return;
       var d = v.debrief || {}, p = v.path, grade = r.grade;
-      $("s-result-eyebrow").textContent = r.passed ? "The resolution was adopted" : r.statement ? "A Presidential Statement was agreed" : "The resolution failed";
-      $("s-result-h").textContent = GRADE[grade] + " for " + p.name;
+      $("s-result-eyebrow").textContent = r.recalled ? "Your capital has lost confidence in you" : r.passed ? "The resolution was adopted" :
+        r.statement ? "A Presidential Statement was agreed" : "The resolution failed";
+      $("s-result-h").textContent = r.recalled ? "Recalled for consultations" : GRADE[grade] + " for " + p.name;
       var b = $("s-result-body"); b.textContent = "";
       // the rank plaque and the four medals
       if (d.rank) {
@@ -799,6 +810,13 @@
         grade === 1 ? "A respectable session. Read the turning points below: the next one will go further." :
         "A hard session, Ambassador. Every great delegate has one. The dossier below shows exactly what happened, and why."));
       b.insertBefore(chief, b.firstChild);
+      if (v.debrief && v.debrief.capital) {
+        var cp = h("div", "s-debrief"); cp.appendChild(h("h3", "", "Your capital"));
+        cp.appendChild(h("p", "", "Confidence at the end: " + v.debrief.capital.confidence + " of " + v.debrief.capital.of + ". " +
+          v.debrief.capital.deals + " deal" + (v.debrief.capital.deals === 1 ? "" : "s") + " made." +
+          (v.debrief.capital.recalled ? " You were recalled before the summit." : "")));
+        b.appendChild(cp);
+      }
       if (v.debrief && v.debrief.half_loaf) {
         var hl = h("div", "s-debrief s-loaf"); hl.appendChild(h("h3", "", "Half a loaf"));
         hl.appendChild(h("p", "", v.debrief.half_loaf.verdict));
@@ -975,6 +993,10 @@
                        ["Respect ✦ ", "is your standing in the room. At 7 you get an extra action each turn; at 8 proposing clauses is free."],
                        ["Expertise ✎ ", "comes from reading country files and knowing procedure. Spend it on diplomatic skills."],
                        ["Actions ⚑ ", "are your moves this turn. Most things cost one."]])] },
+        { at: "#m-capital", face: "concerned", title: "Your capital",
+          text: ["Your Foreign Minister is watching. This is their confidence in you, out of " + v.capital.max + ". It rises when you meet a chapter's goal and get your aims into the text.",
+                 "It falls when you miss a goal, let your red line into the draft, or make a deal that goes too far: trading away your instructions, or promising to back your red line. Telegrams tell you why. At zero you are recalled for consultations: " +
+                 (v.difficulty === "hard" ? "on Hard, that ends your session." : "you lose a turn.")] },
         { at: "#b-board", face: "calm", title: "The room", demo: function () { if (sample) setTimeout(function () { envoy(v.you.iso3, sample, false); }, 500); },
           text: ["Every token is a delegation, banded in the colour of its regional group. Green leans towards your draft, red against.",
                  "As delegations lean your way, their land takes your colour; a rival's sphere shows too, like borders on a campaign map. Envoys cross the map whenever anyone makes a move. Click any token to work that delegation."] },
@@ -989,6 +1011,9 @@
                        ["Ask them to sponsor or sign ", "so the draft can be tabled first."],
                        ["Predict their vote: ", "scored at the summit, and the Kingmaker's path." + (sc ? " Permanent members can be asked to abstain rather than veto." : "")],
                        ["Secure them ", "once they trust you and lean your way: a signed commitment makes them twice as hard for a rival to move."]])] },
+        { face: "thinking", title: "Dossiers and the deal table", art: artDeal,
+          text: ["Every delegation has a dossier: the size of its economy, its income group, what it exports and whether it receives development aid. These are real World Bank figures, each with its year.",
+                 "What a delegation wants follows from them: development money, access to markets, backing for a candidacy, or its favourite clause. At the deal table you offer some of these for its yes, an abstention, sponsorship, Influence or intelligence. The meter shows whether it would accept, and your capital's reaction shows whether it would approve. A deal takes " + v.costs.deal_ap + " actions; one a turn, one per delegation a chapter, and your budget allows " + v.budget.total + " funding pledges in all."] },
         { at: "#c-regions", tab: "brief", face: "wry", title: "Regional groups",
           text: ["Win more than half of a regional group and it endorses your draft: extra Influence every turn, and its members lean your way at the vote.",
                  "A side event, on the Delegates tab, works on a whole group at once (2 actions). Rivals court groups too, so an endorsement can be lost."] },
@@ -1153,7 +1178,12 @@
       if (V && V.phase === "done") { queue = []; return; }
       var x = queue.shift();
       var holder = $("s-advice-face");
-      if (x.adv) {
+      a.classList.toggle("s-telegram", !!x.tele);
+      if (x.tele) {
+        holder.textContent = ""; adviceFace = null;
+        holder.appendChild(G.portrait(x.face, "minister"));
+        $("s-advice-h").textContent = "Telegram from your capital";
+      } else if (x.adv) {
         holder.textContent = ""; adviceFace = null;
         holder.appendChild(staffIcon(x.adv.kind, x.adv.stars, 112));
         $("s-advice-h").textContent = x.adv.name + ", " + x.adv.kind_name;
@@ -1163,6 +1193,7 @@
         $("s-advice-h").textContent = "The Chief of Protocol";
       }
       $("s-advice-text").textContent = x.text;
+      if (x.tele && A.motionOn()) typeOut($("s-advice-text"), x.text);
       a.hidden = false; restart(a, "s-advice-in"); if (adviceFace) restart(adviceFace, "g-react");
       A.play("flip");
       adviceTimer = setTimeout(function () { if (!a.matches(":hover") && !a.contains(document.activeElement)) { hideAdvice(); setTimeout(adviceNext, 400); } }, 9000);
@@ -1183,6 +1214,7 @@
         if (x.kind === "worry") advise("concerned", x.text, null, staffOf(v, x.text));
         if (x.kind === "promote") advise("delighted", x.text, null, staffOf(v, x.text));
         if (x.kind === "counter") advise("delighted", x.text + " Well judged, Ambassador.");
+        if (x.kind === "telegram") telegram(x.text, x.mood);
       });
       if (v.phase === "chapter" && prev.chapter !== v.chapter && prev.objectives) {
         var met = v.objectives[String(prev.chapter)];
@@ -1288,6 +1320,113 @@
       Object.keys(tokens).forEach(function (iso) { tokens[iso].classList.toggle("secured", !!(v.tokens[iso] || {}).secured); });
     }
 
+    // ---------- phase 9: dossiers, the deal table and your capital ----------
+    var ASK = { funding: "development money", trade: "access to markets", candidacy: "backing for a candidacy", clause: "its favourite clause" };
+    function dossierBox(d, open) {
+      var box = h("details", "s-dossier-box"); if (open) box.open = true;
+      box.appendChild(h("summary", "", "Dossier: economy and trade"));
+      var dl = h("dl", "s-facts s-dossier");
+      d.rows.forEach(function (r) { dl.appendChild(h("dt", "", r.label)); dl.appendChild(h("dd", "", r.value + (r.year ? " (" + r.year + ")" : ""))); });
+      box.appendChild(dl);
+      var src = h("p", "s-small s-source"), a = h("a", "", d.source); a.href = d.url; a.target = "_blank"; a.rel = "noopener";
+      src.appendChild(document.createTextNode("Source: ")); src.appendChild(a); src.appendChild(document.createTextNode(". Real figures, each with its year."));
+      box.appendChild(src);
+      return box;
+    }
+    function telegram(text, mood) {
+      if (!G) return;
+      queue.push({ tele: true, face: mood === "approve" ? "delighted" : mood === "furious" ? "concerned" : "eyebrow", text: text });
+      if (queue.length > 3) queue.shift();
+      A.play("paper");
+      setTimeout(adviceNext, 900);
+    }
+    function typeOut(el, text) {
+      el.textContent = ""; var i = 0;
+      el.setAttribute("aria-label", text);
+      (function step() { if (i > text.length || !el.isConnected) return; el.textContent = text.slice(0, i); i += 2; setTimeout(step, 22); })();
+    }
+    function artDeal() {
+      var t = h("div", "s-g-deal");
+      var l = h("div", "s-g-tray"); l.appendChild(h("b", "", "You offer"));
+      ["A funding pledge", "Trade terms"].forEach(function (x, i) { var c = h("span", "", x); c.style.animationDelay = (0.2 + i * 0.25) + "s"; l.appendChild(c); });
+      var m = h("div", "s-g-hand", "⇄");
+      var r = h("div", "s-g-tray"); r.appendChild(h("b", "", "You ask for"));
+      ["Their yes"].forEach(function (x, i) { var c = h("span", "", x); c.style.animationDelay = (0.7 + i * 0.25) + "s"; r.appendChild(c); });
+      t.appendChild(l); t.appendChild(m); t.appendChild(r);
+      return t;
+    }
+    var DEAL = { iso: null, give: {}, get: {}, note: "" };
+    function dealTable(iso) {
+      DEAL = { iso: iso, give: {}, get: {}, note: "" };
+      renderDeal();
+      open("s-deal");
+      A.play("flip");
+    }
+    function renderDeal() {
+      var v = V, d = v && v.tokens[DEAL.iso]; if (!d || !d.deal) return;
+      var t = d.deal;
+      $("s-deal-h").textContent = v.you.name + " and " + d.name;
+      $("s-deal-sub").textContent = d.name + " wants " + t.asks.map(function (k) { return ASK[k]; }).join(", ") +
+        ". Trust " + d.trust + (t.bonus ? " (worth +" + t.bonus + " on the table)" : "") + ". Your budget: " +
+        (v.budget.total - v.budget.used) + " of " + v.budget.total + " funding pledges left.";
+      function tray(id, items, side, labels) {
+        var box = $(id); box.textContent = "";
+        Object.keys(labels).forEach(function (k) {
+          var on = !!DEAL[side][k], have = k in items;
+          var b = h("button", "s-item" + (on ? " on" : "")); b.type = "button"; b.setAttribute("aria-pressed", String(on));
+          b.appendChild(h("b", "", labels[k].name));
+          b.appendChild(h("span", "", labels[k].what));
+          if (have) {
+            var val = items[k], tag = side === "give" ? "worth " + val.toFixed(1) + " to them" : "costs them " + val.toFixed(1);
+            if (side === "give" && t.asks.indexOf(k) >= 0) tag += " · they want this";
+            if (side === "give" && t.capital[k] < 0) tag += " · your capital objects";
+            b.appendChild(h("em", "", tag));
+          } else {
+            b.disabled = true;
+            b.appendChild(h("em", "", side === "get" && (k === "yes" || k === "abstain") && t.red_line ? "the draft crosses their red line" : "not on the table"));
+          }
+          b.addEventListener("click", function () {
+            if (DEAL[side][k]) delete DEAL[side][k]; else DEAL[side][k] = true;
+            if (side === "get" && k === "yes") delete DEAL.get.abstain;
+            if (side === "get" && k === "abstain") delete DEAL.get.yes;
+            DEAL.note = ""; A.play("tick"); renderDeal();
+          });
+          box.appendChild(b);
+        });
+      }
+      tray("s-deal-give", t.give, "give", v.deal_items.give);
+      tray("s-deal-get", t.get, "get", v.deal_items.get);
+      var gk = Object.keys(DEAL.give), wk = Object.keys(DEAL.get);
+      var score = gk.reduce(function (s, k) { return s + (t.give[k] || 0); }, 0) + t.bonus - wk.reduce(function (s, k) { return s + (t.get[k] || 0); }, 0);
+      var verdict = !gk.length || !wk.length ? null : score >= 1.5 ? "delighted" : score >= 0 ? "accept" : score >= -1.5 ? "more" : "refuse";
+      var words = { delighted: "They'd jump at it.", accept: "They'd accept.", more: "They'd want a little more.", refuse: "They'd refuse." };
+      var dial = $("s-deal-dial");
+      dial.className = "s-meter-dial" + (verdict ? " v-" + verdict : "");
+      dial.querySelector("i").style.transform = "rotate(" + Math.max(-80, Math.min(80, score * 30)) + "deg)";
+      $("s-deal-verdict").textContent = DEAL.note || (verdict ? words[verdict] : "Choose something for each side of the table.");
+      var cap = gk.reduce(function (s, k) { return s + (t.capital[k] || 0); }, 0), cb = $("s-deal-capital"); cb.textContent = "";
+      if (gk.length) {
+        if (G) cb.appendChild(G.portrait(cap < -1 ? "concerned" : cap < 0 ? "eyebrow" : "calm", "minister"));
+        cb.appendChild(h("p", "", cap < -1 ? "Your capital would be furious (" + cap + " confidence)." : cap < 0 ? "Your capital would grumble (" + cap + " confidence)." : "Your capital would approve."));
+      }
+      var cost = DEAL.give.funding ? v.costs.deal_funding : 0;
+      $("s-deal-note").textContent = "A deal takes " + v.costs.deal_ap + " actions" + (cost ? " and " + cost + " Influence" : "") +
+        ". A refusal still uses the actions. Promises made here are kept, or broken, at the summit.";
+      $("s-deal-go").disabled = !gk.length || !wk.length || !v.deal_ready || v.ap < v.costs.deal_ap || v.influence < cost;
+    }
+    function dealAnswer(v, out) {
+      if (out.deal) {
+        close("s-deal");
+        say("Deal done with " + (v.tokens[DEAL.iso] || {}).name + ".");
+        restart(document.body, "s-dealt");
+        return;
+      }
+      var labels = v.deal_items.give;
+      DEAL.note = "They turned it down." + (out.counter ? " They'd take it with " + labels[out.counter].name.toLowerCase() + " added: try again next turn." : " Try a better offer next turn.");
+      say(DEAL.note);
+      if (!$("s-deal").hidden) renderDeal();
+    }
+
     // ---------- the debrief dossier ----------
     function debriefInto(b, v) {
       var d = v.debrief; if (!d) return;
@@ -1339,6 +1478,10 @@
     $("s-bloc-whip").addEventListener("click", function () { move({ do: "bloc_whip", group: $("s-bloc-pick").value }); });
     $("s-end-turn").addEventListener("click", function () { amending = null; move({ do: "end_turn" }); });
     $("s-reserve").addEventListener("click", function () { move({ do: "reserve" }); });
+    $("s-deal-go").addEventListener("click", function () {
+      if (!DEAL.iso) return;
+      move({ do: "deal", iso3: DEAL.iso, give: Object.keys(DEAL.give), get: Object.keys(DEAL.get) });
+    });
     $("s-abandon").addEventListener("click", function () {
       if (!window.confirm("Abandon this session? It can't be brought back.")) return;
       if (mode === "saved") api({ do: "abandon", save_id: +saveId }).then(function () { window.location.href = "/session"; });
