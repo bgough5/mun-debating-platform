@@ -40,7 +40,8 @@ see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun
   answer them by holding an action in reserve, securing delegations and replying at the summit; positions shift. The
   golden rule (half a loaf is better than none) is in the scoring. Every country has a dossier of real World
   Bank figures; you trade at the deal table (funding, trade terms, candidacies, clauses for votes, sponsorship,
-  Influence or intelligence), and your capital's confidence answers by telegram: lose it and you are recalled. The Chief of Protocol walks new players through the
+  Influence or intelligence), and your capital's confidence answers by telegram: lose it and you are recalled. Lobbying is a pitch of two arguments matched to each delegation; deals are haggled in rounds; rivals can
+  be won over with a compromise. Systems unlock stage by stage, and each turn's news arrives as one paced reel. The Chief of Protocol walks new players through the
   whole session first, and speaks up at key moments.
 - **People:** one student list with year levels, saved groups (for example "Debating Jr BGO", ticked in one go; D-085),
   teacher access (which teachers see whom), staff, student pathways and milestones.

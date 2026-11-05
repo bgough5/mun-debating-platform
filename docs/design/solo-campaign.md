@@ -628,3 +628,80 @@ The vote bar adds "your instructions: n of 3 in the text".
 | Average actions per turn, stage 1 / 2 / 3 (competent bots) | 3 | 3.12 / 5.25 / 6.66 |
 | Average session (minutes, estimated; competent bots) | 41–62 | 41–55 |
 | Stuck games | 0 | 0 |
+
+## 25. Talking to delegations, a quieter turn, and fewer numbers (phase 12, 5 Nov 2026)
+
+Ben adopted everything from two rounds of lead-developer pushback and asked for it all in one phase, then a full test, then no more changes until his playtest.
+
+**Pitches** (`talks.receptive`, `talks.a_lobby`).
+- **The choice:** lobbying is a pitch of two arguments from five: economic interest, security and stability, shared values, law and precedent, and regional solidarity.
+- **Who listens to what:** each delegation's strongest two land fully, the third half and the rest barely (1.0 / 0.5 / 0.15). The ranking is read from its World Bank dossier and situation, with a seeded shuffle.
+  - Aid recipients and low-income countries respond to economic interest.
+  - Permanent members and big economies respond to security.
+  - Rich countries respond to values and precedent.
+  - Developing countries respond to regional solidarity.
+- **Effect:** a pitch moves the delegation 0.55 × (0.3 + 0.7 × its average match), replacing the flat Lobby step and the old bonus for having read its file.
+- **Finding out what lands:** the file now shows "Pitch it: it listens to …", an adviser at two stars reports it, and every answer says which arguments landed.
+
+**Haggling** (`talks.a_deal`: stages `open`, `offer`, `walk`).
+- **Opening (2 actions):** you choose what you ask for. They name a price: what your asks cost them, less trust, plus seeded greed of 0.8–1.8, plus 0.6 if a rival is courting them. They also say which of your items they want.
+- **Rounds (free):** offer less and they come down halfway, but never below their walk-away point. An offer below the walk-away point is an insult (−2 patience).
+- **Patience:** 2 plus trust. Each round there's a chance they walk: 12% a round, plus 20% if a rival is courting them, less 5% per trust. A rival may also outbid you (+0.5).
+- **Advisers:** one posted to the delegation reveals the walk-away point, exactly at three stars and as a range at two.
+- **The rules carried over from phase 9:** the capital's objections, the budget, and deal votes holding.
+
+**Compromise with rivals** (`talks.a_compromise`).
+- **The same haggling,** offering "drop the commitment it can't accept" (worth 2.2) and/or "let its wish into the text" (1.6).
+- **Prices:** a Broker asks about 1.6, a Spoiler 2.0 and a Hawk 2.8, so a Hawk needs both. The price is 0.6 less if the rival is losing the vote.
+- **Peace:** it stops moving and amending, and its stance on the merged text is +1. Half its goodwill passes to you, and it co-sponsors.
+- **Your capital** objects to dropping your own aims (−2 for the main aim, −1 for the second) and to letting your red line in (−3).
+
+**Unlocks by stage** (`talks.UNLOCK`):
+- **Bloc meetings:** posting and hiring advisers, the deal table, compromise.
+- **Sponsors:** secure, hold in reserve, ask to sponsor or sign.
+- **Quick sessions:** everything at once.
+
+**The walkthrough** (`session-walk.js`) is now nine steps before the first turn. The Chief introduces Bloc meetings (four steps) and Sponsors (two) as they open, and the golden rule as the Summit opens. A Quick session gets all of it up front.
+
+**The turn-start reel** (`session-reel.js`). At the start of each turn the news comes one card at a time, with Next or "Skip the rest":
+- the President: the last turn of a stage, the news, a meeting;
+- the Minister: telegrams;
+- the advisers: what rivals did, reports, shifting positions, who is at your door.
+
+**Each character has one job.**
+- **The Chief teaches:** walkthroughs, the golden rule, the first time your actions run out, a skill to unlock.
+- **The President keeps time:** stages, breakthroughs, news, meetings, the Summit.
+- **The Minister holds your mandate:** telegrams.
+- **The advisers bring intelligence:** reports, rivals, offers, endorsements won and lost, the vote bar tipping.
+
+**One commitments ledger** (`talks.ledger`). Promises, favours, abstention pledges, deal votes, secured delegations and truces form one list:
+- on each delegation's card ("Commitments");
+- as one marker on its token;
+- in the debrief, as "Your commitments", each kept or broken.
+
+**Fewer numbers.** Expertise is no longer a header meter: it's your staff's know-how, shown with "Staff skills". Trust and goodwill are shown as one relationship (Hostile, Cool, Neutral, Warm, Close).
+
+**Tidy-up.**
+- **Code:** the walkthrough, talks and turn reel are their own files (`session-walk.js`, `session-talks.js`, `session-reel.js`), so `session.js` falls from 1,696 to about 1,380 lines. The new engine code is its own module, `talks.py`.
+- **Bot fix:** the Analyst bot timed its predictions with the old fixed turn count, so in phase 11 it never made enough. That is fixed: it now uses `turns_now` and stays in the last stage until it has predicted.
+- **The two Security Council scenarios:** measured below (phase 11 already lifted the hardest to 26%).
+
+**Measured** (2,400 games, 20 per cell):
+
+| Target | Phase 11 | Phase 12 |
+|---|---|---|
+| Standard: silver or better | 55.5% | 66.7% |
+| Gold on own path: hardliner / analyst / broker / drafter | 29.4 / 11.3 / 28.1 / 57.5% | 33.8% / 36.2% / 32.5% / 60.0% |
+| Hardest scenario on Standard | 26.3% | 20.0% |
+| Random player, silver or better | 18.1% | 15.2% |
+| Rivals get what they came for: Easy / Standard / Hard | 11.1 / 19.9 / 26.5% | 11.3% / 20.3% / 28.7% |
+| Deals per game | 1.64 | 0.76 |
+| Average actions per turn by stage | 3.1 / 5.3 / 6.7 | 3.15 / 5.26 / 6.66 |
+| Average session (minutes, estimated; competent bots) | – | 41–62 |
+| Stuck games | 0 | 0 |
+
+Security Council scenarios, silver or better on Easy / Standard / Hard:
+- AI and cyber: 53.7% / 46.3% / 38.8%;
+- climate security: 33.8% / 20.0% / 27.5%.
+
+These are bot measurements. Ben's playtest is next, and nothing changes until then.

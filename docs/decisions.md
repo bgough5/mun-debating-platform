@@ -553,6 +553,20 @@ Measured in section 22 of the design doc.
 
 Measured in section 24 of the design doc.
 
+
+**Phase 12, talking to delegations, a quieter turn and fewer numbers (5 Nov 2026).** Ben adopted the lead-developer proposals in full:
+- pitches of two arguments instead of a Lobby button;
+- the deal table as haggling, with a walk-away point, patience and counter-offers;
+- compromise with rivals;
+- systems that unlock by stage, with a short first walkthrough;
+- a turn-start reel;
+- one job per character;
+- one commitments ledger;
+- Expertise folded into staff, and trust and goodwill shown as one relationship;
+- a code tidy-up.
+
+Not adopted: a career across sessions. After this, no more changes until Ben's playtest. Measured in section 25 of the design doc.
+
 ### D-100 The speech coach beside every speech box — Decided (5 Nov 2026, Ben)
 Ben: "there should be some stats and visual add-ins that makes speeches easier to write. some things such as word count, expected speaking time, repetitive language indicators, lists of persuasive techniques … keep the platform clean, easily set-up and intuitive … as pretty and fun/interactive/clear as possible." He chose:
 - every speech box, "togglable so it doesn't feel like a constant tutorial", plus Model UN phrases to click in ("addressing other honourable delegates etc.");
