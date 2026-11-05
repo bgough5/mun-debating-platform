@@ -124,6 +124,7 @@ def load(conn, committee_id: int, code: str) -> Scenario:
                    positions={iso: dict(v) for iso, v in pack["positions"].items()},
                    sources={iso: list(v) if isinstance(v, list) else [v] for iso, v in (pack.get("sources") or {}).items()},
                    news=list(pack.get("news") or []), events=events, c_yes=params.c_yes, c_no=params.c_no)
+    scn.preamble = [p["text"] for p in pack["resolution"].get("preambular", [])]
     scn._loader = loader
     scn._conn_holder = conn_holder
     return scn

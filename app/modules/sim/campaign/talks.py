@@ -318,6 +318,7 @@ def _make_peace(scn, g, talks, give):
             if rv["block"] in c["tags"]:
                 new = [t for t in c["tags"] if t != rv["block"]]
                 E._break_promises_if_changed(scn, g, c, new)
+                E._hist(scn, g, c, "you", "removed in your compromise with " + name + ": " + E._lc(scn.tags[rv["block"]]).rstrip("."), new or None)
                 if new:
                     c["tags"] = new
                     if "you" not in c["amended_by"]:
@@ -331,6 +332,7 @@ def _make_peace(scn, g, talks, give):
         if card:
             g["cards"].remove(card["id"])
         g["draft"].append({"id": f"p{g['next_id']}", "text": text, "tags": tags, "author": iso, "amended_by": ["you"], "merged": True})
+        E._hist(scn, g, g["draft"][-1], iso, "added in its compromise with you")
         g["next_id"] += 1
     rv["truce"] = True
     for i in list(g["sway"][iso]):

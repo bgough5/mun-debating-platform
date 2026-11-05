@@ -233,7 +233,7 @@
     function opt(sel, value, text) { var o = h("option", "", text); o.value = value; sel.appendChild(o); return o; }
 
     // ---------- tabs ----------
-    var TABS = ["brief", "draft", "dele", "blocs", "sponsors", "summit", "staff", "record"];
+    var TABS = ["brief", "draft", "dele", "blocs", "sponsors", "summit", "powers", "whip", "staff", "skills", "record"];
     var rail = $("s-rail");
     function panelOpen() { return rail.classList.contains("open"); }
     function setTab(name, focus, dock) {
@@ -241,9 +241,10 @@
         var b = $("t-" + t), on = t === name;
         b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; $("p-" + t).hidden = !on;
       });
+      var was = TABS.filter(function (t) { return $("t-" + t) && !$("p-" + t).hidden; })[0];
       rail.classList.add("open"); document.body.classList.add("s-panel-open");
-      rail.classList.toggle("center", name === "summit" || dock === "center");
-      rail.classList.toggle("dock-left", name === "dele" && dock === "left");
+      if (was !== name || !panelOpen()) { var pn = rail.querySelector(".s-panes"); if (pn) pn.scrollTop = 0; }   // each panel opens at its top
+      rail.classList.add("center");
       if (focus) $("t-" + name).focus();
     }
     function closePanel() {
@@ -323,7 +324,7 @@
       var items = afterCard || []; afterCard = null;
       var p = stagePanel; stagePanel = null;
       var panel = function () { if (p && v.phase === "chapter" && !panelOpen() && $("s-walk").hidden) setTab(p, false, p === "draft" ? "center" : null); };
-      var reel = function () { REEL.play(items, panel); };
+      var reel = function () { REEL.play(items, function () { panel(); DLG.offer(V); }); };
       var set = v.phase === "summit" ? "summit" : v.length !== "quick" && v.chapter > 1 ? "stage" + v.chapter : null;
       if (set && guideOn() && !seenIntro[set]) { seenIntro[set] = true; setTimeout(function () { WALK.start(V, reel, set); }, 300); }
       else setTimeout(reel, 250);
@@ -376,9 +377,19 @@
           dial.setAttribute("aria-label", "About " + Math.round(c.chance * 100) + "% chance it would pass now");
           li.appendChild(dial);
         }
-        li.appendChild(document.createTextNode(c.text));
+        var changed = known && prev && (prev.draft.filter(function (p) { return p.id === c.id; })[0] || {}).now !== c.now;
+        if (changed) li.classList.add("s-changed");
+        if (c.stale) {
+          li.appendChild(h("p", "s-now", "Now commits countries to: " + c.now + "."));
+          li.appendChild(h("p", "s-was", "Its wording before it was amended: " + c.text));
+        } else li.appendChild(document.createTextNode(c.text));
         li.appendChild(h("span", "s-by", (c.mine ? "Yours" : c.author) + (c.amended_by.length ? " · amended by " + c.amended_by.join(", ") : "") +
-                                          " · commits countries to: " + c.tags.map(function (t) { return t.label.toLowerCase(); }).join("; ")));
+                                          (c.stale ? "" : " · commits countries to: " + c.tags.map(function (t) { return t.label.toLowerCase(); }).join("; "))));
+        if (c.history && c.history.length) {
+          var hd = h("details", "s-hist"); hd.appendChild(h("summary", "", "History (" + c.history.length + ")" + (changed ? ": changed since your last look" : "")));
+          var hl = h("ol"); c.history.forEach(function (x) { hl.appendChild(h("li", x.who === "you" ? "you" : x.who === "draft" ? "" : "them", x.when + ": " + x.name + " " + x.what)); });
+          hd.appendChild(hl); li.appendChild(hd);
+        }
         var acts = h("div", "s-acts");
         acts.appendChild(btn(amending === c.id ? "Cancel" : "Amend", "s-chip", function () { amending = amending === c.id ? null : c.id; draw(V); }, !v.ap));
         acts.appendChild(btn("Strike (" + v.costs.strike + " Influence)", "s-chip", function () {
@@ -396,7 +407,7 @@
       });
       var cards = $("c-cards"); cards.textContent = "";
       if (!v.cards.length) cards.appendChild(h("li", "", "No clause cards left on the table."));
-      v.cards.forEach(function (card) {
+      v.cards.filter(function (card) { return card.tags.some(function (t) { return (v.in_draft || []).indexOf(t) < 0; }); }).forEach(function (card) {
         var li = h("li");
         li.appendChild(h("span", "", card.text));
         li.appendChild(h("span", "s-tagline", "Commits countries to: " + card.tags.map(function (t) { return v.tags[t].toLowerCase(); }).join("; ")));
@@ -412,7 +423,7 @@
     function amendBox(v, c) {
       var box = h("div", "s-amend"), have = c.tags.map(function (t) { return t.code; });
       box.appendChild(h("span", "s-small", "Tick what the clause should commit countries to (one to three). One addition and one removal per amendment."));
-      Object.keys(v.tags).forEach(function (code) {
+      Object.keys(v.tags).filter(function (code) { return have.indexOf(code) >= 0 || (v.in_draft || []).indexOf(code) < 0; }).forEach(function (code) {
         var lab = h("label"), cb = h("input"); cb.type = "checkbox"; cb.value = code; cb.checked = have.indexOf(code) >= 0;
         lab.appendChild(cb); lab.appendChild(document.createTextNode(v.tags[code])); box.appendChild(lab);
       });
@@ -495,9 +506,9 @@
         grid.appendChild(btn("Ask to sponsor", "s-btn small", function () { move({ do: "sign", iso3: picked, role: "sponsor" }); }, noAp));
         grid.appendChild(btn("Ask to sign", "s-btn ghost small", function () { move({ do: "sign", iso3: picked, role: "signatory" }); }, noAp));
       }
-      var pr = h("div", "s-predict wide"); pr.appendChild(h("span", "", "Predict their final vote (1 action):"));
+      var pr = h("div", "s-predict wide"); pr.appendChild(h("span", "", "Your whip sheet, whole text (free):"));
       ["yes", "abstain", "no"].forEach(function (x) {
-        var b = btn(x, "s-chip", function () { move({ do: "whip", iso3: picked, vote: x }); }, noAp);
+        var b = btn(x, "s-chip", function () { move({ do: "mark", iso3: picked, clause: "final", vote: d.predicted === x ? null : x }); });
         b.setAttribute("aria-pressed", String(d.predicted === x)); pr.appendChild(b);
       });
       grid.appendChild(pr);
@@ -537,7 +548,7 @@
 
     // ---------- skills ----------
     function skills(v) {
-      $("s-skills-btn").textContent = "Staff skills (" + v.xp + ")";
+      $("n-skills").textContent = v.xp >= v.skill_cost && v.phase === "chapter" ? "!" : "";
       var tree = $("s-tree"); tree.textContent = "";
       var by = {};
       v.skill_list.forEach(function (s) { (by[s.branch] = by[s.branch] || []).push(s); });
@@ -565,7 +576,7 @@
       $("s-where").textContent = v.phase === "done" ? "Finished" : v.phase === "summit" ? "The Summit" :
         v.chapter_name + " · turn " + v.turn + " of " + v.turns + (v.stage ? " · " + (v.stage.made ? "breakthrough made" : v.stage.turns_left + " left") : "");
       stageBar(v, prev);
-      $("s-you").textContent = "You are " + v.you.name + " · " + v.rule + " · aiming for " + v.path.name;
+      $("s-you").textContent = "You are " + v.you.name + " · aiming for " + v.path.name + (v.reputation ? " · known as " + v.reputation.replace(/^known to /, "someone known to ") : "");
       meter("m-influence", v.influence); meter("m-respect", v.respect);
       meter("m-capital", v.capital.value + "/" + v.capital.max);
       $("m-capital").classList.toggle("low", v.capital.value <= 2);
@@ -612,6 +623,8 @@
       $("c-aim").textContent = "Your aim: " + v.path.name + ". " + v.path.what;
       regions(v);
       tug(v, prev);
+      DLG.sheet(v); DLG.powers(v);
+      if (prev && !turnChanged && !afterCard && $("s-chapter-card").hidden) DLG.offer(v);   // new visits mid-turn; at a turn change they follow the reel
       var nb = $("n-brief");                                          // what's waiting on the Brief: offers, a question
       if (nb) nb.textContent = v.phase === "chapter" ? ((v.offers || []).length + (v.question ? 1 : 0) || "") : "";
       staff(v);
@@ -637,6 +650,7 @@
         restart(q, "s-in");
       }
       if (out && out.file) showFile(out.file);
+      if (action && action.do === "visit") DLG.after(v, out);
       if (action && (action.do === "deal" || action.do === "compromise")) TALK.answer(v, out || {}, action);
       else if (TALK.isOpen()) TALK.render();
       else if (out && action && action.do === "offer") say(out.refused_by_room ? "The working group wouldn't make the change, so the deal fell through." : out.accepted ? "Deal done." : "You turned the offer down.");
@@ -687,7 +701,7 @@
         if (turnChanged) {
           var reelItems = REEL.build(v, prev, news);
           if (prev.chapter !== v.chapter) afterCard = reelItems;            // after the stage card (and its intro)
-          else setTimeout(function () { REEL.play(reelItems); }, 500);
+          else setTimeout(function () { REEL.play(reelItems, function () { DLG.offer(V); }); }, 500);
         }
       }
       $("s-end-turn").hidden = v.phase !== "chapter";
@@ -907,6 +921,18 @@
           v.debrief.capital.deals + " deal" + (v.debrief.capital.deals === 1 ? "" : "s") + " made." +
           (v.debrief.capital.recalled ? " You were recalled before the summit." : "")));
         b.appendChild(cp);
+      }
+      if (r.passed) {
+        var ex = btn("Download the resolution (Word)", "s-btn", function () {
+          var body = mode === "saved" ? { do: "export", save_id: +saveId } : { do: "export", state: guest.state, sig: guest.sig };
+          api(body).then(function (j) {
+            var bin = atob(j.docx), arr = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+            var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([arr], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }));
+            a.download = j.name; document.body.appendChild(a); a.click(); a.remove();
+          }).catch(function (e) { sayError(e.message); });
+        });
+        var exw = h("div", "s-row s-export"); exw.appendChild(ex); exw.appendChild(h("span", "s-sub", "The adopted text, set out as a resolution."));
+        b.appendChild(exw);
       }
       if (v.debrief && v.debrief.ledger && v.debrief.ledger.length) {
         var lg = h("div", "s-debrief"); lg.appendChild(h("h3", "", "Your commitments"));
@@ -1166,7 +1192,8 @@
         row.appendChild(sel); body.appendChild(row);
         var rep = h("p", "s-report");
         if (a.report) { rep.appendChild(h("span", "s-sure s-sure-" + a.report.stars, a.report.sure)); rep.appendChild(document.createTextNode(" " + a.report.text)); }
-        else rep.textContent = a.post ? (a.starts ? "Starts reporting next turn." : "No report yet.") : a.what;
+        else rep.textContent = v.unlock.post ? "Blocked until Bloc meetings: advisers can be posted from the second stage." :
+          a.post ? (a.starts ? "Starts reporting next turn." : "No report yet.") : a.what;
         body.appendChild(rep);
         li.appendChild(body); ul.appendChild(li);
       });
@@ -1175,7 +1202,7 @@
         n + " of " + v.costs.staff_max + " advisers. A new adviser starts as a junior and costs " + v.costs.hire + " Influence.";
       var hr = $("c-hire-row"); hr.textContent = "";
       (v.staff_kinds || []).forEach(function (k) {
-        hr.appendChild(btn(k.name, "s-btn ghost small", function () { move({ do: "hire", kind: k.code }); },
+        hr.appendChild(btn(k.name + " (" + v.costs.hire + " Influence)", "s-btn ghost small", function () { move({ do: "hire", kind: k.code }); },
                            full || v.influence < v.costs.hire || v.phase !== "chapter" || !!v.unlock.hire));
       });
     }
@@ -1282,11 +1309,14 @@
         ul.appendChild(li);
       });
     }
-    var landsTagged = false;
+    var landsTagged = false, lastLook = null;
     function stageLook(v) {
       var b = document.body;
       ["1", "2", "3", "summit"].forEach(function (k) { b.classList.remove("s-stage-" + k); });
       b.classList.add("s-stage-" + (v.phase === "chapter" ? (v.length === "quick" ? "1" : String(v.chapter)) : "summit"));
+      var key = b.className.match(/s-stage-\w+/)[0];
+      if (lastLook && lastLook !== key) { var fr = document.querySelector(".s-stage .b-frame"); if (fr) restart(fr, "s-stage-anim"); }
+      lastLook = key;
       if (!landsTagged) {
         Object.keys(lands).forEach(function (iso) { var t = v.tokens[iso]; if (t && t.rcode) lands[iso].forEach(function (l) { l.classList.add("rg-" + t.rcode.toLowerCase()); }); });
         landsTagged = true;
@@ -1379,7 +1409,7 @@
                 setTab: setTab, closePanel: closePanel, pick: pick, envoy: envoy, stage: stage, TABS: TABS, ASK: ASK,
                 hideAdvice: hideAdvice, syncSettings: syncSettings, staffIcon: staffIcon, staffOf: staffOf,
                 view: function () { return V; }, redraw: function () { if (V) country(V); } };
-    var WALK = M.walk(ctx), TALK = M.talks(ctx), REEL = M.reel(ctx);
+    var WALK = M.walk(ctx), TALK = M.talks(ctx), REEL = M.reel(ctx), DLG = M.dialogue(ctx);
     if (mode === "guest") {
       guest = slots()[slot];
       if (!guest || guest.pack !== document.body.getAttribute("data-pack")) {

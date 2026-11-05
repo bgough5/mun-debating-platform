@@ -85,7 +85,7 @@ def test_a_broken_promise_costs_trust_and_respect(scenarios):
     fan = next(i for i in scn.isos if i not in E._others(g) and scn.dist(c["tags"])[i][0] >= 0.4)
     g, _ = E.apply(scn, g, {"do": "promise", "iso3": fan, "clause": c["id"]})
     assert g["trust"][fan] == 1
-    other = next(t for t in scn.tags if t not in c["tags"])
+    other = next(t for t in scn.tags if all(t not in x["tags"] for x in g["draft"]))   # a commitment not yet in the draft
     g["influence"] = 10
     g2, out = E.apply(scn, g, {"do": "amend", "clause": c["id"], "add": other})
     if out["accepted"]:

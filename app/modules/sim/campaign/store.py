@@ -24,6 +24,7 @@ from app.modules.sim.campaign import content as K
 from app.modules.sim.campaign import econ as X
 from app.modules.sim.campaign import engine as E
 from app.modules.sim.campaign import talks as T
+from app.modules.sim.campaign import visits as VI
 from app.modules.sim.campaign.scenario import Scenario, load, rebind
 from app.util import now_iso
 
@@ -218,7 +219,8 @@ def view(scn: Scenario, g: dict) -> dict:
         draft.append({"id": c["id"], "text": c["text"], "tags": [{"code": t, "label": tags[t]} for t in c["tags"]],
                       "author": _name(scn, g, c["author"]), "mine": c["author"] == "you",
                       "amended_by": [_name(scn, g, a) for a in c["amended_by"]], "stance": E.stance(scn, g, "you", c),
-                      "own_words": bool(c.get("own_words")),
+                      "own_words": bool(c.get("own_words")), "history": c.get("history", []), "stale": bool(c.get("text_stale")),
+                      "now": ", ".join(E._lc(tags[t]).rstrip(".") for t in c["tags"]),
                       "chance": E.chance(scn, g, c, runs=200)["p_pass"] if chapters else None})
     regions = []
     for code, name in REGIONS.items():
@@ -264,7 +266,14 @@ def view(scn: Scenario, g: dict) -> dict:
         "capital": {"value": g.get("capital", E.R["capital_start"]), "max": E.R["capital_max"]},
         "budget": {"total": X.budget(g["iso3"]), "used": g.get("pledged", 0)},
         "deal_ready": g.get("deal_tick") != g.get("tick"), "deal_items": {"give": K.DEAL_GIVE, "get": K.DEAL_GET},
-        "talks": T.talks_view(scn, g), "args": T.ARGS, "unlock": {k: T.locked(g, k) for k in T.UNLOCK},
+        "talks": T.talks_view(scn, g),
+        "visits": [{**x, "name": {"minister": "Your Foreign Minister", "press": "A journalist"}.get(x.get("who"), scn.member(x["iso3"]).name),
+                    "face": sum(map(ord, x["iso3"] + x["kind"])) % 4, "feeling": None if x.get("who") else VI.feeling(g, x["iso3"]),
+                    "room": [{"iso3": i, "name": scn.member(i).name, "feeling": VI.feeling(g, i), "face": sum(map(ord, i)) % 4} for i in x.get("members", [])]}
+                   for x in g.get("visits", [])] if chapters else [],
+        "reputation": VI.reputation(g),
+        "sheet": {**g.get("sheet", {}), "final": g["whip"]}, "powers": _powers(scn, g),
+        "in_draft": sorted({t for c in g["draft"] for t in c["tags"]}), "args": T.ARGS, "unlock": {k: T.locked(g, k) for k in T.UNLOCK},
         "tug": _tug(scn, g),
         "event": g.get("event"), "question": {"ask": q["ask"], "options": q["options"]} if q else None,
         "draft": draft, "cards": [c for c in scn.cards if c["id"] in g["cards"]],
@@ -336,6 +345,43 @@ def _race(scn: Scenario, g: dict) -> list[dict]:
         r["signatory_names"] = [scn.member(i).name for i in r["signatories"]]
         r["tabled"] = len(r["sponsors"]) >= E.R["sponsors"] and len(r["sponsors"]) + len(r["signatories"]) >= E._signers_needed(scn)
     return [{**r, "need_sponsors": E.R["sponsors"], "need_total": E._signers_needed(scn)} for r in rows]
+
+
+def _powers(scn: Scenario, g: dict) -> list[dict]:
+    """Who is strong: you and each rival, by Influence, endorsements, sponsors, how much of the draft is theirs, and how
+    busy they were last turn."""
+    out = []
+    n = max(1, len(g["draft"]))
+    for who in ["you", *[r["iso3"] for r in g["rivals"]]]:
+        rv = None if who == "you" else next(r for r in g["rivals"] if r["iso3"] == who)
+        own = sum(1.0 if c["author"] == who else 0.5 if who in c.get("amended_by", []) else 0.0 for c in g["draft"])
+        out.append({"who": who, "name": "You" if who == "you" else scn.member(who).name,
+                    "style": None if who == "you" else K.RIVAL_STYLES[rv.get("style", "hawk")]["name"],
+                    "influence": g["influence"] if who == "you" else rv["influence"],
+                    "endorsements": sum(1 for v in g["endorse"].values() if v == who),
+                    "sponsors": len(g["sponsors"]) if who == "you" else len(rv["sponsors"]),
+                    "share": round(own / n, 2), "moves": len(g.get("moved", {}).get(who, [])) if who != "you" else None,
+                    "truce": bool(rv and rv.get("truce"))})
+    return out
+
+
+def resolution_docx(scn: Scenario, g: dict) -> bytes:
+    """The adopted resolution as a document: heading, committee, sponsors, the preamble, and each adopted operative
+    clause numbered, with a semicolon between clauses and a full stop at the end."""
+    from app.exports import resolution_docx as build
+    s = g.get("summit") or {}
+    passed = {r["clause"] for r in s.get("results", []) if r["passed"]}
+    clauses = [c for c in g["draft"] if c["id"] in passed]
+    ops = []
+    for i, c in enumerate(clauses):
+        text = c["text"].strip().rstrip(";.,")
+        if c.get("text_stale"):
+            labels = [E._lc(scn.tags[t]).rstrip(".") for t in c["tags"]]
+            text = labels[0][:1].upper() + labels[0][1:] + ("" if len(labels) == 1 else ", and " + "; and ".join(labels[1:]))
+        ops.append({"position": i + 1, "text": text + ("." if i == len(clauses) - 1 else ";")})
+    pre = [{"text": p} for p in getattr(scn, "preamble", [])]
+    sponsors = [scn.member(g["iso3"]).name] + [scn.member(i).name for i in g["sponsors"] if scn.member(i)]
+    return build({"title": scn.title}, {"name": scn.rule.name}, pre, ops, sponsors)
 
 
 def _tug(scn: Scenario, g: dict) -> dict:

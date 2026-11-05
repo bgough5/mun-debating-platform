@@ -14,6 +14,7 @@
 <script src="/static/js/session-walk.js" defer></script>
 <script src="/static/js/session-talks.js" defer></script>
 <script src="/static/js/session-reel.js" defer></script>
+<script src="/static/js/session-dialogue.js" defer></script>
 <script src="/static/js/session.js" defer></script>
 </head>{% endmacro %}
 
@@ -38,6 +39,7 @@
         ("motion", "Motion", "Animations. Auto follows this computer's setting.", [("auto", "Auto"), ("on", "On"), ("off", "Off")]),
         ("text", "Text size", "Larger text on the cards.", [("normal", "Normal"), ("large", "Large")]),
         ("timer", "Summit timer", "Twenty seconds for each decision at the summit.", [(True, "On"), (False, "Off")]),
+        ("talk", "Delegates come to talk", "Delegates approach you between moves: rivals, allies, the press and your capital.", [(True, "On"), (False, "Off")]),
         ("tips", "The guide", "The Chief of Protocol's walkthrough before each new session, and advice at key moments.", [(True, "On"), (False, "Off")]),
       ] %}
       <div class="s-setting"><b id="set-{{ key }}">{{ name }}</b><span>{{ what }}</span>

@@ -126,6 +126,24 @@ def session_api(request: Request, payload: dict = Body(...)):
                 sid = S.save_new(w, me, g)
             return {"url": f"/session/s/{sid}", "view": view}
         return {"url": f"/session/guest/{code}", "state": g, "sig": S.sign(db, g), "view": view}
+    if do == "export":                                     # the adopted resolution as a Word document
+        import base64
+        if payload.get("save_id"):
+            if not me:
+                raise UserError("Sign in first.", 403)
+            with db.read() as conn:
+                r = S.mine(conn, int(payload["save_id"]), me)
+                g = r["state"]
+                with S.LOCK:
+                    scn = S.scenario(db, conn, r["pack"])
+        else:
+            g = S.verify(db, payload.get("state"), payload.get("sig"))
+            with db.read() as conn:
+                with S.LOCK:
+                    scn = S.scenario(db, conn, str(g.get("pack") or ""))
+        if g.get("phase") != "done" or not ((g.get("summit") or {}).get("final") or {}).get("passed"):
+            raise UserError("Only an adopted resolution can be exported.")
+        return {"name": scn.title + ".docx", "docx": base64.b64encode(S.resolution_docx(scn, g)).decode()}
     if do == "view" or do == "move":
         if payload.get("save_id"):
             if not me:

@@ -30,7 +30,7 @@ def test_deadlines_shorten_stage_by_stage(scn):
     assert [E.LENGTHS["standard"]["deadlines"][i] for i in range(3)] == [6, 5, 4]
     assert E.turns_now(g) == 6
     q = _game(scn, length="quick")
-    assert E.LENGTHS["quick"]["chapters"] == 1 and len(E.checklist(scn, q)) == 6   # Quick: all three breakthroughs as one list
+    assert E.LENGTHS["quick"]["chapters"] == 1 and len(E.checklist(scn, q)) == 7   # Quick: all three breakthroughs as one list
 
 
 def test_pressing_only_end_turn_makes_no_breakthrough(scn):
@@ -46,15 +46,19 @@ def test_pressing_only_end_turn_makes_no_breakthrough(scn):
 
 def test_a_breakthrough_lets_you_move_on_with_momentum(scn):
     g = _game(scn)
-    card = next(c for c in scn.cards if c["id"] in g["cards"] and g["mandate"]["red"] not in c["tags"])
-    g["ap"], g["influence"] = 6, 20
-    g, _ = E.apply(scn, g, {"do": "propose", "card": card["id"]})
-    while len(g["draft"]) < 4:
-        nxt = next(c for c in scn.cards if c["id"] in g["cards"])
-        g["ap"] = 6
-        g, _ = E.apply(scn, g, {"do": "propose", "card": nxt["id"]})
-    if not E.projection(scn, g)["passed"]:
-        pytest.skip("this draft wouldn't pass as it stands")
+    g["ap"], g["influence"], g["turn"] = 9, 20, 2                    # no breakthrough on a stage's first turn (phase 13)
+    m = g["mandate"]
+    have = {t for c in g["draft"] for t in c["tags"]}
+    for card in [c for c in scn.cards if c["id"] in g["cards"] and m["red"] not in c["tags"]]:
+        if len(g["draft"]) >= 5 and sum(c["author"] == "you" for c in g["draft"]) >= 2 and m["must"] in have:
+            break
+        if all(t in have for t in card["tags"]):
+            continue
+        g["ap"] = 9
+        g, _ = E.apply(scn, g, {"do": "propose", "card": card["id"]})
+        have = {t for c in g["draft"] for t in c["tags"]}
+    if not E._objective(scn, g):
+        pytest.skip("this draft doesn't make the breakthrough")
     assert "1" in g["breakthroughs"]
     with pytest.raises(E.GameError):
         E.apply(scn, _game(scn), {"do": "advance"})                       # no breakthrough, no moving on

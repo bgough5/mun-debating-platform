@@ -10,6 +10,7 @@ from app.modules.mun.worldmap import REGIONS
 from app.modules.sim.campaign import content as K
 from app.modules.sim.campaign import engine as E
 from app.modules.sim.campaign import talks as T
+from app.modules.sim.campaign import visits as VI
 
 STYLES = {"hardliner": "mandate", "broker": "consensus", "drafter": "architect", "analyst": "kingmaker", "random": None}
 BRANCH = {"hardliner": ["point_of_order", "division", "bloc_whip"], "broker": ["bloc_whip", "back_channel", "friendly"],
@@ -115,6 +116,8 @@ class Bot:
         g = self.stage_choice(g)
         if g["phase"] != "chapter":
             return g
+        for act in list(VI.bot_answer(g, self.rng, self.style != "random")):
+            g, _ = self.act(g, act)
         if g["ap"] > 0 and self.style != "random" and not g.get("reserve"):
             g, _ = self.act(g, {"do": "reserve"})          # keep the last action back to answer a rival
         g, _ = self.act(g, {"do": "end_turn"})

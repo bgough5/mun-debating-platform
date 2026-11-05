@@ -43,7 +43,10 @@
         <button type="button" role="tab" id="t-summit" aria-controls="p-summit" aria-selected="false" tabindex="-1" data-tab="summit" hidden>{{ icon("vote") }}<span>Summit</span></button>
         <button type="button" role="tab" id="t-blocs" aria-controls="p-blocs" aria-selected="false" tabindex="-1" data-tab="blocs" hidden>{{ icon("bloc") }}<span>Blocs</span> <span class="s-n" id="n-blocs"></span></button>
         <button type="button" role="tab" id="t-sponsors" aria-controls="p-sponsors" aria-selected="false" tabindex="-1" data-tab="sponsors" hidden>{{ icon("roll-call") }}<span>Sponsors</span></button>
+        <button type="button" role="tab" id="t-powers" aria-controls="p-powers" aria-selected="false" tabindex="-1" data-tab="powers">{{ icon("prediction") }}<span>Powers</span></button>
+        <button type="button" role="tab" id="t-whip" aria-controls="p-whip" aria-selected="false" tabindex="-1" data-tab="whip">{{ icon("whip") }}<span>Whip</span></button>
         <button type="button" role="tab" id="t-staff" aria-controls="p-staff" aria-selected="false" tabindex="-1" data-tab="staff">{{ icon("people") }}<span>Staff</span></button>
+        <button type="button" role="tab" id="t-skills" aria-controls="p-skills" aria-selected="false" tabindex="-1" data-tab="skills">{{ icon("pathway") }}<span>Skills</span> <span class="s-n" id="n-skills"></span></button>
         <button type="button" role="tab" id="t-record" aria-controls="p-record" aria-selected="false" tabindex="-1" data-tab="record">{{ icon("history") }}<span>Record</span></button>
       </div>
       <div class="s-panes" tabindex="0" aria-label="Your move">
@@ -102,6 +105,21 @@
           <p class="s-small">The clerk's sheets: a draft is tabled when it has its sponsors and enough signatories. The first tabled, as L.1, is voted on first.</p>
           <ul class="s-sheets" id="c-sheets"></ul></section>
       </div>
+      <div class="s-pane" role="tabpanel" id="p-powers" aria-labelledby="t-powers" hidden>
+        <section class="b-card"><h2>The powers in the room</h2>
+          <p class="s-small">You and each rival: Influence to spend, how much of the draft is theirs, the regional groups and sponsors behind them, and how busy they were last turn.</p>
+          <ul class="s-powers" id="c-powers"></ul></section>
+      </div>
+      <div class="s-pane" role="tabpanel" id="p-whip" aria-labelledby="t-whip" hidden>
+        <section class="b-card"><h2>Your whip sheet</h2>
+          <p class="s-small">Mark how you think each delegation will vote on each clause (C1, C2…) and on the whole text: click to cycle Y (yes), A (abstain), N (no). It's free. At the summit every mark is checked against the real vote: the Kingmaker's path.</p>
+          <div class="s-sheet-wrap" id="c-sheet"></div></section>
+      </div>
+      <div class="s-pane" role="tabpanel" id="p-skills" aria-labelledby="t-skills" hidden>
+        <section class="b-card"><h2 id="s-skills-h">What your staff know</h2>
+          <p class="s-small" id="s-skills-note"></p>
+          <div class="s-tree" id="s-tree"></div></section>
+      </div>
       <div class="s-pane" role="tabpanel" id="p-staff" aria-labelledby="t-staff" hidden>
         <section class="b-card" id="c-staff"><h2>Your staff</h2>
           <p class="s-small">Post each adviser to study a delegation or a rival. They report at the start of each turn; juniors can be wrong, and say how sure they are. Reports that prove right earn promotions.</p>
@@ -118,7 +136,6 @@
   </main>
   <footer class="b-bottom s-bar">
     <button type="button" class="s-btn ghost small" data-open="s-pause">Menu</button>
-    <button type="button" class="s-btn ghost small" data-open="s-skills" id="s-skills-btn">Staff skills</button>
     <p class="p-msg" id="p-msg" role="status"></p>
     <button type="button" class="s-btn ghost" id="s-reserve" title="Spend an action now to answer the first rival move against you before your next turn">Hold in reserve</button>
     <button type="button" class="s-btn" id="s-end-turn">End turn</button>
@@ -128,6 +145,11 @@
     <div class="s-doc s-chapter"><p class="s-eyebrow" id="s-cc-eyebrow">Chapter</p><div class="s-cc-pres" id="s-cc-pres" aria-hidden="true"></div><h2 id="s-cc-h">–</h2><p id="s-cc-goal"></p><p class="s-sub" id="s-cc-look"></p>
       <div class="s-cc-crisis" id="s-cc-crisis" hidden><span class="s-cc-stamp">Crisis</span><h3 id="s-cc-crisis-h"></h3><p id="s-cc-crisis-p"></p><p class="s-small" id="s-cc-crisis-t"></p></div>
       <div class="s-row s-center"><button type="button" class="s-btn" data-close="s-chapter-card">Begin</button></div></div>
+  </div>
+  <div class="s-overlay" id="s-visit" hidden role="dialog" aria-modal="true" aria-labelledby="s-visit-h">
+    <div class="s-doc s-reeldoc"><div class="s-reel-face" id="s-visit-face" aria-hidden="true"></div>
+      <div><p class="s-eyebrow" id="s-visit-who">–</p><h2 id="s-visit-h">–</h2><p id="s-visit-p"></p><div class="s-visit-room" id="s-visit-room" hidden></div>
+        <div class="s-visit-opts" id="s-visit-opts"></div><p class="s-sub" id="s-visit-n"></p></div></div>
   </div>
   <div class="s-overlay" id="s-reel" hidden role="dialog" aria-modal="true" aria-labelledby="s-reel-h">
     <div class="s-doc s-reeldoc"><div class="s-reel-face" id="s-reel-face" aria-hidden="true"></div>
@@ -174,12 +196,6 @@
         <button type="button" class="s-btn ghost" id="s-deal-accept" hidden>Accept their terms</button>
         <button type="button" class="s-btn ghost" id="s-deal-walk" hidden>Walk away</button>
         <button type="button" class="s-btn ghost" data-close="s-deal">Back to the map</button></div></div>
-  </div>
-  <div class="s-overlay" id="s-skills" hidden role="dialog" aria-modal="true" aria-labelledby="s-skills-h">
-    <div class="s-doc wide"><h2 id="s-skills-h">What your staff know</h2>
-      <p class="s-sub" id="s-skills-note">Earn Expertise by reading country files and getting procedure right. Each skill costs 3.</p>
-      <div class="s-tree" id="s-tree"></div>
-      <div class="s-row"><button type="button" class="s-btn" data-close="s-skills">Done</button></div></div>
   </div>
   <div class="s-overlay" id="s-result" hidden role="dialog" aria-modal="true" aria-labelledby="s-result-h">
     <div class="s-doc wide s-final"><p class="s-eyebrow" id="s-result-eyebrow">The session is over</p><h2 id="s-result-h">–</h2>

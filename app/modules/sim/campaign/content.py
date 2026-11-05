@@ -183,11 +183,11 @@ DEAL_GET = {
 # Stages (phase 11): each ends at a breakthrough (move on now, or keep working) or at its deadline.
 STAGES = {
     1: {"name": "Working group", "breakthrough": "zero draft agreed",
-        "goal": "Agree a zero draft: four clauses or more, one of them yours, and a text that would pass as it stands.",
+        "goal": "Agree a zero draft: five clauses or more, two of them yours, your main aim in the text, and a text that would pass.",
         "unlocks": "Bloc meetings open: the regional groups meet, one each turn.",
         "look": "The drafting table is open: build the text."},
     2: {"name": "Bloc meetings", "breakthrough": "a regional group endorses your draft",
-        "goal": "Win a regional group's endorsement for your draft.",
+        "goal": "Win a new regional group's endorsement for your draft (from the stage's second turn).",
         "unlocks": "Sponsors: the sign-up sheet opens, and the race to table first begins.",
         "look": "The map shows the regional groups. One group meets each turn: attend, and work its members."},
     3: {"name": "Sponsors", "breakthrough": "your draft is tabled as L.1",

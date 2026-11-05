@@ -21,9 +21,11 @@ def _close_card(page):
 def _calm(page):
     """Answer what comes between turns: the turn reel (skip the rest), a breakthrough (keep working) and advice."""
     page.wait_for_timeout(700)
-    for _ in range(8):
+    for _ in range(14):
         if page.is_visible("#s-walk"):
             page.click("#s-guide-skip" if page.is_visible("#s-guide-skip") else "#s-guide-next")
+        elif page.is_visible("#s-visit"):                                    # a delegate's visit: the last (politest) answer
+            page.locator("#s-visit-opts button:not([disabled])").last.click()
         elif page.is_visible("#s-reel"):
             page.click("#s-reel-skip" if page.is_visible("#s-reel-skip") else "#s-reel-next")
         elif page.is_visible("#s-breakthrough"):
@@ -61,7 +63,7 @@ def test_a_guest_sets_up_and_continues_a_session(browser, live):
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.goto(live.url + "/session")
-    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false}))")   # the walkthrough has its own test
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false, talk: false}))")   # the walkthrough has its own test
     page.reload()
     page.wait_for_selector("h1:has-text('The Session')")
     assert not axe(page, "session_title")
@@ -124,7 +126,7 @@ def test_a_guest_makes_moves_on_the_board(browser, live):
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.goto(live.url + "/session/new")
-    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false}))")   # the walkthrough has its own test
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false, talk: false}))")   # the walkthrough has its own test
     page.click('[data-pick="pack"][data-value="comet_halcyon"]')
     page.click('[data-step="1"] [data-next]')
     page.wait_for_selector("#s-seats-box .s-seat")
@@ -158,9 +160,9 @@ def test_a_guest_makes_moves_on_the_board(browser, live):
     assert not axe(page, "session_file")
     page.click("#s-file [data-close]")
     ap_is(ap - 2)
-    if ap > 2:
-        page.click("#c-country .s-predict button:has-text('yes')")
-        ap_is(ap - 3)
+    page.click("#c-country .s-predict button:has-text('yes')")              # the whip sheet is free (phase 13)
+    page.wait_for_selector("#c-country .s-predict button[aria-pressed='true']")
+    ap_is(ap - 2)
     assert not axe(page, "session_delegations")
     _end_turn(page, 2)
     # The draft: propose a clause in your own words, then amend another
@@ -184,7 +186,7 @@ def test_a_guest_makes_moves_on_the_board(browser, live):
     ap_is(ap - 2)
     page.click("#t-record")
     assert "You proposed a clause" in page.inner_text("#c-log")
-    page.click("#s-skills-btn")
+    page.click("#t-skills")
     assert page.is_visible("#s-tree .s-branch") and page.locator("#s-tree .s-skill").count() == 8
     assert not axe(page, "session_skills")
     assert not errors, errors
@@ -198,7 +200,7 @@ def test_a_quick_session_reaches_the_summit_and_ends_with_medals(browser, live):
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.goto(live.url + "/session/new")
-    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false}))")   # the walkthrough has its own test
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false, talk: false}))")   # the walkthrough has its own test
     page.click('[data-pick="pack"][data-value="comet_halcyon"]')
     page.click('[data-step="1"] [data-next]')
     page.wait_for_selector("#s-seats-box .s-seat")
@@ -245,7 +247,7 @@ def test_the_almanac_and_the_debrief_in_the_browser(browser, live):
     page.wait_for_selector("#a-countries details")
     assert not axe(page, "session_almanac")
     page.goto(live.url + "/session/new")
-    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({timer: false, tips: true}))")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({timer: false, tips: true, talk: false}))")
     page.click('[data-pick="pack"][data-value="comet_halcyon"]')
     page.click('[data-step="1"] [data-next]')
     page.wait_for_selector("#s-seats-box .s-seat")
@@ -335,7 +337,7 @@ def test_the_chief_of_protocol_walks_a_new_player_through_the_session(browser, l
     page.wait_for_selector("#s-walk:not([hidden])")
     page.keyboard.press("Escape")
     assert page.is_hidden("#s-walk")
-    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: true}))")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: true, talk: false}))")
     page.click("#s-end-turn")                                                # the turn reel: the President, the Minister, advisers
     page.wait_for_selector("#s-reel:not([hidden])")
     assert page.inner_text("#s-reel-who") and page.locator("#s-reel-face svg").count() >= 1
@@ -355,7 +357,7 @@ def test_staff_the_vote_bar_and_the_reserve_in_the_browser(browser, live):
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.goto(live.url + "/session/new")
-    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false}))")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false, talk: false}))")
     page.click('[data-pick="pack"][data-value="comet_halcyon"]')
     page.click('[data-step="1"] [data-next]')
     page.wait_for_selector("#s-seats-box .s-seat")
@@ -397,7 +399,7 @@ def test_the_deal_table_in_the_browser(browser, live):
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.goto(live.url + "/session/new")
-    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false}))")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false, talk: false}))")
     page.click('[data-pick="pack"][data-value="comet_halcyon"]')
     page.click('[data-step="1"] [data-next]')
     page.wait_for_selector("#s-seats-box .s-seat")
@@ -443,7 +445,7 @@ def test_the_session_is_drawn_at_real_size_on_a_small_laptop(browser, live):
     page.on("pageerror", lambda e: errors.append(str(e)))
     inside = "s => { const r = document.querySelector(s).getBoundingClientRect(); return r.width > 0 && r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight + 1 && r.right <= innerWidth + 1; }"
     page.goto(live.url + "/session/new")
-    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false}))")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false, talk: false}))")
     page.click('[data-pick="pack"][data-value="ga_climate_transition"]')
     page.click('[data-step="1"] [data-next]')
     page.wait_for_selector("#s-seats-box .s-seat")
@@ -468,6 +470,7 @@ def test_the_session_is_drawn_at_real_size_on_a_small_laptop(browser, live):
     assert page.is_hidden("#s-pause") and "s-panel-open" not in (page.get_attribute("body", "class") or "")
     page.click('#b-map .b-token[data-iso="NGA"]', force=True)
     page.wait_for_selector("#c-country .s-acts-grid")
+    page.wait_for_timeout(400)
     assert page.evaluate(inside, "#c-country .s-acts-grid button")              # the first action is in view
     assert not axe(page, "session_real_size")
     assert not errors, errors
