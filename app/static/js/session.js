@@ -11,7 +11,26 @@
 
   function $(id) { return document.getElementById(id); }
   function h(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
-  function say(t) { var m = $("p-msg") || $("s-msg"); if (m) m.textContent = t; var s = $("p-say"); if (s) s.textContent = t; }
+  // the bar at the bottom: a ticker of the latest news and moves; your last move's result; a failed move in red, with why
+  var errUntil = 0;
+  function say(t) {
+    var m = $("p-msg") || $("s-msg"); var s = $("p-say"); if (s) s.textContent = t;
+    if (!m || Date.now() < errUntil) return;
+    m.className = "p-msg"; m.textContent = t;
+  }
+  function sayError(t) {
+    var m = $("p-msg") || $("s-msg"); var s = $("p-say"); if (s) s.textContent = "That didn't work: " + t;
+    if (!m) return;
+    errUntil = Date.now() + 7000;
+    m.className = "p-msg err"; m.textContent = "That didn't work: " + t;
+  }
+  function ticker(log) {
+    var m = $("p-msg"); if (!m || Date.now() < errUntil || !log || !log.length) return;
+    var items = log.slice(-8).reverse().map(function (x) { return x.text; });
+    m.className = "p-msg ticker"; m.textContent = "";
+    var run = document.createElement("span"); run.className = "s-tick-run"; run.textContent = items.join("     ·     ");
+    m.appendChild(run);
+  }
   function restart(el, cls) { el.classList.remove(cls); void el.getBoundingClientRect(); el.classList.add(cls); }
 
   // ---------- the table at the screen's real size (phase 10): text never shrinks, and browser zoom works ----------
@@ -270,7 +289,7 @@
         draw(r.view, r.out, action);
         if (r.view.phase === "done") setTimeout(function () { result(r.view); }, action.do === "statement" ? 600 : 1800);
         if (action.do === "end_turn") A.play("gavel"); else if (SOUND[action.do]) A.play(SOUND[action.do]);
-      }).catch(function (e) { say(e.message); A.play("tick"); });
+      }).catch(function (e) { sayError(e.message); A.play("tick"); });
     }
 
     function meter(id, value) {
@@ -541,6 +560,7 @@
     // ---------- drawing everything ----------
     function draw(v, out, action) {
       var prev = V; V = v;
+      ticker(v.log);
       var turnChanged = !!prev && v.phase === "chapter" && (prev.turn !== v.turn || prev.chapter !== v.chapter);
       $("s-where").textContent = v.phase === "done" ? "Finished" : v.phase === "summit" ? "The Summit" :
         v.chapter_name + " · turn " + v.turn + " of " + v.turns + (v.stage ? " · " + (v.stage.made ? "breakthrough made" : v.stage.turns_left + " left") : "");
@@ -1368,7 +1388,7 @@
         return;
       }
     }
-    call({ do: "view" }).then(function (r) { draw(r.view); if (r.view.phase === "done") result(r.view); }).catch(function (e) { say(e.message); });
+    call({ do: "view" }).then(function (r) { draw(r.view); if (r.view.phase === "done") result(r.view); }).catch(function (e) { sayError(e.message); });
   }
 
   if (page === "title") titlePage();
