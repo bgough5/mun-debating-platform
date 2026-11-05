@@ -960,3 +960,13 @@
 .s-g-haggle div { text-align: center; padding: 6px; background: var(--white); border: 1px solid var(--walnut); animation: s-in .45s both; }
 .s-g-haggle b { display: block; font-family: var(--serif); font-size: 22px; color: var(--maroon); }
 .s-g-haggle span { font-size: 13px; }
+
+/* Playtest fix (5 Nov 2026): a card taller than the window scrolls; its inner frame must stay put, not scroll away */
+.s-stage .s-overlay .s-doc::after { display: none; }
+.s-stage .s-overlay .s-doc { outline: 1px solid rgb(122 92 14 / 35%); outline-offset: -8px; }
+/* settings: two columns, so they fit a laptop screen without scrolling */
+.s-stage #s-settings .s-doc { width: min(1100px, 94vw); }
+.s-stage .s-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 0 28px; }
+.s-stage .s-setting { padding: 6px 0; }
+.s-stage .s-setting b { font-size: 18px; }
+.s-stage .s-setting span { font-size: 15px; }
