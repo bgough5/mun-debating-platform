@@ -116,3 +116,48 @@ def test_options_do_not_give_away_their_consequences(scn):
             for o in v["options"]:
                 assert "(" not in o["label"] or "Influence" in o["label"] or "its file" in o["label"] or "adviser" in o["label"] or "whip sheet" in o["label"], o["label"]
         assert all(len(V.likeness(i).split()) in (4, 5) for i in scn.isos)
+
+
+def test_talking_is_a_conversation(scn):
+    """Ben, 6 Nov: you open with an argument, they react, and where you take it decides how far they move."""
+    from app.modules.sim.campaign import talks as T
+    g = E.new_game(scn, scn.isos[0], seed=8)
+    g["influence"], g["ap"] = 20, 5
+    iso = next(i for i in scn.isos if i not in E._others(g) and i != g["iso3"]
+               and E.mu_of(scn, g, i, [g["mandate"]["must"]]) > E.R["redline"])
+    r = T.receptive(scn, g, iso)
+    best = max(r, key=lambda k: (r[k], k)); worst = min(r, key=lambda k: (r[k], k))
+    ap = g["ap"]
+    g1, out = E.apply(scn, g, {"do": "talk", "step": "open", "iso3": iso, "arg": best})
+    assert g1["ap"] == ap - 1 and out["conv"]["reply"] and g1["conv"]["iso3"] == iso
+    assert {"press", "ask", "close"} <= {o["code"] for o in out["conv"]["options"]}
+    with pytest.raises(E.GameError):
+        E.apply(scn, g1, {"do": "talk", "step": "open", "iso3": iso, "arg": worst})    # one conversation at a time
+    pressed, o1 = E.apply(scn, g1, {"do": "talk", "step": "follow", "choice": "press"})
+    closed, o2 = E.apply(scn, g1, {"do": "talk", "step": "follow", "choice": "close"})
+    asked, o3 = E.apply(scn, g1, {"do": "talk", "step": "follow", "choice": "ask"})
+    assert o1["moved"] > o2["moved"] > o3["moved"] and "leans" in o3 and not pressed.get("conv")   # pressing a strong point pays
+    g2, _ = E.apply(scn, g, {"do": "talk", "step": "open", "iso3": iso, "arg": worst})
+    _, weak = E.apply(scn, g2, {"do": "talk", "step": "follow", "choice": "press"})
+    assert weak["moved"] < o1["moved"]                                                      # pressing a weak one doesn't
+    g3, _ = E.apply(scn, g2, {"do": "end_turn"})
+    assert not g3.get("conv") and any("talked with" in x["text"] for x in g3["log"])          # left open, it ends politely
+
+
+def test_delegates_remember_your_talks(scn):
+    from app.modules.sim.campaign import talks as T
+    g = E.new_game(scn, scn.isos[0], seed=9)
+    g["influence"], g["ap"] = 30, 9
+    iso = next(i for i in scn.isos if i not in E._others(g) and i != g["iso3"]
+               and E.mu_of(scn, g, i, [g["mandate"]["must"]]) > E.R["redline"])
+    r = T.receptive(scn, g, iso)
+    best = max(r, key=lambda k: (r[k], k))
+    g1, _ = E.apply(scn, g, {"do": "talk", "step": "open", "iso3": iso, "arg": best})
+    g1, first = E.apply(scn, g1, {"do": "talk", "step": "follow", "choice": "press"})
+    g2, out = E.apply(scn, g1, {"do": "talk", "step": "open", "iso3": iso, "arg": best})
+    assert "before" in out["conv"]["reply"]                                                  # they remember
+    g2, again = E.apply(scn, g2, {"do": "talk", "step": "follow", "choice": "press"})
+    assert again["moved"] < first["moved"] and len(g2["talked"][iso]) == 2                   # the same point counts for less
+    other = next(k for k in T.ARGS if k != best)
+    g3, out = E.apply(scn, g1, {"do": "talk", "step": "open", "iso3": iso, "arg": other})
+    assert "forgotten" in out["conv"]["reply"] or "Last time" in out["conv"]["reply"]

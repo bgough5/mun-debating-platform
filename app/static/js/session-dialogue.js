@@ -70,7 +70,7 @@
         card.appendChild(h("span", "s-feel f-" + m.feeling.toLowerCase(), m.feeling));
         room.appendChild(card);
       });
-      var row = $("s-visit-opts"); row.textContent = "";
+      var row = $("s-visit-opts"); row.textContent = ""; row.classList.remove("s-cards5");
       x.options.forEach(function (o, i) {
         var b = h("button", "s-btn" + (i && x.kind !== "persuade" ? " ghost" : ""), o.label + (o.cost ? " (" + o.cost + " Influence)" : "")); b.type = "button";
         if (o.cost && v.influence < o.cost) b.disabled = true;
@@ -87,7 +87,7 @@
     }
     $("s-visit").addEventListener("keydown", function (e) {           // Escape ends it politely: the last answer
       if (e.key === "Escape") { e.stopPropagation(); var v = c.view(), x = (v.visits || []).filter(function (y) { return y.id === showing; })[0];
-        if (x) answer(x, x.options[x.options.length - 1].code); else if (showing) leave(); }
+        if (x) answer(x, x.options[x.options.length - 1].code); else if (showing === "talk") leaveTalk(); else if (showing) leave(); }
     });
     function leave() { c.close("s-visit"); showing = null; setTimeout(next, 400); }
     // after you answer: the room's reactions (caucus), their reply, or straight on to whoever is next
@@ -160,6 +160,69 @@
         ul.appendChild(li);
       });
     }
-    return { offer: offer, sheet: sheet, powers: powers, after: after };
+    // ---------- talking with a delegation (Ben, 6 Nov): open with an argument, they react, you take it on ----------
+    var talking = null;
+    function talkFrame(iso, h2, text) {
+      var v = c.view(), t = v.tokens[iso];
+      var doc = document.querySelector("#s-visit .s-doc"); doc.className = "s-doc s-reeldoc k-talk";
+      var face = $("s-visit-face"); face.textContent = ""; face.classList.remove("s-visit-pair");
+      if (G) face.appendChild(G.portrait(h2 === "Their answer" ? "calm" : "thinking", "delegate " + likeness(iso)));
+      var rel = t && t.relation !== undefined ? ["Hostile", "Cool", "Neutral", "Warm", "Close"][t.relation + 2] : null;
+      if (rel) face.appendChild(h("span", "s-feel f-" + rel.toLowerCase(), rel));
+      var who = $("s-visit-who"); who.textContent = ""; who.appendChild(pin(iso)); who.appendChild(document.createTextNode(t ? t.name : iso));
+      $("s-visit-step").textContent = ""; $("s-visit-h").textContent = h2; $("s-visit-p").textContent = text;
+      var room = $("s-visit-room"); room.textContent = ""; room.hidden = true;
+      $("s-visit-n").textContent = "";
+      var row = $("s-visit-opts"); row.textContent = ""; row.classList.remove("s-cards5"); return row;
+    }
+    function talk(iso) {                                               // open (or return to) a conversation
+      var v = c.view(); if (!v || showing) return;
+      talking = iso; showing = "talk";
+      if (v.conv && v.conv.iso3 === iso) { talkReply(v.conv); return; }
+      var d = v.tokens[iso];
+      var row = talkFrame(iso, "What will you open with?", (d.listens_to && d.listens_to.length ? "From its file, it listens to " + d.listens_to.join(" and ").toLowerCase() + ". " : "") +
+        "Choose the argument you lead with. Watch how they take it: where you go next decides how far they move.");
+      row.classList.add("s-cards5");
+      Object.keys(v.args).forEach(function (k) {
+        var known = d.listens_to && d.listens_to.indexOf(v.args[k].name) >= 0, used = (d.talked || []).indexOf(k) >= 0;
+        var b = h("button", "s-btn ghost s-argcard" + (known ? " known" : "") + (used ? " used" : "")); b.type = "button";
+        b.appendChild(h("b", "", v.args[k].name)); b.appendChild(h("span", "", v.args[k].what));
+        if (used) b.appendChild(h("em", "", "You've used this with them"));
+        b.addEventListener("click", function () { c.move({ do: "talk", step: "open", iso3: iso, arg: k }); A.play("paper"); });
+        row.appendChild(b);
+      });
+      var back = h("button", "s-btn ghost small", "Not now"); back.type = "button";
+      back.addEventListener("click", leaveTalk); row.appendChild(back);
+      c.open("s-visit"); c.restart(document.querySelector("#s-visit .s-doc"), "s-reel-in"); A.play("paper");
+    }
+    function talkReply(cv) {
+      var row = talkFrame(cv.iso3, "They react", "You opened with " + cv.first_name.toLowerCase() + ". \u201c" + cv.reply + "\u201d");
+      cv.options.forEach(function (o, i) {
+        var b = h("button", "s-btn" + (i ? " ghost" : ""), o.label); b.type = "button";
+        b.addEventListener("click", function () { c.move({ do: "talk", step: "follow", choice: o.code }); A.play("paper"); });
+        row.appendChild(b);
+      });
+      if (!$("s-visit").hidden) c.restart($("s-visit-p"), "s-in"); else c.open("s-visit");
+    }
+    function talkEnd(v, out) {
+      var iso = out.talked, t = v.tokens[iso] || {};
+      var lines = ["\u201c" + out.heard + "\u201d"];
+      var row = talkFrame(iso, "Their answer", lines.join(" "));
+      var p = $("s-visit-p");
+      var landed = TALKS().pitchAnswer(out); if (landed) p.appendChild(h("span", "s-intel", "Your arguments: " + landed));
+      if (out.would_vote) p.appendChild(h("span", "s-intel", "On the whole text as it stands, they would vote " + out.would_vote + "."));
+      if (out.leans) p.appendChild(h("span", "s-intel", "Towards each rival: " + Object.keys(out.leans).map(function (k) { return k + " " + (out.leans[k] > 0.3 ? "warm" : out.leans[k] < -0.3 ? "cold" : "neutral"); }).join(", ") + "."));
+      var ok = h("button", "s-btn", "Done"); ok.type = "button"; ok.addEventListener("click", leaveTalk); row.appendChild(ok);
+      if ($("s-visit").hidden) c.open("s-visit");
+      A.play(out.moved > 0.2 ? "chime" : "tick");
+    }
+    function leaveTalk() { c.close("s-visit"); showing = null; talking = null; setTimeout(next, 400); }
+    function TALKS() { return c.talks(); }
+    // after a talk move: their reaction, or the end of the conversation
+    function talkStep(v, out, action) {
+      if (action.step === "open" && out && out.conv) { talkReply(out.conv); return; }
+      if (out && out.talked) talkEnd(v, out);
+    }
+    return { offer: offer, sheet: sheet, powers: powers, after: after, talk: talk, talkStep: talkStep, likeness: likeness, pin: pin };
   };
 })();

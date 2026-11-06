@@ -81,6 +81,13 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
   - **Relationships:** `visits.relation()` is the one relationship scale.
   - **Panels:** brief, draft, dele (with Powers), coalition (blocs and sponsors), summit, whip, staff (with Skills), record. Staff is hidden in stage 1.
   - **Delegate looks:** `visits.likeness()` and its copy in `session-dialogue.js` must give the same result. The classes carry a `dl-` prefix, because `.t1`, `.h3` and so on are app classes.
+- The Session, phase 15 (the grand look, mahogany and brass) and phase 16 (from Ben's playtest, 6 Nov):
+  - **The look:** it lives at the end of `session.css`, scoped `.s-stage`, so the projector board is unchanged. Its colours are tokens (mahogany, lacquer, gilt, ivory, enamel, plus a table, banner and sea for each stage). The map defs `s-sea`, `s-metal`, `s-en-yes`, `s-en-no` and `s-cast` sit in the shared `_board_map.html`. The textures are generated SVG noise.
+  - **Talking is a conversation:** `talks.a_talk` has two steps. `open` takes an `arg` and spends the action. `follow` takes a `choice`: `press`, `switch:<arg>`, `ask` or `close`. `g["conv"]` holds the open conversation, `conv_view` describes it, and ending the turn closes it.
+  - **Delegates remember talks:** they're stored in `g["talked"][iso]`. Each repeat of an argument is worth `REPEAT` (0.7) of the time before, and following up a strong talk within two turns adds goodwill. Bots still use `a_lobby`.
+  - **Signing:** `a_sign` returns `signed`, which shows the `#s-signed` card.
+  - **Hover cards and shortcuts** are in `session-keys.js`: E ends the turn, 1–8 open the panels, T talks to the open delegation.
+  - **The Brief** flows in CSS columns.
 - Was a flake: `tests/ui/test_phase5_a11y.py::test_a11y_every_student_page`. The phase 6 run (5 Nov 2026) caught it: the speech coach's `.coach-back` kept its desktop pixel width for a moment after the crawl resized to 320 px (`reflow-320px` on `/me/committees/1/prepare`). It is now clamped with `max-width: 100%`. Not yet confirmed by several full runs.
 - Known flake: `tests/ui/test_start_ui.py::test_resume_from_the_dashboard` timed out in two full runs (4 Nov 2026) and passes alone; not yet investigated.
 - Don't run two test suites at once on the laptop: the accessibility crawl timed out on page loads twice when another pytest run overlapped it, and passed (715/715) on a clean run (30 Oct 2026).
