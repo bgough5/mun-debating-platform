@@ -30,9 +30,6 @@
       if (reports.length) out.push({ who: "staff", adv: adv(c.staffOf(v, reports[0].text)), face: "thinking", title: "Your staff report", text: "", list: reports.map(function (x) { return x.text; }) });
       var shifts = news.filter(function (x) { return x.kind === "shift"; });
       if (shifts.length) out.push({ who: "staff", adv: adv(), face: "eyebrow", title: "Positions are shifting", text: "", list: shifts.map(function (x) { return x.text; }) });
-      var fresh = (v.offers || []).filter(function (o) { return !((prev && prev.offers) || []).some(function (p) { return p.id === o.id; }); });
-      if (fresh.length) out.push({ who: "staff", adv: adv(), face: "wry", title: "At your door", text: fresh.map(function (o) { return o.name; }).join(" and ") + (fresh.length === 1 ? " is" : " are") +
-                                   " at your door with an offer. It's on your Brief, and it lapses when the turn ends." });
       return out;
     }
     function play(list, then) {

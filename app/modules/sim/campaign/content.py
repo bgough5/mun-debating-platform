@@ -27,7 +27,7 @@ EVENTS = [
     {"id": "quiet", "title": "A quiet morning", "body": "Nothing unexpected. The committee gets on with its work.", "effect": {}, "teaches": ""},
 ]
 
-# Procedure moments: the right answer earns Expertise and Respect; a wrong one costs a little Respect and explains why.
+# Procedure moments: the right answer earns Expertise and Standing; a wrong one costs a little Standing and explains why.
 QUESTIONS = [
     {"id": "q_poi", "ask": "Another delegate wants to ask the speaker a question about their speech. What do they raise?",
      "options": ["A point of information", "A point of order", "A point of personal privilege"], "answer": 0,
@@ -100,7 +100,7 @@ PATHS = {
     "architect": {"name": "Architect", "for": "The drafter",
                   "what": "Most of the final text is yours: your clauses and amendments."},
     "kingmaker": {"name": "Kingmaker", "for": "The analyst",
-                  "what": "You read the room accurately, keep every promise and end with high Respect."},
+                  "what": "You read the room accurately, keep every promise and end with high Standing."},
 }
 
 CHAPTERS = {

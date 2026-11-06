@@ -8,6 +8,7 @@ from app.db import SYSTEM
 from app.modules.sim import play
 from app.modules.sim.campaign import content as K
 from app.modules.sim.campaign import engine as E
+from app.modules.sim.campaign import visits as V
 from app.modules.sim.campaign.scenario import load
 
 
@@ -54,19 +55,25 @@ def test_a_new_government_shifts_a_position_and_the_shift_reaches_the_vote(scn):
     assert any(x["label"] == scn.tags[tag] for x in f["shifts"])                        # the file says it changed
 
 
-def test_offers_come_to_your_door_and_lapse_at_the_end_of_the_turn(scn):
-    games = _games(scn, 30)
-    assert sum(1 for g in games if g["offers"]) >= 20                                  # most turns bring someone to the door
+def test_offers_come_to_your_door_as_visits_and_lapse_at_the_end_of_the_turn(scn):
+    """Offers come in person, as visits (phase 14): none on the very first turn, at most two visitors a turn."""
+    first = _games(scn, 30)
+    assert not any(g["offers"] or g["visits"] for g in first)                        # the very first turn is yours alone
+    games = [E.apply(scn, g, {"do": "end_turn"})[0] for g in first]
+    assert all(len(g["visits"]) <= V.MAX_VISITORS for g in games)
+    assert sum(1 for g in games if g["offers"]) >= 8                                   # often someone at the door
+    assert all({o["id"] for o in g["offers"]} == {v["offer"] for v in g["visits"] if v["kind"] == "offer"} for g in games)
     g = next(g for g in games if any(o["kind"] == "back" for o in g["offers"]))
     o = next(o for o in g["offers"] if o["kind"] == "back")
+    v = next(v for v in g["visits"] if v.get("offer") == o["id"])
     ap, trust = g["ap"], g["trust"][o["iso3"]]
-    g2, out = E.apply(scn, g, {"do": "offer", "id": o["id"], "answer": "accept"})
+    g2, out = E.apply(scn, g, {"do": "visit", "id": v["id"], "choice": "accept"})
     assert out["accepted"] and g2["ap"] == ap                                          # answering costs no action
     assert {"iso3": o["iso3"], "clause": o["clause"], "kept": None} in g2["promises"]
     assert g2["trust"][o["iso3"]] == min(E.R["trust_max"], trust + 1) and g2["deals"] == 1
     with pytest.raises(E.GameError):
-        E.apply(scn, g2, {"do": "offer", "id": o["id"], "answer": "accept"})          # once only
-    g3, out = E.apply(scn, g, {"do": "offer", "id": o["id"], "answer": "refuse"})
+        E.apply(scn, g2, {"do": "visit", "id": v["id"], "choice": "accept"})          # once only
+    g3, out = E.apply(scn, g, {"do": "visit", "id": v["id"], "choice": "refuse"})
     assert not out["accepted"] and not any(x["id"] == o["id"] for x in g3["offers"]) and g3["deals"] == 0
     left = [x for x in g["offers"] if x["id"] != o["id"]]
     g4, _ = E.apply(scn, g, {"do": "end_turn"})

@@ -233,7 +233,7 @@
     function opt(sel, value, text) { var o = h("option", "", text); o.value = value; sel.appendChild(o); return o; }
 
     // ---------- tabs ----------
-    var TABS = ["brief", "draft", "dele", "blocs", "sponsors", "summit", "powers", "whip", "staff", "skills", "record"];
+    var TABS = ["brief", "draft", "dele", "coalition", "summit", "whip", "staff", "record"];
     var rail = $("s-rail");
     function panelOpen() { return rail.classList.contains("open"); }
     function setTab(name, focus, dock) {
@@ -304,12 +304,12 @@
       var was = prev && prev.objectives && v.objectives[String(prev.chapter)];
       $("s-cc-eyebrow").textContent = summit ? "The final act" : (v.length === "quick" ? "One working session" : "Stage " + v.chapter + " of " + v.chapters);
       $("s-cc-h").textContent = summit ? "The Summit" : v.chapter_name;
-      var pre = prev && prev.phase === "chapter" ? (prev.chapter_name + ": " + (was ? "breakthrough made. +3 Influence, +1 Respect. " : "the deadline passed without a breakthrough. −1 Respect. ")) : "";
+      var pre = prev && prev.phase === "chapter" ? (prev.chapter_name + ": " + (was ? "breakthrough made. +3 Influence. " : "the deadline passed without a breakthrough. ")) : "";
       $("s-cc-goal").textContent = pre + (summit ? "The draft goes to the vote, clause by clause, then as a whole." :
         "Breakthrough: " + v.stage.goal + " Deadline: " + v.stage.deadline + " turns.");
       $("s-cc-look").textContent = summit ? "I'll preside. Every clause is voted on, then the whole text." : v.stage.look;
       var pf = $("s-cc-pres"); pf.textContent = ""; if (G) pf.appendChild(G.portrait(summit ? "eyebrow" : "delighted", "president"));
-      stagePanel = summit ? null : (v.length === "quick" || v.chapter === 1 ? "draft" : v.chapter === 2 ? "blocs" : "sponsors");
+      stagePanel = summit ? null : (v.length === "quick" || v.chapter === 1 ? "draft" : "coalition");
       var cr = !summit && v.crisis && v.crisis.chapter === v.chapter ? v.crisis : null;
       $("s-cc-crisis").hidden = !cr;
       if (cr) { $("s-cc-crisis-h").textContent = cr.title; $("s-cc-crisis-p").textContent = cr.body; $("s-cc-crisis-t").textContent = cr.teaches; }
@@ -337,7 +337,7 @@
       if (v.stage) {
         v.stage.checklist.forEach(function (x) { ul.appendChild(h("li", x.done ? "done" : "", x.label + " (" + x.count + ")")); });
         var adv = $("c-advance"); adv.textContent = "";
-        if (v.stage.made) adv.appendChild(btn("Move on now: +" + v.stage.momentum.respect + " Respect, +" + v.stage.momentum.influence + " Influence", "s-btn small", function () { move({ do: "advance" }); }));
+        if (v.stage.made) adv.appendChild(btn("Move on now: +" + v.stage.momentum.respect + " Standing, +" + v.stage.momentum.influence + " Influence", "s-btn small", function () { move({ do: "advance" }); }));
         return;
       }
       var items = [], c1 = v.draft_ok.clauses >= 4, mine = v.draft_ok.mine >= 1;
@@ -578,8 +578,7 @@
       stageBar(v, prev);
       $("s-you").textContent = "You are " + v.you.name + " · aiming for " + v.path.name + (v.reputation ? " · known as " + v.reputation.replace(/^known to /, "someone known to ") : "");
       meter("m-influence", v.influence); meter("m-respect", v.respect);
-      meter("m-capital", v.capital.value + "/" + v.capital.max);
-      $("m-capital").classList.toggle("low", v.capital.value <= 2);
+      $("m-respect").classList.toggle("low", v.respect <= 2);
       var ap = $("s-ap"); ap.textContent = "";
       for (var i = 0; i < Math.max(v.ap, 0); i++) ap.appendChild(h("i", "on"));
       $("m-ap").setAttribute("aria-label", v.ap + " actions left this turn");
@@ -606,15 +605,12 @@
       var cr = v.phase === "chapter" && v.crisis && v.crisis.chapter === v.chapter ? v.crisis : null, cb = $("c-crisis-body");
       $("c-crisis").hidden = !cr; cb.textContent = "";
       if (cr) { cb.appendChild(h("p", "s-goal", cr.title)); cb.appendChild(h("p", "", cr.body)); cb.appendChild(h("p", "s-small", cr.teaches)); }
-      var ol = $("c-offer-list"); ol.textContent = "";
-      $("c-offers").hidden = !(v.offers && v.offers.length);
-      (v.offers || []).forEach(function (o) {
-        var li = h("li", "s-offer");
-        li.appendChild(h("p", "s-offer-text", o.text)); li.appendChild(h("p", "s-small", o.terms));
-        var row = h("div", "s-row");
-        row.appendChild(btn("Accept", "s-btn small", function () { move({ do: "offer", id: o.id, answer: "accept" }); }));
-        row.appendChild(btn("Turn it down", "s-btn ghost small", function () { move({ do: "offer", id: o.id, answer: "refuse" }); }));
-        li.appendChild(row); ol.appendChild(li);
+      var ol = $("c-agreement-list"); ol.textContent = "";                // one list of everything agreed (phase 14)
+      $("c-agreements").hidden = !(v.agreements && v.agreements.length);
+      (v.agreements || []).forEach(function (x) {
+        var li = h("li", x.kept === true ? "kept" : x.kept === false ? "broken" : "");
+        li.appendChild(h("b", "", x.name + ": ")); li.appendChild(document.createTextNode(x.what + (x.kept === true ? " (kept)" : x.kept === false ? " (broken)" : "")));
+        ol.appendChild(li);
       });
       var il = $("c-instr-list"); il.textContent = "";
       [["in", "Get in: ", v.mandate.must.label], ["in", "Also get in: ", v.mandate.also.label], ["out", "Keep out: ", v.mandate.red.label]].forEach(function (x) {
@@ -626,7 +622,7 @@
       DLG.sheet(v); DLG.powers(v);
       if (prev && !turnChanged && !afterCard && $("s-chapter-card").hidden) DLG.offer(v);   // new visits mid-turn; at a turn change they follow the reel
       var nb = $("n-brief");                                          // what's waiting on the Brief: offers, a question
-      if (nb) nb.textContent = v.phase === "chapter" ? ((v.offers || []).length + (v.question ? 1 : 0) || "") : "";
+      if (nb) nb.textContent = v.phase === "chapter" && v.question ? "1" : "";
       staff(v);
       pins(v);
       var rs = $("s-reserve");
@@ -717,7 +713,7 @@
     // ---------- the summit ----------
     var STANCE = {
       firm: ["Firm", "State your country's position plainly. Delegations that share your main aim warm to you; those against it cool a little."],
-      open: ["Open", "Listen first and acknowledge the other side. The room respects it: +1 Respect."],
+      open: ["Open", "Listen first and acknowledge the other side. The room respects it: +1 Standing."],
       bridge: ["Bridge", "Speak to the undecided. Delegations in the middle warm to you."]
     };
     var GRADE = ["No medal", "Bronze", "Silver", "Gold"];
@@ -727,7 +723,7 @@
 
     function summitTabs(v) {
       var summit = v.phase !== "chapter";
-      ["brief", "draft", "dele", "blocs", "sponsors"].forEach(function (t) { if (summit) $("t-" + t).hidden = true; });
+      ["brief", "draft", "dele", "coalition"].forEach(function (t) { if (summit) $("t-" + t).hidden = true; });
       if (!summit) ["brief", "draft", "dele"].forEach(function (t) { $("t-" + t).hidden = false; });
       $("t-summit").hidden = !summit;
       if (summit && $("t-summit").getAttribute("aria-selected") !== "true" && $("t-record").getAttribute("aria-selected") !== "true") setTab("summit");
@@ -778,7 +774,7 @@
         if (S.attack) {
           var at = h("div", "s-amendment s-attack");
           at.appendChild(h("b", "", S.attack.by_name + " asks to speak against this clause"));
-          at.appendChild(h("p", "", "Unanswered, the speech will cool the room towards it. A right of reply (Respect " + v.costs.reply_respect + " or more) answers it."));
+          at.appendChild(h("p", "", "Unanswered, the speech will cool the room towards it. A right of reply (Standing " + v.costs.reply_respect + " or more) answers it."));
           box.appendChild(at);
         }
         box.appendChild(h("p", "s-small", "First, what will you do? Then cast " + v.you.name + "'s vote."));
@@ -790,7 +786,7 @@
         chip("stand", S.pending ? "Let it go to a vote" : "Stand firm", true);
         chip("offer", "Last offer (" + S.offer_cost + " Influence)", S.influence >= S.offer_cost);
         chip("favour", "Call in a favour (" + S.favours.length + ")", S.favours.length > 0);
-        if (S.pending) chip("accept", "Accept as friendly (+1 Respect)", true);
+        if (S.pending) chip("accept", "Accept as friendly (+1 Standing)", true);
         if (S.pending) chip("point_of_order", "Point of order", S.po);
         if (S.attack) chip("reply", "Right of reply", S.can_reply);
         box.appendChild(dec);
@@ -898,7 +894,7 @@
       });
       b.appendChild(row);
       b.appendChild(h("p", "s-sub s-center", "You aimed for " + p.name + ": " + p.what + "  Predictions right: " + r.whip_right + " of " + r.whip_judged +
-                                             " · promises kept " + r.kept_promises + ", broken " + r.broken_promises + " · Respect " + r.respect + " · Expertise " + r.expertise + "."));
+                                             " · promises kept " + r.kept_promises + ", broken " + r.broken_promises + " · Standing " + r.respect + " · Expertise " + r.expertise + "."));
       if (d.history && d.history.length > 1) b.appendChild(chart(d.history));
       if (d.clauses && d.clauses.length) b.appendChild(deeds(d.clauses));
       if (d.moments && d.moments.length) {
@@ -916,8 +912,8 @@
         "A hard session, Ambassador. Every great delegate has one. The dossier below shows exactly what happened, and why."));
       b.insertBefore(chief, b.firstChild);
       if (v.debrief && v.debrief.capital) {
-        var cp = h("div", "s-debrief"); cp.appendChild(h("h3", "", "Your capital"));
-        cp.appendChild(h("p", "", "Confidence at the end: " + v.debrief.capital.confidence + " of " + v.debrief.capital.of + ". " +
+        var cp = h("div", "s-debrief"); cp.appendChild(h("h3", "", "Your standing"));
+        cp.appendChild(h("p", "", "Standing at the end: " + v.debrief.capital.confidence + " of " + v.debrief.capital.of + ". " +
           v.debrief.capital.deals + " deal" + (v.debrief.capital.deals === 1 ? "" : "s") + " made." +
           (v.debrief.capital.recalled ? " You were recalled before the summit." : "")));
         b.appendChild(cp);
@@ -981,14 +977,14 @@
       var ns = "http://www.w3.org/2000/svg", svg = document.createElementNS(ns, "svg");
       svg.setAttribute("viewBox", "0 0 " + W + " " + (H + 46)); svg.setAttribute("class", "s-chart"); svg.setAttribute("role", "img");
       var last = hist[n - 1];
-      svg.setAttribute("aria-label", "Your standing turn by turn. At the end: " + last.leaning + " of " + last.of + " delegations leaning your way, Influence " + last.influence + ", Respect " + last.respect + ".");
+      svg.setAttribute("aria-label", "Your standing turn by turn. At the end: " + last.leaning + " of " + last.of + " delegations leaning your way, Influence " + last.influence + ", Standing " + last.respect + ".");
       function el(tag, attrs, text) { var e = document.createElementNS(ns, tag); Object.keys(attrs).forEach(function (k) { e.setAttribute(k, attrs[k]); }); if (text != null) e.textContent = text; svg.appendChild(e); return e; }
       for (var gy = 0; gy <= 4; gy++) el("line", { x1: L, x2: W - 10, y1: T + gy * H / 4, y2: T + gy * H / 4, class: "s-grid" });
       var maxI = 1.15 * Math.max.apply(null, hist.map(function (x) { return x.influence; }).concat([10]));
       var series = [
         ["Support", "s-l-support", function (x) { return x.of ? x.leaning / x.of : 0; }, function (x) { return x.leaning + " of " + x.of; }],
         ["Influence", "s-l-influence", function (x) { return x.influence / maxI; }, function (x) { return String(x.influence); }],
-        ["Respect", "s-l-respect", function (x) { return x.respect / 10; }, function (x) { return String(x.respect); }]
+        ["Standing", "s-l-respect", function (x) { return x.respect / 10; }, function (x) { return String(x.respect); }]
       ];
       function X(i) { return L + (n === 1 ? 0 : i * (W - L - 190) / (n - 1)); }
       hist.forEach(function (x, i) {
@@ -1007,7 +1003,7 @@
       var lastY = -99;
       ends.forEach(function (e) { var y = Math.max(e[0] + 5, lastY + 20); lastY = y; el("text", { x: X(n - 1) + 12, y: y, class: "s-end " + e[1][1] }, e[1][0] + " " + e[1][3](last)); });
       box.appendChild(svg);
-      box.appendChild(h("p", "s-sub", "Support: delegations leaning your way. Influence and Respect at the end of each turn."));
+      box.appendChild(h("p", "s-sub", "Support: delegations leaning your way. Influence and Standing at the end of each turn."));
       return box;
     }
 
@@ -1104,7 +1100,7 @@
     }
     function moments(v, prev, news, won, lost, turnChanged) {
       var aide = (v.staff || [])[0] || null;
-      if (prev.phase === "chapter" && v.phase === "summit") advise("eyebrow", "The Summit is open. Choose how to open your speech: firm to rally your friends, open for Respect, bridge for the undecided.");
+      if (prev.phase === "chapter" && v.phase === "summit") advise("eyebrow", "The Summit is open. Choose how to open your speech: firm to rally your friends, open for Standing, bridge for the undecided.");
       if (won) advise("delighted", "A regional group now stands behind your draft. Rivals will try to win it back.", null, aide);
       if (lost) advise("concerned", "We've lost a regional group's endorsement. A side event or its meeting can win it back.", null, aide);
       if (!turnChanged) news.forEach(function (x) {                  // the turn's news is the reel's; these come mid-turn
@@ -1268,9 +1264,6 @@
         if (x.next) li.appendChild(h("span", "s-small", "Next: " + x.next + "."));
         ul.appendChild(li);
       });
-      var ot = $("c-overtime"); ot.textContent = "";
-      if (v.overtime_next) ot.appendChild(btn("Overtime: +1 action for " + v.overtime_next + " Influence", "s-btn ghost small", function () { move({ do: "overtime" }); }, v.influence < v.overtime_next));
-      else if (v.phase === "chapter") ot.appendChild(h("p", "s-small", "Your staff can't work any later this turn."));
     }
     var SIDE = { you: "leans your way", rival: "leans to a rival", undecided: "undecided", self: "you", "rival-self": "a rival" };
     function rooms(v) {
@@ -1293,7 +1286,7 @@
         r.members.forEach(function (m) { var c = h("span", "s-chip-m " + m.side, m.name); c.title = m.name + ": " + (m.rival ? "leans to " + m.rival : SIDE[m.side]); chips.appendChild(c); });
         li.appendChild(chips); ul.appendChild(li);
       });
-      var nb = $("n-blocs"); if (nb) nb.textContent = v.meeting && !v.meeting.attended ? "!" : "";
+      var nb = $("n-coalition"); if (nb) nb.textContent = v.meeting && !v.meeting.attended ? "!" : "";
     }
     function sheets(v) {
       var ul = $("c-sheets"); if (!ul) return;
@@ -1321,7 +1314,13 @@
         Object.keys(lands).forEach(function (iso) { var t = v.tokens[iso]; if (t && t.rcode) lands[iso].forEach(function (l) { l.classList.add("rg-" + t.rcode.toLowerCase()); }); });
         landsTagged = true;
       }
-      if (v.phase === "chapter") { $("t-blocs").hidden = !(v.rooms || []).length; $("t-sponsors").hidden = !(v.race || []).length; }
+      if (v.phase === "chapter") {
+        var hasRooms = !!(v.rooms || []).length, hasRace = !!(v.race || []).length;
+        $("t-coalition").hidden = !(hasRooms || hasRace);
+        $("c-signup").hidden = !hasRace; $("c-meeting").hidden = !hasRooms; $("c-roomcard").hidden = !hasRooms;
+      }
+      // a quieter first stage: Staff opens with Bloc meetings, and the walkthrough introduces it then
+      $("t-staff").hidden = v.phase === "chapter" && v.length !== "quick" && v.chapter === 1;
     }
     var btShown = {};
     function breakthroughCard(v, prev) {
@@ -1331,7 +1330,7 @@
       $("s-bt-p").textContent = "Well done, delegates. " + (v.stage.turns_left ? "You have " + v.stage.turns_left + " turn" + (v.stage.turns_left === 1 ? "" : "s") + " left in " + v.chapter_name +
         ". Move on now, and that time becomes momentum; or keep working to strengthen your hand." : "This is the stage's last turn.");
       $("s-bt-unlocks").textContent = v.stage.unlocks;
-      $("s-bt-go").textContent = "Move on now: +" + v.stage.momentum.respect + " Respect, +" + v.stage.momentum.influence + " Influence";
+      $("s-bt-go").textContent = "Move on now: +" + v.stage.momentum.respect + " Standing, +" + v.stage.momentum.influence + " Influence";
       $("s-bt-stay").textContent = v.stage.turns_left ? "Keep working (" + v.stage.turns_left + " turn" + (v.stage.turns_left === 1 ? "" : "s") + " left)" : "Finish this turn";
       var pf = $("s-bt-pres"); pf.textContent = ""; if (G) pf.appendChild(G.portrait("delighted", "president"));
       setTimeout(function () {

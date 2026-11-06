@@ -17,10 +17,12 @@
       <p class="b-ribbon"><span class="b-ribbon-text" id="s-you">…</span></p>
     </div>
     <ul class="s-meters" aria-label="Your standing">
-      <li class="s-meter" id="m-influence" title="Influence: spent on pitches, deals and side events"><i aria-hidden="true">₳</i><b>–</b><span>Influence</span></li>
-      <li class="s-meter" id="m-respect" title="Respect: your standing in the room"><i aria-hidden="true">✦</i><b>–</b><span>Respect</span></li>
-      <li class="s-meter" id="m-capital" title="Your capital's confidence in you: at zero you are recalled"><i aria-hidden="true">✉</i><b>–</b><span>Capital</span></li>
-      <li class="s-meter" id="m-ap" title="Action points left this turn"><i aria-hidden="true">⚑</i><span class="s-ap" id="s-ap"></span><span>Actions</span></li>
+      <li class="s-meter" id="m-influence" tabindex="0" aria-describedby="tip-influence"><i aria-hidden="true">₳</i><b>–</b><span>Influence</span>
+        <span class="s-tip" role="tooltip" id="tip-influence">Your currency. You earn some each turn, and more from regional groups that endorse you. Spend it on pitches, deals, side events and advisers.</span></li>
+      <li class="s-meter" id="m-respect" tabindex="0" aria-describedby="tip-respect"><i aria-hidden="true">✦</i><b>–</b><span>Standing</span>
+        <span class="s-tip" role="tooltip" id="tip-respect">How the room and your own government see you. Kept promises, good procedure and breakthroughs raise it; lies found out, broken promises and your capital's displeasure lower it. At 5 and 8 it gives you an extra action. At zero you are recalled.</span></li>
+      <li class="s-meter" id="m-ap" tabindex="0" aria-describedby="tip-ap"><i aria-hidden="true">⚑</i><span class="s-ap" id="s-ap"></span><span>Actions</span>
+        <span class="s-tip" role="tooltip" id="tip-ap">Your moves this turn. Your delegation grows as the session goes on: the Brief shows where each action comes from. Talking to visitors and marking your whip sheet are free.</span></li>
     </ul>
   </header>
 
@@ -41,12 +43,9 @@
         <button type="button" role="tab" id="t-draft" aria-controls="p-draft" aria-selected="false" tabindex="-1" data-tab="draft">{{ icon("resolution") }}<span>Draft</span> <span class="s-n" id="n-draft"></span></button>
         <button type="button" role="tab" id="t-dele" aria-controls="p-dele" aria-selected="false" tabindex="-1" data-tab="dele">{{ icon("delegation") }}<span>Delegates</span></button>
         <button type="button" role="tab" id="t-summit" aria-controls="p-summit" aria-selected="false" tabindex="-1" data-tab="summit" hidden>{{ icon("vote") }}<span>Summit</span></button>
-        <button type="button" role="tab" id="t-blocs" aria-controls="p-blocs" aria-selected="false" tabindex="-1" data-tab="blocs" hidden>{{ icon("bloc") }}<span>Blocs</span> <span class="s-n" id="n-blocs"></span></button>
-        <button type="button" role="tab" id="t-sponsors" aria-controls="p-sponsors" aria-selected="false" tabindex="-1" data-tab="sponsors" hidden>{{ icon("roll-call") }}<span>Sponsors</span></button>
-        <button type="button" role="tab" id="t-powers" aria-controls="p-powers" aria-selected="false" tabindex="-1" data-tab="powers">{{ icon("prediction") }}<span>Powers</span></button>
+        <button type="button" role="tab" id="t-coalition" aria-controls="p-coalition" aria-selected="false" tabindex="-1" data-tab="coalition" hidden>{{ icon("bloc") }}<span>Coalition</span> <span class="s-n" id="n-coalition"></span></button>
         <button type="button" role="tab" id="t-whip" aria-controls="p-whip" aria-selected="false" tabindex="-1" data-tab="whip">{{ icon("whip") }}<span>Whip</span></button>
-        <button type="button" role="tab" id="t-staff" aria-controls="p-staff" aria-selected="false" tabindex="-1" data-tab="staff">{{ icon("people") }}<span>Staff</span></button>
-        <button type="button" role="tab" id="t-skills" aria-controls="p-skills" aria-selected="false" tabindex="-1" data-tab="skills">{{ icon("pathway") }}<span>Skills</span> <span class="s-n" id="n-skills"></span></button>
+        <button type="button" role="tab" id="t-staff" aria-controls="p-staff" aria-selected="false" tabindex="-1" data-tab="staff">{{ icon("people") }}<span>Staff</span> <span class="s-n" id="n-skills"></span></button>
         <button type="button" role="tab" id="t-record" aria-controls="p-record" aria-selected="false" tabindex="-1" data-tab="record">{{ icon("history") }}<span>Record</span></button>
       </div>
       <div class="s-panes" tabindex="0" aria-label="Your move">
@@ -56,10 +55,10 @@
           <div class="s-row" id="c-advance"></div></section>
         <section class="b-card" id="c-ap"><h2>Your delegation</h2>
           <p class="s-small">Your actions each turn come from all of these, like resources in a campaign: earn more as the session goes on.</p>
-          <ul class="s-sources" id="c-ap-list"></ul><div class="s-row" id="c-overtime"></div></section>
-        <section class="b-card s-offers" id="c-offers" hidden><h2>At your door</h2>
-          <p class="s-small">Delegations come to you with deals. Answering costs no action; an offer lapses at the end of the turn.</p>
-          <ul class="s-offer-list" id="c-offer-list"></ul></section>
+          <ul class="s-sources" id="c-ap-list"></ul></section>
+        <section class="b-card s-agreements" id="c-agreements" hidden><h2>Agreements</h2>
+          <p class="s-small">Everything you and other delegations have agreed: promises, favours, deals, pacts and peace. Each is checked at the vote.</p>
+          <ul class="s-ledger" id="c-agreement-list"></ul></section>
         <section class="b-card s-crisis-card" id="c-crisis" hidden><h2>This stage's crisis</h2><div id="c-crisis-body"></div></section>
         <section class="b-card" id="c-event" hidden><h2>News</h2><div id="c-event-body"></div></section>
         <section class="b-card" id="c-instr"><h2>Your instructions</h2>
@@ -89,36 +88,27 @@
         <section class="b-card" id="c-bloc" hidden><h2>Bloc whip</h2>
           <div class="s-row"><label class="visually-hidden" for="s-bloc-pick">Bloc</label><select id="s-bloc-pick"></select>
             <button type="button" class="s-btn small" id="s-bloc-whip">Whip the bloc</button></div></section>
+        <section class="b-card"><h2>The powers in the room</h2>
+          <p class="s-small">You and each rival: Influence to spend, how much of the draft is theirs, the regional groups and sponsors behind them, and how busy they were last turn.</p>
+          <ul class="s-powers" id="c-powers"></ul></section>
       </div>
       <div class="s-pane" role="tabpanel" id="p-summit" aria-labelledby="t-summit" hidden>
         <section class="b-card s-summit-card" id="c-summit" aria-live="polite"></section>
         <section class="b-card" id="c-results" hidden><h2>Votes so far</h2><ol class="s-results" id="c-result-list"></ol></section>
       </div>
-      <div class="s-pane" role="tabpanel" id="p-blocs" aria-labelledby="t-blocs" hidden>
-        <section class="b-card" id="c-meeting"><h2>Bloc meetings</h2><div id="c-meeting-body"></div></section>
-        <section class="b-card"><h2>The meeting rooms</h2>
-          <p class="s-small">Every regional group, its members and where they lean. More than half of a group's voters endorse a draft.</p>
-          <ul class="s-rooms" id="c-rooms"></ul></section>
-      </div>
-      <div class="s-pane" role="tabpanel" id="p-sponsors" aria-labelledby="t-sponsors" hidden>
-        <section class="b-card"><h2>The sign-up sheets</h2>
+      <div class="s-pane" role="tabpanel" id="p-coalition" aria-labelledby="t-coalition" hidden>
+        <section class="b-card" id="c-signup"><h2>The sign-up sheets</h2>
           <p class="s-small">The clerk's sheets: a draft is tabled when it has its sponsors and enough signatories. The first tabled, as L.1, is voted on first.</p>
           <ul class="s-sheets" id="c-sheets"></ul></section>
-      </div>
-      <div class="s-pane" role="tabpanel" id="p-powers" aria-labelledby="t-powers" hidden>
-        <section class="b-card"><h2>The powers in the room</h2>
-          <p class="s-small">You and each rival: Influence to spend, how much of the draft is theirs, the regional groups and sponsors behind them, and how busy they were last turn.</p>
-          <ul class="s-powers" id="c-powers"></ul></section>
+        <section class="b-card" id="c-meeting"><h2>Bloc meetings</h2><div id="c-meeting-body"></div></section>
+        <section class="b-card" id="c-roomcard"><h2>The meeting rooms</h2>
+          <p class="s-small">Every regional group, its members and where they lean. More than half of a group's voters endorse a draft.</p>
+          <ul class="s-rooms" id="c-rooms"></ul></section>
       </div>
       <div class="s-pane" role="tabpanel" id="p-whip" aria-labelledby="t-whip" hidden>
         <section class="b-card"><h2>Your whip sheet</h2>
           <p class="s-small">Mark how you think each delegation will vote on each clause (C1, C2…) and on the whole text: click to cycle Y (yes), A (abstain), N (no). It's free. At the summit every mark is checked against the real vote: the Kingmaker's path.</p>
           <div class="s-sheet-wrap" id="c-sheet"></div></section>
-      </div>
-      <div class="s-pane" role="tabpanel" id="p-skills" aria-labelledby="t-skills" hidden>
-        <section class="b-card"><h2 id="s-skills-h">What your staff know</h2>
-          <p class="s-small" id="s-skills-note"></p>
-          <div class="s-tree" id="s-tree"></div></section>
       </div>
       <div class="s-pane" role="tabpanel" id="p-staff" aria-labelledby="t-staff" hidden>
         <section class="b-card" id="c-staff"><h2>Your staff</h2>
@@ -126,6 +116,9 @@
           <ul class="s-staff" id="c-staff-list"></ul></section>
         <section class="b-card" id="c-hire"><h2>Take on an adviser</h2>
           <p class="s-small" id="c-hire-note"></p><div class="s-row" id="c-hire-row"></div></section>
+        <section class="b-card"><h2 id="s-skills-h">What your staff know</h2>
+          <p class="s-small" id="s-skills-note"></p>
+          <div class="s-tree" id="s-tree"></div></section>
       </div>
       <div class="s-pane" role="tabpanel" id="p-record" aria-labelledby="t-record" hidden>
         <section class="b-card" id="c-rivals"><h2>Rivals</h2><ul class="s-log" id="c-rival-list"></ul></section>
@@ -148,7 +141,7 @@
   </div>
   <div class="s-overlay" id="s-visit" hidden role="dialog" aria-modal="true" aria-labelledby="s-visit-h">
     <div class="s-doc s-reeldoc"><div class="s-reel-face" id="s-visit-face" aria-hidden="true"></div>
-      <div><p class="s-eyebrow" id="s-visit-who">–</p><h2 id="s-visit-h">–</h2><p id="s-visit-p"></p><div class="s-visit-room" id="s-visit-room" hidden></div>
+      <div><p class="s-visit-step" id="s-visit-step"></p><p class="s-eyebrow" id="s-visit-who">–</p><h2 id="s-visit-h">–</h2><p id="s-visit-p"></p><div class="s-visit-room" id="s-visit-room" hidden></div>
         <div class="s-visit-opts" id="s-visit-opts"></div><p class="s-sub" id="s-visit-n"></p></div></div>
   </div>
   <div class="s-overlay" id="s-reel" hidden role="dialog" aria-modal="true" aria-labelledby="s-reel-h">

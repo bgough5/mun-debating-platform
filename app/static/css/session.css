@@ -1104,3 +1104,67 @@
 .s-stage .s-tabs .icon { width: 22px; height: 22px; }
 @media (max-height: 700px) { .s-stage .s-tabs button { padding: 3px 2px; } .s-stage .s-tabs .icon { width: 19px; height: 19px; } }
 .s-stage #p-brief[hidden] { display: none; }
+
+/* ---------- Delegates in respectful variety (phase 13, Ben): skin tone, hair, glasses, a tie or scarf, and the
+   country's flag as a lapel pin. No national costume. ---------- */
+.g-face.delegate .g-hair-line { display: none; }
+.g-face.delegate.dl-k0 .g-skin { fill: var(--skin-lt); } .g-face.delegate.dl-k1 .g-skin { fill: var(--skin); }
+.g-face.delegate.dl-k2 .g-skin { fill: var(--skin-md); } .g-face.delegate.dl-k3 .g-skin { fill: var(--skin-dk); }
+.g-face.delegate.dl-k4 .g-skin { fill: var(--skin-dp); }
+.g-face.delegate.dl-k3 .g-nose, .g-face.delegate.dl-k4 .g-nose { stroke: var(--walnut); }
+.g-face.delegate.dl-w0 .g-hair { fill: var(--hair-bk); } .g-face.delegate.dl-w1 .g-hair { fill: var(--hair-br); }
+.g-face.delegate.dl-w2 .g-hair { fill: var(--hair-dk); }
+.g-face.delegate .g-brow { stroke: var(--walnut-dk); }
+.g-face.delegate.dl-gl .g-glasses, .g-face.delegate.dl-gl .g-glasses-rim { display: inline; }
+.g-face.delegate.dl-t0 .g-tie { fill: var(--maroon); } .g-face.delegate.dl-t1 .g-tie { fill: var(--un-blue); }
+.g-face.delegate.dl-t2 .g-tie { fill: var(--green); } .g-face.delegate.dl-t3 .g-tie { display: none; }
+.g-scarf { fill: var(--brass); stroke: var(--brass-dk); stroke-width: 1.5; }
+.g-face.delegate .g-pin, .g-face.delegate .g-pin-line { display: none; }
+/* the flag pin beside the name */
+.s-pin { display: inline-block; width: 26px; height: 18px; vertical-align: -3px; margin-right: 6px; border: 1px solid var(--walnut); overflow: hidden; }
+.s-pin svg { width: 100%; height: 100%; display: block; }
+
+/* ---------- Each kind of conversation has its own look (phase 13, Ben) ---------- */
+#s-visit .s-doc { position: relative; }
+#s-visit .s-visit-reply { margin: 6px 0 0; font-style: italic; }
+#s-visit .s-visit-reply[hidden] { display: none; }
+#s-visit .s-visit-step { position: absolute; top: 10px; right: 14px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+/* a rival presses you: two portraits facing across a table, as in a diplomacy screen */
+#s-visit .s-doc.k-press { background: linear-gradient(180deg, var(--parchment), var(--parchment-dk)); border-top: 6px solid var(--stamp); }
+#s-visit .k-press .s-visit-pair { display: flex; align-items: center; justify-content: center; gap: 14px; }
+#s-visit .k-press .s-visit-pair .g-face { width: 92px; height: 108px; }
+#s-visit .k-press .s-visit-pair .s-vs { font: 700 18px var(--serif); color: var(--stamp); }
+#s-visit .k-press .s-visit-pair .g-face.you { transform: scaleX(-1); }
+/* the caucus: a room of faces */
+#s-visit .s-doc.k-caucus { border-top: 6px solid var(--green); }
+/* your capital: a telegram, typed */
+#s-visit .s-doc.k-capital { background: var(--parchment); border: 2px solid var(--walnut); }
+#s-visit .k-capital #s-visit-p { font-family: "Courier New", monospace; text-transform: uppercase; letter-spacing: .04em; font-size: 15px;
+  border-top: 1px dashed var(--walnut); border-bottom: 1px dashed var(--walnut); padding: 8px 0; }
+/* the press: flashes and a microphone */
+#s-visit .s-doc.k-media { background: linear-gradient(180deg, var(--white), var(--parchment)); border-top: 6px solid var(--walnut-dk); overflow: hidden; }
+#s-visit .k-media::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: var(--white); opacity: 0; animation: s-flash 2.4s ease-out .2s 2; }
+@keyframes s-flash { 0%, 100% { opacity: 0; } 4% { opacity: .75; } 12% { opacity: 0; } 40% { opacity: 0; } 44% { opacity: .5; } 52% { opacity: 0; } }
+#s-visit .k-media #s-visit-p { font-family: var(--book); font-size: 19px; font-style: italic; }
+@media (prefers-reduced-motion: reduce) { #s-visit .k-media::after { animation: none; } }
+/* making the case: your arguments as cards to play */
+#s-visit .s-doc.k-persuade { border-top: 6px solid var(--brass); }
+#s-visit .k-persuade .s-visit-opts { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+#s-visit .k-persuade .s-visit-opts .s-btn { min-height: 86px; justify-content: center; text-align: center; font-family: var(--serif); font-weight: 700;
+  background: var(--white); color: var(--ink); border: 1px solid var(--brass-dk); box-shadow: 0 3px 0 var(--brass-dk); }
+#s-visit .k-persuade .s-visit-opts .s-btn:hover, #s-visit .k-persuade .s-visit-opts .s-btn:focus-visible { background: var(--lit); color: var(--ink); transform: translateY(-3px); }
+/* a quiet question, a friend, a promise, something to sell: a note passed across */
+#s-visit .s-doc.k-ask, #s-visit .s-doc.k-info { border-left: 6px solid var(--un-blue); }
+#s-visit .s-doc.k-ally, #s-visit .s-doc.k-collect { border-left: 6px solid var(--green); }
+
+/* ---------- Phase 14 (simplify before the playtest): meter tips, the Agreements list ---------- */
+.s-stage .s-meter { position: relative; cursor: help; }
+.s-stage .s-meter .s-tip { display: none; position: absolute; top: calc(100% + 8px); right: 0; z-index: 30; width: 300px; padding: 10px 12px;
+  background: var(--parchment); color: var(--ink); border: 1px solid var(--walnut); box-shadow: 0 8px 20px rgb(0 0 0 / 40%);
+  font: 400 15px/1.4 var(--book); text-transform: none; letter-spacing: 0; text-align: left; white-space: normal; }
+.s-stage .s-meter:hover .s-tip, .s-stage .s-meter:focus-visible .s-tip, .s-stage .s-meter:focus-within .s-tip { display: block; }
+.s-stage .s-meter:focus-visible { outline: 2px solid var(--lit); outline-offset: 2px; }
+.s-stage .s-meter.low b { color: var(--stamp); }
+.b-card .s-ledger { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 4px; font-size: 15px; }
+.b-card .s-ledger li.kept b { color: var(--green); } .b-card .s-ledger li.broken b { color: var(--stamp); }
+#s-visit .s-doc.k-offer { border-left: 6px solid var(--brass); }

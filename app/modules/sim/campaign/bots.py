@@ -78,8 +78,10 @@ class Bot:
             q = next(q for q in K.QUESTIONS if q["id"] == g["question"])
             right = self.rng.random() < (self.skill if self.style != "random" else 0.34)
             g, _ = self.act(g, {"do": "answer", "option": q["answer"] if right else (q["answer"] + 1) % len(q["options"])})
-        for o in list(g.get("offers", [])):
-            g, _ = self.act(g, {"do": "offer", "id": o["id"], "answer": "accept" if self.take(g, o) else "refuse"})
+        for v in [v for v in g.get("visits", []) if v["kind"] == "offer"]:
+            o = next((x for x in g.get("offers", []) if x["id"] == v["offer"]), None)
+            if o:
+                g, _ = self.act(g, {"do": "visit", "id": v["id"], "choice": "accept" if self.take(g, o) else "refuse"})
         if self.style in ("broker", "analyst") and g["influence"] >= 6 and len(g.get("secured", [])) < 2:
             friends = sorted((E.lean(self.scn, g, "you", i), i) for i in self.free(g)
                              if g["trust"].get(i, 0) >= 1 and i not in g.get("secured", []))
@@ -97,8 +99,6 @@ class Bot:
         g = self.stage_choice(g)
         if g["phase"] != "chapter":
             return g
-        if self.style != "random" and g["influence"] >= 10 and g.get("overtime", 0) == 0:
-            g, _ = self.act(g, {"do": "overtime"})            # money into time, when there is money to spare
         m = g.get("meeting")
         if m and g["ap"] >= 2 and g["influence"] >= 2 and g["endorse"].get(m) != "you" and                 (self.style in ("broker", "analyst") or self.rng.random() < 0.5):
             g, _ = self.act(g, {"do": "attend"})

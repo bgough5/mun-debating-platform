@@ -143,14 +143,19 @@ def test_the_view_shows_the_crisis_offers_and_rival_personalities(app):
         assert v["crisis"]["chapter"] == 1 and v["crisis"]["title"] and v["crisis"]["teaches"]
         assert all(r["style_name"] and r["style_what"] for r in v["rivals"]) and len({r["style"] for r in v["rivals"]}) == 3
         assert v["turns"] in (5, 6)                                                   # stage 1 lasts 6 turns; a deadline crisis takes one off
-        if v["offers"]:
+        for _ in range(4):                                                            # none on the first turn
+            j = api(c, {"do": "move", "state": j["state"], "sig": j["sig"], "action": {"do": "end_turn"}}).json()
+            v = j["view"]
+            if any(x["kind"] == "offer" for x in v["visits"]):
+                break
+        if any(x["kind"] == "offer" for x in v["visits"]):
             break
-    o = v["offers"][0]
-    assert o["name"] and o["text"].startswith(o["name"]) and o["terms"]
-    m = api(c, {"do": "move", "state": j["state"], "sig": j["sig"], "action": {"do": "offer", "id": o["id"], "answer": "refuse"}})
-    assert m.status_code == 200 and all(x["id"] != o["id"] for x in m.json()["view"]["offers"])
-    again = api(c, {"do": "move", "state": m.json()["state"], "sig": m.json()["sig"], "action": {"do": "offer", "id": o["id"], "answer": "accept"}})
-    assert again.status_code == 400 and "lapsed" in again.json()["error"]
+    o = next(x for x in v["visits"] if x["kind"] == "offer")                       # an offer comes in person (phase 14)
+    assert o["name"] and o["text"].startswith(o["name"]) and len(v["visits"]) <= 2
+    m = api(c, {"do": "move", "state": j["state"], "sig": j["sig"], "action": {"do": "visit", "id": o["id"], "choice": "refuse"}})
+    assert m.status_code == 200 and all(x["id"] != o["id"] for x in m.json()["view"]["visits"])
+    again = api(c, {"do": "move", "state": m.json()["state"], "sig": m.json()["sig"], "action": {"do": "visit", "id": o["id"], "choice": "accept"}})
+    assert again.status_code == 400 and "over" in again.json()["error"]
 
 
 
@@ -189,7 +194,7 @@ def test_the_view_shows_dossiers_the_deal_table_and_the_capital(app):
     c = guest(app)
     j = api(c, {"do": "new", "pack": "comet_halcyon", "iso3": "NZL", "length": "quick", "difficulty": "easy", "path": "mandate"}).json()
     v = j["view"]
-    assert v["capital"] == {"value": 6, "max": 10} and v["budget"]["total"] >= 1 and v["deal_ready"]
+    assert v["respect"] == 4 and "capital" not in v and v["budget"]["total"] >= 1 and v["deal_ready"]
     you = v["tokens"]["NZL"]["dossier"]
     assert you["known"] and "World Bank" in you["source"] and any(r["label"] == "Economy (GDP)" for r in you["rows"])
     free = [i for i, t in v["tokens"].items() if t.get("deal")]

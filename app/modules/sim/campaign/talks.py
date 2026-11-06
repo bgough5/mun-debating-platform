@@ -386,6 +386,9 @@ def ledger(scn, g, iso: str | None = None) -> list[dict]:
     for rv in g["rivals"]:
         if rv.get("truce"):
             add(rv["iso3"], "peace: a merged text it co-sponsors", "truce", None if not votes else votes.get(rv["iso3"]) != "no")
+    for p in g.get("pacts", []):
+        add(p["iso3"], "you won't vote against its clause" + ("; it leaves yours alone" if any(
+            r["iso3"] == p["iso3"] and r.get("spare") for r in g["rivals"]) else ""), "pact", p.get("kept"))
     return out
 
 

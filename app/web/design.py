@@ -53,6 +53,8 @@ TOKENS = {
     "hl-repeat": "#FCE8A6", "hl-filler": "#F9D3D0", "hl-long": "#DCE8FA", "hl-tech": "#CDEBD5",
     # The Chief of Protocol, The Session's guide (D-101): a painted portrait. Fills only; no text sits on these.
     "skin": "#E2B48C", "skin-dk": "#B9825A", "hair": "#D3D6DB", "hair-dk": "#8E939B", "navy": "#1B2A45", "navy-lt": "#2E4268", "shirt": "#C9DDF2",
+    # Delegates in respectful variety (phase 13): skin tones and hair colours, never national costume.
+    "skin-lt": "#F3D2B3", "skin-md": "#C68E62", "skin-dp": "#7B4B2C", "hair-bk": "#231A15", "hair-br": "#5A3A22",
 }
 
 TEXT, LARGE, UI = 4.5, 3.0, 3.0

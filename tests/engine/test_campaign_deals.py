@@ -85,23 +85,23 @@ def test_the_capital_objects_to_a_promise_on_your_red_line(scn):
             break
     else:
         pytest.skip("no draft clause with the red line")
-    before = g["capital"]
+    before = g["respect"]
     g2, _ = E.apply(scn, g, {"do": "promise", "iso3": iso, "clause": c["id"]})
-    assert g2["capital"] == before - 2
+    assert g2["respect"] == before - 2
     tele = [x for x in g2["log"] if x["kind"] == "telegram"]
     assert tele and tele[-1]["mood"] in ("furious", "grumble") and "red line" in tele[-1]["text"]
 
 
 def test_a_recall_costs_a_turn_or_ends_the_session_on_hard(scn):
     g, _ = _ready(scn, difficulty="standard")
-    g["capital"] = 1
+    g["respect"] = 1
     E._capital(scn, g, -2, "Enough.")
-    assert g["capital"] == 3 and g["recall"] == 1 and g["phase"] == "chapter"
+    assert g["respect"] == 2 and g["recall"] == 1 and g["phase"] == "chapter"
     g, _ = E.apply(scn, g, {"do": "end_turn"})
     if g["phase"] == "chapter":
         assert g["ap"] == 0                                              # a turn in the capital
     h, _ = _ready(scn, difficulty="hard")
-    h["capital"] = 1
+    h["respect"] = 1
     E._capital(scn, h, -2, "Enough.")
     assert h["phase"] == "done" and h["result"]["recalled"] and h["result"]["grade"] == 0
     assert "recalled" in E.half_loaf(scn, h)["verdict"]
@@ -111,10 +111,10 @@ def test_a_recall_costs_a_turn_or_ends_the_session_on_hard(scn):
 
 def test_the_capital_judges_each_chapter(scn):
     g, _ = _ready(scn)
-    c0 = g["capital"]
+    c0 = g["respect"]
     E._capital_chapter(scn, g, True)
-    assert g["capital"] >= c0 - 1
+    assert g["respect"] >= c0 - 1
     g2, _ = _ready(scn)
     g2["draft"] = [{"id": "x", "text": "t", "tags": [g2["mandate"]["red"]], "author": "draft", "amended_by": []}]
     E._capital_chapter(scn, g2, False)
-    assert g2["capital"] == c0 - 2                                       # goal missed, and the red line is in the draft
+    assert g2["respect"] == c0 - 2                                       # goal missed, and the red line is in the draft
