@@ -1289,9 +1289,9 @@
 .s-stage .s-talk-btn { margin-top: 6px; }
 #s-signed .s-doc { position: relative; overflow: hidden; border-left: 6px solid var(--enamel-yes); }
 .s-signed-stamp { position: absolute; right: 24px; top: 18px; padding: 4px 14px; border: 3px double var(--enamel-yes-dk); color: var(--enamel-yes-dk);
-  font: 700 22px var(--serif); letter-spacing: .18em; text-transform: uppercase; transform: rotate(-9deg); animation: s-stamp-in .45s cubic-bezier(.5, 0, .6, 1.4) .25s both; }
-@keyframes s-stamp-in { from { opacity: 0; transform: rotate(-9deg) scale(2.2); } to { opacity: .9; transform: rotate(-9deg) scale(1); } }
-@media (prefers-reduced-motion: reduce) { .s-signed-stamp { animation: none; opacity: .9; } }
+  font: 700 22px var(--serif); letter-spacing: .18em; text-transform: uppercase; transform: rotate(-9deg); animation: s-stamp-in .45s cubic-bezier(.5, 0, .6, 1.4) .1s both; }
+@keyframes s-stamp-in { from { transform: rotate(-9deg) scale(2.2); } to { transform: rotate(-9deg) scale(1); } }   /* size only: full strength throughout */
+@media (prefers-reduced-motion: reduce) { .s-signed-stamp { animation: none; } }
 #s-visit .s-argcard em { font-size: 12px; font-style: italic; color: var(--gilt-dk); }
 #s-visit .s-argcard.used { opacity: .85; }
 /* hover cards on the map's tokens */
