@@ -268,8 +268,8 @@ def view(scn: Scenario, g: dict) -> dict:
         "deal_ready": g.get("deal_tick") != g.get("tick"), "deal_items": {"give": K.DEAL_GIVE, "get": K.DEAL_GET},
         "talks": T.talks_view(scn, g),
         "visits": [{**x, "name": {"minister": "Your Foreign Minister", "press": "A journalist"}.get(x.get("who"), scn.member(x["iso3"]).name),
-                    "face": sum(map(ord, x["iso3"] + x["kind"])) % 4, "feeling": None if x.get("who") else VI.feeling(g, x["iso3"]),
-                    "room": [{"iso3": i, "name": scn.member(i).name, "feeling": VI.feeling(g, i), "face": sum(map(ord, i)) % 4} for i in x.get("members", [])]}
+                    "face": VI.likeness(x["iso3"]), "step": x.get("step", 1), "feeling": None if x.get("who") else VI.feeling(g, x["iso3"]),
+                    "room": [{"iso3": i, "name": scn.member(i).name, "feeling": VI.feeling(g, i), "face": VI.likeness(i)} for i in x.get("members", [])]}
                    for x in g.get("visits", [])] if chapters else [],
         "reputation": VI.reputation(g),
         "sheet": {**g.get("sheet", {}), "final": g["whip"]}, "powers": _powers(scn, g),

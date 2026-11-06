@@ -93,7 +93,7 @@ def test_rework_after_the_stage_review(app, coord):
     """Fixes from Ben's stage-by-stage review (D-092): names instead of 'computed', '(demo)' as a tag, a caucus topic
     that doesn't outlive the caucus, vetoes marked on the result, and the student and teacher screens putting the vote
     first."""
-    sid, ids, tok = evatt(app, coord)
+    sid, ids, tok = evatt(app, coord, n=15)                                      # every seat held, so France's no counts
     c = Client(app, base_url="http://testserver").__enter__()
     st = c.get(f"/projector/{tok}/state.json").json()
     assert "(demo)" not in st["session"]["committee"].lower() and st["session"]["demo"] is True

@@ -59,6 +59,26 @@
       el("path", { d: "M94 74 Q116 56 146 64", class: "g-hair-line" }, bust);
       el("path", { d: "M90 86 Q112 70 140 76", class: "g-hair-line" }, bust);
       el("path", { d: "M150 68 Q162 78 164 96", class: "g-hair-line" }, bust);
+    } else if (/\bdelegate\b/.test(variant || "")) {
+      var hs = (/\bh(\d)\b/.exec(variant) || [0, "0"])[1];
+      if (hs === "1") {            // shoulder-length, worn down behind the face
+        bust.insertBefore(el("path", { d: "M72 140 Q66 84 120 78 Q174 84 168 140 L172 204 Q150 214 140 196 L100 196 Q90 214 68 204 Z", class: "g-hair" }), bust.firstChild.nextSibling);
+        el("path", { d: "M78 128 Q80 92 120 86 Q160 92 162 128 Q150 100 120 98 Q92 100 78 128 Z", class: "g-hair" }, bust);
+      } else if (hs === "2") {     // close-cropped
+        el("path", { d: "M80 120 Q80 88 120 86 Q160 88 160 120 Q150 100 120 98 Q90 100 80 120 Z", class: "g-hair" }, bust);
+      } else if (hs === "3") {     // curls
+        [[86, 108], [96, 94], [110, 86], [126, 85], [141, 90], [153, 101], [159, 116], [81, 122]].forEach(function (c) {
+          el("circle", { cx: c[0], cy: c[1], r: 13, class: "g-hair" }, bust); });
+      } else if (hs === "4") {     // tied up in a bun
+        el("circle", { cx: 120, cy: 76, r: 18, class: "g-hair" }, bust);
+        el("path", { d: "M78 128 Q74 88 120 84 Q166 88 162 128 Q154 100 120 96 Q86 100 78 128 Z", class: "g-hair" }, bust);
+      } else {
+        el("path", { d: "M76 132 Q72 84 120 80 Q170 82 164 132 Q160 104 140 98 Q120 92 98 100 Q80 108 76 132 Z", class: "g-hair" }, bust);
+      }
+      if (/\bt3\b/.test(variant)) {  // a scarf over the suit instead of a tie
+        el("path", { d: "M92 204 Q120 226 148 204 L156 214 Q120 244 84 214 Z", class: "g-scarf" }, bust);
+        el("path", { d: "M132 222 L142 284 L126 284 L122 228 Z", class: "g-scarf" }, bust);
+      }
     } else {
       el("path", { d: "M76 132 Q72 84 120 80 Q170 82 164 132 Q160 104 140 98 Q120 92 98 100 Q80 108 76 132 Z", class: "g-hair" }, bust);
       el("path", { d: "M78 128 Q78 116 84 108", class: "g-hair-line" }, bust);

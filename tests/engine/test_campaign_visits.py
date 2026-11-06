@@ -66,3 +66,53 @@ def test_the_whip_sheet_is_free_and_clause_histories_record_changes(scn):
     other = next(x for x in g["draft"] if x["id"] != c["id"] and taken not in x["tags"])
     with pytest.raises(E.GameError):
         E.apply(scn, g, {"do": "amend", "clause": other["id"], "add": taken})   # a commitment can't go in twice
+
+
+def test_answers_depend_on_what_you_know(scn):
+    """Ben: "what if the delegate doesn't know? What does tell the truth mean?" You can only tell what you know."""
+    g = E.new_game(scn, scn.isos[0], seed=5)
+    iso = next(i for i in scn.isos if i not in E._others(g) and i != g["iso3"])
+    g["read"], g["whip"] = [], {}
+    for adv in g.get("staff", []):
+        adv["post"] = None
+    unknown = V._make(scn, g, "ask", iso, V._rng(g, "k"))
+    assert V.knows(g, unknown["about"]) is None
+    assert {o["code"] for o in unknown["options"]} == {"guess", "dunno", "lie"}      # no "truth" when you don't know it
+    g["read"] = list(scn.isos)
+    known = V._make(scn, g, "ask", iso, V._rng(g, "k"))
+    assert V.knows(g, known["about"]) == "its file"
+    assert {o["code"] for o in known["options"]} == {"truth", "lie", "decline"}
+    assert any("Tell them what you know" in o["label"] for o in known["options"])
+
+
+def test_some_conversations_go_on_for_more_than_one_exchange(scn):
+    g = E.new_game(scn, scn.isos[0], seed=6)
+    g["visits"] = [{"id": "vx-media", "kind": "media", "iso3": g["iso3"], "who": "press", "clause": g["draft"][0]["id"], "text": "?",
+                    "options": [{"code": "evasive", "label": "No comment", "cost": 0}]}]
+    g, out = E.apply(scn, g, {"do": "visit", "id": "vx-media", "choice": "evasive"})
+    assert out["continues"] and g["visits"][0]["step"] == 2
+    r0 = g["respect"]
+    g, out = E.apply(scn, g, {"do": "visit", "id": g["visits"][0]["id"], "choice": "walk"})
+    assert not out.get("continues") and g["respect"] == max(0, r0 - 1)
+    rv = g["rivals"][0]
+    rv["style"] = "broker"
+    tag = next(t for t in scn.tags if t != g["mandate"]["must"])
+    g["visits"] = [{"id": "vx-press", "kind": "press", "iso3": rv["iso3"], "tag": tag, "text": "?",
+                    "options": [{"code": "counter", "label": "Counter", "cost": 0}]}]
+    g, out = E.apply(scn, g, {"do": "visit", "id": "vx-press", "choice": "counter"})
+    nxt = g["visits"][0]
+    assert {o["code"] for o in nxt["options"]} == {"agree_both", "refuse"}
+    g, _ = E.apply(scn, g, {"do": "visit", "id": nxt["id"], "choice": "agree_both"})
+    rv = next(r for r in g["rivals"] if r["iso3"] == rv["iso3"])
+    assert rv["spare"] == g["mandate"]["must"]
+
+
+def test_options_do_not_give_away_their_consequences(scn):
+    for seed in range(1, 15):
+        g = E.new_game(scn, scn.isos[seed % len(scn.isos)], seed=seed)
+        g, _ = E.apply(scn, g, {"do": "end_turn"})
+        g, _ = E.apply(scn, g, {"do": "end_turn"})
+        for v in g["visits"]:
+            for o in v["options"]:
+                assert "(" not in o["label"] or "Influence" in o["label"] or "its file" in o["label"] or "adviser" in o["label"] or "whip sheet" in o["label"], o["label"]
+        assert all(len(V.likeness(i).split()) in (4, 5) for i in scn.isos)

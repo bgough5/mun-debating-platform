@@ -1003,6 +1003,8 @@ def _rival_options(scn: Scenario, g: dict, rv: dict, react: bool = False, poach:
         if card:
             opts.append((2.2, ("propose", card["id"]), 1))
     for c in g["draft"]:
+        if rv.get("spare") in c["tags"]:
+            continue                                         # it agreed to leave this one alone
         if block in c["tags"]:
             if len(c["tags"]) > 1:
                 opts.append((2.0 * w.get("amend", 1), ("amend", c["id"]), 1))
