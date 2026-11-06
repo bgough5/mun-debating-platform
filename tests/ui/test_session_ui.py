@@ -140,18 +140,19 @@ def test_a_guest_makes_moves_on_the_board(browser, live):
     infl = int(page.inner_text("#m-influence b"))
     ap = page.locator("#s-ap i.on").count()            # 2 to 4: the opening news can change it
     ap_is = lambda k: page.wait_for_function(f"document.querySelectorAll('#s-ap i.on').length === {k}")
-    # A pitch from the map (phase 12): two arguments; the delegate answers, and an action point and some Influence are spent
+    # Talking from the map (6 Nov): open with an argument, they react, take it on; an action and some Influence are spent
     page.click('#b-map .b-token[data-iso="IND"]')
     assert page.get_attribute("#t-dele", "aria-selected") == "true"
     page.wait_for_selector("#c-country h3:has-text('India')")
-    assert page.is_disabled("#c-country .s-pitch button:has-text('Make the pitch')")   # two arguments first
-    page.locator("#c-country .s-arg").nth(0).click()
-    page.locator("#c-country .s-arg").nth(1).click()
-    assert page.locator("#c-country .s-arg[aria-pressed='true']").count() == 2
-    page.click("#c-country .s-pitch button:has-text('Make the pitch')")
+    page.click("#c-country .s-talk-btn")
+    page.locator("#s-visit .s-argcard").first.click()
+    page.wait_for_function("document.getElementById('s-visit-h').textContent === 'They react'")
+    ap_is(ap - 1)
+    page.locator("#s-visit-opts button").nth(1).click()                      # turn to a second argument
+    page.wait_for_function("document.getElementById('s-visit-h').textContent === 'Their answer'")
+    page.click("#s-visit-opts button:has-text('Done')")
     page.wait_for_selector("#c-heard:not([hidden]) blockquote")
     assert "Your pitch:" in page.inner_text("#c-heard")
-    ap_is(ap - 1)
     assert "India" in page.inner_text("#c-heard")
     assert int(page.inner_text("#m-influence b")) < infl
     page.click("#c-country button:has-text('Read the file')")
@@ -324,7 +325,7 @@ def test_the_chief_of_protocol_walks_a_new_player_through_the_session(browser, l
         if page.inner_text("#s-guide-next").lower() == "begin the session":
             break
         page.keyboard.press("ArrowRight")
-    for title in ("the president of the committee", "your secret instructions", "pitching a delegation", "the draft"):
+    for title in ("the president of the committee", "your secret instructions", "talking with a delegation", "the draft"):
         assert title in seen, (title, seen)
     page.check("#s-guide-off")                                               # don't show the tutorial again
     page.click("#s-guide-next")
@@ -477,5 +478,53 @@ def test_the_session_is_drawn_at_real_size_on_a_small_laptop(browser, live):
     page.wait_for_timeout(400)
     assert page.evaluate(inside, "#c-country .s-acts-grid button")              # the first action is in view
     assert not axe(page, "session_real_size")
+    assert not errors, errors
+    ctx.close()
+
+
+def test_talking_picking_and_signing(browser, live):
+    """Ben's playtest, 6 Nov: talking is a conversation; picking another delegation clears the last one's words; a
+    delegation signing your draft gets its own card."""
+    ctx = browser.new_context(viewport={"width": 1536, "height": 753})
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(live.url + "/session/new")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false, talk: false}))")
+    page.click('[data-pick="pack"][data-value="comet_halcyon"]')
+    page.click('[data-step="1"] [data-next]')
+    page.wait_for_selector("#s-seats-box .s-seat")
+    page.click('.s-seat[data-value="NZL"]')
+    page.click('[data-step="2"] [data-next]')
+    page.click('[data-pick="length"][data-value="quick"]')
+    for n in (3, 4, 5):
+        page.click(f'[data-step="{n}"] [data-next]')
+    page.click("#s-begin")
+    page.wait_for_selector("#s-chapter-card:not([hidden])")
+    _close_card(page)
+    first, second = "AUS", "JPN"
+    page.click(f'#b-map .b-token[data-iso="{first}"]', force=True)
+    page.wait_for_selector("#c-country .s-talk-btn")
+    page.click("#c-country .s-talk-btn")
+    page.wait_for_selector("#s-visit:not([hidden]) .s-argcard")
+    assert not axe(page, "session_talk_open")
+    page.locator("#s-visit .s-argcard").first.click()
+    page.wait_for_function("document.getElementById('s-visit-h').textContent === 'They react'")
+    page.locator("#s-visit-opts button").first.click()
+    page.wait_for_function("document.getElementById('s-visit-h').textContent === 'Their answer'")
+    assert not axe(page, "session_talk_answer")
+    page.click("#s-visit-opts button:has-text('Done')")
+    assert page.is_visible("#c-heard") and "Australia" in page.inner_text("#c-heard")
+    page.evaluate("window.socSessionPanel.close()")
+    page.click(f'#b-map .b-token[data-iso="{second}"]', force=True)
+    page.wait_for_function("document.querySelector('#c-country h3') && document.querySelector('#c-country h3').textContent.startsWith('Japan')")
+    assert page.is_hidden("#c-heard")                                        # the last delegation's words don't linger
+    sign = page.locator("#c-country button:has-text('Ask to sign')")
+    if sign.count() and sign.is_enabled():
+        sign.click()
+        page.wait_for_timeout(600)
+        if page.is_visible("#s-signed"):
+            assert "signatory" in page.inner_text("#s-signed") and not axe(page, "session_signed")
+            page.click("#s-signed-row button")
     assert not errors, errors
     ctx.close()

@@ -199,6 +199,7 @@ def view(scn: Scenario, g: dict) -> dict:
              "deal_vote": (g.get("deal_votes") or {}).get(iso)}
         t["dossier"] = X.profile(iso)
         t["relation"] = VI.relation(g, iso)
+        t["talked"] = sorted({x for h in g.get("talked", {}).get(iso, []) for x in h["args"]})
         t["commitments"] = [c["what"] for c in T.ledger(scn, g, iso)]
         if iso in g["read"]:
             t["listens_to"] = T.listens_to(scn, g, iso)
@@ -262,6 +263,7 @@ def view(scn: Scenario, g: dict) -> dict:
         "staff_kinds": [{"code": k, **v} for k, v in K.STAFF_KINDS.items()],
         "reserve": g.get("reserve", 0), "secured": len(g.get("secured", [])),
         "agreements": T.ledger(scn, g) if chapters else [],
+        "conv": T.conv_view(scn, g) if chapters else None,
         "budget": {"total": X.budget(g["iso3"]), "used": g.get("pledged", 0)},
         "deal_ready": g.get("deal_tick") != g.get("tick"), "deal_items": {"give": K.DEAL_GIVE, "get": K.DEAL_GET},
         "talks": T.talks_view(scn, g),

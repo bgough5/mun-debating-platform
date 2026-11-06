@@ -614,7 +614,7 @@ def apply(scn: Scenario, game: dict, action: dict) -> tuple[dict, dict]:
         g.setdefault("touched", []).append(action["iso3"])
     if do not in ("end_turn", "advance") and _check_breakthrough(scn, g):
         out["breakthrough"] = True
-    if g["phase"] == "chapter" and do not in ("end_turn", "advance", "stay", "visit", "mark", "whip", "post", "answer"):
+    if g["phase"] == "chapter" and do not in ("end_turn", "advance", "stay", "visit", "mark", "whip", "post", "answer") and not g.get("conv"):
         vid = V.after_move(scn, g, action)
         if vid:
             out["visit"] = vid
@@ -844,7 +844,8 @@ def a_sign(scn, g, a):
     _spend(g, 1)
     g["sponsors" if role == "sponsor" else "signatories"].append(iso)
     _log(g, "you", f"{scn.member(iso).name} signed as a {role}.", "action", iso)
-    return {}
+    return {"signed": {"iso3": iso, "name": scn.member(iso).name, "role": role,
+                       "sponsors": len(g["sponsors"]), "signatories": len(g["signatories"])}}
 
 
 def a_answer(scn, g, a):
@@ -948,6 +949,8 @@ def a_abstain(scn, g, a):
 
 
 def a_end_turn(scn, g, a):
+    if g.get("conv"):
+        T.a_talk(scn, g, {"step": "follow", "choice": "close"})   # a conversation left open ends politely
     if g.get("question"):
         g["question"] = None          # an unanswered procedure moment simply passes
     _upkeep(scn, g)
@@ -2040,7 +2043,7 @@ def a_mark(scn, g, a):
         sheet.pop(iso, None)
     return {}
 
-CHAPTER = {"lobby": T.a_lobby, "read": a_read, "propose": a_propose, "amend": a_amend, "strike": a_strike, "promise": a_promise,
+CHAPTER = {"lobby": T.a_lobby, "talk": T.a_talk, "read": a_read, "propose": a_propose, "amend": a_amend, "strike": a_strike, "promise": a_promise,
            "side_event": a_side_event, "favour": a_favour, "whip": a_whip, "sign": a_sign, "answer": a_answer, "skill": a_skill,
            "divide": a_divide, "merge": a_merge, "bloc_whip": a_bloc_whip, "abstain": a_abstain, "offer": a_offer,
            "hire": a_hire, "post": a_post, "reserve": a_reserve, "secure": a_secure, "deal": T.a_deal, "compromise": T.a_compromise, "visit": V.a_visit, "mark": a_mark,

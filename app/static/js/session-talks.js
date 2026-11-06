@@ -10,30 +10,16 @@
 
     // ---------- pitches ----------
     var chosen = {};
-    function pitchBox(v, d, iso) {
+    function pitchBox(v, d, iso) {                                    // talking is a conversation now (dialogue module)
       var box = h("div", "s-pitch wide");
       var top = h("p", "s-pitch-h");
-      top.appendChild(h("b", "", "Pitch " + d.name)); top.appendChild(document.createTextNode(" · choose two arguments · " + d.lobby_cost + " Influence, 1 action"));
+      top.appendChild(h("b", "", "Talk with " + d.name)); top.appendChild(document.createTextNode(" · " + d.lobby_cost + " Influence, 1 action"));
       box.appendChild(top);
       if (d.listens_to && d.listens_to.length) box.appendChild(h("p", "s-small", "From its file: it listens to " + d.listens_to.join(" and ").toLowerCase() + "."));
-      var pick = chosen[iso] = (chosen[iso] || []).filter(function (k) { return v.args[k]; });
-      var row = h("div", "s-args");
-      Object.keys(v.args).forEach(function (k) {
-        var on = pick.indexOf(k) >= 0, known = d.listens_to && d.listens_to.indexOf(v.args[k].name) >= 0;
-        var b = h("button", "s-arg" + (on ? " on" : "") + (known ? " known" : "")); b.type = "button";
-        b.setAttribute("aria-pressed", String(on)); b.title = v.args[k].what;
-        b.appendChild(h("b", "", v.args[k].name)); b.appendChild(h("span", "", v.args[k].what));
-        b.addEventListener("click", function () {
-          var i = pick.indexOf(k);
-          if (i >= 0) pick.splice(i, 1); else { pick.push(k); if (pick.length > 2) pick.shift(); }
-          A.play("tick"); c.redraw();
-        });
-        row.appendChild(b);
-      });
-      box.appendChild(row);
-      var go = c.btn("Make the pitch", "s-btn small", function () { c.move({ do: "lobby", iso3: iso, args: pick.slice() }); chosen[iso] = []; },
-                     pick.length !== 2 || !v.ap || v.influence < d.lobby_cost);
-      box.appendChild(go);
+      var open = v.conv && v.conv.iso3 === iso;
+      box.appendChild(c.btn(open ? "Continue the conversation" : "Talk to " + d.name, "s-btn small s-talk-btn", function () { c.talk(iso); },
+                            !open && (!!v.conv || !v.ap || v.influence < d.lobby_cost)));
+      if (v.conv && !open) box.appendChild(h("p", "s-small", "You're in a conversation with " + v.conv.name + ": finish it first."));
       return box;
     }
     function pitchAnswer(out) {

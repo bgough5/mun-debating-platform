@@ -449,8 +449,10 @@
       }
       sel.value = picked || "";
     }
+    var heardIso = null;
     function pick(iso) {
       picked = iso;
+      if (heardIso !== iso) $("c-heard").hidden = true;             // their words belong to them, not the next delegation
       Object.keys(tokens).forEach(function (k) { tokens[k].classList.toggle("picked", k === iso); });
       if (V) country(V);
     }
@@ -636,10 +638,11 @@
       countryPicker(v); country(v); skills(v);
       // the delegate's reply, and anything else the move said
       if (out && out.heard) {
+        heardIso = action.iso3 || out.talked;
         $("c-heard").hidden = false;
         var q = $("c-heard-text"); q.textContent = "";
         q.appendChild(document.createTextNode("“" + out.heard + "”"));
-        q.appendChild(h("cite", "", "The delegate of " + (v.tokens[action.iso3] || {}).name + (out.red_line ? " (a red line: they barely moved)" : "")));
+        q.appendChild(h("cite", "", "The delegate of " + (v.tokens[heardIso] || {}).name + (out.red_line ? " (a red line: they barely moved)" : "")));
         var landed = TALK.pitchAnswer(out); if (landed) q.appendChild(h("span", "s-intel", "Your pitch: " + landed));
         if (out.leans) q.appendChild(h("span", "s-intel", "Leaning towards each rival: " + Object.keys(out.leans).map(function (k) { return k + " " + (out.leans[k] > 0.3 ? "warm" : out.leans[k] < -0.3 ? "cold" : "neutral"); }).join(", ") + "."));
         if (out.would_vote) q.appendChild(h("span", "s-intel", "On the whole text as it stands, it would vote " + out.would_vote + "."));
@@ -647,6 +650,8 @@
       }
       if (out && out.file) showFile(out.file);
       if (action && action.do === "visit") DLG.after(v, out);
+      if (action && action.do === "talk") DLG.talkStep(v, out, action);
+      if (out && out.signed) signedCard(v, out.signed);
       if (action && (action.do === "deal" || action.do === "compromise")) TALK.answer(v, out || {}, action);
       else if (TALK.isOpen()) TALK.render();
       else if (out && action && action.do === "offer") say(out.refused_by_room ? "The working group wouldn't make the change, so the deal fell through." : out.accepted ? "Deal done." : "You turned the offer down.");
@@ -1322,6 +1327,17 @@
       // a quieter first stage: Staff opens with Bloc meetings, and the walkthrough introduces it then
       $("t-staff").hidden = v.phase === "chapter" && v.length !== "quick" && v.chapter === 1;
     }
+    function signedCard(v, s) {                                      // a delegation puts its name to your draft
+      var row = $("s-signed-row"); row.textContent = "";
+      var face = $("s-signed-face"); face.textContent = "";
+      if (window.socSession.guide) face.appendChild(window.socSession.guide.portrait("delighted", "delegate " + DLG.likeness(s.iso3)));
+      var who = $("s-signed-who"); who.textContent = ""; who.appendChild(DLG.pin(s.iso3)); who.appendChild(document.createTextNode(s.name));
+      $("s-signed-h").textContent = s.role === "sponsor" ? "A new sponsor" : "A new signatory";
+      $("s-signed-p").textContent = s.name + " puts its name to your draft as a " + s.role + ". Your sheet now has " +
+        s.sponsors + " sponsor" + (s.sponsors === 1 ? "" : "s") + " and " + s.signatories + " signator" + (s.signatories === 1 ? "y" : "ies") + ".";
+      row.appendChild(btn("Back to work", "s-btn", function () { close("s-signed"); }));
+      open("s-signed"); restart(document.querySelector("#s-signed .s-doc"), "s-reel-in"); A.play("stamp");
+    }
     var btShown = {};
     function breakthroughCard(v, prev) {
       if (!v.stage || !v.stage.made || v.stage.stayed || btShown[v.chapter]) return;
@@ -1408,7 +1424,11 @@
                 setTab: setTab, closePanel: closePanel, pick: pick, envoy: envoy, stage: stage, TABS: TABS, ASK: ASK,
                 hideAdvice: hideAdvice, syncSettings: syncSettings, staffIcon: staffIcon, staffOf: staffOf,
                 view: function () { return V; }, redraw: function () { if (V) country(V); } };
+    ctx.talk = function (iso) { DLG.talk(iso); };
+    ctx.talks = function () { return TALK; };
+    ctx.picked = function () { return picked; };
     var WALK = M.walk(ctx), TALK = M.talks(ctx), REEL = M.reel(ctx), DLG = M.dialogue(ctx);
+    if (M.keys) M.keys(ctx);
     if (mode === "guest") {
       guest = slots()[slot];
       if (!guest || guest.pack !== document.body.getAttribute("data-pack")) {

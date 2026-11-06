@@ -101,10 +101,10 @@
           text: [list([["Influence ₳ ", "is your currency: pitches, deals and side events cost it."],
                        ["Standing ✦ ", "is how the room and your own government see you. It adds actions at 5 and 8. Your Foreign Minister's telegrams move it too; fall to zero and you're recalled."],
                        ["Actions ⚑ ", "are your moves this turn. Your delegation grows as the session goes on."]])] },
-        { at: "#c-country", tab: "dele", pick: sample, face: "thinking", title: "Pitching a delegation", art: artPitch,
+        { at: "#c-country", tab: "dele", pick: sample, face: "thinking", title: "Talking with a delegation", art: artPitch,
           demo: function () { if (sample) setTimeout(function () { c.envoy(v.you.iso3, sample, false); }, 500); },
-          text: ["Click a token to open its card. To win it over, pitch it: choose two arguments. Each delegation listens to some arguments more than others, from what matters to its country: its economy, its security, its neighbours, its values.",
-                 "A pitch that matches moves it far; one that doesn't barely moves it. Read its file, or post an adviser to it, to learn what will land."] },
+          text: ["Click a token to open its card, then Talk. Open with an argument: its economy, its security, its neighbours, its values, or the law. Watch how they take it.",
+                 "If it lands, press the point. If it doesn't, turn to another argument, or ask where they stand. Read its file first, or post an adviser to it, to learn what will land."] },
         { at: "#c-clauses", tab: "draft", face: "thinking", title: "The draft",
           text: ["The resolution as it stands. The dial on each clause is its chance of passing now. Propose clauses from cards, amend one commitment at a time, or strike a clause. The working group must agree to changes to anyone else's text.",
                  "Everything else opens from the bar on the right. When your actions are spent, end the turn."] }

@@ -97,6 +97,122 @@ def a_lobby(scn, g, a):
     return out
 
 
+# ---------------------------------------------------------------- talking: a pitch as a conversation (Ben, 6 Nov)
+# You open with one argument and they react; where you take it next decides how far it moves them. Bots still pitch
+# with `a_lobby`, and both share the same strengths (`receptive`) and the same step (`pitch_step`).
+
+REACT = {
+    "strong": ["That matters to us. Go on.", "You have our attention. That is exactly what our capital worries about.",
+               "Now that is a point we can take home."],
+    "some": ["Perhaps. It isn't the whole story for us.", "There is something in that. What else?",
+             "We hear you, though our capital weighs other things more."],
+    "weak": ["With respect, that isn't what moves our capital.", "Hm. That isn't really our concern.",
+             "I'm not sure that's the argument for us."],
+}
+PRESS_WORDS = {"press": "Press the point", "ask": "Ask where they stand", "close": "Thank them and leave it there"}
+
+
+def _word(x):
+    return "strong" if x >= 0.9 else "some" if x >= 0.45 else "weak"
+
+
+REPEAT = 0.7                                                  # each time an argument is used again with the same delegation
+
+
+def _used(g, iso, arg) -> int:
+    return sum(arg in x["args"] for x in g.get("talked", {}).get(iso, []))
+
+
+def _memory(scn, g, iso, arg) -> tuple[str, float]:
+    """What they remember of your last talk, and any goodwill it left."""
+    hist = g.get("talked", {}).get(iso, [])
+    if not hist:
+        return "", 0.0
+    last = hist[-1]
+    said = " and ".join(ARGS[a]["name"].lower() for a in last["args"])
+    if arg in [a for x in hist for a in x["args"]]:
+        return f"You've made the case on {ARGS[arg]['name'].lower()} to us before. ", 0.0
+    if last["q"] >= 0.9 and g.get("tick", 0) - last["tick"] <= 2:
+        return f"We haven't forgotten what you said about {said}. ", 0.1
+    return f"Last time you talked {said} with us. ", 0.0
+
+
+def conv_view(scn, g) -> dict | None:
+    """The conversation you have open (it lasts until you finish it or end the turn)."""
+    cv = g.get("conv")
+    if not cv:
+        return None
+    opts = [{"code": "press", "label": f"{PRESS_WORDS['press']}: {ARGS[cv['first']]['name'].lower()}"}]
+    if not cv.get("red"):
+        opts += [{"code": "switch:" + k, "label": f"Turn to {ARGS[k]['name'].lower()}" + (" (used before)" if _used(g, cv["iso3"], k) else "")}
+             for k in ARGS if k != cv["first"]]
+    opts += [{"code": "ask", "label": PRESS_WORDS["ask"]}, {"code": "close", "label": PRESS_WORDS["close"]}]
+    return {"iso3": cv["iso3"], "name": scn.member(cv["iso3"]).name, "first": cv["first"], "first_name": ARGS[cv["first"]]["name"],
+            "reply": cv["reply"], "options": opts}
+
+
+def a_talk(scn, g, a):
+    """step "open": spend the action and open with an argument; step "follow": where you take it, and the outcome."""
+    step = a.get("step", "open")
+    if step == "open":
+        iso, arg = a.get("iso3"), a.get("arg")
+        E._country(scn, g, iso)
+        if arg not in ARGS:
+            raise E.GameError("Choose what to open with.")
+        if g.get("conv"):
+            raise E.GameError("Finish the conversation you're in first.")
+        cost = E.lobby_cost(scn, g, iso)
+        E._spend(g, 1, cost)
+        r = receptive(scn, g, iso)
+        red = E.mu_of(scn, g, iso, [g["mandate"]["must"]]) <= E.R["redline"]
+        rng = random.Random(f"{g['seed']}:talk:{g['n']}:{iso}")
+        memory, goodwill = _memory(scn, g, iso, arg)
+        felt = r[arg] * REPEAT ** _used(g, iso, arg)
+        reply = ("Before you go on: the clause you want is a red line for us. We'll listen, but we won't move far." if red
+                 else memory + rng.choice(REACT[_word(r[arg]) if felt >= r[arg] * 0.99 else ("some" if felt >= SOME else "weak")]))
+        g["conv"] = {"iso3": iso, "first": arg, "reply": reply, "red": red, "cost": cost, "goodwill": goodwill}
+        return {"conv": conv_view(scn, g)}
+    cv = g.get("conv")
+    if not cv:
+        raise E.GameError("You aren't in a conversation.")
+    choice = a.get("choice") or "close"
+    iso, first = cv["iso3"], cv["first"]
+    r = {k: x * REPEAT ** _used(g, iso, k) for k, x in receptive(scn, g, iso).items()}   # what they've heard before counts less
+    if choice == "press":
+        q, how = (min(1.15, r[first] * 1.2), "pressed the point") if r[first] >= 0.9 else (r[first] * 0.6, "pressed a point that wasn't landing")
+        landed = {first: _word(r[first])}
+    elif choice.startswith("switch:") and choice[7:] in ARGS and choice[7:] != first and not cv.get("red"):
+        k = choice[7:]
+        q, how = (r[first] + r[k]) / 2, "turned to " + ARGS[k]["name"].lower()
+        landed = {first: _word(r[first]), k: _word(r[k])}
+    elif choice == "ask":
+        q, how, landed = r[first] * 0.6, "asked where they stand", {first: _word(r[first])}
+    elif choice == "close":
+        q, how, landed = r[first] * 0.75, "left it there", {first: _word(r[first])}
+    else:
+        raise E.GameError("Choose where to take the conversation.")
+    q = q + cv.get("goodwill", 0.0)
+    g["conv"] = None
+    g.setdefault("talked", {}).setdefault(iso, []).append({"args": list(landed), "q": round(q, 2), "tick": g.get("tick", 0)})
+    mu = E.mu_of(scn, g, iso, [g["mandate"]["must"]])
+    if cv.get("red"):
+        moved = E._sway(g, "you", iso, E.R["redline_step"])
+        heard = "We've said what we can. That clause is a red line for us."
+    else:
+        moved = E._sway(g, "you", iso, E.R["pitch_step"] * (0.3 + 0.7 * q))
+        heard = (("You've made a real case. " if q >= 0.9 else "You've given us something to think about. " if q >= 0.5 else
+                  "I don't think we're persuaded. ") + E.LINES[E.bucket(mu + g["sway"]["you"][iso])])
+    g["region_last"][scn.member(iso).region] = "you"
+    E._log(g, "you", f"You talked with {scn.member(iso).name}: you opened with {ARGS[first]['name'].lower()} and {how}.", "action", iso)
+    out = {"heard": heard, "moved": round(moved, 2), "cost": cv["cost"], "red_line": bool(cv.get("red")), "landed": landed,
+           "talked": iso, "how": how}
+    if choice == "ask" or (g["length"] != "quick" and g["chapter"] >= 2):
+        out["leans"] = {scn.member(rv["iso3"]).name: round(E.lean(scn, g, rv["iso3"], iso), 2) for rv in g["rivals"]}
+    if (choice == "ask" or (g["length"] != "quick" and g["chapter"] >= 3)) and E.final_clause(g)["tags"]:
+        out["would_vote"] = E.vote_of(scn, E.latent(scn, g, iso, E.final_clause(g), mood=False))
+    return out
+
+
 # ---------------------------------------------------------------- haggling (deals and compromises)
 
 def _courted(scn, g, iso) -> str | None:
