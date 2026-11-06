@@ -54,6 +54,8 @@ TOKENS = {
     # The Chief of Protocol, The Session's guide (D-101): a painted portrait. Fills only; no text sits on these.
     "skin": "#E2B48C", "skin-dk": "#B9825A", "hair": "#D3D6DB", "hair-dk": "#8E939B", "navy": "#1B2A45", "navy-lt": "#2E4268", "shirt": "#C9DDF2",
     # Delegates in respectful variety (phase 13): skin tones and hair colours, never national costume.
+    # The Session's grand look (phase 15, Ben's choice A): mahogany and brass, with a table and banner for each stage.
+    "mahogany": "#5A2414", "mahogany-dk": "#3A150B", "mahogany-xd": "#240B05", "lacquer": "#13233D", "lacquer-dk": "#0B1628", "lacquer-xd": "#070E1B", "gilt-hi": "#FFF2C4", "gilt": "#E2BF6A", "gilt-md": "#B48A35", "gilt-lt": "#F0D68E", "gilt-dk": "#6B4A14", "satin-sea": "#1D5466", "satin-sea-dk": "#0C2B37", "land-ivory": "#EFE5CB", "land-ivory-dk": "#CFC4A6", "engraving": "#3B2A18", "ivory": "#F7F0DC", "ivory-ink": "#23170C", "enamel-yes": "#6F9A6C", "enamel-yes-lt": "#9CC79A", "enamel-yes-dk": "#3F6A43", "enamel-no": "#C46D5A", "enamel-no-lt": "#D98A78", "enamel-no-dk": "#7A3326", "walnut-table": "#3A2A1C", "walnut-table-dk": "#241910", "walnut-table-xd": "#140D07", "lacquer-blue": "#123A5C", "lacquer-blue-dk": "#0A2741", "lacquer-blue-xd": "#061A2D", "sea-bloc": "#2A5E79", "rosewood": "#5B1520", "rosewood-dk": "#3B0C14", "rosewood-xd": "#22060B", "lacquer-red": "#4A0F1A", "lacquer-red-dk": "#330911", "lacquer-red-xd": "#1F050A", "sea-sponsor": "#2A4D5C", "ebony": "#2B2620", "ebony-dk": "#121010", "ebony-xd": "#050404", "lacquer-black": "#17140F", "lacquer-black-dk": "#0C0A07", "lacquer-black-xd": "#050403", "sea-summit": "#18283F", "sea-summit-dk": "#08111F",
     "skin-lt": "#F3D2B3", "skin-md": "#C68E62", "skin-dp": "#7B4B2C", "hair-bk": "#231A15", "hair-br": "#5A3A22",
 }
 
@@ -73,6 +75,11 @@ PAIRS = [
     ("ink", "warn-bg", TEXT, "warning message"), ("ink", "err-bg", TEXT, "error message"),
     ("ink", "info-bg", TEXT, "information message"), ("ink", "ok-bg", TEXT, "success message body"),
     ("maroon", "err-bg", TEXT, "error heading"),
+    ("ivory-ink", "ivory", TEXT, "The Session: cards and documents"), ("gilt-dk", "ivory", TEXT, "The Session: eyebrows on cards"), ("ivory-ink", "gilt-md", TEXT, "The Session: a token's name on metal"),
+    ("ivory-ink", "enamel-yes", TEXT, "The Session: a token leaning for"), ("ivory-ink", "enamel-no", TEXT, "The Session: a token leaning against"),
+    ("gilt-dk", "gilt", LARGE, "The Session: brass buttons"), ("gilt", "lacquer-dk", TEXT, "The Session: tabs and meter labels"),
+    ("gilt-lt", "lacquer", TEXT, "The Session: meter numbers"), ("gilt", "lacquer-blue-dk", TEXT, "The Session: tabs in Bloc meetings"),
+    ("gilt", "lacquer-red-dk", TEXT, "The Session: tabs in Sponsors"), ("gilt", "lacquer-black-dk", TEXT, "The Session: tabs at the Summit"),
     ("green-dk", "yes-bg", TEXT, "Yes / Support badge"), ("maroon", "no-bg", TEXT, "No / Oppose badge"),
     ("ink", "abs-bg", TEXT, "Abstain badge"), ("muted", "unk-bg", TEXT, "Unknown badge"),
     ("control", "cream", UI, "input borders on the page"), ("control", "card", UI, "input borders on cards"),
