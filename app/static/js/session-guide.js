@@ -60,7 +60,7 @@
       el("path", { d: "M90 86 Q112 70 140 76", class: "g-hair-line" }, bust);
       el("path", { d: "M150 68 Q162 78 164 96", class: "g-hair-line" }, bust);
     } else if (/\bdelegate\b/.test(variant || "")) {
-      var hs = (/\bh(\d)\b/.exec(variant) || [0, "0"])[1];
+      var hs = (/\bdl-h(\d)\b/.exec(variant) || [0, "0"])[1];
       if (hs === "1") {            // shoulder-length, worn down behind the face
         bust.insertBefore(el("path", { d: "M72 140 Q66 84 120 78 Q174 84 168 140 L172 204 Q150 214 140 196 L100 196 Q90 214 68 204 Z", class: "g-hair" }), bust.firstChild.nextSibling);
         el("path", { d: "M78 128 Q80 92 120 86 Q160 92 162 128 Q150 100 120 98 Q92 100 78 128 Z", class: "g-hair" }, bust);
@@ -75,7 +75,7 @@
       } else {
         el("path", { d: "M76 132 Q72 84 120 80 Q170 82 164 132 Q160 104 140 98 Q120 92 98 100 Q80 108 76 132 Z", class: "g-hair" }, bust);
       }
-      if (/\bt3\b/.test(variant)) {  // a scarf over the suit instead of a tie
+      if (/\bdl-t3\b/.test(variant)) {  // a scarf over the suit instead of a tie
         el("path", { d: "M92 204 Q120 226 148 204 L156 214 Q120 244 84 214 Z", class: "g-scarf" }, bust);
         el("path", { d: "M132 222 L142 284 L126 284 L122 228 Z", class: "g-scarf" }, bust);
       }

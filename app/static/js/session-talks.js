@@ -110,7 +110,7 @@
       var cap = Object.keys(T.give).reduce(function (s, k) { return s + ((give[k] || {}).capital || 0); }, 0), cb = $("s-deal-capital"); cb.textContent = "";
       if (Object.keys(T.give).length) {
         if (G) cb.appendChild(G.portrait(cap < -1 ? "concerned" : cap < 0 ? "eyebrow" : "calm", "minister"));
-        cb.appendChild(h("p", "", cap < -1 ? "Your capital would be furious (" + cap + " confidence)." : cap < 0 ? "Your capital would grumble (" + cap + " confidence)." : "Your capital would approve."));
+        cb.appendChild(h("p", "", cap < -1 ? "Your capital would be furious (" + cap + " Standing)." : cap < 0 ? "Your capital would grumble (" + cap + " Standing)." : "Your capital would approve."));
       }
     }
     function giveItems(v, d) {

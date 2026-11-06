@@ -1108,16 +1108,16 @@
 /* ---------- Delegates in respectful variety (phase 13, Ben): skin tone, hair, glasses, a tie or scarf, and the
    country's flag as a lapel pin. No national costume. ---------- */
 .g-face.delegate .g-hair-line { display: none; }
-.g-face.delegate.k0 .g-skin { fill: var(--skin-lt); } .g-face.delegate.k1 .g-skin { fill: var(--skin); }
-.g-face.delegate.k2 .g-skin { fill: var(--skin-md); } .g-face.delegate.k3 .g-skin { fill: var(--skin-dk); }
-.g-face.delegate.k4 .g-skin { fill: var(--skin-dp); }
-.g-face.delegate.k3 .g-nose, .g-face.delegate.k4 .g-nose { stroke: var(--walnut); }
-.g-face.delegate.w0 .g-hair { fill: var(--hair-bk); } .g-face.delegate.w1 .g-hair { fill: var(--hair-br); }
-.g-face.delegate.w2 .g-hair { fill: var(--hair-dk); }
+.g-face.delegate.dl-k0 .g-skin { fill: var(--skin-lt); } .g-face.delegate.dl-k1 .g-skin { fill: var(--skin); }
+.g-face.delegate.dl-k2 .g-skin { fill: var(--skin-md); } .g-face.delegate.dl-k3 .g-skin { fill: var(--skin-dk); }
+.g-face.delegate.dl-k4 .g-skin { fill: var(--skin-dp); }
+.g-face.delegate.dl-k3 .g-nose, .g-face.delegate.dl-k4 .g-nose { stroke: var(--walnut); }
+.g-face.delegate.dl-w0 .g-hair { fill: var(--hair-bk); } .g-face.delegate.dl-w1 .g-hair { fill: var(--hair-br); }
+.g-face.delegate.dl-w2 .g-hair { fill: var(--hair-dk); }
 .g-face.delegate .g-brow { stroke: var(--walnut-dk); }
-.g-face.delegate.gl .g-glasses, .g-face.delegate.gl .g-glasses-rim { display: inline; }
-.g-face.delegate.t0 .g-tie { fill: var(--maroon); } .g-face.delegate.t1 .g-tie { fill: var(--un-blue); }
-.g-face.delegate.t2 .g-tie { fill: var(--green); } .g-face.delegate.t3 .g-tie { display: none; }
+.g-face.delegate.dl-gl .g-glasses, .g-face.delegate.dl-gl .g-glasses-rim { display: inline; }
+.g-face.delegate.dl-t0 .g-tie { fill: var(--maroon); } .g-face.delegate.dl-t1 .g-tie { fill: var(--un-blue); }
+.g-face.delegate.dl-t2 .g-tie { fill: var(--green); } .g-face.delegate.dl-t3 .g-tie { display: none; }
 .g-scarf { fill: var(--brass); stroke: var(--brass-dk); stroke-width: 1.5; }
 .g-face.delegate .g-pin, .g-face.delegate .g-pin-line { display: none; }
 /* the flag pin beside the name */
@@ -1141,7 +1141,6 @@
 #s-visit .s-doc.k-capital { background: var(--parchment); border: 2px solid var(--walnut); }
 #s-visit .k-capital #s-visit-p { font-family: "Courier New", monospace; text-transform: uppercase; letter-spacing: .04em; font-size: 15px;
   border-top: 1px dashed var(--walnut); border-bottom: 1px dashed var(--walnut); padding: 8px 0; }
-#s-visit .k-capital #s-visit-h::before { content: "TELEGRAM \2022 "; color: var(--stamp); }
 /* the press: flashes and a microphone */
 #s-visit .s-doc.k-media { background: linear-gradient(180deg, var(--white), var(--parchment)); border-top: 6px solid var(--walnut-dk); overflow: hidden; }
 #s-visit .k-media::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: var(--white); opacity: 0; animation: s-flash 2.4s ease-out .2s 2; }
@@ -1157,3 +1156,15 @@
 /* a quiet question, a friend, a promise, something to sell: a note passed across */
 #s-visit .s-doc.k-ask, #s-visit .s-doc.k-info { border-left: 6px solid var(--un-blue); }
 #s-visit .s-doc.k-ally, #s-visit .s-doc.k-collect { border-left: 6px solid var(--green); }
+
+/* ---------- Phase 14 (simplify before the playtest): meter tips, the Agreements list ---------- */
+.s-stage .s-meter { position: relative; cursor: help; }
+.s-stage .s-meter .s-tip { display: none; position: absolute; top: calc(100% + 8px); right: 0; z-index: 30; width: 300px; padding: 10px 12px;
+  background: var(--parchment); color: var(--ink); border: 1px solid var(--walnut); box-shadow: 0 8px 20px rgb(0 0 0 / 40%);
+  font: 400 15px/1.4 var(--book); text-transform: none; letter-spacing: 0; text-align: left; white-space: normal; }
+.s-stage .s-meter:hover .s-tip, .s-stage .s-meter:focus-visible .s-tip, .s-stage .s-meter:focus-within .s-tip { display: block; }
+.s-stage .s-meter:focus-visible { outline: 2px solid var(--lit); outline-offset: 2px; }
+.s-stage .s-meter.low b { color: var(--stamp); }
+.b-card .s-ledger { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 4px; font-size: 15px; }
+.b-card .s-ledger li.kept b { color: var(--green); } .b-card .s-ledger li.broken b { color: var(--stamp); }
+#s-visit .s-doc.k-offer { border-left: 6px solid var(--brass); }

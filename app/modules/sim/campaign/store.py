@@ -198,8 +198,7 @@ def view(scn: Scenario, g: dict) -> dict:
              "est": None if rival or not final["tags"] else E._deal_vote(scn, g, iso, final, E.vote_of(scn, E.latent(scn, g, iso, final, mood=False))),
              "deal_vote": (g.get("deal_votes") or {}).get(iso)}
         t["dossier"] = X.profile(iso)
-        rel = g["trust"].get(iso, 0) + 2 * g["sway"]["you"].get(iso, 0.0)
-        t["relation"] = 2 if rel >= 3 else 1 if rel >= 1 else 0 if rel > -1 else -1 if rel > -3 else -2
+        t["relation"] = VI.relation(g, iso)
         t["commitments"] = [c["what"] for c in T.ledger(scn, g, iso)]
         if iso in g["read"]:
             t["listens_to"] = T.listens_to(scn, g, iso)
@@ -243,7 +242,6 @@ def view(scn: Scenario, g: dict) -> dict:
         "goal": E.stage_names(g).get(g["chapter"], {}).get("goal", ""),
         "stage": _stage(scn, g), "stage_track": [{"n": n, "name": v["name"]} for n, v in E.stage_names(g).items()],
         "ap_sources": E.ap_sources(scn, g) if g["phase"] == "chapter" else [],
-        "overtime_next": E.R["overtime"][g.get("overtime", 0)] if g["phase"] == "chapter" and g.get("overtime", 0) < len(E.R["overtime"]) else None,
         "meeting": {"code": g["meeting"], "name": REGIONS[g["meeting"]], "attended": g.get("attended") == g.get("tick")}
                    if g.get("meeting") and g["phase"] == "chapter" else None,
         "rooms": _rooms(scn, g) if g["phase"] == "chapter" and (g["length"] == "quick" or g["chapter"] >= 2) else [],
@@ -263,7 +261,7 @@ def view(scn: Scenario, g: dict) -> dict:
                    "report": a.get("report"), "starts": a.get("post") and g.get("tick", 0) <= a.get("since", 0)} for a in g.get("staff", [])],
         "staff_kinds": [{"code": k, **v} for k, v in K.STAFF_KINDS.items()],
         "reserve": g.get("reserve", 0), "secured": len(g.get("secured", [])),
-        "capital": {"value": g.get("capital", E.R["capital_start"]), "max": E.R["capital_max"]},
+        "agreements": T.ledger(scn, g) if chapters else [],
         "budget": {"total": X.budget(g["iso3"]), "used": g.get("pledged", 0)},
         "deal_ready": g.get("deal_tick") != g.get("tick"), "deal_items": {"give": K.DEAL_GIVE, "get": K.DEAL_GET},
         "talks": T.talks_view(scn, g),

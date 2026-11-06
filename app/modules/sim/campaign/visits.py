@@ -37,6 +37,19 @@ def knows(g, iso) -> str | None:
     return None
 
 
+MAX_VISITORS = 2                                              # Ben: delegates come to talk, not an inbox to clear
+TIER = {"capital": 0, "caucus": 0, "press": 1, "collect": 1}
+
+
+def _offer_visit(scn, g, o):
+    """An offer at your door, as a visit: the delegate puts the deal to you in person."""
+    terms = {"back": "You'd promise to vote yes on that clause at the summit.",
+             "drop": "You'd propose that amendment; the working group must agree.",
+             "favour": "You'd pay 2 Influence."}[o["kind"]]
+    return {"id": "v-" + o["id"], "kind": "offer", "iso3": o["iso3"], "offer": o["id"], "text": o["text"] + " " + terms,
+            "options": [{"code": "accept", "label": "Accept the deal", "cost": 0}, {"code": "refuse", "label": "Turn it down", "cost": 0}]}
+
+
 def _label(scn, tag):
     return E._lc(scn.tags[tag]).rstrip(".")
 
@@ -128,8 +141,14 @@ def turn_start(scn, g):
             E._sway(g, "you", lie["iso3"], -0.3)
             E._log(g, lie["iso3"], f"{scn.member(lie['iso3']).name} found out you misled them about {scn.member(lie['about']).name}. "
                                    "They trust you less, and the room has noticed.", "warning", lie["iso3"])
+    g["visitors"] = 0
+    if g["chapter"] == 1 and g["turn"] == 1:                 # the very first turn is yours alone
+        g["offers"] = []
+        return
     rng = _rng(g, "start")
     g["visits"].extend(_extra(scn, g, rng))
+    if g.get("offers"):                                       # a delegation with a deal comes to see you (one a turn)
+        g["visits"].append(_offer_visit(scn, g, rng.choice(g["offers"])))
     n = 1 + (g["respect"] >= 5) + (any(v >= 2 for v in g["trust"].values()))
     seen = set()
     for k in range(min(3, n)):
@@ -137,18 +156,25 @@ def turn_start(scn, g):
         if pick and (pick[1], pick[0]) not in seen:
             seen.add((pick[1], pick[0]))
             g["visits"].append(_make(scn, g, pick[0], pick[1], rng))
+    rng.shuffle(g["visits"])                                   # who gets through: your capital and the caucus first, then
+    g["visits"].sort(key=lambda x: TIER.get(x["kind"], 2))     # rivals pressing, offers and promises, then the rest
+    g["visits"] = g["visits"][:max(1 if rng.random() < 0.35 else MAX_VISITORS, sum(TIER.get(x["kind"]) == 0 for x in g["visits"]))]
+    shown = {x.get("offer") for x in g["visits"]}
+    g["offers"] = [o for o in g.get("offers", []) if o["id"] in shown]
+    g["visitors"] = len(g["visits"])
 
 
 def after_move(scn, g, action):
     """Now and then, a delegate approaches right after one of your moves (often the one you just worked on)."""
     rng = _rng(g, "move")
-    if rng.random() >= 0.22 or len(g.get("visits", [])) >= 4:
+    if rng.random() >= 0.22 or g.get("visitors", 0) >= MAX_VISITORS or (g["chapter"] == 1 and g["turn"] == 1):
         return None
     pick = _pick(scn, g, rng, near=action.get("iso3"))
     if not pick:
         return None
     v = _make(scn, g, pick[0], pick[1], rng)
     g.setdefault("visits", []).append(v)
+    g["visitors"] = g.get("visitors", 0) + 1
     return v["id"]
 
 
@@ -233,6 +259,8 @@ def a_visit(scn, g, a):
             if truth != "yes":
                 g.setdefault("lies", []).append({"iso3": iso, "about": about})
             E._log(g, "you", f"You told {name} that {scn.member(about).name} is backing your draft.", "action", iso)
+    elif v["kind"] == "offer":
+        out.update(E.a_offer(scn, g, {"id": v["offer"], "answer": "accept" if c == "accept" else "refuse"}))
     elif v["kind"] in ("caucus", "capital", "media", "collect", "persuade"):
         out = answer_more(scn, g, v, c, out)
     elif v["kind"] == "info" and c == "pay":
@@ -274,9 +302,14 @@ def bot_answer(g, rng, competent):
 FEEL = {2: "Close", 1: "Warm", 0: "Neutral", -1: "Cool", -2: "Hostile"}
 
 
-def feeling(g, iso) -> str:
+def relation(g, iso) -> int:
+    """One relationship with each delegation (trust and how far you've won it over, together): -2 to 2."""
     rel = g["trust"].get(iso, 0) + 2 * g["sway"]["you"].get(iso, 0.0)
-    return FEEL[2 if rel >= 3 else 1 if rel >= 1 else 0 if rel > -1 else -1 if rel > -3 else -2]
+    return 2 if rel >= 3 else 1 if rel >= 1 else 0 if rel > -1 else -1 if rel > -3 else -2
+
+
+def feeling(g, iso) -> str:
+    return FEEL[relation(g, iso)]
 
 
 def reputation(g) -> str | None:
@@ -441,5 +474,5 @@ def likeness(iso: str) -> str:
     """A delegate's look, the same every game: skin tone, hair, glasses, and a tie or scarf. Respectful variety only:
     no national costume. Built from a hash of the country code, so it never encodes a stereotype about a country."""
     n = sum((i + 7) * ord(ch) for i, ch in enumerate(iso))
-    parts = [f"k{n % 5}", f"h{(n // 5) % 5}", f"w{(n // 25) % 3}", "gl" if (n // 75) % 3 == 0 else "", f"t{(n // 7) % 4}"]
+    parts = [f"dl-k{n % 5}", f"dl-h{(n // 5) % 5}", f"dl-w{(n // 25) % 3}", "dl-gl" if (n // 75) % 3 == 0 else "", f"dl-t{(n // 7) % 4}"]
     return " ".join(x for x in parts if x)

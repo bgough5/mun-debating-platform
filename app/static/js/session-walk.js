@@ -87,7 +87,7 @@
         { face: "thinking", title: "How the hour will run", art: artTimeline,
           text: [quick ? "A Quick session is one working session, then the Summit, then your debrief." :
                    "Three stages: the Working group drafts, Bloc meetings win regional groups, Sponsors table the draft. Then the Summit, then your debrief.",
-                 "Each stage ends at a breakthrough or at its deadline. Make the breakthrough and you choose: move on now, and every turn left becomes Respect and Influence, or keep working. Miss it, and the committee moves on without you."] },
+                 "Each stage ends at a breakthrough or at its deadline. Make the breakthrough and you choose: move on now, and every turn left becomes Standing and Influence, or keep working. Miss it, and the committee moves on without you."] },
         { face: "delighted", title: "The President of the committee", art: artPresident,
           text: ["The President keeps the time. He opens each stage, announces breakthroughs and the news, and chairs the Summit. Your Foreign Minister sends telegrams from your capital; your advisers bring you intelligence.",
                  "At the start of each turn they report to you one at a time, so nothing gets lost."] },
@@ -99,8 +99,7 @@
           text: ["Every session is graded on all four paths, from no medal to gold. You're aiming for " + v.path.name + ", but a gold on any path is a gold."] },
         { at: ".s-meters", face: "calm", title: "Your standing",
           text: [list([["Influence ₳ ", "is your currency: pitches, deals and side events cost it."],
-                       ["Respect ✦ ", "is your standing in the room. It adds actions at 5 and 8."],
-                       ["Capital ✉ ", "is your government's confidence in you. Lose it all and you're recalled."],
+                       ["Standing ✦ ", "is how the room and your own government see you. It adds actions at 5 and 8. Your Foreign Minister's telegrams move it too; fall to zero and you're recalled."],
                        ["Actions ⚑ ", "are your moves this turn. Your delegation grows as the session goes on."]])] },
         { at: "#c-country", tab: "dele", pick: sample, face: "thinking", title: "Pitching a delegation", art: artPitch,
           demo: function () { if (sample) setTimeout(function () { c.envoy(v.you.iso3, sample, false); }, 500); },
@@ -112,7 +111,7 @@
       ];
       S.stage2 = [
         { at: ".s-tabs", face: "delighted", title: "Bloc meetings: new tools", art: artRooms,
-          text: ["The regional groups now meet, one each turn. Open Blocs to see every meeting room: who leans your way, who leans to a rival, and how many you need. Attend the meeting in session to work all its members at once."] },
+          text: ["The regional groups now meet, one each turn. Open Coalition to see every meeting room: who leans your way, who leans to a rival, and how many you need. Attend the meeting in session to work all its members at once."] },
         { at: "#c-staff", tab: "staff", face: "wry", title: "Your staff",
           text: ["Your advisers can now be posted. Each studies one delegation or rival and reports at the start of each turn. Juniors can be wrong and say how sure they are; reports that prove right earn promotions. Hire more for Influence, up to " + v.costs.staff_max + "."] },
         { face: "eyebrow", title: "The deal table: haggling", art: artHaggle,
@@ -124,7 +123,7 @@
       ];
       S.stage3 = [
         { at: ".s-tabs", face: "eyebrow", title: "Sponsors: the race to table", art: artRooms,
-          text: ["The sign-up sheets are out: yours beside each rival's. Ask delegations to sponsor or sign your draft. The first draft tabled, as L.1, is voted on first."] },
+          text: ["The sign-up sheets are out, in Coalition: yours beside each rival's. Ask delegations to sponsor or sign your draft. The first draft tabled, as L.1, is voted on first."] },
         { at: "#s-reserve", face: "wry", title: "Hold the line",
           text: [list([["Secure: ", "a delegation that trusts you signs a commitment; rivals pay double to move it."],
                        ["Hold in reserve: ", "spend an action now, and your team answers the first rival move against you before your next turn."]])] }

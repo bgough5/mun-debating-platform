@@ -91,15 +91,10 @@ def test_the_delegation_grows(scn):
     assert all(x["next"] is None or isinstance(x["next"], str) for x in E.ap_sources(scn, g))
 
 
-def test_overtime_costs_more_each_time(scn):
+def test_overtime_is_retired(scn):
+    """Phase 14 (Ben): actions come only from your delegation, so there is no buying extra ones with Influence."""
     g = _game(scn)
     g["influence"] = 20
-    ap = g["ap"]
-    for cost in E.R["overtime"]:
-        before = g["influence"]
-        g, _ = E.apply(scn, g, {"do": "overtime"})
-        assert g["influence"] == before - cost
-    assert g["ap"] == ap + len(E.R["overtime"])
     with pytest.raises(E.GameError):
         E.apply(scn, g, {"do": "overtime"})
 

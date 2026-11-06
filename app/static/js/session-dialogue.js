@@ -13,7 +13,7 @@
     // a delegate's look, the same every game (the same sum as visits.likeness in Python): respectful variety only
     function likeness(iso) {
       var n = 0; for (var i = 0; i < iso.length; i++) n += (i + 7) * iso.charCodeAt(i);
-      return ["k" + n % 5, "h" + Math.floor(n / 5) % 5, "w" + Math.floor(n / 25) % 3, Math.floor(n / 75) % 3 === 0 ? "gl" : "", "t" + Math.floor(n / 7) % 4]
+      return ["dl-k" + n % 5, "dl-h" + Math.floor(n / 5) % 5, "dl-w" + Math.floor(n / 25) % 3, Math.floor(n / 75) % 3 === 0 ? "dl-gl" : "", "dl-t" + Math.floor(n / 7) % 4]
         .filter(Boolean).join(" ");
     }
     // the country's flag, as a lapel pin, copied from its token on the map
@@ -29,7 +29,7 @@
     function portraitOf(x, mood) {
       if (!G) return null;
       if (x.who === "minister") return G.portrait(mood, "minister");
-      if (x.who === "press") return G.portrait(mood, "delegate k2 h2 w1 t1");
+      if (x.who === "press") return G.portrait(mood, "delegate dl-k2 dl-h2 dl-w1 dl-t1");
       return G.portrait(mood, "delegate " + x.face);
     }
     function offer(v) {
@@ -38,8 +38,8 @@
       next();
     }
     var HEAD = { press: "A word in your ear", ally: "A friend at your shoulder", ask: "A quiet question", info: "Something to sell",
-      caucus: "The caucus: your address", capital: "A call from your capital", media: "The press", collect: "A promise to keep", persuade: "Make the case" };
-    var MOOD = { press: "eyebrow", ally: "delighted", ask: "thinking", info: "wry", caucus: "calm", capital: "eyebrow", media: "wry", collect: "calm", persuade: "thinking" };
+      caucus: "The caucus: your address", capital: "A call from your capital", offer: "A deal at your door", media: "The press", collect: "A promise to keep", persuade: "Make the case" };
+    var MOOD = { offer: "wry", press: "eyebrow", ally: "delighted", ask: "thinking", info: "wry", caucus: "calm", capital: "eyebrow", media: "wry", collect: "calm", persuade: "thinking" };
     function next() {
       if (showing || waiting || !queue.length) return;
       if (document.querySelector(".s-overlay:not([hidden])") || !$("s-walk").hidden) { setTimeout(next, 700); return; }

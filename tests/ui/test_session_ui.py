@@ -186,9 +186,9 @@ def test_a_guest_makes_moves_on_the_board(browser, live):
     ap_is(ap - 2)
     page.click("#t-record")
     assert "You proposed a clause" in page.inner_text("#c-log")
-    page.click("#t-skills")
-    assert page.is_visible("#s-tree .s-branch") and page.locator("#s-tree .s-skill").count() == 8
-    assert not axe(page, "session_skills")
+    assert page.is_hidden("#t-staff")                                        # a quieter first stage: Staff opens in stage 2
+    assert page.locator("#p-staff #s-tree .s-skill").count() == 8            # the skills live with the staff (phase 14)
+    assert page.locator(".s-tabs [role=tab]:not([hidden])").count() == 5     # Brief, Draft, Delegates, Whip, Record
     assert not errors, errors
     ctx.close()
 
@@ -412,7 +412,11 @@ def test_the_deal_table_in_the_browser(browser, live):
     page.wait_for_selector("#s-chapter-card:not([hidden])")
     _close_card(page)
     _calm(page)
-    assert page.text_content("#m-capital b") == "6/10"
+    assert page.text_content("#m-respect b") == "4" and page.locator("#m-capital").count() == 0   # one Standing
+    page.click("#t-staff")                                                   # staff and their skills, together
+    assert page.is_visible("#s-tree .s-branch") and page.locator("#s-tree .s-skill").count() == 8
+    assert not axe(page, "session_staff")
+    page.evaluate("window.socSessionPanel.close()")
     page.click('#b-map .b-token[data-iso="IND"]', force=True)
     page.wait_for_selector("#c-country .s-dossier-box")
     assert "World Bank" in page.text_content("#c-country .s-dossier-box")
@@ -460,7 +464,7 @@ def test_the_session_is_drawn_at_real_size_on_a_small_laptop(browser, live):
     _close_card(page)
     assert page.evaluate("getComputedStyle(document.getElementById('b-stage')).transform") == "none"
     assert min(page.evaluate("[...document.querySelectorAll('#p-brief .b-card p')].map(e => parseFloat(getComputedStyle(e).fontSize))")) >= 16
-    for sel in ("#t-brief", "#t-draft", "#t-dele", "#t-staff", "#t-record", "#s-end-turn", "#s-reserve", "#m-capital"):
+    for sel in ("#t-brief", "#t-draft", "#t-dele", "#t-staff", "#t-record", "#s-end-turn", "#s-reserve", "#m-respect"):
         assert page.evaluate(inside, sel), sel
     page.click("#t-brief")
     assert "s-panel-open" in page.get_attribute("body", "class")

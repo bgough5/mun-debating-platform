@@ -32,7 +32,7 @@ VOTES = ("yes", "abstain", "no")
 
 R = {   # every number the balance harness tunes lives here
     "ap": 3, "ap_respect": 7, "start_influence": 6, "income": 1, "endorse_income": 1, "rival_income": 2,
-    "start_respect": 3, "respect_max": 10, "trust_max": 3,
+    "start_respect": 4, "respect_max": 10, "trust_max": 3,
     "lobby_step": 0.35, "lobby_step_read": 0.5, "redline_step": 0.1, "sway_cap": 1.2, "redline": -1.5,
     "promise_sway": 0.2, "side_event_cost": 3, "side_event_step": 0.15, "endorse_pull": 0.25, "lean_min": 0.3,
     "favour_trust": 2, "offer_cost": 2, "offer_step": 0.5, "propose_cost": 1, "amend_cost": 1, "strike_cost": 2,
@@ -605,7 +605,10 @@ def apply(scn: Scenario, game: dict, action: dict) -> tuple[dict, dict]:
     handler = (CHAPTER if g["phase"] == "chapter" else SUMMIT).get(do)
     if not handler:
         raise GameError("That isn't something you can do now.")
+    standing = g["respect"]
     out = handler(scn, g, action) or {}
+    if g["respect"] <= 0 < standing and g["phase"] != "done" and not g.get("recall"):
+        _recall(scn, g)
     g["stats"][do] = g["stats"].get(do, 0) + 1
     if isinstance(action.get("iso3"), str) and do not in ("post", "end_turn"):
         g.setdefault("touched", []).append(action["iso3"])
@@ -1353,7 +1356,7 @@ def s_decide(scn, g, a):
         if not s.get("attack"):
             raise GameError("No one has spoken against this clause, so there is nothing to reply to.")
         if g["respect"] < R["reply_respect"]:
-            raise GameError(f"The Chair grants a right of reply to delegates with Respect {R['reply_respect']} or more.")
+            raise GameError(f"The Chair grants a right of reply to delegates with Standing {R['reply_respect']} or more.")
         out["reply"] = True
         _log(g, "you", f"You exercised your right of reply: {scn.member(s['attack']['by']).name}'s attack fell flat.", "action")
     elif choice not in ("stand", "favour"):
@@ -1433,7 +1436,6 @@ def s_final(scn, g, a):
         if my_vote == "no":
             g["golden"] = "broke"
             g["respect"] = max(0, g["respect"] - R["golden_respect"])
-            g["capital"] = max(0, g.get("capital", R["capital_start"]) - 2)
             _log(g, "you", "You voted against a text that carried your capital's main aim. Half a loaf is better than none.", "warning")
         elif my_vote == "yes" and also not in tags:
             g["golden"] = "kept"
@@ -1808,15 +1810,17 @@ def _deal_vote(scn: Scenario, g: dict, iso: str, clause: dict, vote: str) -> str
 
 
 def _capital(scn: Scenario, g: dict, delta: int, why: str) -> None:
-    """Your capital's confidence in you: telegrams when it changes; recalled for consultations at zero."""
-    before = g.get("capital", R["capital_start"])
-    g["capital"] = max(0, min(R["capital_max"], before + delta))
+    """Your capital's view of you moves your Standing (one meter since 6 Nov 2026: the room's respect and your
+    government's confidence together). A telegram says why; at zero you are recalled (see `apply`)."""
+    before = g["respect"]
+    g["respect"] = max(0, min(R["respect_max"], before + delta))
+    g["capital"] = g["respect"]
     mood = "approve" if delta > 0 else "furious" if delta <= -2 else "grumble"
     _log(g, "capital", why, "telegram")
     g["log"][-1]["mood"] = mood
-    if g["capital"] <= 0 < before:
+    if g["respect"] <= 0 < before:
         _recall(scn, g)
-    elif g["capital"] <= 2 < before:
+    elif 0 < g["respect"] <= 1 < before:
         _log(g, "capital", "One more step like that and you will be recalled for consultations.", "telegram")
         g["log"][-1]["mood"] = "furious"
 
@@ -1833,7 +1837,7 @@ def _recall(scn: Scenario, g: dict) -> None:
                        "expertise": g["expertise"]}
     else:
         g["recall"] = 1
-        g["capital"] = 3
+        g["respect"] = g["capital"] = max(g["respect"], 2)
         _log(g, "capital", "You are recalled for consultations: you'll spend your next turn in the capital, explaining yourself.", "telegram")
         g["log"][-1]["mood"] = "furious"
 
@@ -1912,8 +1916,8 @@ def ap_sources(scn: Scenario, g: dict) -> list[dict]:
          "next": f"{4 - stars % 4} more adviser star{'s' if 4 - stars % 4 != 1 else ''} (hire or promote) for another"},
         {"code": "experience", "name": "Your staff's know-how", "n": (xp >= 5) + (xp >= 10),
          "next": "know-how 5 (read files, answer procedure)" if xp < 5 else "know-how 10" if xp < 10 else None},
-        {"code": "respect", "name": "Respect", "n": (rs >= 5) + (rs >= 8),
-         "next": "Respect 5" if rs < 5 else "Respect 8" if rs < 8 else None},
+        {"code": "respect", "name": "Standing", "n": (rs >= 5) + (rs >= 8),
+         "next": "Standing 5" if rs < 5 else "Standing 8" if rs < 8 else None},
         {"code": "coalition", "name": "Coalition", "n": 1 if mine >= 2 else 0,
          "next": None if mine >= 2 else "two regional groups endorsing your draft"},
     ]
@@ -1969,7 +1973,7 @@ def a_advance(scn, g, a):
     g["respect"] = min(R["respect_max"], g["respect"] + R["momentum_respect"])
     g["influence"] += R["momentum_influence"] * left
     g["momentum"] = g.get("momentum", 0) + left
-    _log(g, "you", f"You moved on with {left} turn{'s' if left != 1 else ''} in hand: +{R['momentum_respect']} Respect, "
+    _log(g, "you", f"You moved on with {left} turn{'s' if left != 1 else ''} in hand: +{R['momentum_respect']} Standing, "
                    f"+{R['momentum_influence'] * left} Influence. Rivals lose those turns too.", "good")
     g["offers"] = []
     _endorsements(scn, g)
@@ -1985,16 +1989,13 @@ def a_stay(scn, g, a):
 
 
 def _end_stage(scn: Scenario, g: dict, early: bool = False) -> None:
-    """A stage ends at its breakthrough (if you move on) or at its deadline. Missing the breakthrough costs Respect,
+    """A stage ends at its breakthrough (if you move on) or at its deadline. Missing the breakthrough costs Standing,
     and your capital judges the stage."""
     L = LENGTHS[g["length"]]
     met = str(g["chapter"]) in g.get("breakthroughs", {}) or _objective(scn, g)
     g["objectives"][str(g["chapter"])] = met
     if met:
         g["influence"] += R["objective_influence"]
-        g["respect"] = min(R["respect_max"], g["respect"] + 1)
-    else:
-        g["respect"] = max(0, g["respect"] - R["late_respect"])
     name = stage_names(g)[g["chapter"]]["name"]
     _log(g, "you", f"{name}: " + ("breakthrough made." if met else "the deadline passed without a breakthrough; the Chair moves on."),
          "objective")
@@ -2043,7 +2044,7 @@ CHAPTER = {"lobby": T.a_lobby, "read": a_read, "propose": a_propose, "amend": a_
            "side_event": a_side_event, "favour": a_favour, "whip": a_whip, "sign": a_sign, "answer": a_answer, "skill": a_skill,
            "divide": a_divide, "merge": a_merge, "bloc_whip": a_bloc_whip, "abstain": a_abstain, "offer": a_offer,
            "hire": a_hire, "post": a_post, "reserve": a_reserve, "secure": a_secure, "deal": T.a_deal, "compromise": T.a_compromise, "visit": V.a_visit, "mark": a_mark,
-           "attend": a_attend, "overtime": a_overtime, "advance": a_advance, "stay": a_stay, "end_turn": a_end_turn}
+           "attend": a_attend, "advance": a_advance, "stay": a_stay, "end_turn": a_end_turn}
 SUMMIT = {"speech": s_speech, "decide": s_decide, "final": s_final, "statement": s_statement, "skill": a_skill, "post": a_post,
           "mark": a_mark}
 
@@ -2081,7 +2082,7 @@ def debrief(scn: Scenario, g: dict) -> dict:
     out["half_loaf"] = half_loaf(scn, g)
     out["stages"] = {"made": sum(1 for v in g.get("objectives", {}).values() if v), "of": LENGTHS[g["length"]]["chapters"],
                      "momentum": g.get("momentum", 0)}
-    out["capital"] = {"confidence": g.get("capital", R["capital_start"]), "of": R["capital_max"], "deals": g.get("deals", 0),
+    out["capital"] = {"confidence": g["respect"], "of": R["respect_max"], "deals": g.get("deals", 0),
                       "recalled": bool((g.get("result") or {}).get("recalled"))}
     out["rivals"] = rival_outcomes(scn, g)
     out["ledger"] = T.ledger(scn, g)
@@ -2199,6 +2200,6 @@ def tips(scn: Scenario, g: dict) -> list[dict]:
     if r.get("broken_promises"):
         k.append("keep every promise: vote yes on the clauses you promised to back")
     if r.get("respect", 0) < 7:
-        k.append(f"build Respect ({r.get('respect', 0)} now; gold needs 7): answer procedure moments, keep promises, accept friendly amendments")
+        k.append(f"build Standing ({r.get('respect', 0)} now; gold needs 7): answer procedure moments, keep promises, accept friendly amendments")
     out.append({"path": "kingmaker", "grade": paths.get("kingmaker", 0), "next": k or ["nothing: you read the room and kept your word"]})
     return out
