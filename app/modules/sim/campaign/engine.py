@@ -100,7 +100,7 @@ def _moods(scn: Scenario, seed: int) -> dict:
 
 # Phase 8: rivals that plan, your staff, counter-moves and the golden rule.
 R.update({"hire_cost": 4, "staff_max": 5, "secure_cost": 2, "secure_max": 3, "poach_cost": 2, "poach_step": 0.15,
-          "reply_respect": 5, "attack": 0.12, "golden_respect": 2, "architect_gold": 0.7})
+          "reply_respect": 5, "attack": 0.12, "golden_respect": 2, "architect_gold": 0.45})
 # Phase 9: the deal table and your capital.
 R.update({"capital_start": 6, "capital_max": 10, "deal_funding": 2, "deal_influence": 3, "candidacy_max": 2, "deal_ap": 2})
 # Phase 11: stages with breakthroughs, a growing delegation.
@@ -1472,8 +1472,8 @@ def score(scn: Scenario, g: dict) -> dict:
     credit = [1.0 if clauses[c]["author"] == "you" else 0.5 if "you" in clauses[c]["amended_by"] else 0.0 for c in kept if c in clauses]
     own = sum(credit) / len(credit) if credit else 0.0
     own_kept = sum(1 for x in credit if x == 1.0)
-    architect = 0 if not passed else 3 if own >= R["architect_gold"] and own_kept >= 3 and share >= 0.65 else \
-        2 if own >= 0.5 and own_kept >= 2 else 1 if own >= 0.25 else 0
+    architect = 0 if not passed else 3 if own >= R["architect_gold"] and own_kept >= 3 and share >= 0.6 else \
+        2 if own >= 0.4 and own_kept >= 2 else 1 if own >= 0.2 else 0          # the text bears your mark (9 Nov)
     st = s.get("statement") or {}
     if not passed and st.get("adopted"):
         sg = [must in st["tags"], also in st["tags"], red not in st["tags"]]
@@ -1494,7 +1494,8 @@ def score(scn: Scenario, g: dict) -> dict:
     kingmaker = 0 if len(judged) < need else 3 if acc >= 0.8 and broken == 0 and g["respect"] >= 7 else \
         2 if acc >= 0.65 and broken <= 1 and g["respect"] >= 5 else 1 if acc >= 0.5 else 0
     paths = {"mandate": mandate, "consensus": consensus, "architect": architect, "kingmaker": kingmaker}
-    return {"passed": passed, "statement": bool(st.get("adopted")), "paths": paths, "chosen": g["path"], "grade": paths[g["path"]],
+    best = max(paths, key=lambda p: (paths[p], p == g["path"]))           # every game is graded on all four (9 Nov)
+    return {"passed": passed, "statement": bool(st.get("adopted")), "paths": paths, "chosen": best, "grade": paths[best],
             "share_yes": round(share, 3), "own_text": round(own, 3), "whip_right": right, "whip_judged": len(judged),
             "broken_promises": broken, "kept_promises": sum(1 for p in g["promises"] if p["kept"] is True),
             "endorsements": mine_regions, "respect": g["respect"], "expertise": g["expertise"], "golden": g.get("golden"),
@@ -2186,8 +2187,8 @@ def tips(scn: Scenario, g: dict) -> list[dict]:
     out.append({"path": "consensus", "grade": paths.get("consensus", 0), "next": c or ["nothing: you had the room with you"]})
     own = r.get("own_text", 0)
     a = []
-    if own < 0.65:
-        a.append(f"write more of the final text ({round(own * 100)}% was yours; gold needs 65%): propose clause cards and protect them")
+    if own < R["architect_gold"]:
+        a.append(f"shape more of the final text ({round(own * 100)}% was yours or amended by you; gold needs half, with three clauses of your own)")
     if not f.get("passed"):
         a.append("your clauses only count in a resolution that passes")
     out.append({"path": "architect", "grade": paths.get("architect", 0), "next": a or ["nothing: the text was yours"]})

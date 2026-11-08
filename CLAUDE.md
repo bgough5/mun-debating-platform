@@ -105,6 +105,10 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
   - **New conversations** are `visits._more` and `answer_new`, with `MAX_VISITORS` at 4.
   - **The President's procedure question** is shown in `#s-proc`, and errors appear in `#s-alert`.
   - `MIN_STAGE_TURNS` is 3.
+- The Session, 9 Nov (design doc section 33):
+  - **No path to choose.** `g["path"]` stays, internal and used by the bots. A result is the best of the four (`result["chosen"]`).
+  - **The Architect path's gold** needs three clauses of your own, half the text, and three in five voting yes.
+  - **The balance harness** reports each bot's own path from `r["paths"][r["path"]]`.
 - Was a flake: `tests/ui/test_phase5_a11y.py::test_a11y_every_student_page`. The phase 6 run (5 Nov 2026) caught it: the speech coach's `.coach-back` kept its desktop pixel width for a moment after the crawl resized to 320 px (`reflow-320px` on `/me/committees/1/prepare`). It is now clamped with `max-width: 100%`. Not yet confirmed by several full runs.
 - Known flake: `tests/ui/test_start_ui.py::test_resume_from_the_dashboard` timed out in two full runs (4 Nov 2026) and passes alone; not yet investigated.
 - Don't run two test suites at once on the laptop: the accessibility crawl timed out on page loads twice when another pytest run overlapped it, and passed (715/715) on a clean run (30 Oct 2026).

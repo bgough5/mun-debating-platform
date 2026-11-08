@@ -126,9 +126,10 @@ def test_a_guest_sets_up_and_continues_a_session(browser, live):
     page.click('[data-pick="length"][data-value="quick"]')
     page.click('[data-step="3"] [data-next]')
     page.click('[data-step="4"] [data-next]')
-    page.click('[data-pick="path"][data-value="consensus"]')
+    assert page.locator('[data-pick="path"]').count() == 0                 # no path to choose: graded on all four (9 Nov)
+    assert page.locator('[data-pick="approach"]').count() == 4
     page.click('[data-step="5"] [data-next]')
-    assert page.inner_text('[data-show="iso3"]') == "New Zealand" and page.inner_text('[data-show="path"]') == "Consensus"
+    assert page.inner_text('[data-show="iso3"]') == "New Zealand" and page.inner_text('[data-show="approach"]') == "Career diplomat"
     page.click("#s-begin")
     page.wait_for_url(re.compile(r"/session/guest/comet_halcyon\?slot=0$"))
     page.wait_for_selector("#s-chapter-card:not([hidden])")

@@ -945,3 +945,19 @@ The whip sheet's clause columns are scored against how each delegation would vot
 - The Summit now gives the Security Council scenarios a fair route: both are above 25%.
 - No approach is simply better.
 - The Architect path (your own text in the resolution) still gives no gold. That is Ben's call.
+
+## 33. Graded on all four, and the Architect path fixed (9 Nov 2026)
+
+Ben: "all of them are being marked already, let's make it you can just go for all of them."
+
+**No path to choose.**
+- The setup's step 5 is now just your approach.
+- Every session is graded on all four paths, and your result is your best (`result["chosen"]` is the best path; `grade` is its medal).
+- The walkthrough has a step, "How each is judged", that gives the gold condition for each path (`content.PATHS[...]["gold"]`).
+- Your secret instructions still decide Mandate.
+
+**The Architect path, fixed.**
+- **Why it failed:** gold needed 70% of the final text to be yours, but the zero draft's own clauses always make up much of the text. Even a strong drafting game ends near 50%.
+- **The new rule:** gold now means the text bears your mark. You need at least three clauses of your own, at least half the text yours or amended by you (`architect_gold` = 0.5), and three in five voting yes.
+- **Silver:** two clauses of your own and 40%.
+- **Bronze:** 20%.

@@ -124,7 +124,7 @@ def summarise(results: list[dict]) -> dict:
     std = [r for r in ok if r["difficulty"] == "standard" and r["style"] != "random"]
     targets = {
         "standard_silver_plus_40_60": rate(std, lambda r: r["grade"] >= 2),
-        "gold_own_path_30_70": {s: rate([r for r in ok if r["style"] == s and r["difficulty"] == "standard"], lambda r: r["grade"] == 3)
+        "gold_own_path_30_70": {s: rate([r for r in ok if r["style"] == s and r["difficulty"] == "standard"], lambda r: r["paths"][r["path"]] == 3)
                                 for s in styles if s != "random"},
         "max_action_share_le_35": max(acts.values()) / total if acts else 0,
         "hardest_pack_standard_ge_25": min((p["standard"] for p in packs.values()), default=0),

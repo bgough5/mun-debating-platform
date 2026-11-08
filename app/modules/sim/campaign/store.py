@@ -326,6 +326,7 @@ def view(scn: Scenario, g: dict) -> dict:
         "you": {"iso3": g["iso3"], "name": scn.member(g["iso3"]).name},
         "mandate": {k: {"code": v, "label": tags[v]} for k, v in g["mandate"].items()},
         "path": {"code": g["path"], **K.PATHS[g["path"]]}, "difficulty": g["difficulty"], "length": g["length"],
+        "paths": [{"code": c, **p} for c, p in K.PATHS.items()],
         "approach": {"code": g.get("approach", "diplomat"), **K.APPROACHES[g.get("approach", "diplomat")]},
         "rivals": [{"iso3": r["iso3"], "name": scn.member(r["iso3"]).name, "style": r.get("style", "hawk"), "truce": bool(r.get("truce")),
                     "style_name": K.RIVAL_STYLES[r.get("style", "hawk")]["name"], "style_what": K.RIVAL_STYLES[r.get("style", "hawk")]["what"],
