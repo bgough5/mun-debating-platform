@@ -135,10 +135,16 @@ def test_a_pledged_permanent_member_abstains_except_on_its_red_lines(scenarios):
             assert after == before
 
 
-def _to_final(scn, g):
+def _to_final(scn, g, vote="no"):
+    """Walk the Summit (D-102) to the final vote: statements, reading, caucus, each amendment debated and voted."""
+    from app.modules.sim.campaign import summit as SM
     g, _ = E.apply(scn, g, {"do": "speech", "stance": "open"})
-    while g["summit"]["step"] == "clause":
-        g, _ = E.apply(scn, g, {"do": "decide", "choice": "stand", "vote": "no"})
+    g, _ = E.apply(scn, g, {"do": "proceed"})
+    g, _ = E.apply(scn, g, {"do": "caucus", "kind": "moderated", "tag": SM.caucus_topics(scn, g)[0]})
+    while g["summit"]["step"] == "amendments":
+        g, _ = E.apply(scn, g, {"do": "debate", "choice": "silent"})
+        g, _ = E.apply(scn, g, {"do": "amend_vote", "vote": vote})
+    g, _ = E.apply(scn, g, {"do": "proceed"})
     return g
 
 

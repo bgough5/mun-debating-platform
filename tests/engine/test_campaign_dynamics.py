@@ -100,18 +100,11 @@ def test_rivals_have_personalities(scn):
         assert set(styles) <= set(K.RIVAL_STYLES) and len(set(styles)) == len(styles)  # three rivals, three personalities
 
 
-def test_the_spoiler_goes_after_your_own_clauses_and_saves_a_floor_amendment(scn):
+def test_the_spoiler_goes_after_your_own_clauses(scn):
     g = next(g for g in _games(scn, 60) if any(r["style"] == "spoiler" for r in g["rivals"]))
     card = g["cards"][0]
     g, out = E.apply(scn, g, {"do": "propose", "card": card})
     g, _ = E.apply(scn, g, {"do": "end_turn"})
     spoiler = next(r for r in g["rivals"] if r["style"] == "spoiler")
     name = scn.member(spoiler["iso3"]).name
-    assert any(x["who"] == spoiler["iso3"] and "your clause" in x["text"] for x in g["log"]) or \
-        any(name in x["text"] and "your clause" in x["text"] for x in g["log"] if x["kind"] == "intel")
-    plain = json.loads(json.dumps(g))
-    for r in plain["rivals"]:
-        r["style"] = "hawk"
-    E._open_summit(scn, g)
-    E._open_summit(scn, plain)
-    assert g["summit"]["amendments_left"] == plain["summit"]["amendments_left"] + 1
+    assert any(x["who"] == spoiler["iso3"] and "your clause" in x["text"] for x in g["log"]) or         any(name in x["text"] and "your clause" in x["text"] for x in g["log"] if x["kind"] == "intel")

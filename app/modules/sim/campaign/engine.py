@@ -449,6 +449,9 @@ def latent(scn: Scenario, g: dict, iso: str, clause: dict, stances: dict | None 
     owner = g["endorse"].get((scn.member(iso).region if scn.member(iso) else ""))
     if owner:
         x += R["endorse_pull"] * stances.get(owner, 0)
+    f = clause.get("force", 0)
+    if f:                                                     # "Encourages" softens, "Urges" sharpens (the Summit, 8 Nov)
+        x = x * 0.7 + 0.25 if f < 0 else x * 1.3 - 0.15
     return x
 
 
@@ -1376,183 +1379,22 @@ def _open_summit(scn: Scenario, g: dict) -> None:
     g["question"] = None
     if g["tabled_first"] is False:
         g["respect"] = max(0, g["respect"] - 1)
-    g["summit"] = {"step": "speech", "queue": [c["id"] for c in g["draft"]], "i": 0, "my_votes": {}, "results": [],
-                   "amendments_left": R["rival_amendments"] * len(g["rivals"]) + (1 if g["tabled_first"] is False else 0)
-                   + sum(1 for r in g["rivals"] if r.get("style") == "spoiler"),
-                   "po_used": False, "pending": None, "final": None}
-    _log(g, "news", "The summit opens. The draft is put to the vote clause by clause.", "event")
-
-
-def _pending(scn: Scenario, g: dict) -> None:
-    s = g["summit"]
-    s["pending"] = None
-    s["attack"] = None
-    if s["i"] < len(s["queue"]):
-        c = _clause(g, s["queue"][s["i"]])
-        if stance(scn, g, "you", c) > 0:
-            foe = next((r["iso3"] for r in g["rivals"] if stance(scn, g, r["iso3"], c) < 0), None)
-            if foe:
-                s["attack"] = {"by": foe}
-    _pending_amendment(scn, g)
-    p = s.get("pending")
-    legal = max((a["stars"] for a in g.get("staff", []) if a["kind"] == "legal"), default=0)
-    if p and legal:
-        c = _clause(g, s["queue"][s["i"]])
-        trial = votes_on(scn, g, {**c, "tags": p["tags"]}, my_vote="no")
-        passes = tally(scn.rule, trial, len(trial)).passed
-        if _rng(g).random() >= ACCURACY[legal]:
-            passes = not passes
-        p["advice"] = {"passes": passes, "sure": K.SURE[legal]}
-
-
-def _pending_amendment(scn: Scenario, g: dict) -> None:
-    s = g["summit"]
-    if s["i"] >= len(s["queue"]) or s["amendments_left"] <= 0:
-        return
-    c = _clause(g, s["queue"][s["i"]])
-    for rv in [r for r in g["rivals"] if not r.get("truce")]:
-        if rv["block"] in c["tags"] and len(c["tags"]) > 1:
-            s["pending"] = {"by": rv["iso3"], "remove": rv["block"], "tags": [t for t in c["tags"] if t != rv["block"]]}
-            return
-        if rv["want"] not in c["tags"] and rv["block"] not in c["tags"] and len(c["tags"]) < 3 and \
-                not any(rv["want"] in x["tags"] for x in g["draft"]):
-            s["pending"] = {"by": rv["iso3"], "add": rv["want"], "tags": c["tags"] + [rv["want"]]}
-            return
-
-
-def s_speech(scn, g, a):
-    s = g["summit"]
-    if s["step"] != "speech":
-        raise GameError("The opening speeches are over.")
-    st = a.get("stance")
-    if st not in STANCES:
-        raise GameError("Choose a stance: firm, open or bridge.")
-    must = g["mandate"]["must"]
-    for iso in scn.isos:
-        if iso in _others(g):
-            continue
-        mu = scn.dist([must]).get(iso, (0, 1))[0]
-        if st == "firm":
-            _sway(g, "you", iso, 0.15 if mu >= 0.4 else -0.05 if mu <= -0.4 else 0)
-        elif st == "bridge" and abs(mu) < 0.4:
-            _sway(g, "you", iso, 0.15)
-    if st == "open":
-        g["respect"] = min(R["respect_max"], g["respect"] + 1)
-    s["step"] = "clause"
-    s["speech"] = st
-    _pending(scn, g)
-    _log(g, "you", f"You gave a {st} opening speech.", "action")
-    return {}
-
-
-def s_decide(scn, g, a):
-    s = g["summit"]
-    if s["step"] != "clause":
-        raise GameError("There's no clause before the committee.")
-    choice, my_vote = a.get("choice", "stand"), a.get("vote")
-    if my_vote not in VOTES:
-        raise GameError("Cast your vote on the clause: yes, no or abstain.")
-    c = _clause(g, s["queue"][s["i"]])
-    out = {"clause": c["id"]}
-    p = s["pending"]
-    if choice == "point_of_order":
-        if "point_of_order" not in g["skills"] or s["po_used"] or not p:
-            raise GameError("A point of order needs the skill, a floor amendment to rule out, and can be used once.")
-        s["po_used"] = True
-        out["amendment"] = "ruled out of order"
-        p = None
-    elif choice == "accept":
-        if not p:
-            raise GameError("There's no floor amendment to accept.")
-        _hist(scn, g, c, p["by"], "floor amendment accepted as friendly", p["tags"])
-        c["tags"] = p["tags"]
-        c["amended_by"].append(p["by"])
-        g["respect"] = min(R["respect_max"], g["respect"] + 1)
-        out["amendment"] = "accepted as friendly"
-        p = None
-    elif choice == "offer":
-        _spend(g, 0, R["offer_cost"])
-        want = {"yes": 1, "no": -1, "abstain": 0}[my_vote]
-        if want:
-            st = {x: stance(scn, g, x, c) for x in ["you", *[r["iso3"] for r in g["rivals"]]]}
-            st["you"] = want
-            cands = [(abs(latent(scn, g, i, c, st) - (scn.c_yes if want > 0 else scn.c_no)), i) for i in scn.isos
-                     if i not in _others(g) and vote_of(scn, latent(scn, g, i, c, st)) != ("yes" if want > 0 else "no")]
-            if cands:
-                iso = sorted(cands)[0][1]
-                _sway(g, "you", iso, R["offer_step"])
-                out["offer"] = iso
-    elif choice == "reply":
-        if not s.get("attack"):
-            raise GameError("No one has spoken against this clause, so there is nothing to reply to.")
-        if g["respect"] < R["reply_respect"]:
-            raise GameError(f"The Chair grants a right of reply to delegates with Standing {R['reply_respect']} or more.")
-        out["reply"] = True
-        _log(g, "you", f"You exercised your right of reply: {scn.member(s['attack']['by']).name}'s attack fell flat.", "action")
-    elif choice not in ("stand", "favour"):
-        raise GameError("Choose what to do: stand firm, make a last offer, call in a favour, reply, accept or rule out an amendment.")
-    atk = s.get("attack")
-    if atk and choice != "reply":
-        for iso in scn.isos:
-            if iso not in _others(g):
-                _sway(g, atk["by"], iso, R["attack"])
-        out["attack"] = atk["by"]
-        _log(g, atk["by"], f"{scn.member(atk['by']).name} spoke against clause {s['i'] + 1}.", "rival")
-    if p:   # an unfriendly floor amendment is voted on first
-        trial = {**c, "tags": p["tags"]}
-        st_votes = votes_on(scn, g, trial, my_vote="no")
-        res = tally(scn.rule, st_votes, len(st_votes))
-        s["amendments_left"] -= 1
-        if res.passed:
-            _hist(scn, g, c, p["by"], "floor amendment adopted", p["tags"])
-            c["tags"] = p["tags"]
-            c["amended_by"].append(p["by"])
-        out["amendment"] = "adopted" if res.passed else "rejected"
-        _log(g, p["by"], f"{scn.member(p['by']).name}'s floor amendment was {out['amendment']}.", "rival")
-    favour = set()
-    if choice == "favour":
-        if not g["favours"]:
-            raise GameError("No one owes you a favour.")
-        favour = {g["favours"].pop(0)}
-    s["my_votes"][c["id"]] = my_vote
-    votes = votes_on(scn, g, c, my_vote=my_vote, favour_for=favour)
-    res = tally(scn.rule, votes, len(votes))
-    for pa in g.get("pacts", []):
-        if pa["kept"] is None and pa["tag"] in c["tags"]:
-            pa["kept"] = my_vote != "no"
-            if not pa["kept"]:
-                g["respect"] = max(0, g["respect"] - 1)
-                g["trust"][pa["iso3"]] = max(-R["trust_max"], g["trust"].get(pa["iso3"], 0) - 2)
-    for pr in g["promises"]:
-        if pr["clause"] == c["id"] and pr["kept"] is None:
-            pr["kept"] = my_vote == "yes"
-            if pr["kept"]:
-                g["respect"] = min(R["respect_max"], g["respect"] + 1)
-            else:
-                g["trust"][pr["iso3"]] = max(-R["trust_max"], g["trust"][pr["iso3"]] - 2)
-                g["respect"] = max(0, g["respect"] - 1)
-    s["results"].append({"clause": c["id"], "tags": list(c["tags"]), "passed": res.passed, "yes": res.yes, "no": res.no,
-                         "abstain": res.abstain, "votes": votes, "summary": res.summary})
-    _log(g, "news", f"Clause {s['i'] + 1} " + ("adopted" if res.passed else "rejected") + f": {res.summary}.", "vote")
-    out.update({"passed": res.passed, "summary": res.summary, "votes": votes})
-    s["i"] += 1
-    if s["i"] >= len(s["queue"]):
-        s["step"] = "final"
-        s["pending"] = None
-    else:
-        _pending(scn, g)
-    return out
+    SM.open_summit(scn, g)
+    _log(g, "news", "The Summit opens: position statements, the draft read in full, a caucus, the amendments one by one, "
+                    "then the final vote.", "event")
 
 
 def s_final(scn, g, a):
     s = g["summit"]
     if s["step"] != "final":
-        raise GameError("Vote on every clause first.")
+        raise GameError("The final vote comes after the amendments and the final reading.")
     my_vote = a.get("vote")
     if my_vote not in VOTES:
         raise GameError("Cast your vote on the resolution: yes, no or abstain.")
-    kept = [r for r in s["results"] if r["passed"]]
-    tags = list(dict.fromkeys(t for r in kept for t in r["tags"]))
+    if not s.get("results"):
+        s["results"] = SM._clause_results(scn, g)
+    SM.settle_final(scn, g, my_vote)
+    tags = list(dict.fromkeys(t for c in g["draft"] for t in c["tags"]))   # the text as amended (D-102)
     final = {"id": "final", "tags": tags, "author": "draft"}
     if tags:
         votes = votes_on(scn, g, final, my_vote=my_vote, favour_for=set(g["favours"]))
@@ -2172,6 +2014,7 @@ def _end_stage(scn: Scenario, g: dict, early: bool = False) -> None:
 
 from app.modules.sim.campaign import talks as T  # noqa: E402  (talks uses the engine's primitives above)
 from app.modules.sim.campaign import visits as V  # noqa: E402
+from app.modules.sim.campaign import summit as SM  # noqa: E402  (the Summit as the UN runs it, D-102)
 
 
 def a_mark(scn, g, a):
@@ -2201,7 +2044,8 @@ CHAPTER = {"lobby": T.a_lobby, "talk": T.a_talk, "read": a_read, "propose": a_pr
            "divide": a_divide, "merge": a_merge, "abstain": a_abstain, "offer": a_offer,
            "hire": a_hire, "post": a_post, "reserve": a_reserve, "deal": T.a_deal, "compromise": T.a_compromise, "visit": V.a_visit, "mark": a_mark,
            "attend": a_attend, "advance": a_advance, "stay": a_stay, "end_turn": a_end_turn}
-SUMMIT = {"speech": s_speech, "decide": s_decide, "final": s_final, "statement": s_statement, "post": a_post,
+SUMMIT = {"speech": SM.s_speech, "proceed": SM.s_proceed, "caucus": SM.s_caucus, "table": SM.s_table, "debate": SM.s_debate,
+          "amend_vote": SM.s_amend_vote, "final": s_final, "statement": s_statement, "post": a_post,
           "mark": a_mark}
 
 
