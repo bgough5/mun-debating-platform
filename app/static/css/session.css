@@ -1407,3 +1407,41 @@
 .s-skip-line { margin: 6px 0; }
 .s-skip-line[hidden], .s-visit-opts[hidden], #s-proc-opts[hidden] { display: none; }
 .s-intel-box { display: grid; gap: 4px; margin: 6px 0; }
+/* ---------- ambassadors in depth (9 Nov): skin, hair colour, jacket, look, facial hair, eyewear, neckwear ---------- */
+.g-face.delegate.dl-k5 .g-skin { fill: var(--skin-ol); } .g-face.delegate.dl-k6 .g-skin { fill: var(--skin-xd); }
+.g-face.delegate.dl-k5 .g-nose { stroke: var(--walnut); } .g-face.delegate.dl-k6 .g-nose { stroke: var(--walnut-dk); }
+.g-face.delegate.dl-w3 .g-hair { fill: var(--hair-mid); } .g-face.delegate.dl-w4 .g-hair { fill: var(--hair-auburn); }
+.g-face.delegate.dl-w5 .g-hair { fill: var(--hair-ginger); } .g-face.delegate.dl-w6 .g-hair { fill: var(--hair-blonde); }
+.g-face.delegate.dl-w7 .g-hair { fill: var(--hair-plat); } .g-face.delegate.dl-w8 .g-hair { fill: var(--hair-white); }
+.g-face.delegate.dl-w9 .g-hair { fill: var(--hair-blue); } .g-face.delegate.dl-w10 .g-hair { fill: var(--hair-pink); }
+.g-face.delegate.dl-w11 .g-hair { fill: var(--hair-green); } .g-face.delegate.dl-w12 .g-hair { fill: var(--hair-purple); }
+.g-face.delegate .g-shaved { opacity: .55; }
+.g-face.delegate.dl-j1 .g-suit, .g-face.delegate.dl-j1 .g-lapel { fill: var(--jacket-charcoal); }
+.g-face.delegate.dl-j2 .g-suit, .g-face.delegate.dl-j2 .g-lapel { fill: var(--jacket-black); }
+.g-face.delegate.dl-j3 .g-suit, .g-face.delegate.dl-j3 .g-lapel { fill: var(--jacket-grey); }
+.g-face.delegate.dl-j4 .g-suit, .g-face.delegate.dl-j4 .g-lapel { fill: var(--maroon); }
+.g-face.delegate.dl-j5 .g-suit, .g-face.delegate.dl-j5 .g-lapel { fill: var(--jacket-forest); }
+.g-face.delegate.dl-j6 .g-suit, .g-face.delegate.dl-j6 .g-lapel { fill: var(--jacket-camel); }
+.g-face.delegate.dl-j7 .g-suit, .g-face.delegate.dl-j7 .g-lapel { fill: var(--jacket-burgundy); }
+.g-face.delegate.dl-j8 .g-suit, .g-face.delegate.dl-j8 .g-lapel { fill: var(--jacket-royal); }
+.g-face.delegate.dl-j9 .g-suit, .g-face.delegate.dl-j9 .g-lapel { fill: var(--jacket-cream); }
+.g-face.delegate .g-lapel { filter: brightness(.82); }
+.g-face.delegate.dl-t4 .g-tie, .g-face.delegate.dl-t5 .g-tie, .g-face.delegate.dl-t6 .g-tie { display: none; }
+.g-bow { fill: var(--maroon); stroke: var(--walnut-dk); stroke-width: 1; }
+.g-pearl { fill: var(--pearl); stroke: var(--parchment-dk); stroke-width: .6; }
+.g-scarf-head { fill: var(--un-blue); stroke: var(--un-blue-dk); stroke-width: 1.5; }
+.g-face.delegate.dl-w4 .g-scarf-head, .g-face.delegate.dl-w7 .g-scarf-head { fill: var(--maroon); stroke: var(--maroon-dk); }
+.g-lash { fill: none; stroke: var(--walnut-dk); stroke-width: 1.8; stroke-linecap: round; }
+.g-face.delegate.dl-gf .g-mouth { stroke: var(--lip); }
+.g-face.delegate.dl-gm .g-brow { stroke-width: 6.5; }
+.g-face.delegate .g-beard { opacity: .95; }
+.g-stubble { fill: var(--walnut-dk); opacity: .18; }
+.g-shades { fill: var(--jacket-black); opacity: .92; }
+.g-shades-rim { fill: none; stroke: var(--jacket-black); stroke-width: 2.5; stroke-linecap: round; }
+.g-face.delegate.dl-e2 .g-eyes, .g-face.delegate.dl-e2 .g-eye-happy { visibility: hidden; }
+.g-face.delegate.dl-e1 .g-glasses, .g-face.delegate.dl-e1 .g-glasses-rim { display: inline; }
+.s-avatar-opts button.s-swatch { min-width: 32px; width: 32px; height: 32px; padding: 0; border: 2px solid var(--white); box-shadow: 0 0 0 1px var(--gilt-md); }
+.s-avatar-opts button.s-swatch[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--gilt-dk); }
+.s-avatar-opts button.s-swatch:hover, .s-avatar-opts button.s-swatch:focus-visible { box-shadow: 0 0 0 3px var(--lit); }
+.s-stats .s-stat { display: grid; gap: 2px; padding: 6px 8px; border: 1px solid var(--line); background: var(--white); }
+

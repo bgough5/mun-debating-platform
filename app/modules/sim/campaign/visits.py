@@ -486,8 +486,13 @@ def likeness(iso: str) -> str:
     """A delegate's look, the same every game: skin tone, hair, glasses, and a tie or scarf. Respectful variety only:
     no national costume. Built from a hash of the country code, so it never encodes a stereotype about a country."""
     n = sum((i + 7) * ord(ch) for i, ch in enumerate(iso))
-    parts = [f"dl-k{n % 5}", f"dl-h{(n // 5) % 5}", f"dl-w{(n // 25) % 3}", "dl-gl" if (n // 75) % 3 == 0 else "", f"dl-t{(n // 7) % 4}"]
+    look = "dl-gf" if (n // 17) % 2 else "dl-gm"
+    parts = [f"dl-k{n % 7}", f"dl-h{(n // 7) % 8}", f"dl-w{NATURAL[(n // 56) % len(NATURAL)]}", "dl-e1" if (n // 392) % 3 == 0 else "",
+             f"dl-t{(n // 11) % 4}", f"dl-j{(n // 13) % 6}", look, f"dl-f{(n // 19) % 4}" if look == "dl-gm" else ""]
     return " ".join(x for x in parts if x)
+
+
+NATURAL = [0, 1, 3, 4, 5, 6, 2]                 # hair colours a delegate may have: black, browns, auburn, ginger, blonde, grey
 
 
 # ---------------------------------------------------------------- more conversations (Ben, 8 Nov 2026)

@@ -25,8 +25,10 @@
     // a delegate's look, the same every game (the same sum as visits.likeness in Python): respectful variety only
     function likeness(iso) {
       var n = 0; for (var i = 0; i < iso.length; i++) n += (i + 7) * iso.charCodeAt(i);
-      return ["dl-k" + n % 5, "dl-h" + Math.floor(n / 5) % 5, "dl-w" + Math.floor(n / 25) % 3, Math.floor(n / 75) % 3 === 0 ? "dl-gl" : "", "dl-t" + Math.floor(n / 7) % 4]
-        .filter(Boolean).join(" ");
+      var NATURAL = [0, 1, 3, 4, 5, 6, 2], look = Math.floor(n / 17) % 2 ? "dl-gf" : "dl-gm";   // the same as visits.likeness
+      return ["dl-k" + n % 7, "dl-h" + Math.floor(n / 7) % 8, "dl-w" + NATURAL[Math.floor(n / 56) % NATURAL.length],
+              Math.floor(n / 392) % 3 === 0 ? "dl-e1" : "", "dl-t" + Math.floor(n / 11) % 4, "dl-j" + Math.floor(n / 13) % 6, look,
+              look === "dl-gm" ? "dl-f" + Math.floor(n / 19) % 4 : ""].filter(Boolean).join(" ");
     }
     // the country's flag, as a lapel pin, copied from its token on the map
     function pin(iso) {

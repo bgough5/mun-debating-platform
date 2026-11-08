@@ -115,7 +115,8 @@ def test_options_do_not_give_away_their_consequences(scn):
         for v in g["visits"]:
             for o in v["options"]:
                 assert "(" not in o["label"] or "Influence" in o["label"] or "its file" in o["label"] or "adviser" in o["label"] or "whip sheet" in o["label"] or "action" in o["label"], o["label"]
-        assert all(len(V.likeness(i).split()) in (4, 5) for i in scn.isos)
+        assert all(6 <= len(V.likeness(i).split()) <= 8 for i in scn.isos)                  # skin, hair, colour, neck, jacket, look (+ glasses, facial hair)
+        assert not any("dl-h9" in V.likeness(i) or any(f"dl-w{k}" in V.likeness(i).split() for k in (7, 8, 9, 10, 11, 12)) for i in scn.isos)
 
 
 def test_talking_is_a_conversation(scn):

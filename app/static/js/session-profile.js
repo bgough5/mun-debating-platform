@@ -12,11 +12,27 @@
   function best(res) { var p = (res && res.paths) || {}; return Object.keys(p).reduce(function (m, k) { return Math.max(m, p[k]); }, 0); }
 
   // ---------- your ambassador's look (the same respectful options as delegates; no costume) ----------
-  var LOOK = { k: ["Skin tone", 5], h: ["Hair", 5], w: ["Hair colour", 3], gl: ["Glasses", 2], t: ["Neckwear", 4] };
-  var LOOK_NAMES = { h: ["Short", "Long", "Cropped", "Curls", "Bun"], w: ["Black", "Brown", "Grey"], gl: ["None", "Glasses"],
-                     t: ["Maroon tie", "Blue tie", "Green tie", "Scarf"] };
-  function look() { try { return JSON.parse(localStorage.getItem(AKEY) || "null"); } catch (e) { return null; } }
-  function classes(a) { return "dl-k" + a.k + " dl-h" + a.h + " dl-w" + a.w + (a.gl ? " dl-gl" : "") + " dl-t" + a.t; }
+  var LOOK = { g: ["Look", 3], k: ["Skin tone", 7], h: ["Hair", 10], w: ["Hair colour", 13], f: ["Facial hair", 4], e: ["Eyewear", 3],
+               t: ["Neckwear", 7], j: ["Jacket", 10] };
+  var LOOK_NAMES = { g: ["Masculine", "Feminine", "Neutral"], h: ["Short", "Long", "Cropped", "Curls", "Bun", "Ponytail", "Side parting", "Afro", "Shaved", "Headscarf"],
+                     w: ["Black", "Dark brown", "Grey", "Brown", "Auburn", "Ginger", "Blonde", "Platinum", "White", "Blue", "Pink", "Green", "Purple"],
+                     f: ["None", "Moustache", "Beard", "Stubble"], e: ["None", "Glasses", "Sunglasses"],
+                     t: ["Maroon tie", "Blue tie", "Green tie", "Scarf", "Bow tie", "Open collar", "Pearls"],
+                     j: ["Navy", "Charcoal", "Black", "Grey", "Maroon", "Forest", "Camel", "Burgundy", "Royal blue", "Cream"] };
+  var SWATCH = { w: ["hair-bk", "hair-br", "hair-dk", "hair-mid", "hair-auburn", "hair-ginger", "hair-blonde", "hair-plat", "hair-white", "hair-blue", "hair-pink", "hair-green", "hair-purple"],
+                 k: ["skin-lt", "skin", "skin-md", "skin-dk", "skin-dp", "skin-ol", "skin-xd"],
+                 j: ["navy", "jacket-charcoal", "jacket-black", "jacket-grey", "maroon", "jacket-forest", "jacket-camel", "jacket-burgundy", "jacket-royal", "jacket-cream"] };
+  function look() {
+    try {
+      var a = JSON.parse(localStorage.getItem(AKEY) || "null");
+      if (a && a.gl !== undefined && a.e === undefined) { a.e = a.gl ? 1 : 0; delete a.gl; }     // a look saved before 9 Nov
+      return a ? Object.assign({ g: 2, k: 1, h: 0, w: 1, f: 0, e: 0, t: 0, j: 0 }, a) : null;
+    } catch (e) { return null; }
+  }
+  function classes(a) {
+    return ["dl-k" + a.k, "dl-h" + a.h, "dl-w" + a.w, "dl-t" + a.t, "dl-j" + a.j, ["dl-gm", "dl-gf", "dl-gn"][a.g || 0],
+            a.f ? "dl-f" + a.f : "", a.e ? "dl-e" + a.e : ""].filter(Boolean).join(" ");
+  }
   window.socSession.avatar = function () { var a = look(); return a ? classes(a) : null; };
 
   // a guest's finished game, recorded once (keyed by the game's seed and scenario)
@@ -97,12 +113,13 @@
 
     // your ambassador: the builder and the preview
     var G = window.socSession.guide, face = document.getElementById("p-face"), opts = document.getElementById("p-avatar-opts");
-    var a = look() || { k: 1, h: 0, w: 1, gl: 0, t: 0 };
+    var a = look() || { g: 2, k: 1, h: 0, w: 1, f: 0, e: 0, t: 0, j: 0 };
     function preview() { face.textContent = ""; if (G) face.appendChild(G.portrait("delighted", "delegate you " + classes(a))); }
     Object.keys(LOOK).forEach(function (key) {
       var row = el("div", "s-row"); row.appendChild(el("span", "", LOOK[key][0]));
       for (var i = 0; i < LOOK[key][1]; i++) (function (i) {
-        var b = el("button", "", LOOK_NAMES[key] ? LOOK_NAMES[key][i] : String(i + 1)); b.type = "button";
+        var b = el("button", SWATCH[key] ? "s-swatch" : "", SWATCH[key] ? "" : (LOOK_NAMES[key] ? LOOK_NAMES[key][i] : String(i + 1))); b.type = "button";
+        if (SWATCH[key]) { b.style.background = "var(--" + SWATCH[key][i] + ")"; b.title = LOOK_NAMES[key] ? LOOK_NAMES[key][i] : "Option " + (i + 1); }
         b.setAttribute("aria-label", LOOK[key][0] + " " + (LOOK_NAMES[key] ? LOOK_NAMES[key][i] : "option " + (i + 1)));
         b.setAttribute("aria-pressed", String(a[key] === i));
         b.addEventListener("click", function () {
@@ -128,7 +145,7 @@
     var stats = document.getElementById("p-stats");
     [["Sessions started", prof.games], ["Finished", prof.finished], ["Resolutions passed", prof.passed],
      ["Gold", prof.medals.Gold], ["Silver", prof.medals.Silver], ["Bronze", prof.medals.Bronze]].forEach(function (x) {
-      stats.appendChild(el("dt", "", x[0])); stats.appendChild(el("dd", "", String(x[1])));
+      var cell = el("div", "s-stat"); cell.appendChild(el("dt", "", x[0])); cell.appendChild(el("dd", "", String(x[1]))); stats.appendChild(cell);
     });
     var lad = document.getElementById("p-ladder");
     prof.scenarios.forEach(function (s) {
