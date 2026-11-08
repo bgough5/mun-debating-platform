@@ -9,6 +9,7 @@
 <div id="p-say" class="visually-hidden" role="status" aria-live="polite"></div>
 <div id="b-stage" class="b-stage s-stage">
   <div class="b-lamp" aria-hidden="true"></div>
+  <div class="s-alert" id="s-alert" role="alert" hidden></div>
   <header class="b-top">
     {{ emblem() }}
     <div class="b-titles">
@@ -131,6 +132,11 @@
     <div class="s-doc s-chapter"><p class="s-eyebrow" id="s-cc-eyebrow">Chapter</p><div class="s-cc-pres" id="s-cc-pres" aria-hidden="true"></div><h2 id="s-cc-h">–</h2><p id="s-cc-goal"></p><p class="s-sub" id="s-cc-look"></p>
       <div class="s-cc-crisis" id="s-cc-crisis" hidden><span class="s-cc-stamp">Crisis</span><h3 id="s-cc-crisis-h"></h3><p id="s-cc-crisis-p"></p><p class="s-small" id="s-cc-crisis-t"></p></div>
       <div class="s-row s-center"><button type="button" class="s-btn" data-close="s-chapter-card">Begin</button></div></div>
+  </div>
+  <div class="s-overlay" id="s-proc" hidden role="dialog" aria-modal="true" aria-labelledby="s-proc-h">
+    <div class="s-doc s-reeldoc k-proc"><div class="s-reel-face" id="s-proc-face" aria-hidden="true"></div>
+      <div><p class="s-eyebrow">The President of the committee</p><h2 id="s-proc-h">A point of procedure</h2><p id="s-proc-p"></p>
+        <div class="s-visit-opts" id="s-proc-opts"></div></div></div>
   </div>
   <div class="s-overlay" id="s-signed" hidden role="dialog" aria-modal="true" aria-labelledby="s-signed-h">
     <div class="s-doc s-reeldoc k-signed"><div class="s-reel-face" id="s-signed-face" aria-hidden="true"></div>

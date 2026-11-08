@@ -33,7 +33,10 @@
       return G.portrait(mood, "delegate " + x.face);
     }
     function offer(v) {
-      if (A.settings().talk === false) return;                      // switched off in Settings
+      if (v.question && v.phase === "chapter" && !seen["q:" + v.turn + ":" + v.chapter + ":" + v.question.id]) {   // the President's question first
+        seen["q:" + v.turn + ":" + v.chapter + ":" + v.question.id] = true; queue.unshift("q:" + v.question.id);
+      }
+      if (A.settings().talk === false) { next(); return; }          // conversations switched off in Settings
       (v.visits || []).forEach(function (x) { if (!seen[x.id]) { seen[x.id] = true; if (x.step > 1) queue.unshift(x.id); else queue.push(x.id); } });
       next();
     }
@@ -43,7 +46,9 @@
     function next() {
       if (showing || waiting || !queue.length) return;
       if (document.querySelector(".s-overlay:not([hidden])") || !$("s-walk").hidden) { setTimeout(next, 700); return; }
-      var v = c.view(), id = queue.shift(), x = (v.visits || []).filter(function (y) { return y.id === id; })[0];
+      var v = c.view(), id = queue.shift();
+      if (id.indexOf("q:") === 0) { if (v.question) procedure(v); else next(); return; }
+      var x = (v.visits || []).filter(function (y) { return y.id === id; })[0];
       if (!x) { next(); return; }
       showing = x.id;
       var doc = document.querySelector("#s-visit .s-doc");
@@ -53,7 +58,8 @@
       var them = portraitOf(x, mood); if (them) face.appendChild(them);
       if (x.kind === "press" && G && v.you) {                      // face to face, across the table
         face.appendChild(h("span", "s-vs", "and"));
-        var me = G.portrait("calm", "delegate you " + likeness(v.you.iso3)); me.setAttribute("aria-label", "You"); face.appendChild(me);
+        var mine = window.socSession.avatar && window.socSession.avatar();          // your own ambassador, if you built one
+        var me = G.portrait("calm", "delegate you " + (mine || likeness(v.you.iso3))); me.setAttribute("aria-label", "You"); face.appendChild(me);
       }
       if (x.feeling) face.appendChild(h("span", "s-feel f-" + x.feeling.toLowerCase(), x.feeling));
       var who = $("s-visit-who"); who.textContent = "";
@@ -160,6 +166,31 @@
         ul.appendChild(li);
       });
     }
+    // ---------- the President's procedure question (it has its own window since 8 Nov) ----------
+    function procedure(v) {
+      showing = "proc";
+      var face = $("s-proc-face"); face.textContent = ""; if (G) face.appendChild(G.portrait("thinking", "president"));
+      $("s-proc-h").textContent = "A point of procedure"; $("s-proc-p").textContent = v.question.ask;
+      var row = $("s-proc-opts"); row.textContent = "";
+      v.question.options.forEach(function (o, k) {
+        var b = h("button", "s-btn ghost", o); b.type = "button";
+        b.addEventListener("click", function () { c.move({ do: "answer", option: k }); });
+        row.appendChild(b);
+      });
+      c.open("s-proc"); c.restart(document.querySelector("#s-proc .s-doc"), "s-reel-in"); A.play("gavel");
+    }
+    function procAnswer(out) {
+      if (!out || out.right === undefined) return;
+      var face = $("s-proc-face"); face.textContent = ""; if (G) face.appendChild(G.portrait(out.right ? "delighted" : "concerned", "president"));
+      $("s-proc-h").textContent = out.right ? "Correct" : "Not quite";
+      $("s-proc-p").textContent = (out.right ? "" : "The answer: " + out.answer + ". ") + out.why;
+      var row = $("s-proc-opts"); row.textContent = "";
+      var ok = h("button", "s-btn", "Thank you, Mr President"); ok.type = "button";
+      ok.addEventListener("click", function () { c.close("s-proc"); showing = null; setTimeout(next, 400); });
+      row.appendChild(ok); A.play(out.right ? "chime" : "tick");
+    }
+    $("s-proc").addEventListener("keydown", function (e) { if (e.key === "Escape") e.stopPropagation(); });   // answer it, or it waits
+
     // ---------- talking with a delegation (Ben, 6 Nov): open with an argument, they react, you take it on ----------
     var talking = null;
     function talkFrame(iso, h2, text) {
@@ -223,6 +254,6 @@
       if (action.step === "open" && out && out.conv) { talkReply(out.conv); return; }
       if (out && out.talked) talkEnd(v, out);
     }
-    return { offer: offer, sheet: sheet, powers: powers, after: after, talk: talk, talkStep: talkStep, likeness: likeness, pin: pin };
+    return { offer: offer, procAnswer: procAnswer, sheet: sheet, powers: powers, after: after, talk: talk, talkStep: talkStep, likeness: likeness, pin: pin };
   };
 })();

@@ -1314,4 +1314,27 @@
 .s-ladder li.locked { opacity: .6; }
 .s-ladder li.gold { border-color: var(--gilt-md); box-shadow: inset 4px 0 0 var(--gilt); }
 .s-medal.m-gold { background: var(--gilt-lt); } .s-medal.m-silver { background: var(--line); } .s-medal.m-bronze { background: var(--land-ivory-dk); }
-
+/* ---------- your ambassador, insignia and approaches (8 Nov) ---------- */
+.s-subhead { margin: 18px 0 2px; font: 700 20px var(--serif); }
+.s-avatar-wrap { display: grid; grid-template-columns: 150px 1fr; gap: 18px; align-items: start; }
+.s-avatar-face .g-face { width: 150px; height: 175px; }
+.s-avatar-opts { display: grid; gap: 8px; }
+.s-avatar-opts .s-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.s-avatar-opts .s-row > span { min-width: 92px; font-size: 14px; color: var(--muted); }
+.s-avatar-opts button { min-width: 44px; min-height: 36px; padding: 4px 10px; font: 600 14px var(--book); border: 1px solid var(--gilt-md); background: var(--white); color: var(--ink); cursor: pointer; }
+.s-avatar-opts button:hover, .s-avatar-opts button:focus-visible { background: var(--gilt-hi); color: var(--ink); }
+.s-avatar-opts button[aria-pressed="true"] { background: var(--gilt-lt); color: var(--ink); box-shadow: inset 0 0 0 2px var(--gilt-dk); }
+.s-insignia { list-style: none; padding: 0; margin: 6px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.s-insignia li { display: grid; gap: 2px; padding: 8px 10px; border: 1px solid var(--line); background: var(--white); font-size: 13px; }
+.s-insignia li b { font: 700 14px var(--serif); }
+.s-insignia li.earned { border-color: var(--gilt-md); box-shadow: inset 4px 0 0 var(--gilt); }
+.s-insignia li:not(.earned) { color: var(--muted); }
+/* ---------- a move that can't happen: red, under the banner (8 Nov); the President's procedure window ---------- */
+.s-alert { position: absolute; z-index: 60; left: 50%; top: 92px; transform: translateX(-50%); max-width: min(760px, 80%); padding: 10px 22px;
+  background: var(--stamp); color: var(--white); border: 1px solid var(--maroon-dk); border-radius: 2px; box-shadow: 0 10px 26px rgb(0 0 0 / 50%);
+  font: 700 17px/1.35 var(--book); text-align: center; }
+.s-alert[hidden] { display: none; }
+.s-alert-in { animation: s-alert-in .35s cubic-bezier(.3, 1.4, .5, 1) both; }
+@keyframes s-alert-in { from { opacity: 0; transform: translate(-50%, -14px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) { .s-alert-in { animation: none; } }
+#s-proc .s-doc { border-left: 6px solid var(--lacquer); }

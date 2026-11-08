@@ -24,6 +24,11 @@ def _calm(page):
     for _ in range(14):
         if page.is_visible("#s-walk"):
             page.click("#s-guide-skip" if page.is_visible("#s-guide-skip") else "#s-guide-next")
+        elif page.is_visible("#s-proc"):                                     # the President's procedure question: answer, then thank him
+            page.locator("#s-proc-opts button").first.click()
+            page.wait_for_timeout(500)
+            if page.is_visible("#s-proc"):
+                page.locator("#s-proc-opts button").last.click()
         elif page.is_visible("#s-visit"):                                    # a delegate's visit: the last (politest) answer
             page.locator("#s-visit-opts button:not([disabled])").last.click()
         elif page.is_visible("#s-reel"):

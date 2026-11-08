@@ -42,7 +42,10 @@ see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun
   Bank figures; you trade at the deal table (funding, trade terms, candidacies, clauses for votes, sponsorship,
   Influence or intelligence), and your capital's confidence answers by telegram: lose it and you are recalled. Lobbying is a pitch of two arguments matched to each delegation; deals are haggled in rounds; rivals can
   be won over with a compromise. Systems unlock stage by stage, and each turn's news arrives as one paced reel. The Chief of Protocol walks new players through the
-  whole session first, and speaks up at key moments.
+  whole session first, and speaks up at key moments. Since Ben's playtests (D-102), delegates come to talk and remember you, talking is a
+  conversation, Respect and the capital are one Standing, and the look is mahogany and brass. Scenarios unlock in order
+  (gold on Standard or Hard), and "Your record" (`/session/profile`) shows medals by scenario, country and path. You
+  build your ambassador, earn insignia, and choose an approach (a trade-off) before each game.
 - **People:** one student list with year levels, saved groups (for example "Debating Jr BGO", ticked in one go; D-085),
   teacher access (which teachers see whom), staff, student pathways and milestones.
 - **Speech coach (D-100):** beside every speech box, and hideable. It has a time dial against the target, word and sentence counts, a reading level, checks for repeated words, fillers and long sentences, and persuasive techniques ticked as they're used. It can mark these in the writing, adds Model UN and debate phrases at the cursor, and reads the speech aloud in the laptop's own voice. Teachers see it read-only.

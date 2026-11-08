@@ -23,6 +23,9 @@
     if (!m) return;
     errUntil = Date.now() + 7000;
     m.className = "p-msg err"; m.textContent = "That didn't work: " + t;
+    var al = $("s-alert");                                          // and in red, dropping from the banner (Ben, 8 Nov)
+    if (al) { al.textContent = t; al.hidden = false; al.classList.remove("s-alert-in"); void al.offsetWidth; al.classList.add("s-alert-in");
+      clearTimeout(sayError.t); sayError.t = setTimeout(function () { al.hidden = true; }, 5000); }
   }
   function ticker(log) {
     var m = $("p-msg"); if (!m || Date.now() < errUntil || !log || !log.length) return;
@@ -175,7 +178,8 @@
     if (tipBox) { tipBox.checked = A.settings().tips !== false; tipBox.addEventListener("change", function () { A.set("tips", tipBox.checked); }); }
     $("s-begin").addEventListener("click", function () {
       var b = $("s-begin"); b.disabled = true; say("Taking your seat…");
-      api({ do: "new", pack: choice.pack, iso3: choice.iso3, length: choice.length, difficulty: choice.difficulty, path: choice.path }).then(function (r) {
+      api({ do: "new", pack: choice.pack, iso3: choice.iso3, length: choice.length, difficulty: choice.difficulty, path: choice.path,
+            approach: choice.approach || "diplomat" }).then(function (r) {
         A.play("gavel");
         if (r.state) {
           var list = slots();
@@ -569,7 +573,7 @@
       $("s-where").textContent = v.phase === "done" ? "Finished" : v.phase === "summit" ? "The Summit" :
         v.chapter_name + " · turn " + v.turn + " of " + v.turns + (v.stage ? " · " + (v.stage.made ? "breakthrough made" : v.stage.turns_left + " left") : "");
       stageBar(v, prev);
-      $("s-you").textContent = "You are " + v.you.name + " · aiming for " + v.path.name + (v.reputation ? " · known as " + v.reputation.replace(/^known to /, "someone known to ") : "");
+      $("s-you").textContent = "You are " + v.you.name + " · aiming for " + v.path.name + (v.approach && v.approach.code !== "diplomat" ? " · " + v.approach.name : "") + (v.reputation ? " · known as " + v.reputation.replace(/^known to /, "someone known to ") : "");
       meter("m-influence", v.influence); meter("m-respect", v.respect);
       $("m-respect").classList.toggle("low", v.respect <= 2);
       var ap = $("s-ap"); ap.textContent = "";
@@ -588,11 +592,7 @@
         if (ev.hypothetical) box.appendChild(h("span", "s-hypo", "Hypothetical"));
         box.appendChild(h("p", "s-goal", ev.title));
         if (ev.body) box.appendChild(h("p", "", ev.body));
-        if (v.question) {
-          var row = h("div", "s-row");
-          v.question.options.forEach(function (o, k) { row.appendChild(btn(o, "s-btn ghost small", function () { move({ do: "answer", option: k }); })); });
-          box.appendChild(row);
-        } else if (ev.teaches) box.appendChild(h("p", "s-small", ev.teaches));
+        if (ev.teaches && !v.question) box.appendChild(h("p", "s-small", ev.teaches));
         if (!prev || prev.turn !== v.turn || prev.chapter !== v.chapter) A.play("news");
       }
       var cr = v.phase === "chapter" && v.crisis && v.crisis.chapter === v.chapter ? v.crisis : null, cb = $("c-crisis-body");
@@ -642,6 +642,7 @@
       if (out && out.file) showFile(out.file);
       if (action && action.do === "visit") DLG.after(v, out);
       if (action && action.do === "talk") DLG.talkStep(v, out, action);
+      if (action && action.do === "answer") DLG.procAnswer(out);
       if (out && out.signed) signedCard(v, out.signed);
       if (action && (action.do === "deal" || action.do === "compromise")) TALK.answer(v, out || {}, action);
       else if (TALK.isOpen()) TALK.render();

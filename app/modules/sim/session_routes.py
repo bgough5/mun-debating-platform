@@ -48,11 +48,14 @@ def session_title(request: Request):
 @router.get("/session/new")
 def session_new(request: Request):
     cards, me = S.scenario_cards(), _student_id(request)
-    if me:                                                   # a signed-in student's scenarios open in order (8 Nov)
+    approaches = [{"code": c, "name": a["name"], "what": a["what"], "needs": a["needs"], "locked": False} for c, a in K.APPROACHES.items()]
+    if me:                                                   # a signed-in student's scenarios and approaches open with medals (8 Nov)
         with request.app.state.db.read() as conn:
-            locks = {x["code"]: x for x in S.student_profile(conn, me)["scenarios"]}
+            prof = S.student_profile(conn, me)
+        locks = {x["code"]: x for x in prof["scenarios"]}
         cards = [{**c, "locked": locks[c["code"]]["locked"], "needs": locks[c["code"]]["needs"]} for c in cards]
-    return render(request, "sim/session_new.html", {"title": "New session", "scenarios": cards, **_common(request)})
+        approaches = prof["approaches"]
+    return render(request, "sim/session_new.html", {"title": "New session", "scenarios": cards, "approaches": approaches, **_common(request)})
 
 
 @router.get("/session/profile")
@@ -62,7 +65,8 @@ def session_profile(request: Request):
     if me:
         with request.app.state.db.read() as conn:
             prof = S.student_profile(conn, me)
-    return render(request, "sim/session_profile.html", {"title": "Your record", "profile": prof, "cards": S.scenario_cards(), **_common(request)})
+    return render(request, "sim/session_profile.html", {"title": "Your record", "profile": prof, "cards": S.scenario_cards(),
+                                                        "approaches": K.APPROACHES, "insignia": K.INSIGNIA, **_common(request)})
 
 
 @router.get("/session/seats/{code}")
@@ -124,7 +128,8 @@ def _new(scn, payload: dict) -> dict:
 
 def _start(scn, iso: str, payload: dict) -> dict:
     return E.new_game(scn, iso, str(payload.get("length") or "standard"), str(payload.get("difficulty") or "standard"),
-                      str(payload.get("path") or "mandate"), seed=E.random.SystemRandom().randrange(1, 2 ** 31))
+                      str(payload.get("path") or "mandate"), seed=E.random.SystemRandom().randrange(1, 2 ** 31),
+                      approach=str(payload.get("approach") or "diplomat"))
 
 
 @router.post("/session/api")
@@ -139,9 +144,13 @@ def session_api(request: Request, payload: dict = Body(...)):
         code = str(payload.get("pack") or "")
         if me:
             with db.read() as conn:
-                rung = next((x for x in S.student_profile(conn, me)["scenarios"] if x["code"] == code), None)
+                prof = S.student_profile(conn, me)
+            rung = next((x for x in prof["scenarios"] if x["code"] == code), None)
             if rung and rung["locked"]:
                 raise UserError(f"That scenario opens when you win gold on Standard or Hard in {rung['needs']}.", 403)
+            way = next((x for x in prof["approaches"] if x["code"] == (payload.get("approach") or "diplomat")), None)
+            if way and way["locked"]:
+                raise UserError(f"{way['name']} opens with: {way['needs'].lower()}.", 403)
         with db.read() as conn:
             with S.LOCK:
                 scn = S.scenario(db, conn, code)

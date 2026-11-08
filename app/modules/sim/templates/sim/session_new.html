@@ -67,6 +67,14 @@
         <button type="button" class="s-pick" data-pick="path" data-value="{{ code }}" data-label="{{ p.name }}" aria-pressed="{{ 'true' if code == 'mandate' else 'false' }}">
           <h3>{{ p.name }}</h3><span class="s-tags"><span class="s-tag">{{ p['for'] }}</span></span><p>{{ p.what }}</p></button>{% endfor %}
       </div>
+      <h3 class="s-subhead" id="h-approach">Your approach</h3>
+      <p class="s-sub">Each is a trade-off, never simply better. Medals open more of them.</p>
+      <div class="s-picks s-approaches" aria-labelledby="h-approach">
+        {% for a in approaches %}
+        <button type="button" class="s-pick{% if a.locked %} locked{% endif %}" data-pick="approach" data-value="{{ a.code }}" data-label="{{ a.name }}"
+                data-needs="{{ a.needs or '' }}" aria-pressed="{{ 'true' if a.code == 'diplomat' else 'false' }}"{% if a.locked %} disabled{% endif %}>
+          <h3>{{ a.name }}</h3>{% if a.locked %}<span class="s-lock">Locked: {{ a.needs }}</span>{% endif %}<p>{{ a.what }}</p></button>{% endfor %}
+      </div>
       <div class="s-nav"><button type="button" class="s-btn ghost" data-back>Back</button><button type="button" class="s-btn" data-next>Next: begin</button></div>
     </section>
 
@@ -80,6 +88,7 @@
           <dt>Length</dt><dd data-show="length">Standard</dd>
           <dt>Rivals</dt><dd data-show="difficulty">Standard</dd>
           <dt>Your aim</dt><dd data-show="path">Mandate</dd>
+          <dt>Your approach</dt><dd data-show="approach">Career diplomat</dd>
         </dl>
         <label class="s-check"><input type="checkbox" id="s-tips-on" checked> The Chief of Protocol walks me through the session first, and advises at key moments</label>
         <p class="s-sub">Your secret instructions from your capital are revealed when the session opens.

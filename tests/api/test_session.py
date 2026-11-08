@@ -227,10 +227,17 @@ def test_scenarios_open_in_order_and_the_record(app):
     assert p["countries"][0] == {"iso3": "NZL", "name": "New Zealand", "best": 3, "medal": "Gold"}
     assert {x["code"]: x["best"] for x in p["paths"]}["consensus"] == 3 and p["medals"]["Gold"] == 1
     assert not any(x["locked"] for x in S.profile(cards, [], everything_open=True)["scenarios"])   # staff
+    fresh = {x["code"]: x["locked"] for x in S.profile(cards, [])["approaches"]}
+    assert fresh == {"diplomat": False, "linguist": True, "veteran": True, "envoy": True}       # approaches open with medals
+    assert {x["code"]: x["locked"] for x in p["approaches"]} == {"diplomat": False, "linguist": False, "veteran": False, "envoy": True}
+    ins = {x["code"]: x["earned"] for x in p["insignia"]}
+    assert ins["first_pass"] and ins["gold_std"] and not ins["hard_won"] and not ins["globetrotter"]
     st = db_one(app, "SELECT id FROM student WHERE active = 1 ORDER BY id LIMIT 1")["id"]
     a = join_as(app, st)
     r = api(a, {"do": "new", "pack": second, "iso3": "NZL", "length": "quick", "difficulty": "standard", "path": "mandate"})
     assert r.status_code == 403 and "gold" in r.json()["error"]                    # locked until gold in the first
+    r = api(a, {"do": "new", "pack": first, "iso3": "NZL", "length": "quick", "difficulty": "standard", "path": "mandate", "approach": "veteran"})
+    assert r.status_code == 403 and "Veteran" in r.json()["error"]                 # an approach opens with medals too
     page = a.get("/session/new").text
     assert "Locked: win gold on Standard or Hard in" in page
     rec = a.get("/session/profile")

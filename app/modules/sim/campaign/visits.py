@@ -158,7 +158,8 @@ def turn_start(scn, g):
             g["visits"].append(_make(scn, g, pick[0], pick[1], rng))
     rng.shuffle(g["visits"])                                   # who gets through: your capital and the caucus first, then
     g["visits"].sort(key=lambda x: TIER.get(x["kind"], 2))     # rivals pressing, offers and promises, then the rest
-    g["visits"] = g["visits"][:max(1 if rng.random() < 0.35 else MAX_VISITORS, sum(TIER.get(x["kind"]) == 0 for x in g["visits"]))]
+    most = MAX_VISITORS + (1 if g.get("approach") == "envoy" else 0)
+    g["visits"] = g["visits"][:max(1 if rng.random() < 0.35 else most, sum(TIER.get(x["kind"]) == 0 for x in g["visits"]))]
     shown = {x.get("offer") for x in g["visits"]}
     g["offers"] = [o for o in g.get("offers", []) if o["id"] in shown]
     g["visitors"] = len(g["visits"])
@@ -167,7 +168,7 @@ def turn_start(scn, g):
 def after_move(scn, g, action):
     """Now and then, a delegate approaches right after one of your moves (often the one you just worked on)."""
     rng = _rng(g, "move")
-    if rng.random() >= 0.22 or g.get("visitors", 0) >= MAX_VISITORS or (g["chapter"] == 1 and g["turn"] == 1):
+    if rng.random() >= 0.22 or g.get("visitors", 0) >= MAX_VISITORS + (1 if g.get("approach") == "envoy" else 0) or (g["chapter"] == 1 and g["turn"] == 1):
         return None
     pick = _pick(scn, g, rng, near=action.get("iso3"))
     if not pick:

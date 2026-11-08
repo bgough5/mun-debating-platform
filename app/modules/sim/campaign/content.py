@@ -94,6 +94,30 @@ STAFF_SKILLS = {"analyst": {2: ["read_room"], 3: ["rival_intel"]},
                 "regional": {2: ["back_channel"], 3: ["friendly"]},
                 "legal": {2: ["point_of_order"], 3: ["division", "merge"]}}
 
+# Your approach (8 Nov 2026): chosen before each game. Each is a trade-off, never simply better, and medals unlock them.
+APPROACHES = {
+    "diplomat": {"name": "Career diplomat", "what": "No strengths and no weaknesses: the classic ambassador.", "unlock": None,
+                 "needs": None},
+    "linguist": {"name": "The Linguist", "what": "Talks cost 1 Influence less. Opening a deal costs 1 Influence more.",
+                 "unlock": "silver", "needs": "Silver or better on Standard or Hard"},
+    "veteran": {"name": "The Veteran", "what": "You start with a senior adviser. One action fewer in each of your first three turns.",
+                "unlock": "gold", "needs": "Gold on Standard or Hard"},
+    "envoy": {"name": "The Envoy", "what": "Up to three visitors a turn and more offers at your door. Rivals gain 1 Influence more each turn.",
+              "unlock": "three_golds", "needs": "Gold in three scenarios on Standard or Hard"},
+}
+
+# Insignia (8 Nov 2026): earned in finished games, shown on your ambassador and in your record. Cosmetic only.
+INSIGNIA = {
+    "first_pass": {"name": "First resolution", "what": "A resolution of yours adopted."},
+    "gold_std": {"name": "Gold standard", "what": "Gold on Standard or Hard."},
+    "hard_won": {"name": "Hard-won", "what": "Gold on Hard."},
+    "council": {"name": "The Council", "what": "A resolution adopted in a Security Council scenario."},
+    "honour": {"name": "Word of honour", "what": "Kept at least two promises and broke none, in one session."},
+    "half_loaf": {"name": "Half a loaf", "what": "Backed a text that wasn't everything you wanted, and it carried your main aim."},
+    "all_paths": {"name": "Four paths", "what": "Gold on every path (in any sessions)."},
+    "globetrotter": {"name": "Globetrotter", "what": "Finished sessions as five different countries."},
+}
+
 PATHS = {
     "mandate": {"name": "Mandate", "for": "The hardliner",
                 "what": "Your secret instructions are in the final text, and it passes."},

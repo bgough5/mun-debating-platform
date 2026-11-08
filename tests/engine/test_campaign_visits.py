@@ -161,3 +161,20 @@ def test_delegates_remember_your_talks(scn):
     other = next(k for k in T.ARGS if k != best)
     g3, out = E.apply(scn, g1, {"do": "talk", "step": "open", "iso3": iso, "arg": other})
     assert "forgotten" in out["conv"]["reply"] or "Last time" in out["conv"]["reply"]
+
+
+def test_approaches_are_trade_offs(scn):
+    """Ben, 8 Nov: an approach chosen before the game; each a trade-off, never simply better."""
+    from app.modules.sim.campaign import content as K
+    base = E.new_game(scn, scn.isos[0], seed=12)
+    iso = next(i for i in scn.isos if i not in E._others(base) and i != base["iso3"])
+    ling = E.new_game(scn, scn.isos[0], seed=12, approach="linguist")
+    assert E.lobby_cost(scn, ling, iso) == max(0, E.lobby_cost(scn, base, iso) - 1)          # talks cost less
+    vet = E.new_game(scn, scn.isos[0], seed=12, approach="veteran")
+    assert vet["staff"][0]["stars"] == 2 and K.STAFF_SKILLS[vet["staff"][0]["kind"]][2][0] in vet["skills"]
+    assert sum(x["n"] for x in E.ap_sources(scn, vet)) == sum(x["n"] for x in E.ap_sources(scn, base)) - 1   # one fewer action, early on
+    vet["turn"] = 4
+    assert not any(x["code"] == "approach" for x in E.ap_sources(scn, vet))
+    with pytest.raises(E.GameError):
+        E.new_game(scn, scn.isos[0], seed=12, approach="superhero")
+    assert set(K.APPROACHES) == {"diplomat", "linguist", "veteran", "envoy"}

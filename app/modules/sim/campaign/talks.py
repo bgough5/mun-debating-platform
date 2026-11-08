@@ -283,7 +283,7 @@ def a_deal(scn, g, a):
             raise E.GameError("Part of that isn't on the table any more.")
         if "yes" in get and "abstain" in get:
             get.remove("abstain")
-        E._spend(g, E.R["deal_ap"], 0)
+        E._spend(g, E.R["deal_ap"], 1 if g.get("approach") == "linguist" else 0)
         g["deal_tick"] = g.get("tick")
         rival = _courted(scn, g, iso)
         greed = random.Random(f"{g['seed']}:greed:{iso}:{g['chapter']}").uniform(0.8, 1.8) + (0.6 if rival else 0.0)
