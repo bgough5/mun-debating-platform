@@ -79,7 +79,7 @@ def main() -> None:
                         fin = (g.get("summit") or {}).get("final") or {"passed": False, "tags": []}
                         rivals_won = sum(1 for rv in g["rivals"] if fin["passed"] and rv["want"] in fin["tags"] and rv["block"] not in fin["tags"])
                         results.append({"pack": code, "difficulty": diff, "style": style, "iso3": iso, "path": g["path"], "approach": way,
-                                        "grade": g["result"]["grade"], "paths": g["result"]["paths"], "passed": g["result"]["passed"],
+                                        "grade": g["result"]["grade"], "paths": g["result"]["paths"], "passed": g["result"]["passed"], "points": g["result"].get("points"),
                                         "stats": g["stats"], "minutes": round(secs / 60, 1), "objectives": g["objectives"],
                                         "rivals": len(g["rivals"]), "rivals_won": rivals_won,
                                         "rival_moves": sum(1 for x in g["log"] if x["kind"] == "rival"),

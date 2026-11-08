@@ -629,6 +629,12 @@ def settle_bargains(scn, g) -> None:
         b.setdefault("by", g["chapter"])
 
 
+def medal(path: str, points: int) -> int:
+    """A path's medal from its points and the measured bands (bronze, silver, gold)."""
+    b, sv, gd = R["bands"][path]
+    return 3 if points >= gd else 2 if points >= sv else 1 if points >= b else 0
+
+
 def diligence(scn, g) -> tuple[float, float]:
     """The Ambassador path: the share of your actions you used, and the share of the room you engaged."""
     given = g.get("ap_given", 0)
@@ -1540,8 +1546,23 @@ def score(scn: Scenario, g: dict) -> dict:
     ambassador = 3 if passed and used >= 0.9 and engaged >= 0.6 else 2 if used >= 0.75 and engaged >= 0.4 else \
         1 if used >= 0.5 or engaged >= 0.25 else 0
     paths = {"mandate": mandate, "consensus": consensus, "architect": architect, "kingmaker": kingmaker, "ambassador": ambassador}
-    best = max(paths, key=lambda p: (paths[p], p == g["path"]))           # every game is graded on all four (9 Nov)
-    return {"passed": passed, "statement": bool(st.get("adopted")), "paths": paths, "chosen": best, "grade": paths[best],
+    # Points out of 100 on each path, from objective numbers only (Ben, 9 Nov); medals come from bands measured over
+    # bot games (R["bands"]: bronze at the median, silver one standard deviation above, gold two above).
+    stated = bool(st.get("adopted")) and not passed
+    carried = 1.0 if passed else 0.75 if stated else 0.5
+    in_text = tags if passed or not stated else st["tags"]
+    got_t = [must in in_text, also in in_text, red not in in_text]
+    points = {
+        "mandate": round(100 * (0.40 * got_t[0] + 0.25 * got_t[1] + 0.25 * got_t[2] + 0.10 * passed) * carried),
+        "consensus": round((60 * share + 25 * min(mine_regions, 3) / 3 + 15 * got[0]) * carried),
+        "architect": round((70 * own + 10 * min(own_kept, 3)) * carried),
+        "kingmaker": round(60 * acc * min(1.0, len(judged) / need) + 2 * g["respect"] + (20 if broken == 0 else 10 if broken == 1 else 0)),
+        "ambassador": round((50 * used + 50 * engaged) * (1.0 if passed else 0.8)),
+    }
+    if R.get("bands"):
+        paths = {p: medal(p, n) for p, n in points.items()}
+    best = max(paths, key=lambda p: (paths[p], points[p], p == g["path"]))           # every game is graded on all four (9 Nov)
+    return {"passed": passed, "statement": bool(st.get("adopted")), "paths": paths, "chosen": best, "grade": paths[best], "points": points,
             "share_yes": round(share, 3), "own_text": round(own, 3), "whip_right": right, "whip_judged": len(judged),
             "broken_promises": broken, "kept_promises": sum(1 for p in g["promises"] if p["kept"] is True),
             "endorsements": mine_regions, "respect": g["respect"], "expertise": g["expertise"], "golden": g.get("golden"),
