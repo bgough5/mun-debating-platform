@@ -265,7 +265,7 @@ def test_a_quick_session_reaches_the_summit_and_ends_with_medals(browser, live):
     assert any(x.startswith("Position statements") for x in steps) and any(x.startswith("Caucus") for x in steps)
     assert any(x.startswith("The final vote") for x in steps) and page.locator("#s-verdict").count() == 1
     page.wait_for_selector("#s-result:not([hidden])", timeout=15000)
-    assert page.locator("#s-result .s-medal").count() == 4                     # the four paths as medals (phase 6)
+    assert page.locator("#s-result .s-medal").count() == 5                     # the four paths as medals (phase 6)
     assert any(m in page.inner_text("#s-result-h") for m in ("Gold", "Silver", "Bronze", "No medal"))
     assert not axe(page, "session_result")
     page.click("#s-result [data-close]")
@@ -304,7 +304,7 @@ def test_the_almanac_and_the_debrief_in_the_browser(browser, live):
     page.wait_for_selector("#s-result:not([hidden]) .s-plaque", timeout=15000)
     assert page.is_hidden("#s-advice") and page.locator("#s-result .s-chief-says svg").count() == 1   # the Chief's verdict, nothing over the dossier
     assert page.evaluate("document.querySelector('#s-result .s-final').scrollTop") == 0
-    assert page.locator("#s-result .s-medal").count() == 4 and page.locator("#s-result .s-deed").count() >= 1
+    assert page.locator("#s-result .s-medal").count() == 5 and page.locator("#s-result .s-deed").count() >= 1
     assert "What to try next time" in page.inner_text("#s-result")
     page.wait_for_timeout(2500)                                               # let the deeds and medals land
     assert not axe(page, "session_debrief")

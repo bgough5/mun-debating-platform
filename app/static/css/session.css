@@ -1375,3 +1375,12 @@
 .s-myamend, .s-queue { margin: 10px 0; }
 .s-myamend summary, .s-queue summary { cursor: pointer; font-weight: 700; color: var(--maroon); }
 .s-myamend .s-btn { display: block; width: 100%; margin: 6px 0; text-align: left; text-transform: none; letter-spacing: 0; font-family: var(--book); }
+/* ---------- ways to win: five paths, always live (9 Nov) ---------- */
+.b-card .s-ways { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 4px; }
+.b-card .s-ways li { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; font-size: 15px; }
+.s-way-dots { display: inline-flex; gap: 3px; }
+.s-way-dots i { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--gilt-dk); background: var(--white); }
+.s-way-dots i.on { background: var(--gilt); }
+.s-ways li.lv3 .s-way-dots i.on { background: var(--enamel-yes); }
+.s-way-word { font-size: 13px; color: var(--muted); min-width: 120px; }
+.s-ways li.lv3 .s-way-word { color: var(--enamel-yes-dk); font-weight: 700; }

@@ -103,7 +103,7 @@ def test_a_guest_plays_a_quick_session_to_the_end(app):
     assert r["view"]["summit"]["step"] == "final"
     r = move({"do": "final", "vote": "yes"})
     assert r["view"]["phase"] == "done" and r["view"]["result"]["grade"] in (0, 1, 2, 3)
-    assert set(r["view"]["result"]["paths"]) == {"mandate", "consensus", "architect", "kingmaker"}
+    assert set(r["view"]["result"]["paths"]) == {"mandate", "consensus", "architect", "kingmaker", "ambassador"}
     after = api(c, {"do": "move", "state": st, "sig": sig, "action": {"do": "end_turn"}})
     assert after.status_code == 400 and "over" in after.json()["error"]
 
@@ -136,7 +136,7 @@ def test_the_almanac_the_debrief_and_teachers_results(app, coord):
     r = api(a, {**body, "action": {"do": "proceed"}}).json()
     r = api(a, {**body, "action": {"do": "final", "vote": "yes"}}).json()
     d = r["view"]["debrief"]
-    assert d and {t["path"] for t in d["tips"]} == {"mandate", "consensus", "architect", "kingmaker"}
+    assert d and {t["path"] for t in d["tips"]} == {"mandate", "consensus", "architect", "kingmaker", "ambassador"}
     if r["view"]["summit"]["final"]["tags"]:
         row = d["countries"][0]
         assert {"model", "yours", "rivals", "group", "mood", "vote", "turned"} <= set(row)

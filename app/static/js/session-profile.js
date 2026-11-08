@@ -61,7 +61,7 @@
                council: fin.some(function (r) { return r.result.passed && types[r.pack] === "Security Council"; }),
                honour: fin.some(function (r) { return (r.result.kept_promises || 0) >= 2 && !r.result.broken_promises; }),
                half_loaf: fin.some(function (r) { return r.result.golden === "kept"; }),
-               all_paths: ["mandate", "consensus", "architect", "kingmaker"].every(function (k) { return (bpa[k] || 0) >= 3; }),
+               all_paths: ["mandate", "consensus", "architect", "kingmaker", "ambassador"].every(function (k) { return (bpa[k] || 0) >= 3; }),
                globetrotter: Object.keys(bi).length >= 5 },
              countries: Object.keys(bi).map(function (k) { return { iso3: k, name: names[k], best: bi[k], medal: GRADES[bi[k]] }; })
                .sort(function (a, b) { return b.best - a.best || (a.name < b.name ? -1 : 1); }) };

@@ -113,7 +113,8 @@ PLAN = {"easy": {"noise": 0.4, "react": False, "poach": False},       # how riva
         "hard": {"noise": 0.0, "react": True, "poach": True}}        # hard ones also answer your last turn
 PROMOTE = {2: 2, 3: 5}                     # experience for a second and a third star (faster since 8 Nov)
 R["talk_fade"] = 0.93                       # goodwill from talking fades a little each turn; deals, promises and commitments hold
-MIN_STAGE_TURNS = 3                         # a stage lasts at least three turns, however early the breakthrough (8 Nov)
+MIN_STAGE_TURNS = 2                         # no breakthrough on a stage's first turn; otherwise move on when you're ready (9 Nov)
+ENGAGE = ("talk", "lobby", "deal", "promise", "sign", "abstain", "compromise", "read")   # moves that engage a delegation
 ACCURACY = {1: 0.7, 2: 0.85, 3: 1.0}       # how often a report is right, by stars
 
 
@@ -550,6 +551,7 @@ def _start_turn(scn: Scenario, g: dict) -> None:
     g["mods"] = {}
     eff = ev["effect"]
     g["ap"] = sum(x["n"] for x in ap_sources(scn, g)) + eff.get("ap", 0)
+    g["ap_given"] = g.get("ap_given", 0) + g["ap"]
     g["overtime"] = 0
     seen = g.setdefault("ap_seen", {})                      # average actions per turn in each stage, for the balance harness
     k = str(g["chapter"])
@@ -625,6 +627,44 @@ def settle_bargains(scn, g) -> None:
             _betray(scn, g, b["iso3"], f"you promised the {REGIONS[b['region']]} a clause and never tabled it.")
     for b in g.get("bargains", []):
         b.setdefault("by", g["chapter"])
+
+
+def diligence(scn, g) -> tuple[float, float]:
+    """The Ambassador path: the share of your actions you used, and the share of the room you engaged."""
+    given = g.get("ap_given", 0)
+    used = 1 - g.get("ap_unused", 0) / given if given else 0.0
+    free = [i for i in scn.isos if i not in _others(g) and i != g["iso3"]]
+    engaged = len(set(g.get("engaged", [])) & set(free)) / len(free) if free else 0.0
+    return round(max(0.0, used), 3), round(engaged, 3)
+
+
+LEVELS = ["Out of reach", "Possible", "Promising", "On course for gold"]
+
+
+def path_progress(scn, g) -> list[dict]:
+    """All five paths are always live (Civ-style, 9 Nov). A rough reading of where each stands now, in words: the
+    vote as it stands, what's in the text, your whip sheet, your word and your legwork. Deliberately vague."""
+    proj = projection(scn, g)
+    tags = {t for c in g["draft"] for t in c["tags"]}
+    m = g["mandate"]
+    passing = proj["passed"]
+    share = proj["yes"] / max(1, len(scn.members))
+    mine = sum(1 for v in g["endorse"].values() if v == "you")
+    got = [m["must"] in tags, m.get("also") in tags, m["red"] not in tags]
+    mandate = 3 if passing and all(got) else 2 if got[0] and (got[1] or got[2]) else 1 if got[0] or got[2] else 0
+    consensus = 3 if passing and share >= 0.75 and mine >= 2 and got[0] else 2 if share >= 0.6 and (mine >= 1 or got[0]) else 1 if share >= 0.45 else 0
+    credit = [1.0 if c["author"] == "you" else 0.5 if "you" in c.get("amended_by", []) else 0.0 for c in g["draft"]]
+    own = sum(credit) / len(credit) if credit else 0.0
+    own_n = sum(1 for x in credit if x == 1.0)
+    architect = 3 if passing and own >= R["architect_gold"] and own_n >= 3 else 2 if own >= 0.4 and own_n >= 2 else 1 if own_n else 0
+    marks = len(g.get("whip", {}))
+    broken = sum(1 for p in g["promises"] if p["kept"] is False)
+    free = [i for i in scn.isos if i not in _others(g) and i != g["iso3"]]
+    kingmaker = 0 if broken > 1 else 3 if marks >= len(free) * 0.6 and not broken and g["respect"] >= 7 else 2 if marks >= 3 and g["respect"] >= 5 else 1 if marks else 0
+    used, engaged = diligence(scn, g)
+    ambassador = 3 if used >= 0.9 and engaged >= 0.6 else 2 if used >= 0.75 and engaged >= 0.4 else 1 if used >= 0.5 or engaged >= 0.25 else 0
+    level = {"mandate": mandate, "consensus": consensus, "architect": architect, "kingmaker": kingmaker, "ambassador": ambassador}
+    return [{"code": c, "name": K.PATHS[c]["name"], "level": level[c], "word": LEVELS[level[c]]} for c in K.PATHS]
 
 
 def fade_talk(g: dict) -> None:
@@ -710,6 +750,8 @@ def apply(scn: Scenario, game: dict, action: dict) -> tuple[dict, dict]:
     g["stats"][do] = g["stats"].get(do, 0) + 1
     if isinstance(action.get("iso3"), str) and do not in ("post", "end_turn"):
         g.setdefault("touched", []).append(action["iso3"])
+    if do in ENGAGE and isinstance(action.get("iso3"), str) and action["iso3"] not in g.setdefault("engaged", []):
+        g["engaged"].append(action["iso3"])
     if do not in ("end_turn", "advance") and _check_breakthrough(scn, g):
         out["breakthrough"] = True
     if g["phase"] == "chapter" and do not in ("end_turn", "advance", "stay", "visit", "mark", "whip", "post", "answer") and not g.get("conv"):
@@ -1079,6 +1121,7 @@ def a_abstain(scn, g, a):
 
 
 def a_end_turn(scn, g, a):
+    g["ap_unused"] = g.get("ap_unused", 0) + max(0, g.get("ap", 0))      # actions left on the table
     if g.get("conv"):
         T.a_talk(scn, g, {"step": "follow", "choice": "close"})   # a conversation left open ends politely
     if g.get("question"):
@@ -1493,7 +1536,10 @@ def score(scn: Scenario, g: dict) -> dict:
     broken = sum(1 for p in g["promises"] if p["kept"] is False)
     kingmaker = 0 if len(judged) < need else 3 if acc >= 0.8 and broken == 0 and g["respect"] >= 7 else \
         2 if acc >= 0.65 and broken <= 1 and g["respect"] >= 5 else 1 if acc >= 0.5 else 0
-    paths = {"mandate": mandate, "consensus": consensus, "architect": architect, "kingmaker": kingmaker}
+    used, engaged = diligence(scn, g)
+    ambassador = 3 if passed and used >= 0.9 and engaged >= 0.6 else 2 if used >= 0.75 and engaged >= 0.4 else \
+        1 if used >= 0.5 or engaged >= 0.25 else 0
+    paths = {"mandate": mandate, "consensus": consensus, "architect": architect, "kingmaker": kingmaker, "ambassador": ambassador}
     best = max(paths, key=lambda p: (paths[p], p == g["path"]))           # every game is graded on all four (9 Nov)
     return {"passed": passed, "statement": bool(st.get("adopted")), "paths": paths, "chosen": best, "grade": paths[best],
             "share_yes": round(share, 3), "own_text": round(own, 3), "whip_right": right, "whip_judged": len(judged),
@@ -1968,6 +2014,9 @@ def a_advance(scn, g, a):
     if str(g["chapter"]) not in g.get("breakthroughs", {}):
         raise GameError("Meet this stage's breakthrough first.")
     left = max(0, turns_now(g) - g["turn"])
+    skipped = left * sum(x["n"] for x in ap_sources(scn, g)) + max(0, g.get("ap", 0))
+    g["ap_given"] = g.get("ap_given", 0) + left * sum(x["n"] for x in ap_sources(scn, g))
+    g["ap_unused"] = g.get("ap_unused", 0) + skipped                        # moving on early: time you didn't spend on the job
     g["respect"] = min(R["respect_max"], g["respect"] + R["momentum_respect"])
     g["influence"] += R["momentum_influence"] * left
     g["momentum"] = g.get("momentum", 0) + left
@@ -2203,4 +2252,11 @@ def tips(scn: Scenario, g: dict) -> list[dict]:
     if r.get("respect", 0) < 7:
         k.append(f"build Standing ({r.get('respect', 0)} now; gold needs 7): answer procedure moments, keep promises, accept friendly amendments")
     out.append({"path": "kingmaker", "grade": paths.get("kingmaker", 0), "next": k or ["nothing: you read the room and kept your word"]})
+    used, engaged = diligence(scn, g)
+    am = []
+    if used < 0.9:
+        am.append(f"use your time: you left {round((1 - used) * 100)}% of your actions unspent (moving on early counts too)")
+    if engaged < 0.6:
+        am.append(f"talk to more of the room: you engaged {round(engaged * 100)}% of the delegations")
+    out.append({"path": "ambassador", "grade": paths.get("ambassador", 0), "next": am or ["nothing: you did the job you're paid for"]})
     return out

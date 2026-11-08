@@ -609,7 +609,15 @@
       [["in", "Get in: ", v.mandate.must.label], ["in", "Also get in: ", v.mandate.also.label], ["out", "Keep out: ", v.mandate.red.label]].forEach(function (x) {
         var li = h("li"); li.appendChild(h("span", x[0], x[1])); li.appendChild(document.createTextNode(x[2])); il.appendChild(li);
       });
-      $("c-aim").textContent = "You're graded on all four ways to win: " + v.paths.map(function (p) { return p.name; }).join(", ") + ". A gold on any of them is a gold.";
+      $("c-aim").textContent = "";
+      var ways = $("c-ways"); ways.textContent = "";                     // all five paths, always live (9 Nov)
+      $("c-paths").hidden = !v.progress;
+      (v.progress || []).forEach(function (p) {
+        var li = h("li", "lv" + p.level); li.appendChild(h("b", "", p.name));
+        var dots = h("span", "s-way-dots"); dots.setAttribute("aria-hidden", "true");
+        for (var k = 0; k < 3; k++) dots.appendChild(h("i", k < p.level ? "on" : ""));
+        li.appendChild(dots); li.appendChild(h("span", "s-way-word", p.word)); ways.appendChild(li);
+      });
       regions(v);
       tug(v, prev);
       DLG.sheet(v); DLG.powers(v);

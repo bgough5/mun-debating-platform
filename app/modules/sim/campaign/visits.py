@@ -194,6 +194,8 @@ def a_visit(scn, g, a):
         E._spend(g, opt.get("ap", 0), opt["cost"])
     g["visits"].remove(v)
     iso, name, c = v["iso3"], scn.member(v["iso3"]).name, opt["code"]
+    if not v.get("who") and iso != g["iso3"] and iso not in g.setdefault("engaged", []):
+        g["engaged"].append(iso)                                  # talking to a visitor engages them too
     out = {"said": c}
     nxt = _follow_up(scn, g, v, c)
     if nxt:                                                   # the conversation goes on: their reply, and your next answer
