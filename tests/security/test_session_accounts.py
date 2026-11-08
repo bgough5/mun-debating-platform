@@ -6,6 +6,7 @@ import json
 
 import pytest
 
+from app.db import SYSTEM
 from app.modules.sim import accounts as AC
 from tests.conftest import Client, db_one, new_client
 from tests.api.helpers import join_as
@@ -16,7 +17,7 @@ def api(c, body):
 
 
 def _open(app):
-    app.state.settings.set("session_accounts", {"open": True, "approval_ref": "Principal, email of 9 Nov 2026"})
+    app.state.settings.set("session_accounts", {"open": True})
 
 
 def _guest(app) -> Client:
@@ -40,15 +41,15 @@ def _fresh_throttles():
     yield
 
 
-def test_sign_up_is_off_until_the_school_approves_it(app):
+def test_sign_up_is_on_unless_the_coordinator_switches_it_off(app):
+    """Ben, 9 Nov: new accounts don't need the school's approval; the coordinator can switch sign-up off."""
+    assert AC.open_signup(app.state.settings)                                      # on by default
+    app.state.settings.set("session_accounts", {"open": False})
     c = _guest(app)
     r = c.post("/session/account/create", {"username": "player_one", "password": "a quiet lighthouse", "password2": "a quiet lighthouse"},
                follow_redirects=False)
     assert r.status_code == 403 and db_one(app, "SELECT COUNT(*) AS n FROM player_account")["n"] == 0
-    assert "switched off until the school approves" in c.get("/session/account").text
-    app.state.settings.set("session_accounts", {"open": True, "approval_ref": ""})     # on, but no approval recorded
-    assert not AC.open_signup(app.state.settings)
-
+    assert "switched off right now" in c.get("/session/account").text
 
 def test_passwords_are_hashed_and_never_logged(app):
     _make(app, "ledger_test", "spring tide over harbour")
@@ -141,8 +142,17 @@ def test_the_coordinators_tools_need_the_coordinator(app, coord):
     assert g.get("/session/accounts", follow_redirects=False).status_code in (401, 303, 403)
     assert g.post(f"/session/accounts/{aid}/delete", follow_redirects=False).status_code in (401, 303, 403)
     page = coord.get("/session/accounts").text
-    assert "reset_me" in page and "Open sign-up" in page
-    r = coord.post("/session/accounts/settings", {"open": "1", "approval_ref": ""}, follow_redirects=False)
-    assert r.status_code == 400                                                     # no approval, no open sign-up
+    assert "reset_me" in page and "signed in now" in page and "New accounts" in page
+    coord.post("/session/accounts/settings", {})
+    assert not AC.open_signup(app.state.settings)                                   # the coordinator can switch it off
+    coord.post("/session/accounts/settings", {"open": "1"})
+    assert AC.open_signup(app.state.settings)
+    with app.state.db.write(SYSTEM) as w:                                          # an account nobody has used for over a year
+        w.conn.execute("UPDATE player_account SET last_login_at = '2024-01-01T00:00:00+00:00' WHERE id = ?", (aid,))
+    assert "not used for a year" in coord.get("/session/accounts").text
+    coord.post("/session/accounts/erase-stale")
+    assert db_one(app, "SELECT COUNT(*) AS n FROM player_account WHERE id = ?", (aid,))["n"] == 0
+    _make(app, "reset_me", "paper boats drift")
+    aid = db_one(app, "SELECT id FROM player_account WHERE username_key = 'reset_me'")["id"]
     reset = coord.post(f"/session/accounts/{aid}/reset").text
     assert "Temporary password" in reset

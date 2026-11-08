@@ -111,7 +111,8 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
   - **The balance harness** reports each bot's own path from `r["paths"][r["path"]]`.
 - The Session, D-103 (9 Nov):
   - **Player accounts** are `app/modules/sim/accounts.py`, with the tables `player_account`, `player_session` and `account_save` (migration 0021).
-  - **Open sign-up** needs `settings["session_accounts"]` to have `open` and an `approval_ref`; the Coordinator sets it at `/session/accounts`.
+  - **Sign-up** is on unless `settings["session_accounts"]["open"]` is false (Ben: no school approval needed).
+  - **At `/session/accounts`** the Coordinator sees every account (signed in now, last sign-in, games) and can erase one, erase every account unused for a year, or reset a password.
   - **Owners:** session routes resolve an owner, `("student", id)` or `("account", id)`, through `_owner`. Store functions take an owner (`TABLES`). A student session comes before an account.
   - **Secrets:** never log `pass_hash`; it is set by a direct UPDATE. Tests are in `tests/security/test_session_accounts.py`.
   - **Ambassador path:** `engine.diligence` uses `ap_given`, `ap_unused` and `engaged`. `path_progress` gives the vague "Ways to win" reading.

@@ -65,7 +65,7 @@ Each student has a personal sign-in code (six letters and numbers) printed on th
 
 The Session (the solo Model UN game) can keep progress for people who aren't on a school list, using a username and a password.
 
-**Open sign-up is switched off.** It stays off until the coordinator records the school's approval in Admin, under "The Session: player accounts". Students on the school's lists don't need an account: their personal code already saves their sessions.
+**Sign-up is open.** Ben decided on 9 Nov 2026 that new accounts don't need separate school approval. The coordinator can switch sign-up off at any time, and sees every account in Admin, under "The Session: player accounts": when it last signed in, whether it's signed in now, and its games. From there the coordinator can erase any account, erase every account unused for a year in one go, or set a temporary password. Students on the school's lists don't need an account: their personal code already saves their sessions.
 
 **What an account stores:**
 - a username the player chooses (3–20 letters, numbers or underscores; the form says not to use a real name);
@@ -92,9 +92,7 @@ There is no email address, real name, date of birth or anything else. The player
 - A player can erase their own account (with their password). That deletes the account, its sessions and its games.
 - The coordinator can erase any account, or set a temporary password, shown once, for a player who has forgotten theirs.
 
-**Decision needed from the school:**
-- whether open sign-up may be used at all, and for whom (for example students playing at home);
-- how long an unused account should be kept (suggested: erase after 12 months without a sign-in; not automatic yet).
+**For the school's information:** accounts unused for 12 months can be erased with one button. It isn't automatic yet.
 
 ## 8. Not verified / open questions for the school
 

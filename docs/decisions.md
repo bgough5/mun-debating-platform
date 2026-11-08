@@ -392,7 +392,9 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 
 Decided:
 - **Player accounts (username, password, remember me)** for The Session, with open sign-up.
-  - Built switched off until the coordinator records the school's approval (the AI-settings pattern). The privacy summary (section 7a) covers it.
+  - Ben (9 Nov): new accounts don't need separate school approval, so sign-up is on.
+  - The coordinator can switch sign-up off, and at `/session/accounts` sees who is active and signed in now. From there they can erase an account, erase every account unused for a year, or set a temporary password.
+  - The privacy summary (section 7a) covers it.
   - Students on the school's lists keep using their personal code.
   - The front page offers "Play The Session" below the code sign-in.
 - **A fifth path, Ambassador:** you used your time and engaged the room. All five paths are always live (Civ-style), with a rough "Ways to win" reading and no thresholds spelled out.
@@ -406,7 +408,7 @@ Decided:
 
 Not decided:
 - whether medals should be harder now that the result is the best of five paths;
-- how long unused player accounts are kept.
+- whether erasing accounts unused for a year should become automatic.
 
 ### D-102 The Session after Ben's playtests: conversations, one Standing, the grand look, a record and approaches — Decided (6–8 Nov 2026, Ben)
 Ben playtested The Session several times between 6 and 8 November and chose from lead-developer proposals each time. Details and measurements: `docs/design/solo-campaign.md` sections 26–31.

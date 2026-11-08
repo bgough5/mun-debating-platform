@@ -335,7 +335,7 @@ def session_account_signin(request: Request, form=Depends(form_data)):
 @router.post("/session/account/create")
 def session_account_create(request: Request, form=Depends(form_data)):
     if not AC.open_signup(request.app.state.settings):
-        raise UserError("New accounts are switched off until the school approves them. You can play as a guest.", 403)
+        raise UserError("New accounts are switched off right now. You can play as a guest.", 403)
     key = f"signup:{_ip(request)}"
     wait = AC.signup_throttle.check(key)
     if wait:
@@ -404,7 +404,7 @@ def session_account_delete(request: Request, form=Depends(form_data)):
 
 @router.get("/session/accounts")
 def session_accounts_manage(request: Request, sess=Depends(require_coordinator)):
-    """The coordinator: whether open sign-up is on (only with the school's approval recorded), and every account."""
+    """The coordinator: every account, who's active, and whether new accounts are allowed."""
     with request.app.state.db.read() as conn:
         listing = AC.listing(conn)
     cfg = request.app.state.settings.get("session_accounts", {}) or {}
@@ -415,12 +415,17 @@ def session_accounts_manage(request: Request, sess=Depends(require_coordinator))
 @router.post("/session/accounts/settings")
 def session_accounts_settings(request: Request, sess=Depends(require_coordinator), form=Depends(form_data)):
     want = form.get("open") == "1"
-    ref = str(form.get("approval_ref") or "").strip()[:300]
-    if want and len(ref) < 5:
-        raise UserError("Open sign-up needs the school's approval first. Record who approved it, and when.")
-    request.app.state.settings.set("session_accounts", {"open": want, "approval_ref": ref})
+    request.app.state.settings.set("session_accounts", {"open": want})
     from app.web.http import redirect
-    return redirect("/session/accounts", "Open sign-up is " + ("on." if want else "off."))
+    return redirect("/session/accounts", "New accounts are " + ("allowed." if want else "switched off."))
+
+
+@router.post("/session/accounts/erase-stale")
+def session_accounts_erase_stale(request: Request, sess=Depends(require_coordinator)):
+    with request.app.state.db.write(request.state.actor) as w:
+        n = AC.erase_stale(w)
+    from app.web.http import redirect
+    return redirect("/session/accounts", f"Erased {n} account{'s' if n != 1 else ''} not used for a year.")
 
 
 @router.post("/session/accounts/{aid}/delete")

@@ -1,8 +1,8 @@
 """The Session's player accounts (Ben, 9 Nov 2026; D-103): a username and a password, plus "remember me".
 
 Security, in one place:
-- Open sign-up is OFF until the coordinator records the school's approval (Admin -> The Session: player accounts).
-  Signing in to an existing account still works if sign-up is later switched off.
+- Sign-up is on (Ben, 9 Nov: no school approval needed); the coordinator can switch it off at /session/accounts.
+  Signing in to an existing account still works if sign-up is switched off.
 - Passwords: scrypt (app.util.hash_passphrase), 10 to 128 characters, not containing the username, not a common
   password. The hash is set outside the change log, so it is never logged.
 - Sign-in: one generic error ("Username or password is wrong."), a hash check even for an unknown username (so the
@@ -40,9 +40,9 @@ signup_throttle = Throttle(limit=5, window_s=3600, lockout_s=3600)
 
 
 def open_signup(settings) -> bool:
-    """New accounts may be made only once the school's approval is recorded."""
+    """New accounts may be made unless the coordinator has switched sign-up off."""
     cfg = settings.get("session_accounts", {}) or {}
-    return bool(cfg.get("open")) and len((cfg.get("approval_ref") or "").strip()) >= 5
+    return bool(cfg.get("open", True))
 
 
 def _ts(dt: datetime) -> str:
@@ -157,9 +157,27 @@ def delete(w, account_id: int) -> None:
 
 
 def listing(conn) -> list[dict]:
-    return rows(conn, "SELECT pa.id, pa.username, pa.created_at, pa.last_login_at, "
-                      "(SELECT COUNT(*) FROM account_save s WHERE s.account_id = pa.id AND s.deleted_at IS NULL) AS saves "
-                      "FROM player_account pa WHERE pa.deleted_at IS NULL ORDER BY pa.username_key")
+    """Every account, most recently used first: when it last signed in, whether it's signed in now, and its games."""
+    now = _ts(_now())
+    year = _ts(_now() - timedelta(days=365))
+    out = rows(conn, "SELECT pa.id, pa.username, pa.created_at, pa.last_login_at, "
+                     "(SELECT COUNT(*) FROM account_save s WHERE s.account_id = pa.id AND s.deleted_at IS NULL) AS saves, "
+                     "(SELECT MAX(s.updated_at) FROM account_save s WHERE s.account_id = pa.id AND s.deleted_at IS NULL) AS last_played, "
+                     "(SELECT COUNT(*) FROM player_session ps WHERE ps.account_id = pa.id AND ps.revoked_at IS NULL AND ps.expires_at > ?) AS live "
+                     "FROM player_account pa WHERE pa.deleted_at IS NULL "
+                     "ORDER BY COALESCE(pa.last_login_at, pa.created_at) DESC", (now,))
+    for r in out:
+        r["stale"] = (r["last_login_at"] or r["created_at"]) < year
+    return out
+
+
+def erase_stale(w, days: int = 365) -> int:
+    """Erase every account that hasn't signed in for `days` days (a year by default)."""
+    cut = _ts(_now() - timedelta(days=days))
+    ids = [r["id"] for r in rows(w.conn, "SELECT id FROM player_account WHERE deleted_at IS NULL AND COALESCE(last_login_at, created_at) < ?", (cut,))]
+    for aid in ids:
+        delete(w, aid)
+    return len(ids)
 
 
 def cookie_kwargs(request, remember: bool) -> dict:

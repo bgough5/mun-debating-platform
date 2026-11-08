@@ -39,7 +39,7 @@ PUBLIC = {
     "/session/profile": "The Session: your record; a signed-in student sees only their own finished sessions, a guest's is kept in their browser (D-101)",
     "/session/account": "The Session: sign in or create a player account (sign-up only once the school approves it; D-103)",
     "/session/account/signin": "The Session: sign in to a player account (throttled; one generic error)",
-    "/session/account/create": "The Session: create a player account; refused unless the school's approval is recorded (throttled)",
+    "/session/account/create": "The Session: create a player account, unless the coordinator has switched sign-up off (throttled)",
     "/session/account/signout": "The Session: sign this browser's player account out",
     "/session/account/password": "The Session: change your own password; needs your current password",
     "/session/account/delete": "The Session: erase your own account and its saves; needs your password",

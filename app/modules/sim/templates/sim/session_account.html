@@ -1,5 +1,5 @@
 {% from "sim/_session_head.html" import head, emblem, settings_panel %}{{ head(title) }}
-{# The Session's player accounts (D-103): sign in, create an account (only once the school has approved open sign-up),
+{# The Session's player accounts (D-103): sign in, create an account (unless the coordinator has switched sign-up off),
    or, signed in, change your password, sign out or erase your account. #}
 <body class="board-body session-body" data-page="account" data-signed-in="{{ 'yes' if signed_in else 'no' }}">
 <a class="skip" href="#main">Skip to your account</a>
@@ -55,7 +55,7 @@
         <button type="submit" class="s-btn">Create my account</button></form>
       <p class="s-sub">We keep only your username, your password (scrambled, so nobody can read it) and your games. You can erase it all at any time.</p>
       {% else %}
-      <p>New accounts are switched off until the school approves them. You can still play as a guest: your game is kept on this computer.</p>
+      <p>New accounts are switched off right now. You can still play as a guest: your game is kept on this computer.</p>
       {% endif %}
       <p class="s-nav"><a class="s-btn ghost" href="/session" hx-boost="false">Play as a guest</a></p></section>
     {% endif %}
