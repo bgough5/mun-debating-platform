@@ -99,35 +99,51 @@ def verify(db, state, sig) -> dict:
 
 # ---------------------------------------------------------------- signed-in students: saved campaigns
 
-def save_new(w, student_id: int, g: dict) -> int:
+# An owner is ("student", id) for a signed-in student or ("account", id) for a player account (D-103). Each kind has
+# its own table, so one can never reach the other's saves.
+TABLES = {"student": ("campaign_save", "student_id"), "account": ("account_save", "account_id")}
+
+
+def _owner(owner) -> tuple:
+    return owner if isinstance(owner, tuple) else ("student", owner)
+
+
+def save_new(w, owner, g: dict) -> int:
+    kind, oid = _owner(owner)
+    table, col = TABLES[kind]
     t = now_iso()
-    return w.insert("campaign_save", {"student_id": student_id, "pack": g["pack"], "iso3": g["iso3"], "length": g["length"],
-                                      "difficulty": g["difficulty"], "path": g["path"], "phase": g["phase"], "chapter": g["chapter"],
-                                      "grade": None, "state_json": json.dumps(g), "created_at": t, "updated_at": t})
+    return w.insert(table, {col: oid, "pack": g["pack"], "iso3": g["iso3"], "length": g["length"],
+                            "difficulty": g["difficulty"], "path": g["path"], "phase": g["phase"], "chapter": g["chapter"],
+                            "grade": None, "state_json": json.dumps(g), "created_at": t, "updated_at": t})
 
 
-def save_move(w, save_id: int, g: dict, action: dict) -> None:
+def save_move(w, save_id: int, g: dict, action: dict, owner=("student", None)) -> None:
+    table = TABLES[_owner(owner)[0]][0]
     grade = g["result"]["grade"] if g.get("result") else None
-    w.conn.execute("UPDATE campaign_save SET state_json = ?, phase = ?, chapter = ?, grade = ?, updated_at = ? WHERE id = ?",
+    w.conn.execute(f"UPDATE {table} SET state_json = ?, phase = ?, chapter = ?, grade = ?, updated_at = ? WHERE id = ?",
                    (json.dumps(g), g["phase"], g["chapter"], grade, now_iso(), save_id))
-    w.log("campaign_save", save_id, "move", None, {"do": action.get("do"), "phase": g["phase"], "chapter": g["chapter"]})
+    w.log(table, save_id, "move", None, {"do": action.get("do"), "phase": g["phase"], "chapter": g["chapter"]})
 
 
-def mine(conn, save_id: int, student_id: int) -> dict:
-    r = one(conn, "SELECT * FROM campaign_save WHERE id = ? AND deleted_at IS NULL", (save_id,))
+def mine(conn, save_id: int, owner) -> dict:
+    kind, oid = _owner(owner)
+    table, col = TABLES[kind]
+    r = one(conn, f"SELECT * FROM {table} WHERE id = ? AND deleted_at IS NULL", (save_id,))
     if not r:
         raise UserError("That session doesn't exist.", 404)
-    if r["student_id"] != student_id:
+    if r[col] != oid:
         raise UserError("That session belongs to someone else.", 403)
     return {**r, "state": json.loads(r["state_json"])}
 
 
-def my_saves(conn, student_id: int) -> list[dict]:
+def my_saves(conn, owner) -> list[dict]:
     from app.modules.mun.packfile import available
+    kind, oid = _owner(owner)
+    table, col = TABLES[kind]
     titles = {p["code"]: p["title"] for p in available()}
     out = []
-    for r in rows(conn, "SELECT id, pack, iso3, length, difficulty, path, phase, chapter, grade, updated_at FROM campaign_save "
-                        "WHERE student_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 20", (student_id,)):
+    for r in rows(conn, f"SELECT id, pack, iso3, length, difficulty, path, phase, chapter, grade, updated_at FROM {table} "
+                        f"WHERE {col} = ? AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 20", (oid,)):
         c = one(conn, "SELECT name FROM country WHERE iso3 = ?", (r["iso3"],))
         out.append({**r, "title": titles.get(r["pack"], r["pack"]), "country": c["name"] if c else r["iso3"],
                     "where": "Finished" if r["phase"] == "done" else ("The Summit" if r["phase"] == "summit" else f"Chapter {r['chapter']}"),
@@ -215,8 +231,14 @@ def profile(cards: list[dict], records: list[dict], everything_open: bool = Fals
 
 
 def student_profile(conn, student_id: int, everything_open: bool = False) -> dict:
+    return owner_profile(conn, ("student", student_id), everything_open)
+
+
+def owner_profile(conn, owner, everything_open: bool = False) -> dict:
+    kind, oid = _owner(owner)
+    table, col = TABLES[kind]
     recs = []
-    for r in rows(conn, "SELECT pack, iso3, path, difficulty, state_json FROM campaign_save WHERE student_id = ? AND deleted_at IS NULL", (student_id,)):
+    for r in rows(conn, f"SELECT pack, iso3, path, difficulty, state_json FROM {table} WHERE {col} = ? AND deleted_at IS NULL", (oid,)):
         g = json.loads(r["state_json"])
         c = one(conn, "SELECT name FROM country WHERE iso3 = ?", (r["iso3"],))
         recs.append({"pack": r["pack"], "iso3": r["iso3"], "country": c["name"] if c else r["iso3"], "path": r["path"],

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb %}
+{# The coordinator's page for The Session's player accounts (D-103): open sign-up only with the school's approval
+   recorded; every account, with erase and a one-time temporary password. #}
+{% block content %}
+{{ breadcrumb([("Admin", "/admin"), ("The Session: player accounts", None)]) }}
+<h1>{{ title }}</h1>
+<p class="lede">Accounts let people outside the school's lists keep their progress in The Session. Students on your lists
+  don't need one: their personal code already saves their sessions.</p>
+{% if reset %}
+<div class="flash ok" role="status"><p>Temporary password for <strong>{{ reset.username }}</strong>: <code>{{ reset.password }}</code></p>
+  <p class="small">Shown once. Give it to them privately; every sign-in on the account has ended. They can change it on their account page.</p></div>
+{% endif %}
+<section class="card" aria-labelledby="h-signup">
+  <h2 id="h-signup">Open sign-up</h2>
+  <p>Open sign-up is <strong>{{ "on" if open else "off" }}</strong>. It stays off until the school has approved it, because
+    the people signing up may be students (see the privacy summary). Signing in to an existing account always works.</p>
+  <form method="post" action="/session/accounts/settings" class="stack">{{ hidden_csrf(csrf) }}
+    <label class="checks"><input type="checkbox" name="open" value="1" {% if cfg.get('open') %}checked{% endif %}> Allow anyone to create an account</label>
+    <label>The school's approval (who approved it, and when)
+      <input type="text" name="approval_ref" maxlength="300" value="{{ cfg.get('approval_ref', '') }}"></label>
+    <p><button type="submit">Save</button></p>
+  </form>
+</section>
+<section class="card" aria-labelledby="h-list">
+  <h2 id="h-list">Accounts</h2>
+  {% if accounts %}
+  <table>
+    <thead><tr><th scope="col">Username</th><th scope="col">Created</th><th scope="col">Last signed in</th><th scope="col" class="num">Saved sessions</th><th scope="col">Actions</th></tr></thead>
+    <tbody>
+    {% for a in accounts %}
+      <tr><td>{{ a.username }}</td><td>{{ a.created_at[:10] }}</td><td>{{ (a.last_login_at or '')[:10] or 'never' }}</td><td class="num">{{ a.saves }}</td>
+        <td class="row">
+          <form method="post" action="/session/accounts/{{ a.id }}/reset">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">New password</button></form>
+          <form method="post" action="/session/accounts/{{ a.id }}/delete" onsubmit="return confirm('Erase {{ a.username }} and their saved sessions? This cannot be undone.')">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Erase</button></form>
+        </td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No accounts yet.{% if not open %} Open sign-up is off, so none can be made.{% endif %}</p>
+  {% endif %}
+</section>
+{% endblock %}

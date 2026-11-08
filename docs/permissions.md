@@ -23,12 +23,12 @@ student may open a resolution only in their own class's committee, and a ballot 
 
 | Role required | Routes |
 |---|---|
-| Public | 38 |
+| Public | 45 |
 | Signed in (any role, checked per item) | 30 |
 | Students only | 55 |
 | Staff and coordinator | 122 |
-| Coordinator only | 40 |
-| **Total** | **285** |
+| Coordinator only | 44 |
+| **Total** | **296** |
 
 ## Coordinator only
 
@@ -70,6 +70,10 @@ student may open a resolution only in their own class's committee, and a ballot 
 | POST | `/people/classes` |
 | GET | `/people/staff` |
 | POST | `/people/staff` |
+| GET | `/session/accounts` |
+| POST | `/session/accounts/settings` |
+| POST | `/session/accounts/{aid}/delete` |
+| POST | `/session/accounts/{aid}/reset` |
 | GET | `/welcome` |
 | POST | `/welcome/class` |
 | POST | `/welcome/committee` |
@@ -329,6 +333,13 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/projector/{token}/state.json` | The board's live state (D-092): what the projector shows anyway; needs the token |
 | GET | `/s/{code}` | Students: your own sign-in link from your card; needs a valid personal code (throttled) |
 | GET | `/session` | The Session's title screen: open to guests; a signed-in student also sees only their own saved sessions (D-101) |
+| GET | `/session/a/{save_id}` | The Session: a player account's saved campaign; only the account that owns it (checked against its session) |
+| GET | `/session/account` | The Session: sign in or create a player account (sign-up only once the school approves it; D-103) |
+| POST | `/session/account/create` | The Session: create a player account; refused unless the school's approval is recorded (throttled) |
+| POST | `/session/account/delete` | The Session: erase your own account and its saves; needs your password |
+| POST | `/session/account/password` | The Session: change your own password; needs your current password |
+| POST | `/session/account/signin` | The Session: sign in to a player account (throttled; one generic error) |
+| POST | `/session/account/signout` | The Session: sign this browser's player account out |
 | GET | `/session/almanac` | The Session's Almanac: choose a scenario; reference material only, nothing personal (D-101) |
 | GET | `/session/almanac/{code}` | The Session's Almanac for one scenario: procedure, paths, skills and the country files with sources (D-101) |
 | POST | `/session/api` | The Session's moves: a guest's signed state is checked and returned without storing it; a saved session needs the student's own session (D-101) |

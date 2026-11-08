@@ -388,6 +388,26 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 
 
 
+### D-103 The Session: player accounts, five paths always live, people who speak, avatars in depth — Decided (9 Nov 2026, Ben)
+
+Decided:
+- **Player accounts (username, password, remember me)** for The Session, with open sign-up.
+  - Built switched off until the coordinator records the school's approval (the AI-settings pattern). The privacy summary (section 7a) covers it.
+  - Students on the school's lists keep using their personal code.
+  - The front page offers "Play The Session" below the code sign-in.
+- **A fifth path, Ambassador:** you used your time and engaged the room. All five paths are always live (Civ-style), with a rough "Ways to win" reading and no thresholds spelled out.
+  - The forced three-turn stage minimum is gone; moving on early counts as time not spent on the job.
+- **No path to choose.** Every game is graded on all paths, and the result is the best.
+- **The Architect path fixed:** gold is three clauses of your own, about half the text, and three in five voting yes.
+- **The Summit replayed in the debrief,** with stats and what you could have done better.
+- **People speak:** the room murmur is retired. Lines write themselves out with a voice per speaker, a moving mouth and a nodding head, with skip ahead.
+- **Avatars in depth:** skin tones, hairstyles (including a headscarf), every hair colour, jackets, look, facial hair, eyewear and neckwear.
+  - Delegates get more variety from the same scramble, never with a headscarf or dyed hair at random.
+
+Not decided:
+- whether medals should be harder now that the result is the best of five paths;
+- how long unused player accounts are kept.
+
 ### D-102 The Session after Ben's playtests: conversations, one Standing, the grand look, a record and approaches — Decided (6–8 Nov 2026, Ben)
 Ben playtested The Session several times between 6 and 8 November and chose from lead-developer proposals each time. Details and measurements: `docs/design/solo-campaign.md` sections 26–31.
 
