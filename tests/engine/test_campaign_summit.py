@@ -107,3 +107,17 @@ def test_a_friendly_amendment_and_a_refused_ultimatum(scn):
         h["threats"] = [{"iso3": rv["iso3"], "tag": rv["block"]}]
         q = SM._table_amendments(scn, h)
         assert q and q[0]["by"] == rv["iso3"] and q[0]["threat"]                          # it comes back, first in line
+
+
+def test_the_summit_replayed_in_the_debrief(scn):
+    from tests.engine.test_campaign import _to_final
+    g = _summit(scn, 5)
+    g = _to_final(scn, g, vote="abstain")
+    g, out = E.apply(scn, g, {"do": "final", "vote": "yes"})
+    if g["phase"] != "done":
+        g, _ = E.apply(scn, g, {"do": "statement", "skip": True})
+    d = E.debrief(scn, g)
+    rp = d["replay"]
+    assert rp and rp["steps"][0]["kind"] == "statement" and any(x["kind"] == "caucus" for x in rp["steps"])
+    assert rp["stats"]["amendments"] == len(g["summit"]["done"]) and rp["stats"]["final"]["passed"] in (True, False)
+    assert any("tabled no amendments" in x for x in rp["lessons"])                   # you tabled none, and it says so

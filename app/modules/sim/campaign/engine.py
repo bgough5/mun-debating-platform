@@ -2115,7 +2115,8 @@ def debrief(scn: Scenario, g: dict) -> dict:
     res = g.get("result") or {}
     total = sum(res.get("paths", {}).values())
     out = {"countries": [], "turned": [], "lost": [], "tips": tips(scn, g), "clauses": [], "promises": [], "struck": [],
-           "rank": rank(total), "points": total, "history": g.get("history", []), "moments": moments(scn, g)}
+           "rank": rank(total), "points": total, "history": g.get("history", []), "moments": moments(scn, g),
+           "replay": SM.replay(scn, g)}
     draft = {c["id"]: c for c in g["draft"]}
     for r in s.get("results", []):
         c = draft.get(r["clause"], {})

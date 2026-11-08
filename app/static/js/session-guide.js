@@ -96,6 +96,7 @@
     el("path", { d: "M133 132 Q139 125 145 132", class: "g-eye-happy", "data-part": "happyR" }, face);
     el("path", { d: "M120 136 Q114 152 118 156 Q122 158 126 155", class: "g-nose" }, face);
     el("path", { class: "g-mouth", "data-part": "mouth" }, face);
+    el("ellipse", { cx: 120, cy: 168, rx: 7, ry: 4.5, class: "g-mouth-open" }, face);   // shown in time with speech
     if (pres) el("path", { d: "M106 159 Q113 152 120 156 Q127 152 134 159 Q127 162 120 159 Q113 162 106 159 Z", class: "g-moustache" }, face);
     el("path", { d: "M86 136 Q101 150 116 136", class: "g-glasses" }, face);
     el("path", { d: "M124 136 Q139 150 154 136", class: "g-glasses" }, face);
@@ -125,5 +126,35 @@
   }
 
   window.socSession = window.socSession || {};
-  window.socSession.guide = { portrait: portrait, face: face_, EXPRESSIONS: EXPRESSIONS };
+  // speak (9 Nov): write `text` into `el` letter by letter while the portrait's mouth moves and a voice blips; call
+  // `done` when the line is finished. Returns { finish } to complete it at once. Instant when motion is reduced.
+  function speak(svg, el, text, done, opts) {
+    opts = opts || {};
+    var A = window.socSession.audio, reduce = A && A.motionOn ? !A.motionOn() :
+      (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    var pitch = opts.pitch || 220, i = 0, timer = null, over = false;
+    var span = document.createElement("span"); span.className = "g-said";
+    el.appendChild(span);
+    function end() {
+      if (over) return; over = true;
+      if (timer) clearInterval(timer);
+      span.textContent = text;
+      if (svg) svg.classList.remove("talking");
+      if (done) done();
+    }
+    if (reduce || !text) { end(); return { finish: end, done: function () { return true; } }; }
+    if (svg) svg.classList.add("talking");
+    timer = setInterval(function () {
+      i = Math.min(text.length, i + (opts.fast ? 3 : 1));
+      span.textContent = text.slice(0, i);
+      if (A && A.blip && i % 3 === 0 && /\S/.test(text.charAt(i - 1))) A.blip(pitch);
+      if (i >= text.length) end();
+    }, opts.ms || 26);
+    return { finish: end, done: function () { return over; } };
+  }
+  function voiceOf(key) {                                         // a speaker's own pitch, the same every time
+    var n = 0; String(key || "").split("").forEach(function (ch, k) { n += (k + 3) * ch.charCodeAt(0); });
+    return 150 + (n % 9) * 22;
+  }
+  window.socSession.guide = { portrait: portrait, face: face_, EXPRESSIONS: EXPRESSIONS, speak: speak, voiceOf: voiceOf };
 })();

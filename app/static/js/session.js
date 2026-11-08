@@ -1270,6 +1270,30 @@
         });
         box.appendChild(t);
       }
+      if (d.replay) {                                                 // the Summit, replayed (9 Nov)
+        var rp = h("div", "s-replay"); rp.appendChild(h("h3", "", "The Summit, replayed"));
+        var stt = d.replay.stats, sl = h("ul", "s-replay-stats");
+        [["Amendments", stt.amendments], ["Went your way", stt.won], ["Went against you", stt.lost], ["Your own", stt.yours],
+         ["Changes to the text", stt.changes]].forEach(function (x) { var li = h("li"); li.appendChild(h("b", "", String(x[1]))); li.appendChild(h("span", "", x[0])); sl.appendChild(li); });
+        rp.appendChild(sl);
+        var tl = h("ol", "s-replay-steps");
+        d.replay.steps.forEach(function (x) {
+          var li = h("li", "k-" + x.kind + (x.result ? " r-" + x.result.split(" ")[0] : ""));
+          if (x.kind === "amendment") {
+            li.appendChild(h("b", "", x.by + ": " + x.text));
+            li.appendChild(h("span", "s-small", x.result.charAt(0).toUpperCase() + x.result.slice(1) +
+              (x.yes !== undefined && x.yes !== null ? " (" + x.yes + " yes, " + x.no + " no, " + x.abstain + " abstaining)" : "") +
+              (x.my_vote ? " · you voted " + x.my_vote : "") + (x.spoke && x.spoke !== "silent" ? " · you " + ({ "for": "spoke for it", against: "spoke against it", reply: "replied", point_of_order: "raised a point of order", accept: "accepted it" }[x.spoke] || x.spoke) : "")));
+          } else li.appendChild(document.createTextNode(x.text));
+          tl.appendChild(li);
+        });
+        rp.appendChild(tl);
+        if (d.replay.lessons.length) {
+          rp.appendChild(h("h4", "", "What you could have done"));
+          var ll = h("ul", "s-replay-lessons"); d.replay.lessons.forEach(function (x) { ll.appendChild(h("li", "", x)); }); rp.appendChild(ll);
+        }
+        box.appendChild(rp);
+      }
       box.appendChild(h("h3", "", "What to try next time"));
       var grid = h("div", "s-tips-list");
       d.tips.forEach(function (x) {

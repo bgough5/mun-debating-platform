@@ -7,7 +7,7 @@
 (function () {
   "use strict";
   var KEY = "soc-session-settings";
-  var DEFAULTS = { sound: false, music: false, murmur: false, motion: "auto", text: "normal", timer: true, tips: true, talk: true };
+  var DEFAULTS = { sound: false, music: false, voices: true, motion: "auto", text: "normal", timer: true, tips: true, talk: true };
   var ctx = null, master = null, musicBus = null, musicTimer = null, murmurNode = null;
 
   function settings() {
@@ -33,7 +33,7 @@
     document.body.classList.toggle("s-nomotion", !motionOn(s));
     document.body.classList.toggle("s-large", s.text === "large");
     music(!!s.music);
-    murmur(!!s.murmur);
+    murmur(false);                                              // the room murmur is retired (9 Nov): people speak instead
   }
 
   function audio() {
@@ -47,7 +47,7 @@
     return ctx;
   }
   // Browsers allow sound only after a click: the first click on the page starts whatever is switched on.
-  document.addEventListener("pointerdown", function () { var s = settings(); if (s.sound || s.music || s.murmur) { audio(); apply(s); } }, true);
+  document.addEventListener("pointerdown", function () { var s = settings(); if (s.sound || s.music) { audio(); apply(s); } }, true);
 
   // ---------- building blocks ----------
   function noise(c, secs) {
@@ -121,6 +121,19 @@
     sting: function (c, t) { brass(c, t, [293.66, 349.23], 0.4, 0.07); brass(c, t + 0.42, [277.18, 329.63], 1.2, 0.07); return "The vote is lost"; },
     open: function (c, t) { brass(c, t, [146.83, 220, 293.66], 2.2, 0.06); bell(c, t + 0.4, 587.33, 2.4, 0.18); return "The session opens"; }
   };
+  // a voice: one soft blip per few letters as someone speaks; each speaker has their own pitch. The words on screen
+  // are the caption.
+  function blip(pitch) {
+    var s = settings();
+    if (!s.sound || s.voices === false) return;
+    var c = audio(); if (!c) return;
+    var t = c.currentTime + 0.005, f = (pitch || 220) * (0.94 + Math.random() * 0.12);
+    var o = c.createOscillator(), g = c.createGain(), lp = c.createBiquadFilter();
+    o.type = "square"; o.frequency.value = f; lp.type = "lowpass"; lp.frequency.value = 1400;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.045, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+    o.connect(lp); lp.connect(g); g.connect(master); o.start(t); o.stop(t + 0.08);
+  }
+
   function play(name) {
     var s = settings();
     if (!s.sound || !SOUNDS[name]) return;
@@ -197,6 +210,6 @@
   }
 
   window.socSession = window.socSession || {};
-  window.socSession.audio = { play: play, music: music, murmur: murmur, settings: settings, set: set, caption: caption, motionOn: motionOn };
+  window.socSession.audio = { play: play, blip: blip, music: music, murmur: murmur, settings: settings, set: set, caption: caption, motionOn: motionOn };
   document.addEventListener("DOMContentLoaded", function () { apply(settings()); });
 })();

@@ -29,6 +29,8 @@ def _calm(page):
             page.wait_for_timeout(500)
             if page.is_visible("#s-proc"):
                 page.locator("#s-proc-opts button").last.click()
+        elif page.is_visible("#s-visit-skip"):                               # a line being spoken: skip ahead
+            page.click("#s-visit-skip")
         elif page.is_visible("#s-visit"):                                    # a delegate's visit: the last (politest) answer
             page.locator("#s-visit-opts button:not([disabled])").last.click()
         elif page.is_visible("#s-reel"):

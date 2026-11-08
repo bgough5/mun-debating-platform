@@ -9,7 +9,19 @@
     var $ = c.$, h = c.h, A = c.A, G = c.G;
 
     // ---------- conversations ----------
-    var seen = {}, queue = [], showing = null, waiting = null;
+    var seen = {}, queue = [], showing = null, waiting = null, line = null;
+    // speaking (9 Nov): the line writes itself out; the answers appear when it's done, or at once with the skip button
+    function say(face, el, text, row, key) {
+      if (line) line.finish();
+      el.textContent = "";
+      var svg = face && face.querySelector("svg.g-face");
+      row.hidden = true;
+      var skip = $("s-visit-skip"); if (skip) skip.hidden = false;
+      line = G && G.speak ? G.speak(svg, el, text, function () { row.hidden = false; if (skip) skip.hidden = true; line = null;
+        var first = row.querySelector("button:not([disabled])"); if (first && !$("s-visit").hidden) first.focus(); }, { pitch: G.voiceOf(key) }) : null;
+      if (!line) { el.textContent = text; row.hidden = false; if (skip) skip.hidden = true; }
+    }
+    function finishLine() { if (line) { line.finish(); return true; } return false; }
     // a delegate's look, the same every game (the same sum as visits.likeness in Python): respectful variety only
     function likeness(iso) {
       var n = 0; for (var i = 0; i < iso.length; i++) n += (i + 7) * iso.charCodeAt(i);
@@ -70,7 +82,6 @@
       who.appendChild(document.createTextNode(x.name + (x.kind === "press" ? " · a rival" : x.kind === "caucus" ? " · coordinator" : "")));
       $("s-visit-step").textContent = x.step > 1 ? "Reply " + (x.step - 1) : "";
       $("s-visit-h").textContent = x.step > 1 ? "They answer" : HEAD[x.kind];
-      $("s-visit-p").textContent = x.text;
       var room = $("s-visit-room"); room.textContent = ""; room.hidden = !(x.room && x.room.length);
       (x.room || []).forEach(function (m) {
         var card = h("div", "s-member"); card.setAttribute("data-iso", m.iso3);
@@ -88,12 +99,19 @@
       });
       $("s-visit-n").textContent = queue.length ? queue.length + " more waiting to see you" : "";
       c.open("s-visit"); c.restart(doc, "s-reel-in"); A.play(x.kind === "capital" ? "tick" : "paper");
+      say(face, $("s-visit-p"), x.text, row, x.who || x.iso3);
     }
     function answer(x, code) {
       c.close("s-visit"); showing = null; waiting = x.id;
       c.move({ do: "visit", id: x.id, choice: code });
       setTimeout(function () { if (waiting === x.id) { waiting = null; next(); } }, 4000);   // if the move failed
     }
+    var skipBtn = $("s-visit-skip");
+    if (skipBtn) skipBtn.addEventListener("click", function () { finishLine(); });
+    $("s-visit-p").addEventListener("click", function () { finishLine(); });
+    $("s-visit").addEventListener("keydown", function (e) {
+      if ((e.key === " " || e.key === "Enter") && line) { e.preventDefault(); finishLine(); }
+    });
     $("s-visit").addEventListener("keydown", function (e) {           // Escape ends it politely: the last answer
       if (e.key === "Escape") { e.stopPropagation(); var v = c.view(), x = (v.visits || []).filter(function (y) { return y.id === showing; })[0];
         if (x) answer(x, x.options[x.options.length - 1].code); else if (showing === "talk") leaveTalk(); else if (showing) leave(); }
@@ -173,7 +191,7 @@
     function procedure(v) {
       showing = "proc";
       var face = $("s-proc-face"); face.textContent = ""; if (G) face.appendChild(G.portrait("thinking", "president"));
-      $("s-proc-h").textContent = "A point of procedure"; $("s-proc-p").textContent = v.question.ask;
+      $("s-proc-h").textContent = "A point of procedure";
       var row = $("s-proc-opts"); row.textContent = "";
       v.question.options.forEach(function (o, k) {
         var b = h("button", "s-btn ghost", o); b.type = "button";
@@ -181,6 +199,9 @@
         row.appendChild(b);
       });
       c.open("s-proc"); c.restart(document.querySelector("#s-proc .s-doc"), "s-reel-in"); A.play("gavel");
+      $("s-proc-p").textContent = "";
+      if (G && G.speak) { row.hidden = true; G.speak(face.querySelector("svg"), $("s-proc-p"), v.question.ask, function () { row.hidden = false; }, { pitch: G.voiceOf("president") }); }
+      else $("s-proc-p").textContent = v.question.ask;
     }
     function procAnswer(out) {
       if (!out || out.right === undefined) return;
@@ -230,24 +251,27 @@
       c.open("s-visit"); c.restart(document.querySelector("#s-visit .s-doc"), "s-reel-in"); A.play("paper");
     }
     function talkReply(cv) {
-      var row = talkFrame(cv.iso3, "They react", "You opened with " + cv.first_name.toLowerCase() + ". \u201c" + cv.reply + "\u201d");
+      var row = talkFrame(cv.iso3, "They react", "");
       cv.options.forEach(function (o, i) {
         var b = h("button", "s-btn" + (i ? " ghost" : ""), o.label); b.type = "button";
         b.addEventListener("click", function () { c.move({ do: "talk", step: "follow", choice: o.code }); A.play("paper"); });
         row.appendChild(b);
       });
-      if (!$("s-visit").hidden) c.restart($("s-visit-p"), "s-in"); else c.open("s-visit");
+      if ($("s-visit").hidden) c.open("s-visit");
+      say($("s-visit-face"), $("s-visit-p"), "You opened with " + cv.first_name.toLowerCase() + ". \u201c" + cv.reply + "\u201d", row, cv.iso3);
     }
     function talkEnd(v, out) {
       var iso = out.talked, t = v.tokens[iso] || {};
-      var lines = ["\u201c" + out.heard + "\u201d"];
-      var row = talkFrame(iso, "Their answer", lines.join(" "));
+      var row = talkFrame(iso, "Their answer", "");
       var p = $("s-visit-p");
-      var landed = TALKS().pitchAnswer(out); if (landed) p.appendChild(h("span", "s-intel", "Your arguments: " + landed));
-      if (out.would_vote) p.appendChild(h("span", "s-intel", "On the whole text as it stands, they would vote " + out.would_vote + "."));
-      if (out.leans) p.appendChild(h("span", "s-intel", "Towards each rival: " + Object.keys(out.leans).map(function (k) { return k + " " + (out.leans[k] > 0.3 ? "warm" : out.leans[k] < -0.3 ? "cold" : "neutral"); }).join(", ") + "."));
       var ok = h("button", "s-btn", "Done"); ok.type = "button"; ok.addEventListener("click", leaveTalk); row.appendChild(ok);
       if ($("s-visit").hidden) c.open("s-visit");
+      say($("s-visit-face"), p, "\u201c" + out.heard + "\u201d", row, iso);
+      var intel = h("span", "s-intel-box");
+      var landed = TALKS().pitchAnswer(out); if (landed) intel.appendChild(h("span", "s-intel", "Your arguments: " + landed));
+      if (out.would_vote) intel.appendChild(h("span", "s-intel", "On the whole text as it stands, they would vote " + out.would_vote + "."));
+      if (out.leans) intel.appendChild(h("span", "s-intel", "Towards each rival: " + Object.keys(out.leans).map(function (k) { return k + " " + (out.leans[k] > 0.3 ? "warm" : out.leans[k] < -0.3 ? "cold" : "neutral"); }).join(", ") + "."));
+      row.parentNode.insertBefore(intel, row);
       A.play(out.moved > 0.2 ? "chime" : "tick");
     }
     function leaveTalk() { c.close("s-visit"); showing = null; talking = null; setTimeout(next, 400); }
