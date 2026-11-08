@@ -149,6 +149,81 @@ def scenario_cards() -> list[dict]:
     return sorted(out, key=lambda c: (order[c["level"]], c["title"]))
 
 
+# ---------------------------------------------------------------- profile and progression (Ben, 8 Nov 2026)
+# Scenarios open in order: the first is open, and a gold (on any path) in one opens the next. The profile is worked
+# out from finished games, so it adds no data of its own. Staff have every scenario open.
+
+UNLOCK_DIFFICULTIES = ("standard", "hard")
+
+
+def best_grade(result: dict | None) -> int:
+    return max((result or {}).get("paths", {}).values() or [0]) if result else 0
+
+
+def profile(cards: list[dict], records: list[dict], everything_open: bool = False) -> dict:
+    """records: finished or unfinished games as {pack, iso3, country, path, result}. Returns the profile view."""
+    best_pack, best_iso, best_path, names, unlock = {}, {}, {}, {}, {}
+    medals = {1: 0, 2: 0, 3: 0}
+    finished = passed = 0
+    for r in records:
+        res = r.get("result")
+        if not res:
+            continue
+        finished += 1
+        passed += bool(res.get("passed"))
+        b = best_grade(res)
+        if b:
+            medals[b] += 1
+        best_pack[r["pack"]] = max(best_pack.get(r["pack"], 0), b)
+        if r.get("difficulty") in UNLOCK_DIFFICULTIES:      # only gold on Standard or Hard opens the next (Ben, 8 Nov)
+            unlock[r["pack"]] = max(unlock.get(r["pack"], 0), b)
+        best_iso[r["iso3"]] = max(best_iso.get(r["iso3"], 0), b)
+        names[r["iso3"]] = r.get("country") or r["iso3"]
+        for p, gr in (res.get("paths") or {}).items():
+            best_path[p] = max(best_path.get(p, 0), gr)
+    ladder, open_next = [], True
+    for i, c in enumerate(cards):
+        locked = not (everything_open or open_next)
+        ladder.append({"code": c["code"], "title": c["title"], "level_name": c["level_name"], "best": best_pack.get(c["code"], 0),
+                       "medal": E.GRADES[best_pack.get(c["code"], 0)], "locked": locked,
+                       "needs": cards[i - 1]["title"] if locked and i else None})
+        open_next = unlock.get(c["code"], 0) >= 3 and not locked
+    std = [r for r in records if r.get("result") and r.get("difficulty") in UNLOCK_DIFFICULTIES]
+    golds = {r["pack"] for r in std if best_grade(r["result"]) >= 3}
+    silver = any(best_grade(r["result"]) >= 2 for r in std)
+    have = {"silver": silver, "gold": bool(golds), "three_golds": len(golds) >= 3}
+    approaches = [{"code": c, "name": a["name"], "what": a["what"], "needs": a["needs"],
+                   "locked": not (everything_open or a["unlock"] is None or have[a["unlock"]])} for c, a in K.APPROACHES.items()]
+    types = {c["code"]: c.get("type", "") for c in cards}
+    fin = [r for r in records if r.get("result")]
+    earned = {
+        "first_pass": any(r["result"].get("passed") for r in fin),
+        "gold_std": bool(golds),
+        "hard_won": any(r.get("difficulty") == "hard" and best_grade(r["result"]) >= 3 for r in fin),
+        "council": any(r["result"].get("passed") and types.get(r["pack"]) == "Security Council" for r in fin),
+        "honour": any((r["result"].get("kept_promises") or 0) >= 2 and not r["result"].get("broken_promises") for r in fin),
+        "half_loaf": any(r["result"].get("golden") == "kept" for r in fin),
+        "all_paths": all(best_path.get(p, 0) >= 3 for p in K.PATHS),
+        "globetrotter": len({r["iso3"] for r in fin}) >= 5,
+    }
+    insignia = [{"code": c, "name": x["name"], "what": x["what"], "earned": bool(earned[c])} for c, x in K.INSIGNIA.items()]
+    return {"games": len(records), "finished": finished, "passed": passed, "medals": {E.GRADES[k]: v for k, v in medals.items()},
+            "scenarios": ladder, "approaches": approaches, "insignia": insignia,
+            "countries": sorted(({"iso3": k, "name": names[k], "best": v, "medal": E.GRADES[v]} for k, v in best_iso.items()),
+                                key=lambda x: (-x["best"], x["name"])),
+            "paths": [{"code": k, "name": p["name"], "best": best_path.get(k, 0), "medal": E.GRADES[best_path.get(k, 0)]} for k, p in K.PATHS.items()]}
+
+
+def student_profile(conn, student_id: int, everything_open: bool = False) -> dict:
+    recs = []
+    for r in rows(conn, "SELECT pack, iso3, path, difficulty, state_json FROM campaign_save WHERE student_id = ? AND deleted_at IS NULL", (student_id,)):
+        g = json.loads(r["state_json"])
+        c = one(conn, "SELECT name FROM country WHERE iso3 = ?", (r["iso3"],))
+        recs.append({"pack": r["pack"], "iso3": r["iso3"], "country": c["name"] if c else r["iso3"], "path": r["path"],
+                     "difficulty": r["difficulty"], "result": g.get("result")})
+    return profile(scenario_cards(), recs, everything_open)
+
+
 def country_choices(scn: Scenario) -> list[dict]:
     """Every seat, with how hard it is to play: how many delegations share your main instruction."""
     out = []
@@ -231,9 +306,9 @@ def view(scn: Scenario, g: dict) -> dict:
         owner = g["endorse"].get(code)
         regions.append({"code": code, "name": name, "members": members, "owner": owner, "owner_name": _name(scn, g, owner) if owner else None,
                         "leaning": sum(1 for i in voters if E.lean(scn, g, "you", i) > E.R["lean_min"]), "voters": len(voters)})
-    skills = [{"code": k, **v, "have": k in g["skills"],
-               "can": k not in g["skills"] and g["xp"] >= K.SKILL_COST and (not v["needs"] or v["needs"] in g["skills"])}
-              for k, v in K.SKILLS.items()]
+    by = {sk: (kind, st) for kind, m in K.STAFF_SKILLS.items() for st, ss in m.items() for sk in ss}
+    skills = [{"code": k, **v, "have": k in g["skills"], "by": K.STAFF_KINDS[by[k][0]]["name"], "stars": by[k][1]}
+              for k, v in K.SKILLS.items() if k in by]
     blocs = sorted({m.group for m in scn.members if m.group})
     last = g["chapter"] == E.LENGTHS[g["length"]]["chapters"]
     return {
@@ -251,6 +326,7 @@ def view(scn: Scenario, g: dict) -> dict:
         "you": {"iso3": g["iso3"], "name": scn.member(g["iso3"]).name},
         "mandate": {k: {"code": v, "label": tags[v]} for k, v in g["mandate"].items()},
         "path": {"code": g["path"], **K.PATHS[g["path"]]}, "difficulty": g["difficulty"], "length": g["length"],
+        "approach": {"code": g.get("approach", "diplomat"), **K.APPROACHES[g.get("approach", "diplomat")]},
         "rivals": [{"iso3": r["iso3"], "name": scn.member(r["iso3"]).name, "style": r.get("style", "hawk"), "truce": bool(r.get("truce")),
                     "style_name": K.RIVAL_STYLES[r.get("style", "hawk")]["name"], "style_what": K.RIVAL_STYLES[r.get("style", "hawk")]["what"],
                     **({"want": tags[r["want"]], "block": tags[r["block"]]} if "rival_intel" in g["skills"] else {})} for r in g["rivals"]],
@@ -275,7 +351,7 @@ def view(scn: Scenario, g: dict) -> dict:
         "sheet": {**g.get("sheet", {}), "final": g["whip"]}, "powers": _powers(scn, g),
         "in_draft": sorted({t for c in g["draft"] for t in c["tags"]}), "args": T.ARGS, "unlock": {k: T.locked(g, k) for k in T.UNLOCK},
         "tug": _tug(scn, g),
-        "event": g.get("event"), "question": {"ask": q["ask"], "options": q["options"]} if q else None,
+        "event": g.get("event"), "question": {"id": q["id"], "ask": q["ask"], "options": q["options"]} if q else None,
         "draft": draft, "cards": [c for c in scn.cards if c["id"] in g["cards"]],
         "endorse": {REGIONS.get(r, r): _name(scn, g, a) for r, a in g["endorse"].items()},
         "tokens": tokens, "log": g["log"][-14:], "skills": g["skills"], "objectives": g["objectives"],

@@ -63,8 +63,8 @@ class Bot:
         return self.est_yes(g, {**c, "tags": tags}, E.stance(self.scn, g, "you", {**c, "tags": tags})) <             self.est_yes(g, c, E.stance(self.scn, g, "you", c))
 
     def act(self, g, action) -> tuple[dict, bool]:
-        if action.get("do") == "lobby" and "args" not in action:      # a pitch: competent bots pick what will land
-            action = {**action, "args": T.bot_args(self.scn, g, action["iso3"], self.rng, self.style != "random")}
+        if action.get("do") == "lobby" and "args" not in action:      # a talk, as a player has it (8 Nov 2026)
+            return self.talk(g, action["iso3"])
         if self.likely_refused(g, action):
             return g, False
         try:
@@ -72,6 +72,30 @@ class Bot:
             return g2, True
         except E.GameError:
             return g, False
+
+    def talk(self, g, iso) -> tuple[dict, bool]:
+        """Open with the argument most likely to land (one not used with them before, if there is a choice), then
+        read their reaction as a player would: press a point that lands, or turn to the next best."""
+        competent = self.style != "random"
+        args = T.bot_args(self.scn, g, iso, self.rng, competent)
+        if competent and T._used(g, iso, args[0]) > T._used(g, iso, args[1]):
+            args = [args[1], args[0]]
+        felt = T.receptive(self.scn, g, iso)[args[0]] * T.REPEAT ** T._used(g, iso, args[0])   # what the reply gives away
+        try:
+            g2, out = E.apply(self.scn, g, {"do": "talk", "step": "open", "iso3": iso, "arg": args[0]})
+        except E.GameError:
+            return g, False
+        codes = [o["code"] for o in out["conv"]["options"]]
+        if not competent:
+            choice = self.rng.choice(codes)
+        elif felt >= 0.9:
+            choice = "press"
+        elif "switch:" + args[1] in codes:
+            choice = "switch:" + args[1]
+        else:
+            choice = "close"
+        g3, _ = E.apply(self.scn, g2, {"do": "talk", "step": "follow", "choice": choice})
+        return g3, True
 
     def turn(self, g: dict) -> dict:
         if g.get("question"):
@@ -82,20 +106,12 @@ class Bot:
             o = next((x for x in g.get("offers", []) if x["id"] == v["offer"]), None)
             if o:
                 g, _ = self.act(g, {"do": "visit", "id": v["id"], "choice": "accept" if self.take(g, o) else "refuse"})
-        if self.style in ("broker", "analyst") and g["influence"] >= 6 and len(g.get("secured", [])) < 2:
-            friends = sorted((E.lean(self.scn, g, "you", i), i) for i in self.free(g)
-                             if g["trust"].get(i, 0) >= 1 and i not in g.get("secured", []))
-            if friends:
-                g, _ = self.act(g, {"do": "secure", "iso3": friends[-1][1]})
         if g["phase"] == "chapter" and g["ap"] >= 2:
             g = self.try_deal(g)
         if g["phase"] == "chapter" and g["ap"] >= 2:
             g = self.try_peace(g)
         if g["phase"] != "chapter":
             return g
-        for sk in BRANCH[self.style]:
-            if g["xp"] >= K.SKILL_COST:
-                g, _ = self.act(g, {"do": "skill", "skill": sk})
         g = self.stage_choice(g)
         if g["phase"] != "chapter":
             return g
@@ -327,7 +343,6 @@ class Bot:
         if mc:
             out += self.lobby_list(g, mc)
         out += self.promises(g)[:1]
-        out += [{"do": "favour", "iso3": i} for i in self.free(g) if g["trust"][i] >= E.R["favour_trust"]][:1]
         return out
 
     def popular_card(self, g):
@@ -370,8 +385,6 @@ class Bot:
                 close = sum(1 for i in E._region_members(self.scn, reg) if i not in E._others(g) and 0 <= E.lean(self.scn, g, "you", i) <= E.R["lean_min"] + 0.1)
                 regions.append((-close, reg))
         for _, reg in sorted(regions)[:1]:
-            if g["influence"] >= E.R["side_event_cost"] + 1:
-                out.append({"do": "side_event", "region": reg})
             near = sorted((i for i in E._region_members(self.scn, reg) if i not in E._others(g)), key=lambda i: abs(E.lean(self.scn, g, "you", i) - E.R["lean_min"]))
             out += [{"do": "lobby", "iso3": i} for i in near[:2]]
         out += self.promises(g)
@@ -433,7 +446,6 @@ class Bot:
         draft = g["draft"]
         acts = [{"do": "lobby", "iso3": self.rng.choice(isos)}, {"do": "read", "iso3": self.rng.choice(isos)},
                 {"do": "whip", "iso3": self.rng.choice(isos), "vote": self.rng.choice(E.VOTES)},
-                {"do": "side_event", "region": self.rng.choice(list(REGIONS))},
                 {"do": "sign", "iso3": self.rng.choice(isos), "role": self.rng.choice(["sponsor", "signatory"])}]
         if g["cards"]:
             acts.append({"do": "propose", "card": self.rng.choice(g["cards"])})

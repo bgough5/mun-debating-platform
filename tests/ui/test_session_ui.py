@@ -24,6 +24,11 @@ def _calm(page):
     for _ in range(14):
         if page.is_visible("#s-walk"):
             page.click("#s-guide-skip" if page.is_visible("#s-guide-skip") else "#s-guide-next")
+        elif page.is_visible("#s-proc"):                                     # the President's procedure question: answer, then thank him
+            page.locator("#s-proc-opts button").first.click()
+            page.wait_for_timeout(500)
+            if page.is_visible("#s-proc"):
+                page.locator("#s-proc-opts button").last.click()
         elif page.is_visible("#s-visit"):                                    # a delegate's visit: the last (politest) answer
             page.locator("#s-visit-opts button:not([disabled])").last.click()
         elif page.is_visible("#s-reel"):
@@ -188,7 +193,7 @@ def test_a_guest_makes_moves_on_the_board(browser, live):
     page.click("#t-record")
     assert "You proposed a clause" in page.inner_text("#c-log")
     assert page.is_hidden("#t-staff")                                        # a quieter first stage: Staff opens in stage 2
-    assert page.locator("#p-staff #s-tree .s-skill").count() == 8            # the skills live with the staff (phase 14)
+    assert page.locator("#p-staff #s-tree .s-skill").count() == 7            # the skills live with the staff (phase 14)
     assert page.locator(".s-tabs [role=tab]:not([hidden])").count() == 5     # Brief, Draft, Delegates, Whip, Record
     assert not errors, errors
     ctx.close()
@@ -415,7 +420,7 @@ def test_the_deal_table_in_the_browser(browser, live):
     _calm(page)
     assert page.text_content("#m-respect b") == "4" and page.locator("#m-capital").count() == 0   # one Standing
     page.click("#t-staff")                                                   # staff and their skills, together
-    assert page.is_visible("#s-tree .s-branch") and page.locator("#s-tree .s-skill").count() == 8
+    assert page.is_visible("#s-tree .s-branch") and page.locator("#s-tree .s-skill").count() == 7
     assert not axe(page, "session_staff")
     page.evaluate("window.socSessionPanel.close()")
     page.click('#b-map .b-token[data-iso="IND"]', force=True)
@@ -451,6 +456,11 @@ def test_the_session_is_drawn_at_real_size_on_a_small_laptop(browser, live):
     inside = "s => { const r = document.querySelector(s).getBoundingClientRect(); return r.width > 0 && r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight + 1 && r.right <= innerWidth + 1; }"
     page.goto(live.url + "/session/new")
     page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false, talk: false}))")
+    assert page.is_disabled('[data-pick="pack"][data-value="ga_climate_transition"]')     # a guest's ladder starts locked
+    gold = lambda pack: {"id": pack + ":1", "pack": pack, "iso3": "NZL", "path": "mandate", "difficulty": "standard",
+                         "result": {"paths": {"mandate": 3}, "passed": True}}
+    page.evaluate("r => localStorage.setItem('soc-session-record', JSON.stringify(r))", [gold("comet_halcyon"), gold("ga_autonomous_weapons")])
+    page.reload()
     page.click('[data-pick="pack"][data-value="ga_climate_transition"]')
     page.click('[data-step="1"] [data-next]')
     page.wait_for_selector("#s-seats-box .s-seat")

@@ -48,6 +48,7 @@ def main() -> None:
     from app.modules.mun.packfile import available
     from app.modules.sim import play
     from app.modules.sim.campaign import bots as B
+    from app.modules.sim.campaign import content as K
     from app.modules.sim.campaign import engine as E
     from app.modules.sim.campaign.scenario import load
     from tests.conftest import make_settings
@@ -68,7 +69,8 @@ def main() -> None:
                     for k in range(args.games):
                         seed = 1000 + k
                         iso = isos[(k * 7) % len(isos)]
-                        g = E.new_game(scn, iso, args.length, diff, path or "mandate", seed)
+                        way = list(K.APPROACHES)[k % len(K.APPROACHES)]     # each approach in turn (8 Nov)
+                        g = E.new_game(scn, iso, args.length, diff, path or "mandate", seed, approach=way)
                         g = B.Bot(scn, style, seed).play(g)
                         if g["phase"] != "done":
                             results.append({"pack": code, "difficulty": diff, "style": style, "stuck": True})
@@ -76,7 +78,7 @@ def main() -> None:
                         secs = FIXED + sum(SECONDS.get(a, 30) * n for a, n in g["stats"].items())
                         fin = (g.get("summit") or {}).get("final") or {"passed": False, "tags": []}
                         rivals_won = sum(1 for rv in g["rivals"] if fin["passed"] and rv["want"] in fin["tags"] and rv["block"] not in fin["tags"])
-                        results.append({"pack": code, "difficulty": diff, "style": style, "iso3": iso, "path": g["path"],
+                        results.append({"pack": code, "difficulty": diff, "style": style, "iso3": iso, "path": g["path"], "approach": way,
                                         "grade": g["result"]["grade"], "paths": g["result"]["paths"], "passed": g["result"]["passed"],
                                         "stats": g["stats"], "minutes": round(secs / 60, 1), "objectives": g["objectives"],
                                         "rivals": len(g["rivals"]), "rivals_won": rivals_won,
@@ -128,6 +130,7 @@ def summarise(results: list[dict]) -> dict:
         "hardest_pack_standard_ge_25": min((p["standard"] for p in packs.values()), default=0),
         "stuck_games": sum(1 for r in results if r.get("stuck")),
         "random_silver_plus": rate([r for r in ok if r["style"] == "random"], lambda r: r["grade"] >= 2),
+        "approach_silver_plus": {w: rate([r for r in std if r.get("approach") == w], lambda r: r["grade"] >= 2) for w in ("diplomat", "linguist", "veteran", "envoy")},
         "recalled_share": {d: rate([r for r in ok if r["difficulty"] == d and r["style"] != "random"], lambda r: r.get("recalled"))
                            for d in ("easy", "standard", "hard")},
         "random_recalled_hard": rate([r for r in ok if r["difficulty"] == "hard" and r["style"] == "random"], lambda r: r.get("recalled")),

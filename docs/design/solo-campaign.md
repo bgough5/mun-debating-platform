@@ -705,3 +705,170 @@ Security Council scenarios, silver or better on Easy / Standard / Hard:
 - climate security: 33.8% / 20.0% / 27.5%.
 
 These are bot measurements. Ben's playtest is next, and nothing changes until then.
+
+## 26. Delegates come to talk, and conversations rethought (phase 13, 6 Nov 2026)
+
+From Ben's playtest. Delegates approach you, at the start of a turn and now and then after a move. Talking to them costs no action. The kinds:
+- **press:** a rival pressing you;
+- **ally:** a friend at your shoulder;
+- **ask:** a quiet question about another delegation;
+- **info:** intelligence for sale;
+- **caucus:** a team talk to a regional group, with each member's reaction under their face;
+- **capital:** your Foreign Minister's call;
+- **media:** the press;
+- **collect:** a promise called in;
+- **persuade:** a wavering delegate, answered with your arguments.
+
+Delegates remember you. Your reputation (`g["rep"]`: honest broker, hard bargainer, known to bluff) and each delegation's feeling towards you are shown.
+
+**Answers depend on what you know** (`visits.knows`). You can only "tell what you know" if you know it: from its file, an adviser posted there, or your whip sheet. Otherwise you guess (and may be wrong), admit you don't know, or bluff. A bluff that is found out costs Standing and that delegation's trust.
+
+**Two or three exchanges** (`_follow_up`). These conversations continue after your first answer:
+- **A rival pressing you:** you can counter. A broker offers a mutual pact (it then spares your main aim, `rv["spare"]`), a spoiler wants paying, a hawk refuses.
+- **The press:** "No comment" brings "So that's a no?"
+- **Your capital:** explaining the difficulties brings "Then tell me what you need".
+- **A promise called in:** asking for their yes in return gets a reply.
+
+**What else changed.**
+- **No hints:** an answer doesn't say what it will do. Only Influence prices show.
+- **A look for each kind:** the press scene has two portraits facing, the capital a typed telegram, the media camera flashes, persuasion argument cards, and the caucus a room of faces.
+- **Delegates' looks** come in respectful variety: five skin tones, five hairstyles, three hair colours, glasses, a tie or a scarf, and the country's flag as a pin. There is no national costume. The look comes from a hash of the country code, never from a guess about a country (`visits.likeness`).
+
+**The rest of phase 13:**
+- the whip sheet (free, scored at the summit);
+- the Powers panel;
+- clause histories and no duplicate commitments;
+- harder breakthroughs and slower Influence;
+- Word export of an adopted resolution;
+- centred panels, finer lines and each stage's look.
+
+## 27. Simplified before the playtest (phase 14, 6 Nov 2026)
+
+Ben's picks from a list of merges. The aim was fewer names to learn, with the same depth.
+
+**Standing.** Respect and your capital's confidence are one meter, `g["respect"]`, which the interface calls Standing.
+- **What moves it:** your capital's telegrams (`_capital`).
+- **At zero, from any cause, you are recalled.** On Hard that ends the session; otherwise you lose a turn.
+- **At a stage's end,** the capital's judgement is the only change, so a missed deadline doesn't count twice.
+- **It starts at 4.**
+
+**Other merges.**
+- **Overtime is retired.** Actions come only from your delegation.
+- **One relationship word** for trust and sway together: Hostile, Cool, Neutral, Warm or Close.
+- **Panels: 11 became 8.** Blocs and Sponsors are one Coalition panel, Powers sits in Delegates, and Skills sits in Staff.
+- **Offers come in person,** as visits.
+- **One Agreements list** covers promises, favours, pledges, deals, pacts and peace.
+- **Visitors:** at most two a turn, and none on the very first turn. Your capital and the caucus get through first, then rivals and promises, then the rest at random.
+- **Staff** stays hidden until stage 2, and the walkthrough introduces it there.
+- **Tooltips:** each meter explains itself in plain words.
+
+## 28. The grand look (phase 15, 6 Nov 2026)
+
+Ben asked for something "grand", not rough. He chose A, mahogany and brass, from three mockups laid over the real board.
+
+**The look:**
+- polished wood, with a lacquered banner and bottom bar;
+- gilt edges and brass corners;
+- brass medallion meters;
+- an ivory, finely inked map on a smooth satin sea;
+- cast-metal tokens, with green or red enamel for their leaning;
+- crisp flags;
+- ivory cards with a gilt hairline.
+
+**Each stage has its own table, banner and sea:** mahogany and navy, walnut and blue, rosewood and red, then ebony and black for the Summit.
+
+**How it's built.** Textures are generated SVG noise, so they stay smooth at any size. The colours are tokens with AA contrast checks. Only The Session changes; the projector board keeps its look.
+
+## 29. Talking is a conversation (phase 16, 6 Nov 2026)
+
+From Ben's playtest. Reading a file stays one action. Talking (`talks.a_talk`) costs one action too, and is a conversation:
+1. **Open** with an argument.
+2. **They react,** which tells you whether it is landing.
+3. **You take it on:**
+   - press the point (best if it lands, poor if not);
+   - turn to another argument (the old two-argument pitch);
+   - ask where they stand (less movement, but you learn how they would vote);
+   - or leave it there.
+
+**Delegates remember talks** (`g["talked"]`):
+- a greeting that recalls last time;
+- each repeat of an argument is worth 0.7 of the time before;
+- a follow-up within two turns of a strong talk starts with goodwill.
+
+**Also:**
+- a card when a delegation signs;
+- the reply card follows the delegation you have open;
+- the Brief flows in two columns;
+- hover cards on tokens;
+- keys: E ends the turn, 1–8 open the panels, T talks.
+
+## 30. Cuts, bots that talk, and your record (phase 17, 8 Nov 2026)
+
+**Cuts** (Ben's picks):
+- **Skills come with advisers' promotions** (`content.STAFF_SKILLS`, `engine.sync_skills`):
+  - Analyst: Read the room at two stars, Rival intelligence at three;
+  - Regional expert: Back channel, then Friendly amendment;
+  - Legal adviser: Point of order, then Division and Merge.
+
+  The skill tree and Bloc whip are gone.
+- **One way to work a regional group:** attend the meeting. Side event and Bloc whip are gone.
+- **Favour and Secure are deal terms:** "A vote owed" and "A signed commitment".
+- **No random news each turn.** Each stage's crisis stays, and the Chair asks a procedure question every other turn. Scenario packs' own `events` are no longer drawn: a possible future home is the stage crises.
+
+**Bots that talk.** The test bots hold conversations as a player would. They open with what will land and avoid repeats. Then, reading the reply, they press a point that lands or turn to their next-best argument.
+
+**Your record and the ladder** (`store.profile`, `/session/profile`).
+- **Unlocking:** the first scenario is open. Gold on any path, on Standard or Hard, opens the next. Gold on Easy shows as a medal but unlocks nothing.
+- **Your record** shows sessions started and finished, resolutions passed and medal counts. It shows your best medal in each scenario, with each country and on each path.
+- **Where it comes from:** a signed-in student's record is worked out from their own saved sessions, with no new table and no new data; the server enforces the locks. A guest's record is kept in their browser.
+- **Staff** have everything open.
+
+**Measured** (2,400 games, 20 per cell, after the cuts and with bots that talk):
+
+| Target | Phase 12 | Phase 17 |
+|---|---|---|
+| Standard: silver or better | 66.7% | 53.9% |
+| Gold on own path: hardliner / analyst / broker / drafter | 33.8 / 36.2 / 32.5 / 60.0% | 43.1 / 38.8 / 36.2 / 0.6% |
+| Hardest scenario on Standard | 20.0% | 15.0% |
+| Random player, silver or better | 15.2% | 12.3% |
+| Rivals get what they came for: Easy / Standard / Hard | 11.3 / 20.3 / 28.7% | 8.6 / 15.9 / 17.8% |
+| Talking's share of winning actions (target 35% or less) | – | 31% |
+| Recalled on Hard (all bots / the random bot) | – | 18% / 99% |
+| Stuck games | 0 | 0 |
+
+**Still open:**
+- The Architect path (your own text in the resolution) almost never gives gold, after phase 13 made breakthroughs harder.
+- The two Security Council scenarios sit at 15% and 24% silver or better on Standard, against a target of 25%.
+
+Both are noted for Ben. Neither is changed without his call.
+
+## 31. Your ambassador, insignia and approaches (phase 18, 8 Nov 2026)
+
+Ben asked whether a currency and bought perks would help. The lead developer pushed back:
+- medals would stop meaning skill;
+- it rewards farming;
+- every perk taxes balance;
+- shops in a school game look like microtransactions.
+
+Ben chose these three instead.
+
+- **Your ambassador:** an avatar from the same respectful options as delegates. It is shown face to face in conversations and on your record. It is kept in the browser, because saving it to a student's account would be new student data and needs the school's sign-off.
+- **Insignia:** cosmetic and earned, never bought (`content.INSIGNIA`):
+  - First resolution;
+  - Gold standard;
+  - Hard-won;
+  - The Council;
+  - Word of honour;
+  - Half a loaf;
+  - Four paths;
+  - Globetrotter.
+- **Your approach:** chosen before each game. Each is a trade-off (`content.APPROACHES`):
+
+  | Approach | Trade-off | Unlocked by |
+  |---|---|---|
+  | Career diplomat | none | always open |
+  | Linguist | talks cost 1 less, opening a deal costs 1 more | silver on Standard or Hard |
+  | Veteran | a senior adviser from the start, one action fewer in each of the first three turns | gold on Standard or Hard |
+  | Envoy | up to three visitors and more offers; rivals gain 1 Influence more a turn | gold in three scenarios on Standard or Hard |
+
+  The balance harness cycles the approaches and reports `approach_silver_plus`.

@@ -23,6 +23,9 @@
     if (!m) return;
     errUntil = Date.now() + 7000;
     m.className = "p-msg err"; m.textContent = "That didn't work: " + t;
+    var al = $("s-alert");                                          // and in red, dropping from the banner (Ben, 8 Nov)
+    if (al) { al.textContent = t; al.hidden = false; al.classList.remove("s-alert-in"); void al.offsetWidth; al.classList.add("s-alert-in");
+      clearTimeout(sayError.t); sayError.t = setTimeout(function () { al.hidden = true; }, 5000); }
   }
   function ticker(log) {
     var m = $("p-msg"); if (!m || Date.now() < errUntil || !log || !log.length) return;
@@ -175,7 +178,8 @@
     if (tipBox) { tipBox.checked = A.settings().tips !== false; tipBox.addEventListener("change", function () { A.set("tips", tipBox.checked); }); }
     $("s-begin").addEventListener("click", function () {
       var b = $("s-begin"); b.disabled = true; say("Taking your seat…");
-      api({ do: "new", pack: choice.pack, iso3: choice.iso3, length: choice.length, difficulty: choice.difficulty, path: choice.path }).then(function (r) {
+      api({ do: "new", pack: choice.pack, iso3: choice.iso3, length: choice.length, difficulty: choice.difficulty, path: choice.path,
+            approach: choice.approach || "diplomat" }).then(function (r) {
         A.play("gavel");
         if (r.state) {
           var list = slots();
@@ -350,7 +354,6 @@
     }
     function regions(v) {
       var ul = $("c-region-list"); ul.textContent = "";
-      var sel = $("s-region-pick"), keepVal = sel.value; sel.textContent = "";
       v.regions.forEach(function (r) {
         var li = h("li", r.owner === "you" ? "you" : r.owner ? "rival" : "");
         li.appendChild(h("b", "", r.name));
@@ -359,9 +362,7 @@
         bar.appendChild(fill); bar.appendChild(h("em")); bar.setAttribute("aria-hidden", "true"); li.appendChild(bar);
         li.appendChild(h("span", "s-small", r.leaning + " of " + r.voters + " lean your way (more than half wins it)"));
         ul.appendChild(li);
-        if (r.voters) opt(sel, r.code, r.name);
       });
-      if (keepVal) sel.value = keepVal;
     }
 
     // ---------- the Draft tab ----------
@@ -498,11 +499,8 @@
         row.appendChild(btn("Promise", "s-btn small", function () { move({ do: "promise", iso3: picked, clause: ps.value }); }));
         grid.appendChild(row);
       }
-      grid.appendChild(btn("Call in a favour", "s-btn ghost small", function () { move({ do: "favour", iso3: picked }); }, noAp || d.trust < v.costs.favour_trust));
       if (d.deal) grid.appendChild(btn(v.unlock.deal ? "Deal table: " + v.unlock.deal : "The deal table (" + v.costs.deal_ap + " actions)", "s-btn small s-deal-btn",
                                        function () { TALK.openTable(picked, "deal"); }, !!v.unlock.deal || d.deal.done || (!v.deal_ready && !(v.talks && v.talks.iso3 === picked)) || (v.ap < v.costs.deal_ap && !(v.talks && v.talks.iso3 === picked))));
-      if (!d.secured && !v.unlock.secure) grid.appendChild(btn("Secure (" + v.costs.secure + " Influence)", "s-btn ghost small", function () { move({ do: "secure", iso3: picked }); },
-                                          noAp || d.trust < 1 || d.est !== "yes" || v.secured >= v.costs.secure_max || v.influence < v.costs.secure));
       if (d.veto && v.veto.length) grid.appendChild(btn("Ask to abstain, not veto", "s-btn ghost small", function () { move({ do: "abstain", iso3: picked }); }, noAp || d.pledged || d.trust < 1));
       if (!v.unlock.sign && !d.signed && (v.last_chapter || v.length === "quick")) {
         grid.appendChild(btn("Ask to sponsor", "s-btn small", function () { move({ do: "sign", iso3: picked, role: "sponsor" }); }, noAp));
@@ -549,25 +547,22 @@
     }
 
     // ---------- skills ----------
-    function skills(v) {
-      $("n-skills").textContent = v.xp >= v.skill_cost && v.phase === "chapter" ? "!" : "";
+    function skills(v) {                                             // skills come with your advisers' promotions (8 Nov)
+      $("n-skills").textContent = "";
       var tree = $("s-tree"); tree.textContent = "";
       var by = {};
-      v.skill_list.forEach(function (s) { (by[s.branch] = by[s.branch] || []).push(s); });
-      Object.keys(by).forEach(function (br) {
-        var col = h("div", "s-branch"); col.appendChild(h("h3", "", br));
-        by[br].forEach(function (s) {
+      v.skill_list.forEach(function (s) { (by[s.by] = by[s.by] || []).push(s); });
+      Object.keys(by).forEach(function (who) {
+        var col = h("div", "s-branch"); col.appendChild(h("h3", "", who));
+        by[who].sort(function (a, b) { return a.stars - b.stars; }).forEach(function (s) {
           var d = h("div", "s-skill" + (s.have ? " have" : ""));
           d.appendChild(h("b", "", s.name)); d.appendChild(h("span", "", s.what));
-          if (s.have) d.appendChild(h("span", "", "Unlocked"));
-          else d.appendChild(btn("Unlock (" + v.skill_cost + ")", "s-btn small", function () { move({ do: "skill", skill: s.code }); }, !s.can || v.phase !== "chapter"));
+          d.appendChild(h("span", "s-small", s.have ? "Yours" : "With a " + (s.stars === 2 ? "senior" : "principal") + " " + who.toLowerCase() + " (" + s.stars + "★)"));
           col.appendChild(d);
         });
         tree.appendChild(col);
       });
-      $("s-skills-note").textContent = "Your staff have " + v.xp + " know-how to spend. They learn when you read country files and get procedure right. Each skill costs " + v.skill_cost + ".";
-      $("c-bloc").hidden = v.skills.indexOf("bloc_whip") < 0;
-      var bs = $("s-bloc-pick"); if (!bs.options.length) v.blocs.forEach(function (b) { opt(bs, b, b + " bloc"); });
+      $("s-skills-note").textContent = "Each skill comes with an adviser's promotion. Advisers are promoted when their reports prove right.";
     }
 
     // ---------- drawing everything ----------
@@ -578,7 +573,7 @@
       $("s-where").textContent = v.phase === "done" ? "Finished" : v.phase === "summit" ? "The Summit" :
         v.chapter_name + " · turn " + v.turn + " of " + v.turns + (v.stage ? " · " + (v.stage.made ? "breakthrough made" : v.stage.turns_left + " left") : "");
       stageBar(v, prev);
-      $("s-you").textContent = "You are " + v.you.name + " · aiming for " + v.path.name + (v.reputation ? " · known as " + v.reputation.replace(/^known to /, "someone known to ") : "");
+      $("s-you").textContent = "You are " + v.you.name + " · aiming for " + v.path.name + (v.approach && v.approach.code !== "diplomat" ? " · " + v.approach.name : "") + (v.reputation ? " · known as " + v.reputation.replace(/^known to /, "someone known to ") : "");
       meter("m-influence", v.influence); meter("m-respect", v.respect);
       $("m-respect").classList.toggle("low", v.respect <= 2);
       var ap = $("s-ap"); ap.textContent = "";
@@ -597,11 +592,7 @@
         if (ev.hypothetical) box.appendChild(h("span", "s-hypo", "Hypothetical"));
         box.appendChild(h("p", "s-goal", ev.title));
         if (ev.body) box.appendChild(h("p", "", ev.body));
-        if (v.question) {
-          var row = h("div", "s-row");
-          v.question.options.forEach(function (o, k) { row.appendChild(btn(o, "s-btn ghost small", function () { move({ do: "answer", option: k }); })); });
-          box.appendChild(row);
-        } else if (ev.teaches) box.appendChild(h("p", "s-small", ev.teaches));
+        if (ev.teaches && !v.question) box.appendChild(h("p", "s-small", ev.teaches));
         if (!prev || prev.turn !== v.turn || prev.chapter !== v.chapter) A.play("news");
       }
       var cr = v.phase === "chapter" && v.crisis && v.crisis.chapter === v.chapter ? v.crisis : null, cb = $("c-crisis-body");
@@ -651,6 +642,7 @@
       if (out && out.file) showFile(out.file);
       if (action && action.do === "visit") DLG.after(v, out);
       if (action && action.do === "talk") DLG.talkStep(v, out, action);
+      if (action && action.do === "answer") DLG.procAnswer(out);
       if (out && out.signed) signedCard(v, out.signed);
       if (action && (action.do === "deal" || action.do === "compromise")) TALK.answer(v, out || {}, action);
       else if (TALK.isOpen()) TALK.render();
@@ -876,6 +868,7 @@
 
     function result(v) {
       var r = v.result; if (!r) return;
+      if (mode === "guest" && window.socSession.record) window.socSession.record(v, guest);   // a guest's record lives in this browser
       var d = v.debrief || {}, p = v.path, grade = r.grade;
       $("s-result-eyebrow").textContent = r.recalled ? "Your capital has lost confidence in you" : r.passed ? "The resolution was adopted" :
         r.statement ? "A Presidential Statement was agreed" : "The resolution failed";
@@ -1405,8 +1398,6 @@
     });
     document.addEventListener("click", function (e) { if (e.target.closest("[data-close]")) setTimeout(adviceNext, 500); });
     $("s-replay-walk").addEventListener("click", function () { close("s-pause"); if (V) WALK.start(V, null, "intro"); });
-    $("s-side-event").addEventListener("click", function () { move({ do: "side_event", region: $("s-region-pick").value }); });
-    $("s-bloc-whip").addEventListener("click", function () { move({ do: "bloc_whip", group: $("s-bloc-pick").value }); });
     $("s-end-turn").addEventListener("click", function () { amending = null; move({ do: "end_turn" }); });
     $("s-reserve").addEventListener("click", function () { move({ do: "reserve" }); });
     $("s-bt-go").addEventListener("click", function () { close("s-breakthrough"); move({ do: "advance" }); });

@@ -54,11 +54,11 @@ def test_a_students_session_is_saved_and_theirs_alone(app):
     from app.retention import erase_student
     st = db_one(app, "SELECT id FROM student WHERE active = 1 ORDER BY id DESC LIMIT 1")["id"]
     a = join_as(app, st)
-    j = api(a, {"do": "new", "pack": "veloria", "iso3": "FRA", "length": "standard", "difficulty": "standard", "path": "mandate"}).json()
+    j = api(a, {"do": "new", "pack": "comet_halcyon", "iso3": "FRA", "length": "standard", "difficulty": "standard", "path": "mandate"}).json()
     assert j["url"].startswith("/session/s/") and "state" not in j
     sid = int(j["url"].rsplit("/", 1)[1])
     assert db_one(app, "SELECT student_id, phase FROM campaign_save WHERE id = ?", (sid,)) == {"student_id": st, "phase": "chapter"}
-    assert 'data-mode="saved"' in a.get(j["url"]).text and "Veloria" in a.get("/session").text
+    assert 'data-mode="saved"' in a.get(j["url"]).text and "Comet" in a.get("/session").text
     m = api(a, {"do": "move", "save_id": sid, "action": {"do": "end_turn"}}).json()
     assert m["view"]["turn"] == 2 and db_one(app, "SELECT chapter FROM campaign_save WHERE id = ?", (sid,))["chapter"] == 1
     other = join_as(app, db_one(app, "SELECT id FROM student WHERE active = 1 AND id != ? ORDER BY id LIMIT 1", (st,))["id"])
@@ -206,3 +206,41 @@ def test_the_view_shows_dossiers_the_deal_table_and_the_capital(app):
     assert r.status_code == 200, r.text
     out, v2 = r.json()["out"], r.json()["view"]
     assert "deal" in out and not v2["deal_ready"] and v2["ap"] == v["ap"] - v["costs"]["deal_ap"]
+
+
+def test_scenarios_open_in_order_and_the_record(app):
+    """Ben, 8 Nov: the first scenario is open; gold (on any path) in one opens the next. The record is worked out
+    from the student's own finished sessions only."""
+    from app.modules.sim.campaign import store as S
+    cards = S.scenario_cards()
+    first, second = cards[0]["code"], cards[1]["code"]
+    p = S.profile(cards, [])
+    assert not p["scenarios"][0]["locked"] and all(x["locked"] for x in p["scenarios"][1:])
+    easy = {"pack": first, "iso3": "NZL", "country": "New Zealand", "path": "mandate", "difficulty": "easy",
+            "result": {"paths": {"mandate": 3, "consensus": 0, "architect": 0, "kingmaker": 0}, "passed": True}}
+    p = S.profile(cards, [easy])
+    assert p["scenarios"][0]["medal"] == "Gold" and p["scenarios"][1]["locked"]           # gold on Easy doesn't open the next
+    won = {"pack": first, "iso3": "NZL", "country": "New Zealand", "path": "mandate", "difficulty": "standard",
+           "result": {"paths": {"mandate": 2, "consensus": 3, "architect": 0, "kingmaker": 0}, "passed": True}}
+    p = S.profile(cards, [won])
+    assert not p["scenarios"][1]["locked"] and p["scenarios"][2]["locked"] and p["scenarios"][0]["medal"] == "Gold"
+    assert p["countries"][0] == {"iso3": "NZL", "name": "New Zealand", "best": 3, "medal": "Gold"}
+    assert {x["code"]: x["best"] for x in p["paths"]}["consensus"] == 3 and p["medals"]["Gold"] == 1
+    assert not any(x["locked"] for x in S.profile(cards, [], everything_open=True)["scenarios"])   # staff
+    fresh = {x["code"]: x["locked"] for x in S.profile(cards, [])["approaches"]}
+    assert fresh == {"diplomat": False, "linguist": True, "veteran": True, "envoy": True}       # approaches open with medals
+    assert {x["code"]: x["locked"] for x in p["approaches"]} == {"diplomat": False, "linguist": False, "veteran": False, "envoy": True}
+    ins = {x["code"]: x["earned"] for x in p["insignia"]}
+    assert ins["first_pass"] and ins["gold_std"] and not ins["hard_won"] and not ins["globetrotter"]
+    st = db_one(app, "SELECT id FROM student WHERE active = 1 ORDER BY id LIMIT 1")["id"]
+    a = join_as(app, st)
+    r = api(a, {"do": "new", "pack": second, "iso3": "NZL", "length": "quick", "difficulty": "standard", "path": "mandate"})
+    assert r.status_code == 403 and "gold" in r.json()["error"]                    # locked until gold in the first
+    r = api(a, {"do": "new", "pack": first, "iso3": "NZL", "length": "quick", "difficulty": "standard", "path": "mandate", "approach": "veteran"})
+    assert r.status_code == 403 and "Veteran" in r.json()["error"]                 # an approach opens with medals too
+    page = a.get("/session/new").text
+    assert "Locked: win gold on Standard or Hard in" in page
+    rec = a.get("/session/profile")
+    assert rec.status_code == 200 and "Your record" in rec.text and '"locked": true' in rec.text
+    g = guest(app).get("/session/profile")
+    assert g.status_code == 200 and '"profile": null' in g.text                    # a guest's record is in their browser

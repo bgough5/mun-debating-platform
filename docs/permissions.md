@@ -23,12 +23,12 @@ student may open a resolution only in their own class's committee, and a ballot 
 
 | Role required | Routes |
 |---|---|
-| Public | 30 |
+| Public | 38 |
 | Signed in (any role, checked per item) | 30 |
-| Students only | 54 |
-| Staff and coordinator | 121 |
+| Students only | 55 |
+| Staff and coordinator | 122 |
 | Coordinator only | 40 |
-| **Total** | **275** |
+| **Total** | **285** |
 
 ## Coordinator only
 
@@ -196,6 +196,7 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/people/students/{student_id}` |
 | POST | `/people/students/{student_id}` |
 | POST | `/people/students/{student_id}/milestones` |
+| GET | `/session/results` |
 | GET | `/start` |
 | POST | `/start` |
 | GET | `/start/resume/{what}/{key}` |
@@ -259,6 +260,7 @@ student may open a resolution only in their own class's committee, and a ballot 
 | POST | `/me/sim/{pid}` |
 | GET | `/me/team/{run_id}` |
 | GET | `/play/s/{pid}` |
+| GET | `/session/s/{save_id}` |
 
 ## Signed in (any role, checked per item)
 
@@ -326,6 +328,14 @@ student may open a resolution only in their own class's committee, and a ballot 
 | GET | `/projector/{token}/plain` | The plain projector page, the board's fallback; needs the token |
 | GET | `/projector/{token}/state.json` | The board's live state (D-092): what the projector shows anyway; needs the token |
 | GET | `/s/{code}` | Students: your own sign-in link from your card; needs a valid personal code (throttled) |
+| GET | `/session` | The Session's title screen: open to guests; a signed-in student also sees only their own saved sessions (D-101) |
+| GET | `/session/almanac` | The Session's Almanac: choose a scenario; reference material only, nothing personal (D-101) |
+| GET | `/session/almanac/{code}` | The Session's Almanac for one scenario: procedure, paths, skills and the country files with sources (D-101) |
+| POST | `/session/api` | The Session's moves: a guest's signed state is checked and returned without storing it; a saved session needs the student's own session (D-101) |
+| GET | `/session/guest/{code}` | The Session as a guest: the game lives in the browser, signed by the server; nothing stored (D-101) |
+| GET | `/session/new` | The Session: set up a new campaign; nothing is stored until a signed-in student starts one (D-101) |
+| GET | `/session/profile` | The Session: your record; a signed-in student sees only their own finished sessions, a guest's is kept in their browser (D-101) |
+| GET | `/session/seats/{code}` | The Session: the seats in a scenario for the setup screen; scenario data only (D-101) |
 | GET | `/setup` | First-run passphrase setup; refuses once a passphrase exists |
 | POST | `/setup` | First-run passphrase setup; refuses once a passphrase exists |
 | WS | `/ws` | WebSocket: every channel subscription is checked per role (app/web/ws.py channel_allowed) |

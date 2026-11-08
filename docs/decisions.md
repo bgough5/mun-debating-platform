@@ -388,6 +388,43 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 
 
 
+### D-102 The Session after Ben's playtests: conversations, one Standing, the grand look, a record and approaches — Decided (6–8 Nov 2026, Ben)
+Ben playtested The Session several times between 6 and 8 November and chose from lead-developer proposals each time. Details and measurements: `docs/design/solo-campaign.md` sections 26–31.
+
+Decided:
+- **Conversations are honest and interactive.**
+  - You can only tell what you know.
+  - Conversations run to two or three exchanges.
+  - Consequences are hidden.
+  - Each kind of conversation looks different.
+  - Delegates come in respectful variety, never in costume.
+  - Talking to a delegation is a conversation: open with an argument, then press, turn to another, ask or leave it. Delegates remember your talks.
+- **Fewer names, same depth:**
+  - Standing (Respect and the capital together);
+  - one relationship word;
+  - eight panels;
+  - offers as visits;
+  - one Agreements list;
+  - at most two visitors a turn;
+  - no overtime;
+  - skills from advisers' promotions;
+  - one way to work a group;
+  - favour and secure as deal terms;
+  - no random news each turn (a procedure question every other turn).
+- **The look:** mahogany and brass, with each stage's own table, banner and sea. The Session only.
+- **Progression:**
+  - Scenarios unlock in order: gold on Standard or Hard opens the next.
+  - "Your record" is worked out from finished games.
+  - Your ambassador is kept in the browser.
+  - Insignia are earned and cosmetic.
+  - Approaches are trade-offs unlocked by medals.
+  - No currency, no bought perks, and no teacher switch to open a scenario: Ben will ask if he needs one.
+
+Not decided:
+- whether to fix or cut the Architect path;
+- the two Security Council scenarios' difficulty;
+- what to do with scenario packs' own events.
+
 ### D-101 Solo play becomes a one-hour campaign — Direction decided, rules proposed (5 Nov 2026, Ben)
 Ben wants solo Model UN to be "an hour long experience" that feels like territory, economy and civilisation games, "with depth, gravity, decision making, unique scenarios", while staying educational. Ben is the overall designer and Claude the lead programmer.
 

@@ -132,11 +132,13 @@ def _adviser(kind: str, name: str, stars: int, region: str, n: int) -> dict:
 
 
 def new_game(scn: Scenario, iso3: str, length: str = "standard", difficulty: str = "standard", path: str = "mandate",
-             seed: int = 1) -> dict:
+             seed: int = 1, approach: str = "diplomat") -> dict:
     if not scn.member(iso3):
         raise GameError("Choose a country that sits on this committee.")
     if length not in LENGTHS or difficulty not in DIFFICULTIES or path not in K.PATHS:
         raise GameError("Choose a length, a difficulty and a victory path.")
+    if approach not in K.APPROACHES:
+        raise GameError("Choose an approach.")
     mandate = mandate_for(scn, iso3)
     rivals = _pick_rivals(scn, iso3, mandate, DIFFICULTIES[difficulty]["rivals"])
     others = [m.iso3 for m in scn.members]
@@ -163,6 +165,10 @@ def new_game(scn: Scenario, iso3: str, length: str = "standard", difficulty: str
         rv["style"] = styles[i % len(styles)]
     _open_chapter(scn, g)
     _start_turn(scn, g)
+    g["approach"] = approach
+    if approach == "veteran" and g["staff"]:
+        g["staff"][0]["stars"] = 2                           # a senior adviser from the start
+    sync_skills(g)
     return g
 
 
@@ -259,7 +265,7 @@ def _make_offers(scn: Scenario, g: dict) -> None:
     g["offers"] = []
     free = [i for i in scn.isos if i not in _others(g)]
     rng.shuffle(free)
-    want = rng.choice([1, 1, 2])
+    want = rng.choice([1, 2, 2] if g.get("approach") == "envoy" else [1, 1, 2])
     taken = {p["iso3"] for p in g["promises"] if p["kept"] is None}
     for iso in free:
         if len(g["offers"]) >= want:
@@ -477,8 +483,10 @@ def _when(g: dict) -> str:
 def _start_turn(scn: Scenario, g: dict) -> None:
     g["talks"] = None
     rng = _rng(g)
-    deck = K.EVENTS + scn.events + scn.events       # the scenario's own events come up about as often as the general ones
-    ev = rng.choice(deck)
+    # No random news each turn since 8 Nov 2026 (each stage's crisis stays): every other turn the Chair puts a
+    # procedure question instead. The old deck is kept in content for reference.
+    ev = {"id": "procedure", "title": "A procedure moment", "body": "", "teaches": "Knowing the rules of procedure is a power in the room.",
+          "effect": {"question": True} if g["turn"] % 2 == 0 else {}}
     g["mods"] = {}
     eff = ev["effect"]
     g["ap"] = sum(x["n"] for x in ap_sources(scn, g)) + eff.get("ap", 0)
@@ -518,8 +526,9 @@ def _start_turn(scn: Scenario, g: dict) -> None:
         g["asked"].append(q["id"])
         g["question"] = q["id"]
         card["body"] = q["ask"]
-    g["event"] = card
-    _log(g, "news", card["title"], "event")
+    g["event"] = card if eff else None
+    if eff:
+        _log(g, "news", card["title"], "event")
     g["tick"] = g.get("tick", 0) + 1
     g["last_touched"], g["touched"] = g.get("touched", []), []
     rivals_move(scn, g)
@@ -576,7 +585,8 @@ def lobby_cost(scn: Scenario, g: dict, iso: str) -> int:
         cost -= 1
     if g["trust"].get(iso, 0) >= 2:
         cost -= 1
-    return max(1, cost + g["mods"].get("lobby_cost", 0))
+    floor = 0 if g.get("approach") == "linguist" else 1
+    return max(floor, cost + g["mods"].get("lobby_cost", 0) - (1 if g.get("approach") == "linguist" else 0))
 
 
 def bucket(x: float) -> int:
@@ -1230,7 +1240,7 @@ def _upkeep(scn: Scenario, g: dict) -> None:
     mine = sum(1 for v in g["endorse"].values() if v == "you")
     g["influence"] += R["income"] + mine * R["endorse_income"]
     for rv in g["rivals"]:
-        rv["influence"] += R["rival_income"] + sum(1 for v in g["endorse"].values() if v == rv["iso3"]) * R["endorse_income"]
+        rv["influence"] += R["rival_income"] + (1 if g.get("approach") == "envoy" else 0) + sum(1 for v in g["endorse"].values() if v == rv["iso3"]) * R["endorse_income"]
     L = LENGTHS[g["length"]]
     g["offers"] = []
     if g["turn"] < turns_now(g):
@@ -1528,7 +1538,8 @@ def score(scn: Scenario, g: dict) -> dict:
     return {"passed": passed, "statement": bool(st.get("adopted")), "paths": paths, "chosen": g["path"], "grade": paths[g["path"]],
             "share_yes": round(share, 3), "own_text": round(own, 3), "whip_right": right, "whip_judged": len(judged),
             "broken_promises": broken, "kept_promises": sum(1 for p in g["promises"] if p["kept"] is True),
-            "endorsements": mine_regions, "respect": g["respect"], "expertise": g["expertise"]}
+            "endorsements": mine_regions, "respect": g["respect"], "expertise": g["expertise"], "golden": g.get("golden"),
+            "approach": g.get("approach", "diplomat")}
 
 
 GRADES = {0: "No medal", 1: "Bronze", 2: "Silver", 3: "Gold"}
@@ -1551,12 +1562,22 @@ def _eff_stars(scn: Scenario, g: dict, adv: dict, iso: str) -> int:
     return max(1, min(3, s))
 
 
+def sync_skills(g: dict) -> list[str]:
+    """Your skills are what your advisers' ranks bring (since 8 Nov 2026): returns any newly gained."""
+    have = sorted({s for a in g.get("staff", []) for st, ss in K.STAFF_SKILLS.get(a["kind"], {}).items() if a["stars"] >= st for s in ss})
+    new = [s for s in have if s not in g.get("skills", [])]
+    g["skills"] = have
+    return new
+
+
 def _xp(g: dict, adv: dict, why: str) -> None:
     adv["xp"] += 1
     nxt = adv["stars"] + 1
     if nxt in PROMOTE and adv["xp"] >= PROMOTE[nxt]:
         adv["stars"] = nxt
-        _log(g, "staff", f"{adv['name']} is promoted to {K.STAFF_RANKS[nxt]}. {why}", "promote")
+        new = sync_skills(g)
+        _log(g, "staff", f"{adv['name']} is promoted to {K.STAFF_RANKS[nxt]}. {why}" +
+             (" New skill: " + ", ".join(K.SKILLS[s]["name"] for s in new) + "." if new else ""), "promote")
     else:
         _log(g, "staff", f"{adv['name']}: {why}", "staff")
 
@@ -1656,6 +1677,7 @@ def a_hire(scn, g, a):
     name = next(n for n in K.STAFF_NAMES if n not in used)
     n = max((int(x["id"][1:]) for x in g["staff"]), default=0) + 1
     g["staff"].append(_adviser(kind, name, 1, scn.member(g["iso3"]).region, n))
+    sync_skills(g)
     _log(g, "you", f"You took on {name} as a {K.STAFF_KINDS[kind]['name'].lower()}.", "action")
     return {"hired": f"a{n}"}
 
@@ -1790,6 +1812,10 @@ def deal_terms(scn: Scenario, g: dict, iso: str) -> dict:
     if ln >= 0 and iso not in g["sponsors"] and iso not in g["signatories"] and len(g["sponsors"]) < R["sponsors"]:
         get["sponsor"] = round(2.0 + max(0.0, R["sponsor_lean"] - ln) * 2, 2)
     get["influence"] = 2.0 if them["rich"] else 3.5
+    if iso not in g.get("favours", []):
+        get["favour"] = round(1.5 + max(0.0, -ln), 2)
+    if iso not in g.get("secured", []) and len(g.get("secured", [])) < R["secure_max"] and ln > R["lean_min"]:
+        get["commit"] = 1.2
     if any(g.get("intent", {}).values()):
         get["intel"] = 1.0
     return {"asks": asks, "give": give, "get": get, "capital": cap, "bonus": round(0.5 * g["trust"].get(iso, 0), 2),
@@ -1923,7 +1949,8 @@ def ap_sources(scn: Scenario, g: dict) -> list[dict]:
          "next": "Standing 5" if rs < 5 else "Standing 8" if rs < 8 else None},
         {"code": "coalition", "name": "Coalition", "n": 1 if mine >= 2 else 0,
          "next": None if mine >= 2 else "two regional groups endorsing your draft"},
-    ]
+    ] + ([{"code": "approach", "name": "The Veteran's caution", "n": -1, "next": "it passes after your first three turns"}]
+         if g.get("approach") == "veteran" and g["chapter"] == 1 and g["turn"] <= 3 else [])
 
 
 def _meeting(scn: Scenario, g: dict) -> None:
@@ -2044,11 +2071,11 @@ def a_mark(scn, g, a):
     return {}
 
 CHAPTER = {"lobby": T.a_lobby, "talk": T.a_talk, "read": a_read, "propose": a_propose, "amend": a_amend, "strike": a_strike, "promise": a_promise,
-           "side_event": a_side_event, "favour": a_favour, "whip": a_whip, "sign": a_sign, "answer": a_answer, "skill": a_skill,
-           "divide": a_divide, "merge": a_merge, "bloc_whip": a_bloc_whip, "abstain": a_abstain, "offer": a_offer,
-           "hire": a_hire, "post": a_post, "reserve": a_reserve, "secure": a_secure, "deal": T.a_deal, "compromise": T.a_compromise, "visit": V.a_visit, "mark": a_mark,
+           "whip": a_whip, "sign": a_sign, "answer": a_answer,
+           "divide": a_divide, "merge": a_merge, "abstain": a_abstain, "offer": a_offer,
+           "hire": a_hire, "post": a_post, "reserve": a_reserve, "deal": T.a_deal, "compromise": T.a_compromise, "visit": V.a_visit, "mark": a_mark,
            "attend": a_attend, "advance": a_advance, "stay": a_stay, "end_turn": a_end_turn}
-SUMMIT = {"speech": s_speech, "decide": s_decide, "final": s_final, "statement": s_statement, "skill": a_skill, "post": a_post,
+SUMMIT = {"speech": s_speech, "decide": s_decide, "final": s_final, "statement": s_statement, "post": a_post,
           "mark": a_mark}
 
 

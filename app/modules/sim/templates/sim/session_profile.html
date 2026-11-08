@@ -1,0 +1,33 @@
+{% from "sim/_session_head.html" import head, emblem, settings_panel %}{{ head(title) }}
+{# Your record in The Session (Ben, 8 Nov 2026): the scenario ladder (gold opens the next), your medals, and your best
+   medal with each country and on each path. A signed-in student's comes from their own saved sessions; a guest's is
+   kept in this browser and drawn by session-profile.js. #}
+<body class="board-body session-body" data-page="profile" data-signed-in="{{ 'yes' if signed_in else 'no' }}" data-staff="{{ 'yes' if staff else 'no' }}">
+<a class="skip" href="#main">Skip to your record</a>
+<div id="b-stage" class="b-stage s-stage">
+  <header class="b-top">
+    {{ emblem() }}
+    <div class="b-titles">
+      <p class="b-kicker">The Session</p>
+      <h1 class="b-committee" id="b-committee">{{ title }}</h1>
+      <p class="b-ribbon"><span class="b-ribbon-text">{% if signed_in %}From your saved sessions{% else %}Kept on this laptop: sign in to keep it anywhere{% endif %}</span></p>
+    </div>
+  </header>
+  <main class="s-profile" id="main" tabindex="-1">
+    <section class="s-doc s-prof-avatar" aria-labelledby="h-avatar"><h2 id="h-avatar">Your ambassador</h2>
+      <div class="s-avatar-wrap"><div class="s-avatar-face" id="p-face" aria-hidden="true"></div><div class="s-avatar-opts" id="p-avatar-opts"></div></div>
+      <p class="s-sub">Kept on this laptop. Your look appears when you meet delegates face to face.</p>
+      <h3>Insignia</h3><ul class="s-insignia" id="p-insignia"></ul></section>
+    <section class="s-doc s-prof-stats" aria-labelledby="h-stats"><h2 id="h-stats">Your sessions</h2><dl class="s-stats" id="p-stats"></dl></section>
+    <section class="s-doc s-prof-ladder" aria-labelledby="h-ladder"><h2 id="h-ladder">The scenarios</h2>
+      <p class="s-sub">Win gold in a scenario, on any path, on Standard or Hard, to open the next.</p><ol class="s-ladder" id="p-ladder"></ol></section>
+    <section class="s-doc" aria-labelledby="h-paths"><h2 id="h-paths">Best on each path</h2><ul class="s-medals" id="p-paths"></ul></section>
+    <section class="s-doc" aria-labelledby="h-approaches"><h2 id="h-approaches">Approaches</h2><ul class="s-medals" id="p-approaches"></ul></section>
+    <section class="s-doc" aria-labelledby="h-countries"><h2 id="h-countries">Best with each country</h2><ul class="s-medals" id="p-countries"></ul></section>
+    <div class="s-nav"><a class="s-btn ghost" href="/session" hx-boost="false">Back</a><a class="s-btn" href="/session/new" hx-boost="false">New session</a></div>
+  </main>
+  <script id="p-data" type="application/json">{{ {"profile": profile, "cards": cards, "paths": paths, "approaches": approaches, "insignia": insignia}|tojson }}</script>
+  {{ settings_panel() }}
+</div>
+</body>
+</html>
