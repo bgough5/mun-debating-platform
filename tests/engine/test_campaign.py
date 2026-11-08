@@ -89,7 +89,8 @@ def test_a_broken_promise_costs_trust_and_respect(scenarios):
     g["influence"] = 10
     g2, out = E.apply(scn, g, {"do": "amend", "clause": c["id"], "add": other})
     if out["accepted"]:
-        assert g2["trust"][fan] == -1 and g2["respect"] == g["respect"] - 1
+        assert g2["trust"][fan] == -E.R["trust_max"] and g2["respect"] == g["respect"] - 2     # a betrayal (8 Nov)
+        assert g2["rep"]["broken"] == 1 and any("Betrayal" in x["text"] for x in g2["log"])
         assert [p["kept"] for p in g2["promises"]] == [False]
 
 
@@ -134,10 +135,16 @@ def test_a_pledged_permanent_member_abstains_except_on_its_red_lines(scenarios):
             assert after == before
 
 
-def _to_final(scn, g):
+def _to_final(scn, g, vote="no"):
+    """Walk the Summit (D-102) to the final vote: statements, reading, caucus, each amendment debated and voted."""
+    from app.modules.sim.campaign import summit as SM
     g, _ = E.apply(scn, g, {"do": "speech", "stance": "open"})
-    while g["summit"]["step"] == "clause":
-        g, _ = E.apply(scn, g, {"do": "decide", "choice": "stand", "vote": "no"})
+    g, _ = E.apply(scn, g, {"do": "proceed"})
+    g, _ = E.apply(scn, g, {"do": "caucus", "kind": "moderated", "tag": SM.caucus_topics(scn, g)[0]})
+    while g["summit"]["step"] == "amendments":
+        g, _ = E.apply(scn, g, {"do": "debate", "choice": "silent"})
+        g, _ = E.apply(scn, g, {"do": "amend_vote", "vote": vote})
+    g, _ = E.apply(scn, g, {"do": "proceed"})
     return g
 
 

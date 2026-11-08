@@ -114,7 +114,7 @@ def test_options_do_not_give_away_their_consequences(scn):
         g, _ = E.apply(scn, g, {"do": "end_turn"})
         for v in g["visits"]:
             for o in v["options"]:
-                assert "(" not in o["label"] or "Influence" in o["label"] or "its file" in o["label"] or "adviser" in o["label"] or "whip sheet" in o["label"], o["label"]
+                assert "(" not in o["label"] or "Influence" in o["label"] or "its file" in o["label"] or "adviser" in o["label"] or "whip sheet" in o["label"] or "action" in o["label"], o["label"]
         assert all(len(V.likeness(i).split()) in (4, 5) for i in scn.isos)
 
 
@@ -178,3 +178,34 @@ def test_approaches_are_trade_offs(scn):
     with pytest.raises(E.GameError):
         E.new_game(scn, scn.isos[0], seed=12, approach="superhero")
     assert set(K.APPROACHES) == {"diplomat", "linguist", "veteran", "envoy"}
+
+
+def test_betrayal_hurts_and_a_rivals_change_is_not_yours(scn):
+    """Ben, 8 Nov: promising, then striking, must cost you; a rival changing the clause voids the promise instead."""
+    g = E.new_game(scn, scn.isos[0], seed=14)
+    c = g["draft"][0]
+    fan = next(i for i in scn.isos if i not in E._others(g) and scn.dist(c["tags"])[i][0] >= 0.4)
+    g["promises"].append({"iso3": fan, "clause": c["id"], "kept": None})
+    r0 = g["respect"]
+    E._break_promises_if_changed(scn, g, c, None, actor=g["rivals"][0]["iso3"])
+    assert g["promises"][-1]["kept"] == "void" and g["respect"] == r0                       # not your doing
+    g["promises"][-1]["kept"] = None
+    E._break_promises_if_changed(scn, g, c, None)
+    assert g["promises"][-1]["kept"] is False and g["respect"] == r0 - 2 and g["trust"][fan] == -E.R["trust_max"]
+    rv = g["rivals"][0]
+    rv["truce"], rv["truce_want"] = True, c["tags"][0]
+    E._break_promises_if_changed(scn, g, c, None)
+    assert rv["truce"] is False and rv["fury"] == g.get("tick", 0) + 1                      # a broken peace
+
+
+def test_talk_fades_but_deals_bind(scn):
+    g = E.new_game(scn, scn.isos[0], seed=15)
+    free = [i for i in scn.isos if i not in E._others(g) and i != g["iso3"]]
+    a, b = free[:2]
+    g["sway"]["you"][a] = g["sway"]["you"][b] = 0.8
+    g["deal_votes"] = {b: "yes"}
+    E.fade_talk(g)
+    assert g["sway"]["you"][b] == 0.8 and g["sway"]["you"][a] == round(0.8 * E.R["talk_fade"], 4)   # goodwill fades; a deal holds
+    g["influence"] = 5
+    t = E.deal_terms(scn, g, a)
+    assert "influence" in t["give"] and "standing" in t["get"]                               # trade Influence and Standing

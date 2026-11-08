@@ -226,6 +226,9 @@ class Bot:
         """Whether to accept an offer at the door: never one that ties you to your red line."""
         if self.style == "random":
             return self.rng.random() < 0.5
+        if o["kind"] == "trade":                                   # a trade: worth it for a vote, if the capital won't mind
+            return o["get"][0] in ("yes", "abstain", "sponsor", "commit") and not o.get("cap") and \
+                ("influence" not in o["give"] or g["influence"] >= 6) and ("standing" not in o["give"] or g["respect"] >= 5)
         if o["kind"] == "back":
             c = next((x for x in g["draft"] if x["id"] == o["clause"]), None)
             return bool(c) and g["mandate"]["red"] not in c["tags"]
@@ -458,37 +461,73 @@ class Bot:
 
     # ---------------- the summit
     def summit(self, g: dict) -> dict:
-        s = g["summit"]
-        if s["step"] == "speech":
+        """The Summit as the UN runs it (D-102). Competent bots judge every amendment by their instructions: speak
+        and vote for what helps, against what hurts, accept friendly edits to their own text, use a point of order
+        only on real grounds, and spend a favour or a last offer when a vote that matters is close."""
+        from app.modules.sim.campaign import summit as SM
+        s = SM._ensure(self.scn, g)
+        rnd = self.style == "random"
+        if s["step"] == "statements":
             stance = {"hardliner": "firm", "broker": "bridge", "drafter": "open", "analyst": "open"}.get(self.style) or self.rng.choice(E.STANCES)
             g, _ = self.act(g, {"do": "speech", "stance": stance})
             return g
-        if s["step"] == "clause":
-            c = E._clause(g, s["queue"][s["i"]])
-            vote, choice = self.clause_vote(g, c), "stand"
-            p = s["pending"]
-            if self.style == "random":
-                choice = self.rng.choice(["stand", "offer", "accept", "favour", "point_of_order"])
-                vote = self.rng.choice(E.VOTES)
-            elif p:
-                hurts = (g["mandate"]["must"] == p.get("remove")) or (g["mandate"]["red"] == p.get("add")) or \
-                        (c["author"] == "you" and self.style == "drafter")
-                if hurts and "point_of_order" in g["skills"] and not s["po_used"]:
-                    choice = "point_of_order"
-                elif not hurts and self.style in ("broker", "analyst"):
-                    choice = "accept"
-            if choice == "stand" and self.style != "random" and s.get("attack") and vote == "yes"                     and g["respect"] >= E.R["reply_respect"]:
-                choice = "reply"
-            if choice == "stand" and self.style != "random":
-                my = {"yes": 1, "no": -1, "abstain": 0}[vote]
-                close = my and self.swing_targets(g, c, my)
-                if g["favours"] and close and (g["mandate"]["must"] in c["tags"] or self.style != "hardliner"):
-                    choice = "favour"
-                elif close and g["influence"] >= E.R["offer_cost"]:
-                    choice = "offer"
-            g2, ok = self.act(g, {"do": "decide", "choice": choice, "vote": vote})
+        if s["step"] in ("reading", "final_reading"):
+            g, _ = self.act(g, {"do": "proceed"})
+            return g
+        if s["step"] == "caucus":
+            if rnd or self.style in ("hardliner", "drafter"):
+                topics = SM.caucus_topics(self.scn, g)
+                tag = self.rng.choice(topics) if rnd else g["mandate"]["must"]
+                g2, ok = self.act(g, {"do": "caucus", "kind": "moderated", "tag": tag})
+            else:
+                final = E.final_clause(g)
+                swing = sorted((abs(E.latent(self.scn, g, i, final, mood=False) - self.scn.c_yes), i) for i in self.free(g))
+                g2, ok = self.act(g, {"do": "caucus", "kind": "unmoderated", "iso3": [i for _, i in swing[:2]]})
             if not ok:
-                g2, _ = self.act(g, {"do": "decide", "choice": "stand", "vote": vote})
+                g2, _ = self.act(g, {"do": "caucus", "kind": "moderated", "tag": SM.caucus_topics(self.scn, g)[0]})
+            return g2
+        if s["step"] == "amendments":
+            if not rnd and s.get("mine", 0) < SM.MY_AMENDMENTS and s["stage"] in ("debate", None):
+                opts = [o for o in SM.amendment_options(self.scn, g) if o["kind"] in ("remove", "add") or
+                        (o["kind"] == "strike" and self.style == "hardliner")]
+                if opts:
+                    o = opts[0]
+                    g2, ok = self.act(g, {"do": "table", "kind": o["kind"], "clause": o["clause"], "tag": o.get("tag")})
+                    if ok:
+                        return g2
+            am = s.get("cur")
+            if not am:
+                return g
+            side = SM._my_side(g, am) if am["by"] != "you" else 1
+            c = next(x for x in g["draft"] if x["id"] == am["clause"])
+            if s["stage"] == "debate":
+                if rnd:
+                    choice = self.rng.choice(["for", "against", "silent", "point_of_order", "reply", "accept"])
+                elif side > 0 and c["author"] == "you" and am["by"] != "you":
+                    choice = "accept"
+                elif side < 0 and "point_of_order" in g["skills"] and not s["po_used"] and SM._out_of_order(g, am):
+                    choice = "point_of_order"
+                elif side < 0 and c["author"] == "you" and g["respect"] >= E.R["reply_respect"] and am["by"] != "you":
+                    choice = "reply"
+                else:
+                    choice = "for" if side > 0 else "against" if side < 0 else "silent"
+                g2, ok = self.act(g, {"do": "debate", "choice": choice})
+                if not ok:
+                    g2, _ = self.act(g, {"do": "debate", "choice": "silent"})
+                return g2
+            vote = self.rng.choice(E.VOTES) if rnd else ("yes" if side > 0 else "no" if side < 0 else "abstain")
+            extra = None
+            if not rnd and side:
+                votes = SM.amendment_votes(self.scn, g, am, vote)
+                res = E.tally(self.scn.rule, votes, len(votes))
+                close = res.passed != (side > 0) and abs(res.yes - res.no) <= 2
+                if close and g["favours"]:
+                    extra = "favour"
+                elif close and g["influence"] >= E.R["offer_cost"]:
+                    extra = "offer"
+            g2, ok = self.act(g, {"do": "amend_vote", "vote": vote, "extra": extra})
+            if not ok:
+                g2, _ = self.act(g, {"do": "amend_vote", "vote": vote})
             return g2
         if s["step"] == "statement":
             if self.style == "random":
@@ -502,7 +541,7 @@ class Bot:
             return g
         vote = "yes" if self.style != "random" else self.rng.choice(E.VOTES)
         if self.style == "hardliner":
-            kept = {t for r in s["results"] if r["passed"] for t in r["tags"]}
+            kept = {t for c in g["draft"] for t in c["tags"]}
             vote = "no" if g["mandate"]["red"] in kept else "yes"
         g, _ = self.act(g, {"do": "final", "vote": vote})
         return g

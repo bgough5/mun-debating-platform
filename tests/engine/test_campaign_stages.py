@@ -46,7 +46,7 @@ def test_pressing_only_end_turn_makes_no_breakthrough(scn):
 
 def test_a_breakthrough_lets_you_move_on_with_momentum(scn):
     g = _game(scn)
-    g["ap"], g["influence"], g["turn"] = 9, 20, 2                    # no breakthrough on a stage's first turn (phase 13)
+    g["ap"], g["influence"], g["turn"] = 9, 20, E.MIN_STAGE_TURNS     # a stage lasts at least three turns (8 Nov)
     m = g["mandate"]
     have = {t for c in g["draft"] for t in c["tags"]}
     for card in [c for c in scn.cards if c["id"] in g["cards"] and m["red"] not in c["tags"]]:

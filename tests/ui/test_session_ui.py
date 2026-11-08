@@ -42,6 +42,40 @@ def _calm(page):
         page.wait_for_timeout(300)
 
 
+def _through_the_summit(page, check=None):
+    """The Summit as the UN runs it (D-102): statements, the draft read, a caucus, the amendments (debate, then vote),
+    the final text, then the final vote. `check(name)` runs axe at each kind of step once."""
+    seen = set()
+    for _ in range(40):
+        page.wait_for_timeout(400)
+        if page.is_visible("#s-advice"):
+            page.click("#s-advice-ok")
+            continue
+        head = page.inner_text("#c-summit h2") if page.locator("#c-summit h2").count() else ""
+        line = head.splitlines()[0].strip() if head else ""
+        if check and line and line not in seen:
+            seen.add(line)
+            check(line)
+        if head.startswith("Position statements"):
+            page.click(".s-stance:has-text('Open')")
+        elif head.startswith("The draft, read"):
+            page.click("#c-summit button:has-text('caucus')")
+        elif head.startswith("Caucus"):
+            page.click("#c-summit button:has-text('Move for a moderated caucus')")
+        elif head.startswith("Amendment"):
+            if page.locator("#c-summit .s-decide button:has-text('Stay silent')").count():
+                page.click("#c-summit .s-decide button:has-text('Stay silent')")
+            else:
+                page.click("#c-summit .s-votes button:has-text('Abstain')")
+                page.wait_for_timeout(1500)                      # the sweep
+        elif head.startswith("The final text"):
+            page.click("#c-summit button:has-text('final vote')")
+        elif head.startswith("The final vote"):
+            page.click("#c-summit .s-votes button:has-text('Yes')")
+            return
+    raise AssertionError("the Summit didn't reach the final vote")
+
+
 def _end_turn(page, turn):
     page.click("#s-end-turn")
     page.wait_for_function(f"document.getElementById('s-where').textContent.indexOf('turn {turn}') >= 0")
@@ -222,17 +256,13 @@ def test_a_quick_session_reaches_the_summit_and_ends_with_medals(browser, live):
     assert page.inner_text("#s-cc-h") == "The Summit"
     _close_card(page)
     assert page.get_attribute("#t-summit", "aria-selected") == "true" and page.is_hidden("#t-draft")
-    page.click(".s-stance:has-text('Open')")
-    page.wait_for_selector("#c-summit .s-votes")
-    assert not axe(page, "session_summit_clause")
-    seen = 0
-    while page.locator("#c-summit h2:has-text('Clause')").count():
-        seen += 1
-        page.click("#c-summit .s-votes button:has-text('Yes')")
-        page.wait_for_function(f"document.querySelectorAll('#c-result-list li').length === {seen}")
-    assert seen >= 1 and page.locator("#s-verdict").count() == 1
-    page.wait_for_selector("#c-summit h2:has-text('The resolution as a whole')")
-    page.click("#c-summit .s-votes button:has-text('Yes')")
+    steps = []
+    def check(head):
+        steps.append(head)
+        assert not axe(page, "session_summit_" + "_".join(head.lower().replace(",", "").split()[:3])), head
+    _through_the_summit(page, check)
+    assert any(x.startswith("Position statements") for x in steps) and any(x.startswith("Caucus") for x in steps)
+    assert any(x.startswith("The final vote") for x in steps) and page.locator("#s-verdict").count() == 1
     page.wait_for_selector("#s-result:not([hidden])", timeout=15000)
     assert page.locator("#s-result .s-medal").count() == 4                     # the four paths as medals (phase 6)
     assert any(m in page.inner_text("#s-result-h") for m in ("Gold", "Silver", "Bronze", "No medal"))
@@ -269,13 +299,7 @@ def test_the_almanac_and_the_debrief_in_the_browser(browser, live):
     _close_card(page)
     _to_the_summit(page)
     _close_card(page)
-    page.click(".s-stance:has-text('Open')")
-    page.wait_for_selector("#c-summit .s-votes")
-    while page.locator("#c-summit h2:has-text('Clause')").count():
-        n = page.locator("#c-result-list li").count()
-        page.click("#c-summit .s-votes button:has-text('Yes')")
-        page.wait_for_function(f"document.querySelectorAll('#c-result-list li').length === {n + 1}")
-    page.click("#c-summit .s-votes button:has-text('Yes')")
+    _through_the_summit(page)
     page.wait_for_selector("#s-result:not([hidden]) .s-plaque", timeout=15000)
     assert page.is_hidden("#s-advice") and page.locator("#s-result .s-chief-says svg").count() == 1   # the Chief's verdict, nothing over the dossier
     assert page.evaluate("document.querySelector('#s-result .s-final').scrollTop") == 0

@@ -872,3 +872,76 @@ Ben chose these three instead.
   | Envoy | up to three visitors and more offers; rivals gain 1 Influence more a turn | gold in three scenarios on Standard or Hard |
 
   The balance harness cycles the approaches and reports `approach_silver_plus`.
+
+## 32. Deals that matter, more conversations, and the Summit as the UN runs it (phase 19, 8 Nov 2026)
+
+From Ben's playtest. A Standard session took about 20 minutes, no stage lasted more than two turns, and the Summit "needs to feel like you're sitting in the UN chambers, and proper procedure followed".
+
+**Pacing and staff.**
+- **A stage lasts at least three turns** (`MIN_STAGE_TURNS`), however early the breakthrough.
+- **Promotions are faster** (`PROMOTE = {2: 2, 3: 5}`), and an adviser posted to a delegation also earns experience when a talk with it goes well.
+
+**Deals and betrayal.**
+- **Betrayal** (`_betray`) is cutting what you promised (a clause, a pact or a peace), whether by striking, amending or voting for an amendment. It:
+  - turns the delegation hostile;
+  - cools its regional group;
+  - costs 2 Standing;
+  - voids its deal;
+  - makes a rival furious;
+  - adds to `rep["broken"]`, which makes every later deal dearer (+0.5 greed each).
+
+  A rival's change to a clause you promised voids the promise; it no longer counts as your broken word (this was a bug).
+- **Talk fades, deals bind** (`fade_talk`, `R["talk_fade"]` = 0.93 a turn). Goodwill from talking fades, except where a deal, a promise or a signed commitment holds the delegation.
+- **The deal table also trades Influence** (you pay 3) **and Standing** (your public support costs 1; their praise gives 1).
+- **Every deal is on the Agreements list in full** (`deal_log`).
+- **Delegations bring trades that suit them** (`_trade_offer`): what they most want from you, for their vote if it's in play, otherwise for what they can give.
+
+**More conversations.** Two to four visitors a turn, with new kinds (`visits._more`):
+- an ultimatum (refuse it and the rival tables its amendment at the Summit: `g["threats"]`);
+- a bloc bargain (`g["bargains"]`, kept or broken by the next stage's end);
+- mediation;
+- a leak in confidence (expose it and the source turns on you);
+- old sins (the press asks about a broken word);
+- an olive branch;
+- your own staff asking to be posted.
+
+**The Summit** (`campaign/summit.py`, `session-summit.js`) follows Ben's order of business:
+1. **Position statements:** rivals and the strongest voices for and against, then yours (firm, open or bridge).
+2. **The draft read in full.**
+3. **A caucus:** moderated (you choose the topic and speak; rivals speak too) or unmoderated (a word with two delegations).
+4. **Amendments, one at a time, as edits of the draft:** strike a clause, strike part of it, add a sub-clause, or soften or strengthen its verb on the ladder Invites / Encourages / Calls upon / Urges / Strongly urges.
+
+   Each is debated, then voted. In the debate you can speak for or against, raise a point of order, claim a right of reply or accept the amendment as friendly. At the vote you can add a last offer or call in a favour.
+5. **The final text,** with tracked changes.
+6. **The final vote** on the text as a whole. There are no clause-by-clause votes.
+
+**How amendments come forward.**
+- **From real motives:**
+  - a rival's red line or wish (a refused ultimatum heads the list);
+  - a delegation's own red line in the text;
+  - a supporter softening a clause that would fail, or strengthening one that is safe;
+  - a champion adding a missing commitment.
+- **Only contested ones** (yes within three of no). **One per delegation, five at most, plus up to two of your own.**
+- **A settled matter is closed** (`closed`): nobody re-tables it.
+- **A point of order succeeds only on a real ground:** an amendment that brings back what the working group struck.
+
+The whip sheet's clause columns are scored against how each delegation would vote on each clause as finally amended.
+
+**Measured:** see the table below (2,400 games, after phase 19).
+
+| Target | Phase 17 | Phase 19 |
+|---|---|---|
+| Standard: silver or better | 53.9% | 63.0% |
+| Gold on own path: hardliner / analyst / broker / drafter | 43.1 / 38.8 / 36.2 / 0.6% | 60.6 / 45.0 / 54.4 / 0.0% |
+| Hardest scenario on Standard (target 25% or more) | 15.0% | 31.2% |
+| Security Council scenarios, Standard: AI and cyber / climate security | 24% / 15% | 39% / 31% |
+| Random player, silver or better | 12.3% | 19.6% |
+| Approaches, silver or better: diplomat / linguist / veteran / envoy | – | 70.6 / 60.6 / 65.6 / 55.0% |
+| Rivals get what they came for: Easy / Standard / Hard | 8.6 / 15.9 / 17.8% | 8.9 / 20.8 / 23.4% |
+| Talking's share of winning actions (35% or less) | 31% | 32% |
+| Stuck games | 0 | 0 |
+
+**What the numbers say:**
+- The Summit now gives the Security Council scenarios a fair route: both are above 25%.
+- No approach is simply better.
+- The Architect path (your own text in the resolution) still gives no gold. That is Ben's call.

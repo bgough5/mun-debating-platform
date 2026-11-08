@@ -343,7 +343,7 @@ def view(scn: Scenario, g: dict) -> dict:
         "budget": {"total": X.budget(g["iso3"]), "used": g.get("pledged", 0)},
         "deal_ready": g.get("deal_tick") != g.get("tick"), "deal_items": {"give": K.DEAL_GIVE, "get": K.DEAL_GET},
         "talks": T.talks_view(scn, g),
-        "visits": [{**x, "name": {"minister": "Your Foreign Minister", "press": "A journalist"}.get(x.get("who"), scn.member(x["iso3"]).name),
+        "visits": [{**x, "name": {"minister": "Your Foreign Minister", "press": "A journalist", "staff": "Your staff"}.get(x.get("who"), scn.member(x["iso3"]).name),
                     "face": VI.likeness(x["iso3"]), "step": x.get("step", 1), "feeling": None if x.get("who") else VI.feeling(g, x["iso3"]),
                     "room": [{"iso3": i, "name": scn.member(i).name, "feeling": VI.feeling(g, i), "face": VI.likeness(i)} for i in x.get("members", [])]}
                    for x in g.get("visits", [])] if chapters else [],
@@ -486,50 +486,64 @@ def _sphere(scn: Scenario, g: dict, iso: str) -> str | None:
 
 
 def _summit_view(scn: Scenario, g: dict) -> dict | None:
-    """The summit as the page shows it: the clause before the committee, any floor amendment, what you can do about
-    it, the votes so far, and the final vote and statement."""
+    """The Summit as the page shows it (D-102): the step, and what that step needs: the statements; the draft as read;
+    the caucus; the amendment on the floor, its debate and what you can do; the final text with its tracked changes;
+    the final vote and any Presidential Statement."""
+    from app.modules.sim.campaign import summit as SM
     s = g.get("summit")
     if not s:
         return None
-    clauses = {c["id"]: c for c in g["draft"]}
-    cur = None
-    if s["step"] == "clause" and s["i"] < len(s["queue"]):
-        c = clauses[s["queue"][s["i"]]]
-        cur = {"id": c["id"], "text": c["text"], "tags": [scn.tags[t] for t in c["tags"]], "n": s["i"] + 1, "of": len(s["queue"]),
-               "chance": E.chance(scn, g, c), "stance": E.stance(scn, g, "you", c), "mine": c["author"] == "you",
-               "expected": _expected(scn, g, c),
-               "author": _name(scn, g, c["author"]),
-               "promised_to": [scn.member(pr["iso3"]).name for pr in g["promises"] if pr["clause"] == c["id"] and pr["kept"] is None]}
-    atk = s.get("attack")
-    if atk:
-        atk = {**atk, "by_name": scn.member(atk["by"]).name}
-    pend = s.get("pending")
-    if pend:
-        pend = {**pend, "by_name": scn.member(pend["by"]).name,
-                "change": ("drop " + scn.tags[pend["remove"]].lower()) if pend.get("remove") else ("add " + scn.tags[pend["add"]].lower())}
-    results = []
-    for r in s["results"]:
-        c = clauses.get(r["clause"], {})
-        results.append({**r, "text": c.get("text", ""), "labels": [scn.tags[t] for t in r["tags"]]})
-    final = s.get("final")
-    kept_tags = list(dict.fromkeys(t for r in s["results"] if r["passed"] for t in r["tags"]))
-    golden = None
-    if s["step"] == "final":
-        kept = {t for r in s["results"] if r["passed"] for t in r["tags"]}
-        m = g["mandate"]
-        if m["must"] in kept and m["red"] not in kept:
-            golden = "aims_in"
-        elif m["red"] in kept:
-            golden = "red_in"
-    return {"step": s["step"], "current": cur, "pending": pend, "results": results, "final": final, "attack": atk, "golden": golden,
-            "can_reply": g["respect"] >= E.R["reply_respect"],
-            "kept": [scn.tags[t] for t in kept_tags],
-            "statement_options": [{"code": t, "label": scn.tags[t]} for t in s.get("statement_options", [])],
-            "statement": s.get("statement"), "speech": s.get("speech"),
-            "favours": [scn.member(i).name for i in g["favours"]], "po": "point_of_order" in g["skills"] and not s["po_used"],
-            "offer_cost": E.R["offer_cost"], "influence": g["influence"],
-            "names": {m.iso3: m.name for m in scn.members}}
+    s = SM._ensure(scn, g)
+    names = {m.iso3: m.name for m in scn.members}
 
+    def who(x):
+        return "You" if x == "you" else names.get(x, x)
+
+    def clause_view(c, n):
+        tracked = [t for t in s.get("tracked", []) if t["clause"] == c["id"]]
+        return {"id": c["id"], "n": n, "text": SM.read_as(c), "labels": [scn.tags[t] for t in c["tags"]], "sponsor": who(c["author"]) if c["author"] != "draft" else "The zero draft",
+                "mine": c["author"] == "you", "chance": E.chance(scn, g, c)["p_pass"] if s["step"] in ("reading",) else None,
+                "changes": [{"by": who(t["by"]), "text": t["text"], "how": t["how"]} for t in tracked],
+                "promised_to": [names[pr["iso3"]] for pr in g["promises"] if pr["clause"] == c["id"] and pr["kept"] is None]}
+    out = {"step": s["step"], "steps": list(SM.STEPS), "speech": s.get("speech"), "names": names,
+           "statements": s.get("statements", []), "caucus": s.get("caucus"), "po": "point_of_order" in g["skills"] and not s["po_used"],
+           "favours": [names[i] for i in g["favours"]], "offer_cost": E.R["offer_cost"], "influence": g["influence"],
+           "can_reply": g["respect"] >= E.R["reply_respect"], "final": s.get("final"), "statement": s.get("statement"),
+           "statement_options": [{"code": t, "label": scn.tags[t]} for t in s.get("statement_options", [])]}
+    if s["step"] in ("reading", "final_reading", "final", "amendments"):
+        out["draft"] = [clause_view(c, k + 1) for k, c in enumerate(g["draft"])]
+        out["struck"] = [{"text": t["text"], "by": who(t["by"])} for t in s.get("tracked", []) if t["kind"] == "strike" or
+                         (t["kind"] == "remove" and t["before"] == [t["tag"]])]
+    if s["step"] == "caucus":
+        out["topics"] = [{"code": t, "label": scn.tags[t], "mine": SM._my_view(g, t)} for t in SM.caucus_topics(scn, g)]
+        final = E.final_clause(g)
+        out["floor"] = sorted(({"iso3": i, "name": names[i], "lean": E.vote_of(scn, E.latent(scn, g, i, final, mood=False)) if final["tags"] else None}
+                               for i in scn.isos if i not in E._others(g) and i != g["iso3"]), key=lambda x: x["name"])
+    if s["step"] == "amendments":
+        am = s.get("cur")
+        if am:
+            c = next(x for x in g["draft"] if x["id"] == am["clause"])
+            legal = max((a["stars"] for a in g.get("staff", []) if a["kind"] == "legal"), default=0)
+            advice = None
+            if legal and s["stage"] == "vote":
+                v = SM.amendment_votes(scn, g, am, "abstain")
+                passes = E.tally(scn.rule, v, len(v)).passed
+                advice = {"passes": passes, "sure": K.SURE[legal]}
+            out["cur"] = {"id": am["id"], "by": who(am["by"]), "by_you": am["by"] == "you", "kind": am["kind"], "text": SM._describe(scn, g, am),
+                          "clause": clause_view(c, g["draft"].index(c) + 1), "threat": bool(am.get("threat")),
+                          "side": SM._my_side(g, am) if am["by"] != "you" else 1, "your_clause": c["author"] == "you",
+                          "stage": s["stage"], "advice": advice}
+            out["debate"] = s.get("debate")
+        out["queue"] = [{"by": who(q["by"]), "text": SM._describe(scn, g, q)} for q in s["queue"] if SM._valid(g, q)]
+        out["done"] = [{"by": who(d["by"]), "text": d["text"], "result": d["result"]} for d in s["done"]]
+        out["options"] = SM.amendment_options(scn, g)
+        out["mine_left"] = SM.MY_AMENDMENTS - s.get("mine", 0)
+    if s["step"] == "final":
+        tags = {t for c in g["draft"] for t in c["tags"]}
+        m = g["mandate"]
+        out["golden"] = "aims_in" if m["must"] in tags and m["red"] not in tags else "red_in" if m["red"] in tags else None
+        out["kept"] = [scn.tags[t] for t in sorted(tags)]
+    return out
 
 def _expected(scn: Scenario, g: dict, c: dict) -> dict:
     """At the summit, every decision card shows the vote count you can expect (without the moods on the day)."""

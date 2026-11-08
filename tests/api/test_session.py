@@ -86,14 +86,21 @@ def test_a_guest_plays_a_quick_session_to_the_end(app):
     r = {"view": j["view"]}
     while r["view"]["phase"] == "chapter":                      # four turns, or three if the deadline is brought forward
         r = move({"do": "end_turn"})
-    assert r["view"]["phase"] == "summit" and r["view"]["summit"]["step"] == "speech"
+    S = r["view"]["summit"]
+    assert r["view"]["phase"] == "summit" and S["step"] == "statements" and S["statements"]   # the Summit as the UN runs it (D-102)
     r = move({"do": "speech", "stance": "bridge"})
-    while r["view"]["summit"]["step"] == "clause":
-        cur = r["view"]["summit"]["current"]
-        assert 0 <= cur["chance"]["p_pass"] <= 1 and cur["n"] <= cur["of"]
-        r = move({"do": "decide", "choice": "stand", "vote": "yes"})
-        assert set(r["out"]["votes"]) >= {"NZL"} and r["out"]["votes"]["NZL"] == "yes"
-    assert r["view"]["summit"]["step"] == "final" and len(r["view"]["summit"]["results"]) >= 1
+    assert r["view"]["summit"]["step"] == "reading" and all(0 <= x["chance"] <= 1 for x in r["view"]["summit"]["draft"])
+    r = move({"do": "proceed"})
+    r = move({"do": "caucus", "kind": "moderated", "tag": r["view"]["summit"]["topics"][0]["code"]})
+    while r["view"]["summit"]["step"] == "amendments":
+        cur = r["view"]["summit"]["cur"]
+        assert cur["text"] and cur["by"]
+        r = move({"do": "debate", "choice": "silent"})
+        r = move({"do": "amend_vote", "vote": "yes"})
+        assert r["out"]["votes"]["NZL"] == "yes"
+    assert r["view"]["summit"]["step"] == "final_reading"
+    r = move({"do": "proceed"})
+    assert r["view"]["summit"]["step"] == "final"
     r = move({"do": "final", "vote": "yes"})
     assert r["view"]["phase"] == "done" and r["view"]["result"]["grade"] in (0, 1, 2, 3)
     assert set(r["view"]["result"]["paths"]) == {"mandate", "consensus", "architect", "kingmaker"}
@@ -121,8 +128,12 @@ def test_the_almanac_the_debrief_and_teachers_results(app, coord):
     while r["view"]["phase"] == "chapter":
         r = api(a, {**body, "action": {"do": "end_turn"}}).json()
     r = api(a, {**body, "action": {"do": "speech", "stance": "open"}}).json()
-    while r["view"]["summit"]["step"] == "clause":
-        r = api(a, {**body, "action": {"do": "decide", "choice": "stand", "vote": "yes"}}).json()
+    r = api(a, {**body, "action": {"do": "proceed"}}).json()
+    r = api(a, {**body, "action": {"do": "caucus", "kind": "moderated", "tag": r["view"]["summit"]["topics"][0]["code"]}}).json()
+    while r["view"]["summit"]["step"] == "amendments":
+        r = api(a, {**body, "action": {"do": "debate", "choice": "silent"}}).json()
+        r = api(a, {**body, "action": {"do": "amend_vote", "vote": "yes"}}).json()
+    r = api(a, {**body, "action": {"do": "proceed"}}).json()
     r = api(a, {**body, "action": {"do": "final", "vote": "yes"}}).json()
     d = r["view"]["debrief"]
     assert d and {t["path"] for t in d["tips"]} == {"mandate", "consensus", "architect", "kingmaker"}
@@ -151,7 +162,7 @@ def test_the_view_shows_the_crisis_offers_and_rival_personalities(app):
         if any(x["kind"] == "offer" for x in v["visits"]):
             break
     o = next(x for x in v["visits"] if x["kind"] == "offer")                       # an offer comes in person (phase 14)
-    assert o["name"] and o["text"].startswith(o["name"]) and len(v["visits"]) <= 2
+    assert o["name"] and o["text"].startswith(o["name"]) and len(v["visits"]) <= 4
     m = api(c, {"do": "move", "state": j["state"], "sig": j["sig"], "action": {"do": "visit", "id": o["id"], "choice": "refuse"}})
     assert m.status_code == 200 and all(x["id"] != o["id"] for x in m.json()["view"]["visits"])
     again = api(c, {"do": "move", "state": m.json()["state"], "sig": m.json()["sig"], "action": {"do": "visit", "id": o["id"], "choice": "accept"}})
