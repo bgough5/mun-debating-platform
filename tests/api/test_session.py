@@ -151,7 +151,7 @@ def test_the_view_shows_the_crisis_offers_and_rival_personalities(app):
         if any(x["kind"] == "offer" for x in v["visits"]):
             break
     o = next(x for x in v["visits"] if x["kind"] == "offer")                       # an offer comes in person (phase 14)
-    assert o["name"] and o["text"].startswith(o["name"]) and len(v["visits"]) <= 2
+    assert o["name"] and o["text"].startswith(o["name"]) and len(v["visits"]) <= 4
     m = api(c, {"do": "move", "state": j["state"], "sig": j["sig"], "action": {"do": "visit", "id": o["id"], "choice": "refuse"}})
     assert m.status_code == 200 and all(x["id"] != o["id"] for x in m.json()["view"]["visits"])
     again = api(c, {"do": "move", "state": m.json()["state"], "sig": m.json()["sig"], "action": {"do": "visit", "id": o["id"], "choice": "accept"}})

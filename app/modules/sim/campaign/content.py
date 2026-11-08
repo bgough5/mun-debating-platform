@@ -196,6 +196,8 @@ DEAL_GIVE = {
     "trade": {"name": "Trade terms", "what": "Easier access to your market for their exports. Your capital minds unless trade matters to your own economy."},
     "candidacy": {"name": "Backing for their candidacy", "what": "Your vote for their candidate at the next UN election (two a session at most)."},
     "clause": {"name": "Backing for their clause", "what": "A promise to vote yes on the clause they like best."},
+    "influence": {"name": "Influence", "what": "You put 3 Influence behind their priorities."},
+    "standing": {"name": "Your public support", "what": "You speak up for their position in the room: it costs you 1 Standing."},
 }
 DEAL_GET = {
     "yes": {"name": "Their yes", "what": "A yes vote on the whole resolution, unless it crosses their own red line."},
@@ -205,6 +207,7 @@ DEAL_GET = {
     "intel": {"name": "Intelligence", "what": "What they know about a rival's next move."},
     "favour": {"name": "A vote owed", "what": "They owe you a favour: call it in at the summit before a vote."},
     "commit": {"name": "A signed commitment", "what": "They sign a commitment to your draft: rivals find them twice as hard to move."},
+    "standing": {"name": "Their public praise", "what": "They praise your work in the room: +1 Standing."},
 }
 
 

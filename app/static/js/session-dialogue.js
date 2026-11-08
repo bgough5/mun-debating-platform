@@ -30,6 +30,7 @@
       if (!G) return null;
       if (x.who === "minister") return G.portrait(mood, "minister");
       if (x.who === "press") return G.portrait(mood, "delegate dl-k2 dl-h2 dl-w1 dl-t1");
+      if (x.who === "staff") return null;                         // your adviser: their own icon is in the Staff panel
       return G.portrait(mood, "delegate " + x.face);
     }
     function offer(v) {
@@ -41,8 +42,10 @@
       next();
     }
     var HEAD = { press: "A word in your ear", ally: "A friend at your shoulder", ask: "A quiet question", info: "Something to sell",
-      caucus: "The caucus: your address", capital: "A call from your capital", offer: "A deal at your door", media: "The press", collect: "A promise to keep", persuade: "Make the case" };
-    var MOOD = { offer: "wry", press: "eyebrow", ally: "delighted", ask: "thinking", info: "wry", caucus: "calm", capital: "eyebrow", media: "wry", collect: "calm", persuade: "thinking" };
+      caucus: "The caucus: your address", capital: "A call from your capital", offer: "A deal at your door",
+      ultimatum: "An ultimatum", bargain: "A bloc's bargain", mediate: "A dispute to settle", leak: "In confidence",
+      old_sins: "The press remembers", olive: "An olive branch", staff: "Your staff", media: "The press", collect: "A promise to keep", persuade: "Make the case" };
+    var MOOD = { ultimatum: "concerned", bargain: "calm", mediate: "thinking", leak: "wry", old_sins: "eyebrow", olive: "calm", staff: "calm", offer: "wry", press: "eyebrow", ally: "delighted", ask: "thinking", info: "wry", caucus: "calm", capital: "eyebrow", media: "wry", collect: "calm", persuade: "thinking" };
     function next() {
       if (showing || waiting || !queue.length) return;
       if (document.querySelector(".s-overlay:not([hidden])") || !$("s-walk").hidden) { setTimeout(next, 700); return; }
@@ -79,7 +82,7 @@
       var row = $("s-visit-opts"); row.textContent = ""; row.classList.remove("s-cards5");
       x.options.forEach(function (o, i) {
         var b = h("button", "s-btn" + (i && x.kind !== "persuade" ? " ghost" : ""), o.label + (o.cost ? " (" + o.cost + " Influence)" : "")); b.type = "button";
-        if (o.cost && v.influence < o.cost) b.disabled = true;
+        if ((o.cost && v.influence < o.cost) || (o.ap && v.ap < o.ap)) b.disabled = true;
         b.addEventListener("click", function () { answer(x, o.code); });
         row.appendChild(b);
       });

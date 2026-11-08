@@ -89,7 +89,8 @@ def test_a_broken_promise_costs_trust_and_respect(scenarios):
     g["influence"] = 10
     g2, out = E.apply(scn, g, {"do": "amend", "clause": c["id"], "add": other})
     if out["accepted"]:
-        assert g2["trust"][fan] == -1 and g2["respect"] == g["respect"] - 1
+        assert g2["trust"][fan] == -E.R["trust_max"] and g2["respect"] == g["respect"] - 2     # a betrayal (8 Nov)
+        assert g2["rep"]["broken"] == 1 and any("Betrayal" in x["text"] for x in g2["log"])
         assert [p["kept"] for p in g2["promises"]] == [False]
 
 

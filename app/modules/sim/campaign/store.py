@@ -343,7 +343,7 @@ def view(scn: Scenario, g: dict) -> dict:
         "budget": {"total": X.budget(g["iso3"]), "used": g.get("pledged", 0)},
         "deal_ready": g.get("deal_tick") != g.get("tick"), "deal_items": {"give": K.DEAL_GIVE, "get": K.DEAL_GET},
         "talks": T.talks_view(scn, g),
-        "visits": [{**x, "name": {"minister": "Your Foreign Minister", "press": "A journalist"}.get(x.get("who"), scn.member(x["iso3"]).name),
+        "visits": [{**x, "name": {"minister": "Your Foreign Minister", "press": "A journalist", "staff": "Your staff"}.get(x.get("who"), scn.member(x["iso3"]).name),
                     "face": VI.likeness(x["iso3"]), "step": x.get("step", 1), "feeling": None if x.get("who") else VI.feeling(g, x["iso3"]),
                     "room": [{"iso3": i, "name": scn.member(i).name, "feeling": VI.feeling(g, i), "face": VI.likeness(i)} for i in x.get("members", [])]}
                    for x in g.get("visits", [])] if chapters else [],

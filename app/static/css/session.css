@@ -1338,3 +1338,8 @@
 @keyframes s-alert-in { from { opacity: 0; transform: translate(-50%, -14px); } to { opacity: 1; transform: translate(-50%, 0); } }
 @media (prefers-reduced-motion: reduce) { .s-alert-in { animation: none; } }
 #s-proc .s-doc { border-left: 6px solid var(--lacquer); }
+#s-visit .s-doc.k-ultimatum { border-left: 6px solid var(--stamp); }
+#s-visit .s-doc.k-bargain, #s-visit .s-doc.k-olive { border-left: 6px solid var(--enamel-yes); }
+#s-visit .s-doc.k-mediate, #s-visit .s-doc.k-staff { border-left: 6px solid var(--lacquer); }
+#s-visit .s-doc.k-leak { border-left: 6px solid var(--gilt-dk); }
+#s-visit .s-doc.k-old_sins { border-left: 6px solid var(--walnut-dk); }

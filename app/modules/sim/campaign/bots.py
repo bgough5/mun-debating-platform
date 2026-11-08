@@ -226,6 +226,9 @@ class Bot:
         """Whether to accept an offer at the door: never one that ties you to your red line."""
         if self.style == "random":
             return self.rng.random() < 0.5
+        if o["kind"] == "trade":                                   # a trade: worth it for a vote, if the capital won't mind
+            return o["get"][0] in ("yes", "abstain", "sponsor", "commit") and not o.get("cap") and \
+                ("influence" not in o["give"] or g["influence"] >= 6) and ("standing" not in o["give"] or g["respect"] >= 5)
         if o["kind"] == "back":
             c = next((x for x in g["draft"] if x["id"] == o["clause"]), None)
             return bool(c) and g["mandate"]["red"] not in c["tags"]

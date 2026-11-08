@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import random
 
+from app.modules.sim.campaign import content as K
 from app.modules.sim.campaign import engine as E
 from app.modules.sim.campaign import talks as T
 
@@ -37,16 +38,16 @@ def knows(g, iso) -> str | None:
     return None
 
 
-MAX_VISITORS = 2                                              # Ben: delegates come to talk, not an inbox to clear
-TIER = {"capital": 0, "caucus": 0, "press": 1, "collect": 1}
+MAX_VISITORS = 4                                              # two to four a turn (Ben, 8 Nov: more, with consequences)
+TIER = {"capital": 0, "caucus": 0, "press": 1, "collect": 1, "ultimatum": 1, "old_sins": 1}
 
 
 def _offer_visit(scn, g, o):
     """An offer at your door, as a visit: the delegate puts the deal to you in person."""
     terms = {"back": "You'd promise to vote yes on that clause at the summit.",
              "drop": "You'd propose that amendment; the working group must agree.",
-             "favour": "You'd pay 2 Influence."}[o["kind"]]
-    return {"id": "v-" + o["id"], "kind": "offer", "iso3": o["iso3"], "offer": o["id"], "text": o["text"] + " " + terms,
+             "favour": "You'd pay 2 Influence.", "trade": ""}[o["kind"]]
+    return {"id": "v-" + o["id"], "kind": "offer", "iso3": o["iso3"], "offer": o["id"], "text": (o["text"] + " " + terms).strip(),
             "options": [{"code": "accept", "label": "Accept the deal", "cost": 0}, {"code": "refuse", "label": "Turn it down", "cost": 0}]}
 
 
@@ -158,8 +159,11 @@ def turn_start(scn, g):
             g["visits"].append(_make(scn, g, pick[0], pick[1], rng))
     rng.shuffle(g["visits"])                                   # who gets through: your capital and the caucus first, then
     g["visits"].sort(key=lambda x: TIER.get(x["kind"], 2))     # rivals pressing, offers and promises, then the rest
-    most = MAX_VISITORS + (1 if g.get("approach") == "envoy" else 0)
-    g["visits"] = g["visits"][:max(1 if rng.random() < 0.35 else most, sum(TIER.get(x["kind"]) == 0 for x in g["visits"]))]
+    g["visits"].extend(_more(scn, g, rng))
+    rng.shuffle(g["visits"])
+    g["visits"].sort(key=lambda x: TIER.get(x["kind"], 2))
+    most = rng.choice([2, 3, 3, 4]) + (1 if g.get("approach") == "envoy" else 0)
+    g["visits"] = g["visits"][:max(most, sum(TIER.get(x["kind"]) == 0 for x in g["visits"]))]
     shown = {x.get("offer") for x in g["visits"]}
     g["offers"] = [o for o in g.get("offers", []) if o["id"] in shown]
     g["visitors"] = len(g["visits"])
@@ -186,8 +190,8 @@ def a_visit(scn, g, a):
     opt = next((o for o in v["options"] if o["code"] == a.get("choice")), None)
     if not opt:
         raise E.GameError("Choose what to say.")
-    if opt["cost"]:
-        E._spend(g, 0, opt["cost"])
+    if opt["cost"] or opt.get("ap"):
+        E._spend(g, opt.get("ap", 0), opt["cost"])
     g["visits"].remove(v)
     iso, name, c = v["iso3"], scn.member(v["iso3"]).name, opt["code"]
     out = {"said": c}
@@ -260,8 +264,13 @@ def a_visit(scn, g, a):
             if truth != "yes":
                 g.setdefault("lies", []).append({"iso3": iso, "about": about})
             E._log(g, "you", f"You told {name} that {scn.member(about).name} is backing your draft.", "action", iso)
+    elif v["kind"] in MORE:
+        out = answer_new(scn, g, v, c, out)
     elif v["kind"] == "offer":
-        out.update(E.a_offer(scn, g, {"id": v["offer"], "answer": "accept" if c == "accept" else "refuse"}))
+        if not any(o["id"] == v["offer"] for o in g.get("offers", [])):
+            out["reply"] = "“We've moved on, Ambassador.”"     # the offer lapsed
+        else:
+            out.update(E.a_offer(scn, g, {"id": v["offer"], "answer": "accept" if c == "accept" else "refuse"}))
     elif v["kind"] in ("caucus", "capital", "media", "collect", "persuade"):
         out = answer_more(scn, g, v, c, out)
     elif v["kind"] == "info" and c == "pay":
@@ -477,3 +486,194 @@ def likeness(iso: str) -> str:
     n = sum((i + 7) * ord(ch) for i, ch in enumerate(iso))
     parts = [f"dl-k{n % 5}", f"dl-h{(n // 5) % 5}", f"dl-w{(n // 25) % 3}", "dl-gl" if (n // 75) % 3 == 0 else "", f"dl-t{(n // 7) % 4}"]
     return " ".join(x for x in parts if x)
+
+
+# ---------------------------------------------------------------- more conversations (Ben, 8 Nov 2026)
+# Each has a consequence that carries forward: a refused ultimatum comes back as a hostile amendment at the Summit
+# (g["threats"]); a confidence broken turns its source against you; a bluff or a betrayal comes back in the press.
+
+MORE = ("ultimatum", "bargain", "mediate", "leak", "old_sins", "olive", "staff")
+
+
+def _more(scn, g, rng) -> list[dict]:
+    out, tick = [], g.get("tick", 0)
+    free = _free(scn, g)
+    others = E._others(g)
+    # an ultimatum: a rival demands you drop part of a clause, or it will table a hostile amendment at the Summit
+    for rv in g["rivals"]:
+        if rv.get("truce") or rng.random() > 0.3:
+            continue
+        c = next((c for c in g["draft"] if rv["block"] in c["tags"] and rv["block"] != g["mandate"]["red"]), None)
+        if c and not any(t["iso3"] == rv["iso3"] for t in g.get("threats", [])):
+            n = g["draft"].index(c) + 1
+            out.append({"id": f"v{tick}-ult-{rv['iso3']}", "kind": "ultimatum", "iso3": rv["iso3"], "clause": c["id"], "tag": rv["block"],
+                        "text": f"{scn.member(rv['iso3']).name}'s delegate, coldly: \u201cTake out the part of clause {n} that "
+                                f"{_label(scn, rv['block'])}, or we table an amendment against it at the Summit, and we will win.\u201d",
+                        "options": [{"code": "yield", "label": "Agree to take it out", "cost": 0},
+                                    {"code": "call", "label": "Call their bluff", "cost": 0},
+                                    {"code": "talk", "label": "Offer to talk it over (1 action)", "cost": 0, "ap": 1}]})
+            break
+    # a bloc bargain: a group's coordinator offers its endorsement for a commitment its members want
+    regs = sorted({scn.member(i).region for i in free if scn.member(i).region in E.REGIONS})
+    if regs and rng.random() < 0.3:
+        reg = rng.choice(regs)
+        mem = [i for i in E._region_members(scn, reg) if i not in others and i != g["iso3"]]
+        have = {t for c in g["draft"] for t in c["tags"]}
+        want = max((t for t in scn.tags if t not in have and t != g["mandate"]["red"]),
+                   key=lambda t: sum(E.mu_of(scn, g, i, [t]) for i in mem), default=None)
+        if mem and want and g["endorse"].get(reg) != "you" and sum(E.mu_of(scn, g, i, [want]) for i in mem) > 0:
+            coord = max(mem, key=lambda i: (len(i), i))
+            out.append({"id": f"v{tick}-bargain-{reg}", "kind": "bargain", "iso3": coord, "region": reg, "tag": want,
+                        "text": f"The coordinator of the {E.REGIONS[reg]}: \u201cPut a clause in the draft that {_label(scn, want)}, "
+                                "and our group will stand behind your draft.\u201d",
+                        "options": [{"code": "accept", "label": "Agree: you'll table it", "cost": 0},
+                                    {"code": "refuse", "label": "Decline politely", "cost": 0}]})
+    # mediation: two delegations in a dispute ask you to settle it
+    if len(free) >= 4 and rng.random() < 0.25:
+        a, b = rng.sample(free, 2)
+        out.append({"id": f"v{tick}-mediate-{a}-{b}", "kind": "mediate", "iso3": a, "other": b,
+                    "text": f"{scn.member(a).name} and {scn.member(b).name} have fallen out over the wording of the draft, "
+                            "and both look to you.",
+                    "options": [{"code": "side_a", "label": f"Back {scn.member(a).name}", "cost": 0},
+                                {"code": "side_b", "label": f"Back {scn.member(b).name}", "cost": 0},
+                                {"code": "mediate", "label": "Bring them together (1 action)", "cost": 0, "ap": 1}]})
+    # a leak: a delegate tells you a rival's plan, in confidence
+    plan = next(((k, x) for k, x in g.get("intent", {}).items() if x), None)
+    if plan and free and rng.random() < 0.3:
+        src = rng.choice(free)
+        out.append({"id": f"v{tick}-leak-{src}", "kind": "leak", "iso3": src, "rival": plan[0],
+                    "text": f"{scn.member(src).name}'s delegate, quietly: \u201cYou didn't hear this from me. "
+                            f"{scn.member(plan[0]).name} will go after {E._target_name(scn, g, plan[1]['kind'], plan[1]['target'])} next.\u201d",
+                    "options": [{"code": "keep", "label": "Thank them, and keep it in confidence", "cost": 0},
+                                {"code": "expose", "label": "Expose the plan in the room", "cost": 0}]})
+    # old sins: a betrayal or a bluff that came out reaches the press
+    sins = g.get("rep", {}).get("broken", 0) + sum(1 for x in g["log"][-12:] if "misled" in x.get("text", ""))
+    if sins and g.get("sins_asked", 0) < sins and rng.random() < 0.5:
+        g["sins_asked"] = g.get("sins_asked", 0) + 1
+        out.append({"id": f"v{tick}-sins", "kind": "old_sins", "iso3": g["iso3"], "who": "press",
+                    "text": "A journalist: \u201cIs it true you broke your word to another delegation? The corridors are talking.\u201d",
+                    "options": [{"code": "apologise", "label": "Admit it and apologise", "cost": 0},
+                                {"code": "deny", "label": "Deny it", "cost": 0},
+                                {"code": "evasive", "label": "No comment", "cost": 0}]})
+    # an olive branch: a cool delegation offers to soften, for your backing
+    cool = [i for i in free if relation(g, i) <= -1]
+    if cool and rng.random() < 0.3:
+        iso = rng.choice(cool)
+        cl = E._their_clause(scn, g, iso)
+        if cl:
+            n = g["draft"].index(cl) + 1
+            out.append({"id": f"v{tick}-olive-{iso}", "kind": "olive", "iso3": iso, "clause": cl["id"],
+                        "text": f"{scn.member(iso).name}'s delegate: \u201cWe've been hard on each other. Back clause {n}, "
+                                "and we'll abstain on your draft rather than vote against it.\u201d",
+                        "options": [{"code": "accept", "label": "Shake on it", "cost": 0},
+                                    {"code": "refuse", "label": "Not today", "cost": 0}]})
+    # your own staff: an adviser asks to be posted where their expertise fits
+    idle = [x for x in g.get("staff", []) if not x.get("post")]
+    if idle and free and rng.random() < 0.35:
+        adv = idle[0]
+        target = (rng.choice(g["rivals"])["iso3"] if adv["kind"] == "analyst" and g["rivals"] else rng.choice(free))
+        out.append({"id": f"v{tick}-staff-{adv['id']}", "kind": "staff", "iso3": g["iso3"], "who": "staff", "adviser": adv["id"], "target": target,
+                    "text": f"{adv['name']}, your {K.STAFF_KINDS[adv['kind']]['name'].lower()}: \u201cAmbassador, post me to "
+                            f"{scn.member(target).name}. I know that delegation, and I'd learn a great deal.\u201d",
+                    "options": [{"code": "post", "label": f"Post them to {scn.member(target).name}", "cost": 0},
+                                {"code": "not_now", "label": "Not now", "cost": 0}]})
+    return out
+
+
+def answer_new(scn, g, v, c, out):
+    iso, name = v["iso3"], scn.member(v["iso3"]).name
+    k = v["kind"]
+    if k == "ultimatum":
+        rv = next(r for r in g["rivals"] if r["iso3"] == iso)
+        cl = next((x for x in g["draft"] if x["id"] == v["clause"]), None)
+        if c == "yield" and cl and v["tag"] in cl["tags"]:
+            new = [t for t in cl["tags"] if t != v["tag"]]
+            E._break_promises_if_changed(scn, g, cl, new)
+            E._hist(scn, g, cl, "you", f"removed under pressure from {name}: " + E._lc(scn.tags[v["tag"]]).rstrip("."), new or None)
+            if new:
+                cl["tags"] = new
+            else:
+                g["draft"].remove(cl)
+            rv["grudge"] = 0
+            _rep(g, "honest")
+            E._log(g, "you", f"You gave way to {name}'s ultimatum.", "action", iso)
+            out["reply"] = "\u201cA wise choice, Ambassador.\u201d"
+        elif c == "talk":
+            rv["grudge"] = max(0, rv.get("grudge", 0) - 1)
+            rv["hold"] = g.get("tick", 0) + 1
+            E._log(g, "you", f"You talked {name} down from its ultimatum, for now.", "action", iso)
+            out["reply"] = "\u201cVery well. We'll hold off. For now.\u201d"
+        else:
+            g.setdefault("threats", []).append({"iso3": iso, "tag": v["tag"]})
+            rv["grudge"] = rv.get("grudge", 0) + 1
+            _rep(g, "hard")
+            E._log(g, iso, f"You called {name}'s bluff. It will table an amendment at the Summit.", "warning", iso)
+            out["reply"] = "\u201cThen we'll see you at the Summit.\u201d"
+    elif k == "bargain":
+        mem = [i for i in E._region_members(scn, v["region"]) if i not in E._others(g) and i != g["iso3"]]
+        if c == "accept":
+            g.setdefault("bargains", []).append({"region": v["region"], "tag": v["tag"], "iso3": iso, "kept": None})
+            for i in mem:
+                E._sway(g, "you", i, 0.15)
+            E._log(g, "you", f"You agreed with the {E.REGIONS[v['region']]}: a clause that {_label(scn, v['tag'])}, for its support.", "action", iso)
+            out["reply"] = "\u201cTable it, and you'll have us.\u201d"
+        else:
+            for i in mem:
+                E._sway(g, "you", i, -0.05)
+    elif k == "mediate":
+        a, b = iso, v["other"]
+        if c == "side_a":
+            E._sway(g, "you", a, 0.3)
+            E._sway(g, "you", b, -0.3)
+        elif c == "side_b":
+            E._sway(g, "you", b, 0.3)
+            E._sway(g, "you", a, -0.3)
+        else:
+            E._sway(g, "you", a, 0.2)
+            E._sway(g, "you", b, 0.2)
+            _rep(g, "honest")
+        E._log(g, "you", {"side_a": f"You backed {name}.", "side_b": f"You backed {scn.member(b).name}.",
+                          "mediate": f"You brought {name} and {scn.member(b).name} together."}[c], "action", iso)
+    elif k == "leak":
+        rv = next((r for r in g["rivals"] if r["iso3"] == v["rival"]), None)
+        if c == "keep":
+            g["trust"][iso] = min(E.R["trust_max"], g["trust"].get(iso, 0) + 1)
+            E._log(g, iso, f"{name} trusted you with a rival's plan.", "intel", v["rival"])
+        else:
+            g.get("intent", {})[v["rival"]] = None                  # the plan is blown
+            g["trust"][iso] = max(-E.R["trust_max"], g["trust"].get(iso, 0) - 2)
+            E._sway(g, "you", iso, -0.3)
+            if rv:
+                rv["grudge"] = rv.get("grudge", 0) + 1
+            E._log(g, "you", f"You exposed {scn.member(v['rival']).name}'s plan. {name} knows who gave it away.", "warning", iso)
+    elif k == "old_sins":
+        if c == "apologise":
+            g["respect"] = max(0, g["respect"] - 1)
+            _rep(g, "honest")
+            out["reply"] = "\u201cThat's a rare thing to hear in this building.\u201d"
+        elif c == "deny":
+            if _rng(g, "deny").random() < 0.5:
+                g["respect"] = max(0, g["respect"] - 2)
+                _rep(g, "bluff")
+                out["reply"] = "\u201cWe have it from three delegations, Ambassador.\u201d"
+            else:
+                out["reply"] = "\u201cIf you say so.\u201d"
+        else:
+            g["respect"] = max(0, g["respect"] - 1)
+        E._log(g, "you", "The press asked about your broken word.", "action")
+    elif k == "olive":
+        if c == "accept":
+            g["promises"].append({"iso3": iso, "clause": v["clause"], "kept": None})
+            g.setdefault("deal_votes", {})[iso] = "abstain"
+            g["trust"][iso] = min(E.R["trust_max"], max(0, g["trust"].get(iso, 0)) + 1)
+            E._log(g, "you", f"You made peace with {name}: you back its clause, it abstains on your draft.", "action", iso)
+            out["reply"] = "\u201cThen we have an understanding.\u201d"
+    elif k == "staff":
+        adv = next((x for x in g.get("staff", []) if x["id"] == v["adviser"]), None)
+        if adv and c == "post":
+            adv["post"], adv["since"] = v["target"], g.get("tick", 0)
+            E._log(g, "staff", f"{adv['name']} is now studying {scn.member(v['target']).name}.", "staff")
+        elif adv:
+            adv["xp"] = max(0, adv["xp"] - 1)
+            E._log(g, "staff", f"{adv['name']} is disappointed.", "staff")
+    return out

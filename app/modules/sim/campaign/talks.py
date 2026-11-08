@@ -202,6 +202,10 @@ def a_talk(scn, g, a):
         moved = E._sway(g, "you", iso, E.R["pitch_step"] * (0.3 + 0.7 * q))
         heard = (("You've made a real case. " if q >= 0.9 else "You've given us something to think about. " if q >= 0.5 else
                   "I don't think we're persuaded. ") + E.LINES[E.bucket(mu + g["sway"]["you"][iso])])
+    if q >= 0.5:
+        for adv in g.get("staff", []):
+            if adv.get("post") == iso:
+                E._xp(g, adv, f"Their briefing helped your talk with {scn.member(iso).name}.")
     g["region_last"][scn.member(iso).region] = "you"
     E._log(g, "you", f"You talked with {scn.member(iso).name}: you opened with {ARGS[first]['name'].lower()} and {how}.", "action", iso)
     out = {"heard": heard, "moved": round(moved, 2), "cost": cv["cost"], "red_line": bool(cv.get("red")), "landed": landed,
@@ -286,7 +290,8 @@ def a_deal(scn, g, a):
         E._spend(g, E.R["deal_ap"], 1 if g.get("approach") == "linguist" else 0)
         g["deal_tick"] = g.get("tick")
         rival = _courted(scn, g, iso)
-        greed = random.Random(f"{g['seed']}:greed:{iso}:{g['chapter']}").uniform(0.8, 1.8) + (0.6 if rival else 0.0)
+        greed = random.Random(f"{g['seed']}:greed:{iso}:{g['chapter']}").uniform(0.8, 1.8) + (0.6 if rival else 0.0) \
+            + 0.5 * g.get("rep", {}).get("broken", 0)          # a name for broken promises costs you at every table
         talks = _open(g, "deal", iso, t["give"], t["capital"], sum(t["get"][i] for i in get), t["bonus"], greed, rival)
         talks["get"] = get
         talks["clause"] = t["clause"]
@@ -383,13 +388,15 @@ def _round(scn, g, a, stage):
     return {"counter": talks["price"], "was": old, "insulted": insult}
 
 
-def _close(scn, g, talks, give):
-    iso, name = talks["iso3"], scn.member(talks["iso3"]).name
-    saved = round(talks["give_vals"] and (sum(talks["give_vals"][i] for i in talks["asks"]) - sum(talks["give_vals"][i] for i in give)), 2)
-    if talks["kind"] == "rival":
-        return _make_peace(scn, g, talks, give)
+def apply_terms(scn, g, iso, give, get, clause=None) -> None:
+    """What both sides hand over in a deal, and the record of it (8 Nov: every agreed deal stays on your Agreements)."""
+    name = scn.member(iso).name
     if "funding" in give:
         E._spend(g, 0, E.R["deal_funding"])
+    if "influence" in give:
+        E._spend(g, 0, 3)
+    if "standing" in give:
+        g["respect"] = max(0, g["respect"] - 1)
     g.setdefault("dealt", []).append(iso)
     for i in give:
         if i == "funding":
@@ -398,9 +405,9 @@ def _close(scn, g, talks, give):
             g["trade_deals"] = g.get("trade_deals", 0) + 1
         elif i == "candidacy":
             g.setdefault("candidacies", []).append(iso)
-        elif i == "clause" and talks.get("clause"):
-            g["promises"].append({"iso3": iso, "clause": talks["clause"], "kept": None})
-    for i in talks["get"]:
+        elif i == "clause" and clause:
+            g["promises"].append({"iso3": iso, "clause": clause, "kept": None})
+    for i in get:
         if i in ("yes", "abstain"):
             g.setdefault("deal_votes", {})[iso] = i
         elif i == "sponsor":
@@ -411,11 +418,22 @@ def _close(scn, g, talks, give):
             g.setdefault("favours", []).append(iso)
         elif i == "commit":
             g.setdefault("secured", []).append(iso)
+        elif i == "standing":
+            g["respect"] = min(E.R["respect_max"], g["respect"] + 1)
         elif i == "intel":
             hit = next(((k, v) for k, v in g.get("intent", {}).items() if v), None)
             if hit:
                 E._log(g, iso, f"{name} tells you: {scn.member(hit[0]).name} will go after "
                                f"{E._target_name(scn, g, hit[1]['kind'], hit[1]['target'])} next.", "intel", hit[0])
+    g.setdefault("deal_log", []).append({"iso3": iso, "give": list(give), "get": list(get), "tick": g.get("tick", 0)})
+
+
+def _close(scn, g, talks, give):
+    iso, name = talks["iso3"], scn.member(talks["iso3"]).name
+    saved = round(talks["give_vals"] and (sum(talks["give_vals"][i] for i in talks["asks"]) - sum(talks["give_vals"][i] for i in give)), 2)
+    if talks["kind"] == "rival":
+        return _make_peace(scn, g, talks, give)
+    apply_terms(scn, g, iso, give, talks["get"], talks.get("clause"))
     g["trust"][iso] = min(E.R["trust_max"], g["trust"][iso] + 1)
     E._sway(g, "you", iso, 0.2)
     g["deals"] = g.get("deals", 0) + 1
@@ -455,6 +473,8 @@ def _make_peace(scn, g, talks, give):
         E._hist(scn, g, g["draft"][-1], iso, "added in its compromise with you")
         g["next_id"] += 1
     rv["truce"] = True
+    if "include" in give:
+        rv["truce_want"] = rv["want"]                     # its wish is now in the text: cutting it later is a betrayal
     for i in list(g["sway"][iso]):
         moved = g["sway"][iso][i] * 0.5
         if moved > 0:
@@ -506,6 +526,14 @@ def ledger(scn, g, iso: str | None = None) -> list[dict]:
     for rv in g["rivals"]:
         if rv.get("truce"):
             add(rv["iso3"], "peace: a merged text it co-sponsors", "truce", None if not votes else votes.get(rv["iso3"]) != "no")
+    for d in g.get("deal_log", []):
+        add(d["iso3"], "deal: you give " + ", ".join(K.DEAL_GIVE[x]["name"].lower() for x in d["give"]) +
+            "; they give " + ", ".join(K.DEAL_GET[x]["name"].lower() for x in d["get"]), "deal_terms")
+    for b in g.get("bargains", []):
+        add(b["iso3"], f"you'll table a clause that {E._lc(scn.tags[b['tag']]).rstrip('.')}; the {E.REGIONS[b['region']]} backs you",
+            "bargain", b["kept"])
+    for t in g.get("threats", []):
+        add(t["iso3"], "it will table an amendment against you at the Summit (you called its bluff)", "threat")
     for p in g.get("pacts", []):
         add(p["iso3"], "you won't vote against its clause" + ("; it leaves yours alone" if any(
             r["iso3"] == p["iso3"] and r.get("spare") for r in g["rivals"]) else ""), "pact", p.get("kept"))
