@@ -59,17 +59,21 @@ def _statements(scn, g: dict) -> list[dict]:
     """The rivals and the two strongest voices for and against open the debate. Each statement shows where they stand."""
     out = []
     final = E.final_clause(g)
-    for rv in g["rivals"]:
+    AGAINST = ["We cannot accept a text that {x}. We will move to amend it.",
+               "My delegation will not support any text that {x}. We have an amendment ready.",
+               "A resolution that {x} would set a dangerous precedent. We will seek to change it."]
+    WAIT = ["Our support depends on whether this text {x}.", "We will judge this draft by one test: whether it {x}."]
+    for k, rv in enumerate(g["rivals"]):
         name = scn.member(rv["iso3"]).name
         if rv.get("truce"):
             out.append({"iso3": rv["iso3"], "name": name, "view": 1,
                         "text": "We have reached an understanding on this text, and we will support it."})
         elif rv["block"] in final["tags"]:
             out.append({"iso3": rv["iso3"], "name": name, "view": -1,
-                        "text": f"We cannot accept a text that {E._lc(scn.tags[rv['block']]).rstrip('.')}. We will move to amend it."})
+                        "text": AGAINST[k % len(AGAINST)].format(x=E._lc(scn.tags[rv['block']]).rstrip('.'))})
         else:
             out.append({"iso3": rv["iso3"], "name": name, "view": 0,
-                        "text": f"Our support depends on whether this text {E._lc(scn.tags[rv['want']]).rstrip('.')}."})
+                        "text": WAIT[k % len(WAIT)].format(x=E._lc(scn.tags[rv['want']]).rstrip('.'))})
     free = [i for i in scn.isos if i not in E._others(g) and i != g["iso3"]]
     if final["tags"] and free:
         xs = sorted(free, key=lambda i: E.latent(scn, g, i, final, mood=False))
@@ -154,7 +158,9 @@ def s_caucus(scn, g, a):
                 E._sway(g, "you", iso, 0.12)
                 moved += 1
         speakers.append({"iso3": g["iso3"], "name": scn.member(g["iso3"]).name,
-                         "text": f"You spoke on a clause that {E._lc(scn.tags[tag]).rstrip('.')}: {moved} delegations nodded along."})
+                         "text": f"You spoke on a clause that {E._lc(scn.tags[tag]).rstrip('.')}: " +
+                                 (f"{moved} delegation{'s' if moved != 1 else ''} came your way." if moved else
+                                  "the room listened politely, but it isn't a topic you can win them on.")})
         for rv in [r for r in g["rivals"] if not r.get("truce")]:
             t = rv["block"] if rv["block"] in {x for c in g["draft"] for x in c["tags"]} else rv["want"]
             for iso in free:

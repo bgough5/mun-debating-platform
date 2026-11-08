@@ -286,7 +286,7 @@
           draw(r.view, r.out, action);
           var wait = sweep(votes, passed);
           var sum = r.out.final ? r.out.final.summary : r.out.summary;
-          say((r.out.amendment ? "The floor amendment was " + r.out.amendment + ". " : "") +
+          say((r.out.amendment && action.do !== "amend_vote" ? "The floor amendment was " + r.out.amendment + ". " : "") +
               (r.out.final ? "The resolution: " : action.do === "amend_vote" ? "The amendment: " : "The clause: ") + (passed ? "adopted. " : "rejected. ") + (sum || ""));
           if (r.view.phase === "done") setTimeout(function () { result(r.view); }, wait);
           return;

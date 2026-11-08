@@ -97,6 +97,14 @@ Owner: Ben Gough, Public Speaking and Debating Coordinator, South Oakleigh Colle
   - **Approaches:** `content.APPROACHES`, held in `g["approach"]` and applied in `lobby_cost`, deal opening, `ap_sources`, visits and rival income.
   - **Insignia:** `content.INSIGNIA`, worked out in `profile`.
   - **The balance harness** cycles the approaches and reports `approach_silver_plus`.
+- The Session, phase 19 (8 Nov; design doc section 32):
+  - **The Summit** is `campaign/summit.py` and `session-summit.js`, with the actions `speech`, `proceed`, `caucus`, `table`, `debate`, `amend_vote` and `final`. There are no clause votes. Amendments come from `_table_amendments`. `closed` holds settled matters, which must never be re-tabled. `read_as` gives the clause verb on the ladder. `_clause_results` scores the whip sheet.
+  - **Betrayal** is `engine._betray`: `_break_promises_if_changed(actor=...)` and `summit._settle_word`.
+  - **Talk fading** is `fade_talk`.
+  - **Deals:** the terms are applied in one place (`talks.apply_terms`), and `deal_log` keeps the record. Delegations' own offers come from `_trade_offer`.
+  - **New conversations** are `visits._more` and `answer_new`, with `MAX_VISITORS` at 4.
+  - **The President's procedure question** is shown in `#s-proc`, and errors appear in `#s-alert`.
+  - `MIN_STAGE_TURNS` is 3.
 - Was a flake: `tests/ui/test_phase5_a11y.py::test_a11y_every_student_page`. The phase 6 run (5 Nov 2026) caught it: the speech coach's `.coach-back` kept its desktop pixel width for a moment after the crawl resized to 320 px (`reflow-320px` on `/me/committees/1/prepare`). It is now clamped with `max-width: 100%`. Not yet confirmed by several full runs.
 - Known flake: `tests/ui/test_start_ui.py::test_resume_from_the_dashboard` timed out in two full runs (4 Nov 2026) and passes alone; not yet investigated.
 - Don't run two test suites at once on the laptop: the accessibility crawl timed out on page loads twice when another pytest run overlapped it, and passed (715/715) on a clean run (30 Oct 2026).
