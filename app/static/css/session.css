@@ -1445,3 +1445,9 @@
 .s-avatar-opts button.s-swatch:hover, .s-avatar-opts button.s-swatch:focus-visible { box-shadow: 0 0 0 3px var(--lit); }
 .s-stats .s-stat { display: grid; gap: 2px; padding: 6px 8px; border: 1px solid var(--line); background: var(--white); }
 
+/* the account forms (D-103): labels above their boxes */
+.s-form { display: grid; gap: 10px; max-width: 420px; }
+.s-form > label:not(.s-check) { display: grid; gap: 4px; font-weight: 700; }
+.s-form input[type="text"], .s-form input[type="password"] { width: 100%; padding: 8px 10px; font: 400 17px var(--book); border: 1px solid var(--gilt-md); background: var(--white); color: var(--ink); }
+.s-form input:focus-visible { outline: 3px solid var(--un-blue-lt); outline-offset: 1px; }
+.s-form .s-btn { justify-self: start; }
