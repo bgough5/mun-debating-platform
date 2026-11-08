@@ -407,6 +407,10 @@ def _close(scn, g, talks, give):
             g["sponsors"].append(iso)
         elif i == "influence":
             g["influence"] += E.R["deal_influence"]
+        elif i == "favour":
+            g.setdefault("favours", []).append(iso)
+        elif i == "commit":
+            g.setdefault("secured", []).append(iso)
         elif i == "intel":
             hit = next(((k, v) for k, v in g.get("intent", {}).items() if v), None)
             if hit:

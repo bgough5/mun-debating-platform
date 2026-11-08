@@ -149,6 +149,62 @@ def scenario_cards() -> list[dict]:
     return sorted(out, key=lambda c: (order[c["level"]], c["title"]))
 
 
+# ---------------------------------------------------------------- profile and progression (Ben, 8 Nov 2026)
+# Scenarios open in order: the first is open, and a gold (on any path) in one opens the next. The profile is worked
+# out from finished games, so it adds no data of its own. Staff have every scenario open.
+
+UNLOCK_DIFFICULTIES = ("standard", "hard")
+
+
+def best_grade(result: dict | None) -> int:
+    return max((result or {}).get("paths", {}).values() or [0]) if result else 0
+
+
+def profile(cards: list[dict], records: list[dict], everything_open: bool = False) -> dict:
+    """records: finished or unfinished games as {pack, iso3, country, path, result}. Returns the profile view."""
+    best_pack, best_iso, best_path, names, unlock = {}, {}, {}, {}, {}
+    medals = {1: 0, 2: 0, 3: 0}
+    finished = passed = 0
+    for r in records:
+        res = r.get("result")
+        if not res:
+            continue
+        finished += 1
+        passed += bool(res.get("passed"))
+        b = best_grade(res)
+        if b:
+            medals[b] += 1
+        best_pack[r["pack"]] = max(best_pack.get(r["pack"], 0), b)
+        if r.get("difficulty") in UNLOCK_DIFFICULTIES:      # only gold on Standard or Hard opens the next (Ben, 8 Nov)
+            unlock[r["pack"]] = max(unlock.get(r["pack"], 0), b)
+        best_iso[r["iso3"]] = max(best_iso.get(r["iso3"], 0), b)
+        names[r["iso3"]] = r.get("country") or r["iso3"]
+        for p, gr in (res.get("paths") or {}).items():
+            best_path[p] = max(best_path.get(p, 0), gr)
+    ladder, open_next = [], True
+    for i, c in enumerate(cards):
+        locked = not (everything_open or open_next)
+        ladder.append({"code": c["code"], "title": c["title"], "level_name": c["level_name"], "best": best_pack.get(c["code"], 0),
+                       "medal": E.GRADES[best_pack.get(c["code"], 0)], "locked": locked,
+                       "needs": cards[i - 1]["title"] if locked and i else None})
+        open_next = unlock.get(c["code"], 0) >= 3 and not locked
+    return {"games": len(records), "finished": finished, "passed": passed, "medals": {E.GRADES[k]: v for k, v in medals.items()},
+            "scenarios": ladder,
+            "countries": sorted(({"iso3": k, "name": names[k], "best": v, "medal": E.GRADES[v]} for k, v in best_iso.items()),
+                                key=lambda x: (-x["best"], x["name"])),
+            "paths": [{"code": k, "name": p["name"], "best": best_path.get(k, 0), "medal": E.GRADES[best_path.get(k, 0)]} for k, p in K.PATHS.items()]}
+
+
+def student_profile(conn, student_id: int, everything_open: bool = False) -> dict:
+    recs = []
+    for r in rows(conn, "SELECT pack, iso3, path, difficulty, state_json FROM campaign_save WHERE student_id = ? AND deleted_at IS NULL", (student_id,)):
+        g = json.loads(r["state_json"])
+        c = one(conn, "SELECT name FROM country WHERE iso3 = ?", (r["iso3"],))
+        recs.append({"pack": r["pack"], "iso3": r["iso3"], "country": c["name"] if c else r["iso3"], "path": r["path"],
+                     "difficulty": r["difficulty"], "result": g.get("result")})
+    return profile(scenario_cards(), recs, everything_open)
+
+
 def country_choices(scn: Scenario) -> list[dict]:
     """Every seat, with how hard it is to play: how many delegations share your main instruction."""
     out = []
@@ -231,9 +287,9 @@ def view(scn: Scenario, g: dict) -> dict:
         owner = g["endorse"].get(code)
         regions.append({"code": code, "name": name, "members": members, "owner": owner, "owner_name": _name(scn, g, owner) if owner else None,
                         "leaning": sum(1 for i in voters if E.lean(scn, g, "you", i) > E.R["lean_min"]), "voters": len(voters)})
-    skills = [{"code": k, **v, "have": k in g["skills"],
-               "can": k not in g["skills"] and g["xp"] >= K.SKILL_COST and (not v["needs"] or v["needs"] in g["skills"])}
-              for k, v in K.SKILLS.items()]
+    by = {sk: (kind, st) for kind, m in K.STAFF_SKILLS.items() for st, ss in m.items() for sk in ss}
+    skills = [{"code": k, **v, "have": k in g["skills"], "by": K.STAFF_KINDS[by[k][0]]["name"], "stars": by[k][1]}
+              for k, v in K.SKILLS.items() if k in by]
     blocs = sorted({m.group for m in scn.members if m.group})
     last = g["chapter"] == E.LENGTHS[g["length"]]["chapters"]
     return {

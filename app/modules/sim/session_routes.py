@@ -25,8 +25,14 @@ def _student_id(request: Request) -> int | None:
     return s.actor.id if s and s.actor.kind == "student" else None
 
 
+def _staff(request: Request) -> bool:
+    s = getattr(request.state, "session", None)
+    return bool(s and s.actor.kind == "staff")
+
+
 def _common(request: Request) -> dict:
-    return {"signed_in": bool(_student_id(request)), "paths": K.PATHS, "lengths": E.LENGTHS, "difficulties": E.DIFFICULTIES}
+    return {"signed_in": bool(_student_id(request)), "staff": _staff(request), "paths": K.PATHS, "lengths": E.LENGTHS,
+            "difficulties": E.DIFFICULTIES}
 
 
 @router.get("/session")
@@ -41,7 +47,22 @@ def session_title(request: Request):
 
 @router.get("/session/new")
 def session_new(request: Request):
-    return render(request, "sim/session_new.html", {"title": "New session", "scenarios": S.scenario_cards(), **_common(request)})
+    cards, me = S.scenario_cards(), _student_id(request)
+    if me:                                                   # a signed-in student's scenarios open in order (8 Nov)
+        with request.app.state.db.read() as conn:
+            locks = {x["code"]: x for x in S.student_profile(conn, me)["scenarios"]}
+        cards = [{**c, "locked": locks[c["code"]]["locked"], "needs": locks[c["code"]]["needs"]} for c in cards]
+    return render(request, "sim/session_new.html", {"title": "New session", "scenarios": cards, **_common(request)})
+
+
+@router.get("/session/profile")
+def session_profile(request: Request):
+    """Your record: a signed-in student's comes from their own saved sessions; a guest's is kept in their browser."""
+    me, prof = _student_id(request), None
+    if me:
+        with request.app.state.db.read() as conn:
+            prof = S.student_profile(conn, me)
+    return render(request, "sim/session_profile.html", {"title": "Your record", "profile": prof, "cards": S.scenario_cards(), **_common(request)})
 
 
 @router.get("/session/seats/{code}")
@@ -116,6 +137,11 @@ def session_api(request: Request, payload: dict = Body(...)):
     action = payload.get("action") if isinstance(payload.get("action"), dict) else {}
     if do == "new":
         code = str(payload.get("pack") or "")
+        if me:
+            with db.read() as conn:
+                rung = next((x for x in S.student_profile(conn, me)["scenarios"] if x["code"] == code), None)
+            if rung and rung["locked"]:
+                raise UserError(f"That scenario opens when you win gold on Standard or Hard in {rung['needs']}.", 403)
         with db.read() as conn:
             with S.LOCK:
                 scn = S.scenario(db, conn, code)

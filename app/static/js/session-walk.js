@@ -115,7 +115,7 @@
         { at: "#c-staff", tab: "staff", face: "wry", title: "Your staff",
           text: ["Your advisers can now be posted. Each studies one delegation or rival and reports at the start of each turn. Juniors can be wrong and say how sure they are; reports that prove right earn promotions. Hire more for Influence, up to " + v.costs.staff_max + "."] },
         { face: "eyebrow", title: "The deal table: haggling", art: artHaggle,
-          text: ["You can now trade: funding, trade terms, backing for a candidacy or a clause, for a delegation's vote, sponsorship, Influence or intelligence.",
+          text: ["You can now trade: funding, trade terms, backing for a candidacy or a clause, for a delegation's vote, sponsorship, a vote owed at the summit, a signed commitment, Influence or intelligence.",
                  "They name a price. Hold out and they come down towards their walk-away point, but every round tests their patience, and a rival courting them may outbid you. An adviser posted to them can tell you how low they'll go."] },
         { face: "thinking", title: "Compromise with a rival",
           text: ["Rivals can become partners. Open a rival's card and negotiate: drop the commitment it can't accept, or let its wish into the text. If it agrees, it stops working against you, brings part of its support and co-sponsors a merged text.",
@@ -125,7 +125,7 @@
         { at: ".s-tabs", face: "eyebrow", title: "Sponsors: the race to table", art: artRooms,
           text: ["The sign-up sheets are out, in Coalition: yours beside each rival's. Ask delegations to sponsor or sign your draft. The first draft tabled, as L.1, is voted on first."] },
         { at: "#s-reserve", face: "wry", title: "Hold the line",
-          text: [list([["Secure: ", "a delegation that trusts you signs a commitment; rivals pay double to move it."],
+          text: [list([["A signed commitment: ", "ask for one at the deal table; rivals find a committed delegation twice as hard to move."],
                        ["Hold in reserve: ", "spend an action now, and your team answers the first rival move against you before your next turn."]])] }
       ];
       S.summit = [

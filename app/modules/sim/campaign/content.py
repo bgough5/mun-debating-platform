@@ -77,9 +77,7 @@ SKILLS = {
                        "what": "Once in the summit, rule a rival's floor amendment out of order."},
     "division": {"branch": "Procedure", "name": "Division of the question", "needs": "point_of_order",
                  "what": "Split a clause with two commitments into two clauses (1 action point)."},
-    "bloc_whip": {"branch": "Diplomacy", "name": "Bloc whip", "needs": None,
-                  "what": "Lobby every member of one bloc at once (2 action points)."},
-    "back_channel": {"branch": "Diplomacy", "name": "Back channel", "needs": "bloc_whip",
+    "back_channel": {"branch": "Diplomacy", "name": "Back channel", "needs": None,
                      "what": "Promises win twice the goodwill."},
     "friendly": {"branch": "Drafting", "name": "Friendly amendment", "needs": None,
                  "what": "Amending costs no Influence and no Trust."},
@@ -91,6 +89,10 @@ SKILLS = {
                     "what": "See what each rival will try next turn."},
 }
 SKILL_COST = 3
+# Since 8 Nov 2026 skills come with your advisers' promotions, not from a tree: (adviser kind, stars) -> skills.
+STAFF_SKILLS = {"analyst": {2: ["read_room"], 3: ["rival_intel"]},
+                "regional": {2: ["back_channel"], 3: ["friendly"]},
+                "legal": {2: ["point_of_order"], 3: ["division", "merge"]}}
 
 PATHS = {
     "mandate": {"name": "Mandate", "for": "The hardliner",
@@ -177,6 +179,8 @@ DEAL_GET = {
     "sponsor": {"name": "Sponsorship", "what": "They sponsor your draft."},
     "influence": {"name": "Influence", "what": "They put 3 Influence behind your work."},
     "intel": {"name": "Intelligence", "what": "What they know about a rival's next move."},
+    "favour": {"name": "A vote owed", "what": "They owe you a favour: call it in at the summit before a vote."},
+    "commit": {"name": "A signed commitment", "what": "They sign a commitment to your draft: rivals find them twice as hard to move."},
 }
 
 

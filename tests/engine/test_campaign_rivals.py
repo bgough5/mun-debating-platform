@@ -112,19 +112,19 @@ def test_a_reserve_answers_the_first_rival_move_against_you(scenarios):
 
 
 def test_a_secured_delegation_is_twice_as_hard_to_move(scenarios):
+    """A signed commitment now comes from the deal table (8 Nov); it still halves a rival's push."""
     scn = scenarios["comet_halcyon"]
     g = E.new_game(scn, scn.isos[0], seed=7, length="quick")
     rv = g["rivals"][0]
     iso = next(i for i in scn.isos if i not in E._others(g))
     with pytest.raises(E.GameError):
-        E.apply(scn, g, {"do": "secure", "iso3": iso})                          # it must trust you and lean your way
-    g["trust"][iso], g["sway"]["you"][iso], g["influence"] = 2, 1.2, 10
-    g, _ = E.apply(scn, g, {"do": "secure", "iso3": iso})
-    assert iso in g["secured"] and g["influence"] == 10 - E.R["secure_cost"]
+        E.apply(scn, g, {"do": "secure", "iso3": iso})                          # no longer an action of its own
+    g["trust"][iso], g["sway"]["you"][iso] = 2, 1.2
+    assert "commit" in E.deal_terms(scn, g, iso)["get"]                         # ask for it at the deal table
+    g["secured"].append(iso)
     rv["influence"] = 10
     E._rival_act(scn, g, rv, "lobby", iso, 2, 0.3)
     assert g["sway"][rv["iso3"]][iso] == pytest.approx(0.15)                    # half the push
-
 
 def test_the_golden_rule(scenarios):
     scn = scenarios["comet_halcyon"]

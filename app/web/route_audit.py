@@ -36,6 +36,7 @@ PUBLIC = {
     "/session/new": "The Session: set up a new campaign; nothing is stored until a signed-in student starts one (D-101)",
     "/session/seats/{code}": "The Session: the seats in a scenario for the setup screen; scenario data only (D-101)",
     "/session/guest/{code}": "The Session as a guest: the game lives in the browser, signed by the server; nothing stored (D-101)",
+    "/session/profile": "The Session: your record; a signed-in student sees only their own finished sessions, a guest's is kept in their browser (D-101)",
     "/session/almanac": "The Session's Almanac: choose a scenario; reference material only, nothing personal (D-101)",
     "/session/almanac/{code}": "The Session's Almanac for one scenario: procedure, paths, skills and the country files with sources (D-101)",
     "/session/api": "The Session's moves: a guest's signed state is checked and returned without storing it; a saved session needs the student's own session (D-101)",

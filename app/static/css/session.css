@@ -1300,4 +1300,18 @@
   font: 400 14px/1.35 var(--book); animation: s-in .15s ease both; }
 .s-hovercard[hidden] { display: none; }
 .s-hovercard b { font: 700 15px var(--serif); }
+/* ---------- your record and the scenario ladder (8 Nov) ---------- */
+.s-pick.locked { opacity: .55; cursor: not-allowed; filter: grayscale(.6); }
+.s-lock { display: block; margin: 4px 0; font: 700 13px var(--book); color: var(--maroon); letter-spacing: .02em; }
+.s-profile { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 18px; padding: 24px 36px; overflow-y: auto; align-content: start; }
+.s-profile .s-doc { padding: 18px 22px; }
+.s-profile .s-nav { grid-column: 1 / -1; }
+.s-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0; }
+.s-stats dt { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.s-stats dd { margin: 0 0 6px; font: 700 30px var(--serif); }
+.s-ladder, .s-medals { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; }
+.s-ladder li, .s-medals li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 10px; background: var(--white); border: 1px solid var(--line); }
+.s-ladder li.locked { opacity: .6; }
+.s-ladder li.gold { border-color: var(--gilt-md); box-shadow: inset 4px 0 0 var(--gilt); }
+.s-medal.m-gold { background: var(--gilt-lt); } .s-medal.m-silver { background: var(--line); } .s-medal.m-bronze { background: var(--land-ivory-dk); }
 

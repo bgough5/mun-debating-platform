@@ -1,6 +1,6 @@
 {% from "sim/_session_head.html" import head, emblem, settings_panel %}{{ head(title) }}
 {# Setting up a session (D-101): six steps, one at a time. session.js keeps the choices and starts the game. #}
-<body class="board-body session-body" data-page="new" data-signed-in="{{ 'yes' if signed_in else 'no' }}">
+<body class="board-body session-body" data-page="new" data-signed-in="{{ 'yes' if signed_in else 'no' }}" data-staff="{{ 'yes' if staff else 'no' }}">
 <a class="skip" href="#main">Skip to the setup</a>
 <div id="b-stage" class="b-stage s-stage">
   <div class="b-lamp" aria-hidden="true"></div>
@@ -23,8 +23,8 @@
       <header><h2 id="h-st1">Choose a scenario</h2><p>Each is a committee with a draft resolution and real (or, where marked, fictional) positions. Start with a Beginner scenario if this is your first session.</p></header>
       <div class="s-picks">
         {% for s in scenarios %}
-        <button type="button" class="s-pick" data-pick="pack" data-value="{{ s.code }}" data-label="{{ s.title }}" aria-pressed="false">
-          <h3>{{ s.title }}</h3>
+        <button type="button" class="s-pick{% if s.locked %} locked{% endif %}" data-pick="pack" data-value="{{ s.code }}" data-label="{{ s.title }}" aria-pressed="false"{% if s.locked %} disabled{% endif %}>
+          <h3>{{ s.title }}</h3>{% if s.locked %}<span class="s-lock">Locked: win gold on Standard or Hard in {{ s.needs }} to open it</span>{% endif %}
           <span class="s-tags"><span class="s-tag {{ s.level }}">{{ s.level_name }}</span><span class="s-tag">{{ s.type }}</span><span class="s-tag">{{ "Fictional" if s.fictional else "Real issue" }}</span></span>
           <p>{{ s.summary }}</p>
         </button>{% endfor %}
