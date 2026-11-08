@@ -61,6 +61,39 @@ Each student has a personal sign-in code (six letters and numbers) printed on th
 - No real student data is ever in the code repository. All development and testing uses generated fake names (`app/fakedata.py`). A pre-commit check rejects database files and data folders, and an automated test scans the repository for them.
 - The "demo" dataset is entirely fake and is kept separate from the real dataset; a banner shows when demo data is on screen.
 
+## 7a. The Session: player accounts (D-103, 9 Nov 2026)
+
+The Session (the solo Model UN game) can keep progress for people who aren't on a school list, using a username and a password.
+
+**Sign-up is open.** Ben decided on 9 Nov 2026 that new accounts don't need separate school approval. The coordinator can switch sign-up off at any time, and sees every account in Admin, under "The Session: player accounts": when it last signed in, whether it's signed in now, and its games. From there the coordinator can erase any account, erase every account unused for a year in one go, or set a temporary password. Students on the school's lists don't need an account: their personal code already saves their sessions.
+
+**What an account stores:**
+- a username the player chooses (3–20 letters, numbers or underscores; the form says not to use a real name);
+- the password, as an scrypt hash, which can't be read back and is never written to the change log;
+- when the account was made, and when it last signed in;
+- the player's saved games.
+
+There is no email address, real name, date of birth or anything else. The player's avatar and guest record stay in their own browser.
+
+**Sign-in:**
+- One HTTP-only cookie holds a random token; the database holds only its SHA-256.
+- Without "remember me", a sign-in lasts until the browser closes, and the server ends it after 12 hours.
+- With "remember me", it lasts 30 days, and the token is replaced at most daily as it is used.
+- Signing out ends the sign-in. Changing the password ends every sign-in on the account.
+
+**Against guessing and misuse:**
+- Sign-in attempts are throttled by username and by computer.
+- There is one error for a wrong username or a wrong password.
+- New accounts are limited to five per computer per hour.
+
+**Kept apart from school data:** accounts have their own tables, and an account can never read a student's data or another account's games.
+
+**Erasure:**
+- A player can erase their own account (with their password). That deletes the account, its sessions and its games.
+- The coordinator can erase any account, or set a temporary password, shown once, for a player who has forgotten theirs.
+
+**For the school's information:** accounts unused for 12 months can be erased with one button. It isn't automatic yet.
+
 ## 8. Not verified / open questions for the school
 
 1. Plain HTTP on the school network (section 1).

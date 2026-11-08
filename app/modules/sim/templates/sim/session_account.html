@@ -1,0 +1,66 @@
+{% from "sim/_session_head.html" import head, emblem, settings_panel %}{{ head(title) }}
+{# The Session's player accounts (D-103): sign in, create an account (unless the coordinator has switched sign-up off),
+   or, signed in, change your password, sign out or erase your account. #}
+<body class="board-body session-body" data-page="account" data-signed-in="{{ 'yes' if signed_in else 'no' }}">
+<a class="skip" href="#main">Skip to your account</a>
+<div id="b-stage" class="b-stage s-stage">
+  <header class="b-top">
+    {{ emblem() }}
+    <div class="b-titles">
+      <p class="b-kicker">The Session</p>
+      <h1 class="b-committee" id="b-committee">{{ title }}</h1>
+      <p class="b-ribbon"><span class="b-ribbon-text">Keep your progress with a username and a password</span></p>
+    </div>
+  </header>
+  <main class="s-profile s-account" id="main" tabindex="-1">
+    {% if account %}
+    <section class="s-doc" aria-labelledby="h-you"><h2 id="h-you">Signed in as {{ account }}</h2>
+      <p>Your sessions, medals and record are kept with this account.</p>
+      <form method="post" action="/session/account/signout"><input type="hidden" name="csrf" value="{{ csrf }}">
+        <button type="submit" class="s-btn">Sign out</button></form>
+      <p class="s-nav"><a class="s-btn ghost" href="/session" hx-boost="false">Back to The Session</a></p></section>
+    <section class="s-doc" aria-labelledby="h-pw"><h2 id="h-pw">Change your password</h2>
+      <form method="post" action="/session/account/password" class="s-form"><input type="hidden" name="csrf" value="{{ csrf }}">
+        <label>Current password <input type="password" name="password" autocomplete="current-password" required></label>
+        <label>New password <input type="password" name="new_password" autocomplete="new-password" minlength="10" required></label>
+        <label>New password again <input type="password" name="new_password2" autocomplete="new-password" minlength="10" required></label>
+        <button type="submit" class="s-btn">Change password</button>
+        <p class="s-sub">This signs your account out everywhere else.</p></form></section>
+    <section class="s-doc" aria-labelledby="h-del"><h2 id="h-del">Erase your account</h2>
+      <p>This deletes your account, your saved sessions and your record, for good.</p>
+      <form method="post" action="/session/account/delete" class="s-form"><input type="hidden" name="csrf" value="{{ csrf }}">
+        <label>Your password <input type="password" name="password" autocomplete="current-password" required></label>
+        <button type="submit" class="s-btn ghost">Erase my account</button></form></section>
+    {% elif signed_in %}
+    <section class="s-doc"><h2>You're signed in with your code</h2>
+      <p>Your progress is already saved with your school sign-in. You don't need an account.</p>
+      <p class="s-nav"><a class="s-btn" href="/session" hx-boost="false">Back to The Session</a></p></section>
+    {% else %}
+    <section class="s-doc" aria-labelledby="h-in"><h2 id="h-in">Sign in</h2>
+      <form method="post" action="/session/account/signin" class="s-form"><input type="hidden" name="csrf" value="{{ csrf }}">
+        <label>Username <input type="text" name="username" autocomplete="username" maxlength="20" required></label>
+        <label>Password <input type="password" name="password" autocomplete="current-password" required></label>
+        <label class="s-check"><input type="checkbox" name="remember" value="1"> Remember me on this computer for 30 days</label>
+        <button type="submit" class="s-btn">Sign in</button></form>
+      <p class="s-sub">Forgotten your password? There's no email to reset it: ask a teacher, who can set a new one for you.</p></section>
+    <section class="s-doc" aria-labelledby="h-new"><h2 id="h-new">Create an account</h2>
+      {% if signup_open %}
+      <form method="post" action="/session/account/create" class="s-form"><input type="hidden" name="csrf" value="{{ csrf }}">
+        <label>Username <input type="text" name="username" autocomplete="username" maxlength="20" pattern="[A-Za-z][A-Za-z0-9_]{2,19}" required></label>
+        <p class="s-sub">3 to 20 letters, numbers or underscores. <b>Don't use your real name.</b></p>
+        <label>Password <input type="password" name="password" autocomplete="new-password" minlength="10" required></label>
+        <label>Password again <input type="password" name="password2" autocomplete="new-password" minlength="10" required></label>
+        <p class="s-sub">At least 10 characters: a short phrase only you would think of works well.</p>
+        <label class="s-check"><input type="checkbox" name="remember" value="1"> Remember me on this computer for 30 days</label>
+        <button type="submit" class="s-btn">Create my account</button></form>
+      <p class="s-sub">We keep only your username, your password (scrambled, so nobody can read it) and your games. You can erase it all at any time.</p>
+      {% else %}
+      <p>New accounts are switched off right now. You can still play as a guest: your game is kept on this computer.</p>
+      {% endif %}
+      <p class="s-nav"><a class="s-btn ghost" href="/session" hx-boost="false">Play as a guest</a></p></section>
+    {% endif %}
+  </main>
+  {{ settings_panel() }}
+</div>
+</body>
+</html>

@@ -114,19 +114,26 @@ INSIGNIA = {
     "council": {"name": "The Council", "what": "A resolution adopted in a Security Council scenario."},
     "honour": {"name": "Word of honour", "what": "Kept at least two promises and broke none, in one session."},
     "half_loaf": {"name": "Half a loaf", "what": "Backed a text that wasn't everything you wanted, and it carried your main aim."},
-    "all_paths": {"name": "Four paths", "what": "Gold on every path (in any sessions)."},
+    "all_paths": {"name": "Every path", "what": "Gold on every path (in any sessions)."},
     "globetrotter": {"name": "Globetrotter", "what": "Finished sessions as five different countries."},
 }
 
 PATHS = {
     "mandate": {"name": "Mandate", "for": "The hardliner",
-                "what": "Your secret instructions are in the final text, and it passes."},
+                "what": "Your secret instructions are in the final text, and it passes.",
+                "gold": "it passes with your main aim and your second aim in, and your red line out."},
     "consensus": {"name": "Consensus", "for": "The broker",
-                  "what": "It passes with the widest support, across regional groups."},
+                  "what": "It passes with the widest support, across regional groups.",
+                  "gold": "it passes with three in four voting yes, two regional groups endorsing you, and your main aim in."},
     "architect": {"name": "Architect", "for": "The drafter",
-                  "what": "Most of the final text is yours: your clauses and amendments."},
+                  "what": "The resolution bears your mark: your clauses and your amendments.",
+                  "gold": "it passes with three clauses of your own in it, at least half the text yours or amended by you, and three in five voting yes."},
     "kingmaker": {"name": "Kingmaker", "for": "The analyst",
-                  "what": "You read the room accurately, keep every promise and end with high Standing."},
+                  "what": "You read the room accurately, keep every promise and end with high Standing.",
+                  "gold": "your whip sheet is four-fifths right, you break no promise, and your Standing ends at 7 or more."},
+    "ambassador": {"name": "Ambassador", "for": "The envoy",
+                   "what": "You did the job you're paid for: you used your time and talked to the whole room.",
+                   "gold": "the resolution passes, you used nearly every action you had, and you engaged most of the room."},
 }
 
 CHAPTERS = {

@@ -61,25 +61,44 @@
       el("path", { d: "M150 68 Q162 78 164 96", class: "g-hair-line" }, bust);
     } else if (/\bdelegate\b/.test(variant || "")) {
       var hs = (/\bdl-h(\d)\b/.exec(variant) || [0, "0"])[1];
-      if (hs === "1") {            // shoulder-length, worn down behind the face
-        bust.insertBefore(el("path", { d: "M72 140 Q66 84 120 78 Q174 84 168 140 L172 204 Q150 214 140 196 L100 196 Q90 214 68 204 Z", class: "g-hair" }), bust.firstChild.nextSibling);
+      var back = bust.firstChild ? bust.firstChild.nextSibling : null;   // behind the head: long hair, an afro, a scarf's drape
+      function behind(node) { bust.insertBefore(node, back); return node; }
+      if (hs === "1") {            // long, worn down
+        behind(el("path", { d: "M72 140 Q66 84 120 78 Q174 84 168 140 L172 204 Q150 214 140 196 L100 196 Q90 214 68 204 Z", class: "g-hair" }));
         el("path", { d: "M78 128 Q80 92 120 86 Q160 92 162 128 Q150 100 120 98 Q92 100 78 128 Z", class: "g-hair" }, bust);
-      } else if (hs === "2") {     // close-cropped
+      } else if (hs === "2") {     // cropped
         el("path", { d: "M80 120 Q80 88 120 86 Q160 88 160 120 Q150 100 120 98 Q90 100 80 120 Z", class: "g-hair" }, bust);
       } else if (hs === "3") {     // curls
         [[86, 108], [96, 94], [110, 86], [126, 85], [141, 90], [153, 101], [159, 116], [81, 122]].forEach(function (c) {
           el("circle", { cx: c[0], cy: c[1], r: 13, class: "g-hair" }, bust); });
-      } else if (hs === "4") {     // tied up in a bun
+      } else if (hs === "4") {     // a bun
         el("circle", { cx: 120, cy: 76, r: 18, class: "g-hair" }, bust);
         el("path", { d: "M78 128 Q74 88 120 84 Q166 88 162 128 Q154 100 120 96 Q86 100 78 128 Z", class: "g-hair" }, bust);
+      } else if (hs === "5") {     // a ponytail
+        behind(el("path", { d: "M150 100 Q186 120 176 176 Q170 196 160 186 Q168 150 146 116 Z", class: "g-hair" }));
+        el("path", { d: "M78 126 Q76 88 120 84 Q164 88 162 126 Q154 100 120 96 Q88 100 78 126 Z", class: "g-hair" }, bust);
+      } else if (hs === "6") {     // a side parting
+        el("path", { d: "M76 130 Q70 86 112 80 Q164 78 166 128 Q158 100 132 94 Q118 104 96 104 Q82 110 76 130 Z", class: "g-hair" }, bust);
+      } else if (hs === "7") {     // an afro
+        behind(el("ellipse", { cx: 120, cy: 104, rx: 62, ry: 50, class: "g-hair" }));
+      } else if (hs === "8") {     // shaved close
+        el("path", { d: "M80 118 Q82 90 120 88 Q158 90 160 118 Q150 104 120 102 Q90 104 80 118 Z", class: "g-hair g-shaved" }, bust);
+      } else if (hs === "9") {     // a headscarf (only if you choose it for your own ambassador)
+        behind(el("path", { d: "M66 150 Q60 74 120 70 Q180 74 174 150 L182 214 Q120 236 58 214 Z", class: "g-scarf-head" }));
+        el("path", { d: "M74 140 Q72 86 120 82 Q168 86 166 140 Q160 102 120 96 Q80 102 74 140 Z", class: "g-scarf-head" }, bust);
       } else {
         el("path", { d: "M76 132 Q72 84 120 80 Q170 82 164 132 Q160 104 140 98 Q120 92 98 100 Q80 108 76 132 Z", class: "g-hair" }, bust);
       }
-      if (/\bdl-t3\b/.test(variant)) {  // a scarf over the suit instead of a tie
+      var neck = (/\bdl-t(\d)\b/.exec(variant) || [0, "0"])[1];
+      if (neck === "3") {            // a scarf over the suit
         el("path", { d: "M92 204 Q120 226 148 204 L156 214 Q120 244 84 214 Z", class: "g-scarf" }, bust);
         el("path", { d: "M132 222 L142 284 L126 284 L122 228 Z", class: "g-scarf" }, bust);
+      } else if (neck === "4") {     // a bow tie
+        el("path", { d: "M106 212 L120 219 L134 212 L134 226 L120 219 L106 226 Z", class: "g-bow" }, bust);
+      } else if (neck === "6") {     // pearls
+        for (var q = 0; q < 9; q++) el("circle", { cx: 100 + q * 5, cy: 214 + Math.sin(q / 8 * Math.PI) * 9, r: 2.6, class: "g-pearl" }, bust);
       }
-    } else {
+        } else {
       el("path", { d: "M76 132 Q72 84 120 80 Q170 82 164 132 Q160 104 140 98 Q120 92 98 100 Q80 108 76 132 Z", class: "g-hair" }, bust);
       el("path", { d: "M78 128 Q78 116 84 108", class: "g-hair-line" }, bust);
       el("path", { d: "M162 128 Q162 116 156 108", class: "g-hair-line" }, bust);
@@ -96,6 +115,18 @@
     el("path", { d: "M133 132 Q139 125 145 132", class: "g-eye-happy", "data-part": "happyR" }, face);
     el("path", { d: "M120 136 Q114 152 118 156 Q122 158 126 155", class: "g-nose" }, face);
     el("path", { class: "g-mouth", "data-part": "mouth" }, face);
+    el("ellipse", { cx: 120, cy: 168, rx: 7, ry: 4.5, class: "g-mouth-open" }, face);   // shown in time with speech
+    if (/\bdl-gf\b/.test(variant || "")) {        // a feminine look: lashes and a lip colour
+      el("path", { d: "M95 126 l-3 -3 M99 124 l-1 -4 M103 124 l1 -4 M135 124 l-1 -4 M139 124 l1 -4 M143 126 l3 -3", class: "g-lash" }, face);
+    }
+    var fh = (/\bdl-f(\d)\b/.exec(variant || "") || [0, "0"])[1];
+    if (fh === "1") el("path", { d: "M106 160 Q113 153 120 157 Q127 153 134 160 Q127 163 120 160 Q113 163 106 160 Z", class: "g-hair g-beard" }, face);
+    else if (fh === "2") el("path", { d: "M82 150 Q84 196 120 200 Q156 196 158 150 Q150 178 120 180 Q90 178 82 150 Z M106 160 Q120 154 134 160 Q120 164 106 160 Z", class: "g-hair g-beard" }, face);
+    else if (fh === "3") el("path", { d: "M86 156 Q90 192 120 194 Q150 192 154 156 Q146 180 120 182 Q94 180 86 156 Z", class: "g-stubble" }, face);
+    if (/\bdl-e2\b/.test(variant || "")) {        // sunglasses
+      el("path", { d: "M84 130 Q84 146 100 146 Q115 146 116 132 Z M124 132 Q125 146 140 146 Q156 146 156 130 Z", class: "g-shades" }, face);
+      el("path", { d: "M84 130 L156 130 M84 131 L76 128 M156 131 L164 128", class: "g-shades-rim" }, face);
+    }
     if (pres) el("path", { d: "M106 159 Q113 152 120 156 Q127 152 134 159 Q127 162 120 159 Q113 162 106 159 Z", class: "g-moustache" }, face);
     el("path", { d: "M86 136 Q101 150 116 136", class: "g-glasses" }, face);
     el("path", { d: "M124 136 Q139 150 154 136", class: "g-glasses" }, face);
@@ -125,5 +156,35 @@
   }
 
   window.socSession = window.socSession || {};
-  window.socSession.guide = { portrait: portrait, face: face_, EXPRESSIONS: EXPRESSIONS };
+  // speak (9 Nov): write `text` into `el` letter by letter while the portrait's mouth moves and a voice blips; call
+  // `done` when the line is finished. Returns { finish } to complete it at once. Instant when motion is reduced.
+  function speak(svg, el, text, done, opts) {
+    opts = opts || {};
+    var A = window.socSession.audio, reduce = A && A.motionOn ? !A.motionOn() :
+      (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    var pitch = opts.pitch || 220, i = 0, timer = null, over = false;
+    var span = document.createElement("span"); span.className = "g-said";
+    el.appendChild(span);
+    function end() {
+      if (over) return; over = true;
+      if (timer) clearInterval(timer);
+      span.textContent = text;
+      if (svg) svg.classList.remove("talking");
+      if (done) done();
+    }
+    if (reduce || !text) { end(); return { finish: end, done: function () { return true; } }; }
+    if (svg) svg.classList.add("talking");
+    timer = setInterval(function () {
+      i = Math.min(text.length, i + (opts.fast ? 3 : 1));
+      span.textContent = text.slice(0, i);
+      if (A && A.blip && i % 3 === 0 && /\S/.test(text.charAt(i - 1))) A.blip(pitch);
+      if (i >= text.length) end();
+    }, opts.ms || 26);
+    return { finish: end, done: function () { return over; } };
+  }
+  function voiceOf(key) {                                         // a speaker's own pitch, the same every time
+    var n = 0; String(key || "").split("").forEach(function (ch, k) { n += (k + 3) * ch.charCodeAt(0); });
+    return 150 + (n % 9) * 22;
+  }
+  window.socSession.guide = { portrait: portrait, face: face_, EXPRESSIONS: EXPRESSIONS, speak: speak, voiceOf: voiceOf };
 })();

@@ -15,7 +15,7 @@
 
   <main class="s-setup-main" id="main" tabindex="-1">
     <ol class="s-steps" aria-label="Setup">
-      {% for n, name in [(1, "Scenario"), (2, "Country"), (3, "Length"), (4, "Rivals"), (5, "Your aim"), (6, "Begin")] %}
+      {% for n, name in [(1, "Scenario"), (2, "Country"), (3, "Length"), (4, "Rivals"), (5, "Approach"), (6, "Begin")] %}
       <li data-step-dot="{{ n }}" class="{{ 'now' if n == 1 }}"><span class="s-coin">{{ n }}</span>{{ name }}</li>{% endfor %}
     </ol>
 
@@ -57,19 +57,14 @@
                                     ("hard", "Hard", "Three rivals, three moves a turn each, and stronger lobbying.")] %}
         <button type="button" class="s-pick" data-pick="difficulty" data-value="{{ code }}" data-label="{{ name }}" aria-pressed="{{ 'true' if code == 'standard' else 'false' }}"><h3>{{ name }}</h3><p>{{ what }}</p></button>{% endfor %}
       </div>
-      <div class="s-nav"><button type="button" class="s-btn ghost" data-back>Back</button><button type="button" class="s-btn" data-next>Next: your aim</button></div>
+      <div class="s-nav"><button type="button" class="s-btn ghost" data-back>Back</button><button type="button" class="s-btn" data-next>Next: your approach</button></div>
     </section>
 
     <section class="s-step" data-step="5" aria-labelledby="h-st5" hidden>
-      <header><h2 id="h-st5">What will you aim for?</h2><p>You're graded on all four at the end; this is the one you're chasing. Each suits a different way of playing.</p></header>
-      <div class="s-picks">
-        {% for code, p in paths.items() %}
-        <button type="button" class="s-pick" data-pick="path" data-value="{{ code }}" data-label="{{ p.name }}" aria-pressed="{{ 'true' if code == 'mandate' else 'false' }}">
-          <h3>{{ p.name }}</h3><span class="s-tags"><span class="s-tag">{{ p['for'] }}</span></span><p>{{ p.what }}</p></button>{% endfor %}
-      </div>
-      <h3 class="s-subhead" id="h-approach">Your approach</h3>
-      <p class="s-sub">Each is a trade-off, never simply better. Medals open more of them.</p>
-      <div class="s-picks s-approaches" aria-labelledby="h-approach">
+      <header><h2 id="h-st5">Your approach</h2><p>Every session is graded on all four ways to win: Mandate, Consensus, Architect and
+        Kingmaker. A gold on any of them is a gold. Choose how you'll play: each approach is a trade-off, never simply better,
+        and medals open more of them.</p></header>
+      <div class="s-picks s-approaches" aria-labelledby="h-st5">
         {% for a in approaches %}
         <button type="button" class="s-pick{% if a.locked %} locked{% endif %}" data-pick="approach" data-value="{{ a.code }}" data-label="{{ a.name }}"
                 data-needs="{{ a.needs or '' }}" aria-pressed="{{ 'true' if a.code == 'diplomat' else 'false' }}"{% if a.locked %} disabled{% endif %}>
@@ -87,7 +82,6 @@
           <dt>Your country</dt><dd data-show="iso3">–</dd>
           <dt>Length</dt><dd data-show="length">Standard</dd>
           <dt>Rivals</dt><dd data-show="difficulty">Standard</dd>
-          <dt>Your aim</dt><dd data-show="path">Mandate</dd>
           <dt>Your approach</dt><dd data-show="approach">Career diplomat</dd>
         </dl>
         <label class="s-check"><input type="checkbox" id="s-tips-on" checked> The Chief of Protocol walks me through the session first, and advises at key moments</label>

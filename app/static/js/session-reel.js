@@ -46,7 +46,8 @@
       $("s-reel-h").textContent = x.title;
       var p = $("s-reel-p"); p.textContent = "";
       if (x.hypo) p.appendChild(h("span", "s-hypo", "Hypothetical"));
-      if (x.text) p.appendChild(document.createTextNode(x.text));
+      if (x.text && G && G.speak) G.speak(face.querySelector("svg.g-face"), p, x.text, null, { pitch: G.voiceOf(x.who) });
+      else if (x.text) p.appendChild(document.createTextNode(x.text));
       var ul = $("s-reel-list"); ul.textContent = "";
       (x.list || []).forEach(function (t) { ul.appendChild(h("li", "", t)); });
       ul.hidden = !(x.list || []).length;

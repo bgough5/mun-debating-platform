@@ -20,15 +20,17 @@
       <a class="s-btn huge" href="/session/new" hx-boost="false">New session <small>about an hour</small></a>
       <div class="s-doc" id="s-continue">
         <h2>Continue</h2>
+        {% if account %}<p class="s-sub">Signed in as <b>{{ account }}</b> · <a href="/session/account" hx-boost="false">Your account</a></p>{% endif %}
         {% if signed_in %}
           {% if saves %}
-          <ul class="s-saves">{% for s in saves %}<li><a href="/session/s/{{ s.id }}" hx-boost="false"><b>{{ s.title }}</b>
+          <ul class="s-saves">{% for s in saves %}<li><a href="{{ save_base }}{{ s.id }}" hx-boost="false"><b>{{ s.title }}</b>
             {% if s.medal %}<span class="s-medal">{{ s.medal }}</span>{% else %}<span></span>{% endif %}
             <span>as {{ s.country }} · {{ s.where }}</span></a></li>{% endfor %}</ul>
           {% else %}<p class="s-sub">No sessions yet. Start one: your progress is saved as you play.</p>{% endif %}
         {% else %}
           <ul class="s-saves" id="s-guest-saves"></ul>
-          <p class="s-sub" id="s-guest-none">You're playing as a guest: a session is kept on this laptop only. <a href="/join">Sign in with your code</a> to keep it anywhere.</p>
+          <p class="s-sub" id="s-guest-none">You're playing as a guest: a session is kept on this laptop only.
+            <a href="/session/account" hx-boost="false">Sign in or create an account</a> to keep your progress, or <a href="/join">sign in with your school code</a>.</p>
         {% endif %}
       </div>
       <a class="s-btn ghost" href="/session/profile" hx-boost="false">Your record <small>medals, countries, what's unlocked</small></a>

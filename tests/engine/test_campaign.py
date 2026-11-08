@@ -103,7 +103,7 @@ def test_every_style_finishes_a_game(scenarios, code, style):
     assert g["phase"] == "done"
     r = g["result"]
     assert set(r["paths"]) == set(E.K.PATHS) and all(0 <= v <= 3 for v in r["paths"].values())
-    assert r["grade"] == r["paths"][g["path"]]
+    assert r["grade"] == max(r["paths"].values()) and r["paths"][r["chosen"]] == r["grade"]   # your best of the four (9 Nov)
     assert g["summit"]["final"]["passed"] in (True, False) and json.loads(json.dumps(g)) == g
 
 

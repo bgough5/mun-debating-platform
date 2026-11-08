@@ -79,7 +79,7 @@ def main() -> None:
                         fin = (g.get("summit") or {}).get("final") or {"passed": False, "tags": []}
                         rivals_won = sum(1 for rv in g["rivals"] if fin["passed"] and rv["want"] in fin["tags"] and rv["block"] not in fin["tags"])
                         results.append({"pack": code, "difficulty": diff, "style": style, "iso3": iso, "path": g["path"], "approach": way,
-                                        "grade": g["result"]["grade"], "paths": g["result"]["paths"], "passed": g["result"]["passed"],
+                                        "grade": g["result"]["grade"], "paths": g["result"]["paths"], "passed": g["result"]["passed"], "points": g["result"].get("points"),
                                         "stats": g["stats"], "minutes": round(secs / 60, 1), "objectives": g["objectives"],
                                         "rivals": len(g["rivals"]), "rivals_won": rivals_won,
                                         "rival_moves": sum(1 for x in g["log"] if x["kind"] == "rival"),
@@ -124,7 +124,7 @@ def summarise(results: list[dict]) -> dict:
     std = [r for r in ok if r["difficulty"] == "standard" and r["style"] != "random"]
     targets = {
         "standard_silver_plus_40_60": rate(std, lambda r: r["grade"] >= 2),
-        "gold_own_path_30_70": {s: rate([r for r in ok if r["style"] == s and r["difficulty"] == "standard"], lambda r: r["grade"] == 3)
+        "gold_own_path_30_70": {s: rate([r for r in ok if r["style"] == s and r["difficulty"] == "standard"], lambda r: r["paths"][r["path"]] == 3)
                                 for s in styles if s != "random"},
         "max_action_share_le_35": max(acts.values()) / total if acts else 0,
         "hardest_pack_standard_ge_25": min((p["standard"] for p in packs.values()), default=0),
@@ -142,7 +142,7 @@ def summarise(results: list[dict]) -> dict:
         "rivals_win_share": {d: round(sum(r["rivals_won"] for r in ok if r["difficulty"] == d)
                                       / max(1, sum(r["rivals"] for r in ok if r["difficulty"] == d)), 3) for d in ("easy", "standard", "hard")},
     }
-    cross = {s: {p: round(statistics.mean(r["paths"][p] for r in ok if r["style"] == s), 2) for p in ("mandate", "consensus", "architect", "kingmaker")}
+    cross = {s: {p: round(statistics.mean(r["paths"][p] for r in ok if r["style"] == s), 2) for p in ("mandate", "consensus", "architect", "kingmaker", "ambassador")}
              for s in styles}
     return {"games": len(results), "targets": targets, "table": table, "packs": packs,
             "action_share_of_winners": {k: round(v / total, 3) for k, v in acts.most_common()}, "mean_grade_by_style_and_path": cross}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_macros.html" import hidden_csrf, breadcrumb %}
+{# The coordinator's page for The Session's player accounts (D-103): open sign-up only with the school's approval
+   recorded; every account, with erase and a one-time temporary password. #}
+{% block content %}
+{{ breadcrumb([("Admin", "/admin"), ("The Session: player accounts", None)]) }}
+<h1>{{ title }}</h1>
+<p class="lede">Accounts let people outside the school's lists keep their progress in The Session. Students on your lists
+  don't need one: their personal code already saves their sessions.</p>
+{% if reset %}
+<div class="flash ok" role="status"><p>Temporary password for <strong>{{ reset.username }}</strong>: <code>{{ reset.password }}</code></p>
+  <p class="small">Shown once. Give it to them privately; every sign-in on the account has ended. They can change it on their account page.</p></div>
+{% endif %}
+<section class="card" aria-labelledby="h-list">
+  <h2 id="h-list">Accounts</h2>
+  {% set live = accounts|selectattr("live")|list %}{% set stale = accounts|selectattr("stale")|list %}
+  <p>{{ accounts|length }} account{{ "" if accounts|length == 1 else "s" }} · <strong>{{ live|length }}</strong> signed in now ·
+    {{ stale|length }} not used for a year. Most recently used first.</p>
+  {% if accounts %}
+  <p class="row"><label class="checks"><input type="checkbox" id="only-active" data-filter-active> Show only accounts used in the last 30 days</label></p>
+  <table id="acct-table">
+    <thead><tr><th scope="col">Username</th><th scope="col">Signed in now</th><th scope="col">Last signed in</th><th scope="col">Last played</th>
+      <th scope="col">Created</th><th scope="col" class="num">Games</th><th scope="col">Actions</th></tr></thead>
+    <tbody>
+    {% for a in accounts %}
+      <tr data-last="{{ a.last_login_at or a.created_at }}">
+        <td>{{ a.username }}</td><td>{{ "Yes" if a.live else "No" }}</td>
+        <td>{{ (a.last_login_at or '')[:10] or 'never' }}{% if a.stale %} <span class="small">(over a year)</span>{% endif %}</td>
+        <td>{{ (a.last_played or '')[:10] or '–' }}</td><td>{{ a.created_at[:10] }}</td><td class="num">{{ a.saves }}</td>
+        <td class="row">
+          <form method="post" action="/session/accounts/{{ a.id }}/reset">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">New password</button></form>
+          <form method="post" action="/session/accounts/{{ a.id }}/delete" onsubmit="return confirm('Erase {{ a.username }} and their saved games? This cannot be undone.')">{{ hidden_csrf(csrf) }}<button type="submit" class="secondary">Erase</button></form>
+        </td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if stale %}
+  <form method="post" action="/session/accounts/erase-stale" onsubmit="return confirm('Erase the {{ stale|length }} account(s) not used for a year, with their games? This cannot be undone.')">{{ hidden_csrf(csrf) }}
+    <p><button type="submit" class="secondary">Erase the {{ stale|length }} account{{ "" if stale|length == 1 else "s" }} not used for a year</button></p></form>
+  {% endif %}
+  {% else %}
+  <p>No accounts yet. People can make one from The Session's title screen.</p>
+  {% endif %}
+</section>
+<section class="card" aria-labelledby="h-signup">
+  <h2 id="h-signup">New accounts</h2>
+  <p>New accounts are <strong>{{ "allowed" if open else "switched off" }}</strong>. Signing in to an existing account always works.</p>
+  <form method="post" action="/session/accounts/settings" class="stack">{{ hidden_csrf(csrf) }}
+    <label class="checks"><input type="checkbox" name="open" value="1" {% if open %}checked{% endif %}> Allow anyone to create an account</label>
+    <p><button type="submit">Save</button></p>
+  </form>
+</section>
+<script>
+  (function () {
+    var box = document.querySelector("[data-filter-active]"); if (!box) return;
+    var cut = new Date(Date.now() - 30 * 864e5).toISOString();
+    box.addEventListener("change", function () {
+      document.querySelectorAll("#acct-table tbody tr").forEach(function (tr) { tr.hidden = box.checked && tr.getAttribute("data-last") < cut; });
+    });
+  })();
+</script>
+{% endblock %}

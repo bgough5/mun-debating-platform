@@ -579,15 +579,20 @@ def s_amend_vote(scn, g, a):
                 c = next(x for x in g["draft"] if x["id"] == am["clause"])
                 iso = min(cands, key=lambda i: abs(_pref(scn, g, i, _trial(g, am)) - _pref(scn, g, i, c)))
                 favour.add(iso)
+    had = {"favours": len(g["favours"]) + (1 if a.get("extra") == "favour" else 0),
+           "influence": g["influence"] + (E.R["offer_cost"] if a.get("extra") == "offer" else 0)}
     votes = amendment_votes(scn, g, am, my_vote, favour)
     res = E.tally(scn.rule, votes, len(votes))
     text = _describe(scn, g, am)                              # as it reads before the edit
+    side = _my_side(g, am) if am["by"] != "you" else 1
     _settle_word(scn, g, am, my_vote)
     if res.passed:
         _apply(scn, g, am, adopted_by="vote")
     s["closed"].append(_key(am))
     s["done"].append({**am, "result": "adopted" if res.passed else "rejected", "text": text, "my_vote": my_vote,
-                      "yes": res.yes, "no": res.no, "abstain": res.abstain})
+                      "yes": res.yes, "no": res.no, "abstain": res.abstain, "side": side, "extra": a.get("extra"),
+                      "spoke": (s.get("debate") or {}).get("choice"), "had": had,
+                      "veto": bool(scn.rule.veto) and any(votes.get(p) == "no" for p in scn.rule.veto)})
     s["my_votes"][am["id"]] = my_vote
     who = "your" if am["by"] == "you" else scn.member(am["by"]).name + "'s"
     E._log(g, "news", f"The amendment ({who}) is {'adopted' if res.passed else 'rejected'}: {res.summary}.", "vote")
@@ -672,3 +677,57 @@ def settle_final(scn, g, my_vote: str) -> None:
     for pa in g.get("pacts", []):
         if pa["kept"] is None:
             pa["kept"] = True if pa["tag"] in tags or my_vote != "no" else False
+
+
+def replay(scn, g) -> dict | None:
+    """The Summit, replayed: what happened at each step, the numbers, and what you could have done better."""
+    s = g.get("summit")
+    if not s or "closed" not in s:
+        return None
+    names = {m.iso3: m.name for m in scn.members}
+    who = lambda x: "You" if x == "you" else names.get(x, x)
+    steps, lessons = [], []
+    steps.append({"kind": "statement", "text": f"You gave a {s.get('speech') or 'short'} position statement."})
+    cu = s.get("caucus") or {}
+    if cu.get("kind") == "moderated":
+        steps.append({"kind": "caucus", "text": f"You moved for a moderated caucus on a clause that {E._lc(scn.tags[cu['tag']]).rstrip('.')}."})
+        if _my_view(g, cu["tag"]) == 0:
+            lessons.append("Your caucus topic wasn't one of your instructions: a topic you hold a view on moves the room your way.")
+    elif cu.get("kind") == "unmoderated":
+        steps.append({"kind": "caucus", "text": "You moved for an unmoderated caucus and worked " + " and ".join(names.get(i, i) for i in cu.get("isos", [])) + " on the floor."})
+    won = lost = with_room = 0
+    for d in s.get("done", []):
+        res = d["result"]
+        mine = d.get("my_vote")
+        margin = d.get("yes", 0) - d.get("no", 0)
+        line = {"kind": "amendment", "by": who(d["by"]), "text": d["text"], "result": res, "my_vote": mine,
+                "yes": d.get("yes"), "no": d.get("no"), "abstain": d.get("abstain"), "spoke": d.get("spoke")}
+        steps.append(line)
+        side = d.get("side", 0)
+        good = (res in ("adopted", "accepted as friendly")) == (side > 0) if side else None
+        if good is True:
+            won += 1
+        elif good is False:
+            lost += 1
+        if mine and res in ("adopted", "rejected"):
+            with_room += (mine == "yes") == (res == "adopted")
+        if good is False and res in ("adopted", "rejected") and abs(margin) <= 2 and not d.get("veto"):
+            had = d.get("had", {})
+            if had.get("favours") and d.get("extra") != "favour":
+                lessons.append(f"\u201c{d['text']}\u201d went against you by {abs(margin) or 'a tie'}{' vote' if abs(margin) == 1 else ' votes' if margin else ''}, "
+                               "while someone still owed you a favour. Calling it in could have turned it.")
+            elif had.get("influence", 0) >= E.R["offer_cost"] and d.get("extra") != "offer":
+                lessons.append(f"\u201c{d['text']}\u201d went against you narrowly, with Influence still in hand: a last offer could have turned it.")
+            if d.get("spoke") == "silent":
+                lessons.append(f"You stayed silent on \u201c{d['text']}\u201d, and it went against you by a little. A speech moves waverers.")
+        if good is False and d.get("veto"):
+            lessons.append(f"\u201c{d['text']}\u201d fell to a permanent member's no. In the Council, win the permanent members before the vote.")
+    f = s.get("final") or {}
+    stats = {"amendments": len(s.get("done", [])), "won": won, "lost": lost, "with_room": with_room,
+             "yours": sum(1 for d in s.get("done", []) if d["by"] == "you"), "changes": len(s.get("tracked", [])),
+             "final": {"yes": f.get("yes"), "no": f.get("no"), "abstain": f.get("abstain"), "passed": f.get("passed")}}
+    if not stats["yours"]:
+        lessons.append("You tabled no amendments of your own: two are allowed, and they're how you put your aims in late.")
+    if f and not f.get("passed") and f.get("yes", 0) >= (f.get("no", 0) or 0) - 2:
+        lessons.append("The final vote was close. One more delegation won over before the Summit would have carried it.")
+    return {"steps": steps, "stats": stats, "lessons": lessons[:5]}

@@ -34,8 +34,8 @@
     function artPaths(v) {
       var g = h("div", "s-g-paths");
       [["mandate", "Mandate", "The hardliner"], ["consensus", "Consensus", "The broker"], ["architect", "Architect", "The drafter"], ["kingmaker", "Kingmaker", "The analyst"]].forEach(function (p, i) {
-        var d = h("div", "s-g-path" + (v.path.code === p[0] ? " yours" : "")); d.style.animationDelay = (0.1 + i * 0.15) + "s";
-        d.appendChild(h("i", "", "★")); d.appendChild(h("b", "", p[1])); d.appendChild(h("span", "", v.path.code === p[0] ? "Your aim" : p[2]));
+        var d = h("div", "s-g-path"); d.style.animationDelay = (0.1 + i * 0.15) + "s";
+        d.appendChild(h("i", "", "★")); d.appendChild(h("b", "", p[1])); d.appendChild(h("span", "", p[2]));
         g.appendChild(d);
       });
       return g;
@@ -96,7 +96,10 @@
                        ["Keep out: ", "anything that " + lc(v.mandate.red.label) + ". That is your red line."]]),
                  "Nobody else can see these orders. Your rivals have their own, roughly the opposite of yours."] },
         { face: "wry", title: "Four ways to win", art: artPaths,
-          text: ["Every session is graded on all four paths, from no medal to gold. You're aiming for " + v.path.name + ", but a gold on any path is a gold."] },
+          text: ["Every session is graded on all five, from no medal to gold, and a gold on any of them is a gold. You don't choose one: they are all live, all game."] },
+        { at: "#c-paths", tab: "brief", face: "thinking", title: "Five ways to win",
+          text: [list((v.paths || []).map(function (p) { return [p.name + ": ", p.what]; })),
+                 "Ways to win, on your Brief, gives a rough reading of each. Push in one direction, and change course whenever the room changes."] },
         { at: ".s-meters", face: "calm", title: "Your standing",
           text: [list([["Influence ₳ ", "is your currency: pitches, deals and side events cost it."],
                        ["Standing ✦ ", "is how the room and your own government see you. It adds actions at 5 and 8. Your Foreign Minister's telegrams move it too; fall to zero and you're recalled."],

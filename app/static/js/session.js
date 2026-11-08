@@ -122,8 +122,8 @@
   // Setting up: six steps
   // =====================================================================================================
   function newPage() {
-    var choice = { pack: null, iso3: null, length: "standard", difficulty: "standard", path: "mandate" };
-    var labels = { length: "Standard", difficulty: "Standard", path: "Mandate" };
+    var choice = { pack: null, iso3: null, length: "standard", difficulty: "standard", approach: "diplomat" };
+    var labels = { length: "Standard", difficulty: "Standard", approach: "Career diplomat" };
     var at = 1, loadedFor = null, moved = false;
     var RIB = { 1: "Choose a scenario", 2: "Choose your country", 3: "How long?", 4: "How strong are your rivals?", 5: "What will you aim for?", 6: "Your briefing" };
     function show(n) {
@@ -178,7 +178,7 @@
     if (tipBox) { tipBox.checked = A.settings().tips !== false; tipBox.addEventListener("change", function () { A.set("tips", tipBox.checked); }); }
     $("s-begin").addEventListener("click", function () {
       var b = $("s-begin"); b.disabled = true; say("Taking your seat…");
-      api({ do: "new", pack: choice.pack, iso3: choice.iso3, length: choice.length, difficulty: choice.difficulty, path: choice.path,
+      api({ do: "new", pack: choice.pack, iso3: choice.iso3, length: choice.length, difficulty: choice.difficulty,
             approach: choice.approach || "diplomat" }).then(function (r) {
         A.play("gavel");
         if (r.state) {
@@ -573,7 +573,7 @@
       $("s-where").textContent = v.phase === "done" ? "Finished" : v.phase === "summit" ? "The Summit" :
         v.chapter_name + " · turn " + v.turn + " of " + v.turns + (v.stage ? " · " + (v.stage.made ? "breakthrough made" : v.stage.turns_left + " left") : "");
       stageBar(v, prev);
-      $("s-you").textContent = "You are " + v.you.name + " · aiming for " + v.path.name + (v.approach && v.approach.code !== "diplomat" ? " · " + v.approach.name : "") + (v.reputation ? " · known as " + v.reputation.replace(/^known to /, "someone known to ") : "");
+      $("s-you").textContent = "You are " + v.you.name + (v.approach && v.approach.code !== "diplomat" ? " · " + v.approach.name : "") + (v.reputation ? " · known as " + v.reputation.replace(/^known to /, "someone known to ") : "");
       meter("m-influence", v.influence); meter("m-respect", v.respect);
       $("m-respect").classList.toggle("low", v.respect <= 2);
       var ap = $("s-ap"); ap.textContent = "";
@@ -609,7 +609,15 @@
       [["in", "Get in: ", v.mandate.must.label], ["in", "Also get in: ", v.mandate.also.label], ["out", "Keep out: ", v.mandate.red.label]].forEach(function (x) {
         var li = h("li"); li.appendChild(h("span", x[0], x[1])); li.appendChild(document.createTextNode(x[2])); il.appendChild(li);
       });
-      $("c-aim").textContent = "Your aim: " + v.path.name + ". " + v.path.what;
+      $("c-aim").textContent = "";
+      var ways = $("c-ways"); ways.textContent = "";                     // all five paths, always live (9 Nov)
+      $("c-paths").hidden = !v.progress;
+      (v.progress || []).forEach(function (p) {
+        var li = h("li", "lv" + p.level); li.appendChild(h("b", "", p.name));
+        var dots = h("span", "s-way-dots"); dots.setAttribute("aria-hidden", "true");
+        for (var k = 0; k < 3; k++) dots.appendChild(h("i", k < p.level ? "on" : ""));
+        li.appendChild(dots); li.appendChild(h("span", "s-way-word", p.word)); ways.appendChild(li);
+      });
       regions(v);
       tug(v, prev);
       DLG.sheet(v); DLG.powers(v);
@@ -755,7 +763,8 @@
     function result(v) {
       var r = v.result; if (!r) return;
       if (mode === "guest" && window.socSession.record) window.socSession.record(v, guest);   // a guest's record lives in this browser
-      var d = v.debrief || {}, p = v.path, grade = r.grade;
+      var d = v.debrief || {}, grade = r.grade;
+      var p = (v.paths || []).filter(function (x) { return x.code === r.chosen; })[0] || v.path;    // your best path (9 Nov)
       $("s-result-eyebrow").textContent = r.recalled ? "Your capital has lost confidence in you" : r.passed ? "The resolution was adopted" :
         r.statement ? "A Presidential Statement was agreed" : "The resolution failed";
       $("s-result-h").textContent = r.recalled ? "Recalled for consultations" : GRADE[grade] + " for " + p.name;
@@ -1260,6 +1269,30 @@
           t.appendChild(tr);
         });
         box.appendChild(t);
+      }
+      if (d.replay) {                                                 // the Summit, replayed (9 Nov)
+        var rp = h("div", "s-replay"); rp.appendChild(h("h3", "", "The Summit, replayed"));
+        var stt = d.replay.stats, sl = h("ul", "s-replay-stats");
+        [["Amendments", stt.amendments], ["Went your way", stt.won], ["Went against you", stt.lost], ["Your own", stt.yours],
+         ["Changes to the text", stt.changes]].forEach(function (x) { var li = h("li"); li.appendChild(h("b", "", String(x[1]))); li.appendChild(h("span", "", x[0])); sl.appendChild(li); });
+        rp.appendChild(sl);
+        var tl = h("ol", "s-replay-steps");
+        d.replay.steps.forEach(function (x) {
+          var li = h("li", "k-" + x.kind + (x.result ? " r-" + x.result.split(" ")[0] : ""));
+          if (x.kind === "amendment") {
+            li.appendChild(h("b", "", x.by + ": " + x.text));
+            li.appendChild(h("span", "s-small", x.result.charAt(0).toUpperCase() + x.result.slice(1) +
+              (x.yes !== undefined && x.yes !== null ? " (" + x.yes + " yes, " + x.no + " no, " + x.abstain + " abstaining)" : "") +
+              (x.my_vote ? " · you voted " + x.my_vote : "") + (x.spoke && x.spoke !== "silent" ? " · you " + ({ "for": "spoke for it", against: "spoke against it", reply: "replied", point_of_order: "raised a point of order", accept: "accepted it" }[x.spoke] || x.spoke) : "")));
+          } else li.appendChild(document.createTextNode(x.text));
+          tl.appendChild(li);
+        });
+        rp.appendChild(tl);
+        if (d.replay.lessons.length) {
+          rp.appendChild(h("h4", "", "What you could have done"));
+          var ll = h("ul", "s-replay-lessons"); d.replay.lessons.forEach(function (x) { ll.appendChild(h("li", "", x)); }); rp.appendChild(ll);
+        }
+        box.appendChild(rp);
       }
       box.appendChild(h("h3", "", "What to try next time"));
       var grid = h("div", "s-tips-list");
