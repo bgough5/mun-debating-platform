@@ -137,6 +137,7 @@
         if (G) card.appendChild(G.portrait(r.reaction === "pleased" ? "delighted" : r.reaction === "annoyed" ? "concerned" : "calm", "delegate " + likeness(iso)));
         var nm = h("b"); nm.appendChild(pin(iso)); nm.appendChild(document.createTextNode(r.name)); card.appendChild(nm);
         card.appendChild(h("span", "s-feel f-" + r.feeling.toLowerCase(), r.reaction + " · " + r.feeling));
+        if (r.said) card.appendChild(h("q", "s-member-said", r.said));
         room.appendChild(card);
         reactIn(card, null, r.reaction === "pleased" ? "nod" : r.reaction === "annoyed" ? "shake" : "brow", 500 + i * 160);
       });

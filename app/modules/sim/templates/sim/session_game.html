@@ -169,11 +169,17 @@
       <p class="s-sub" id="s-pause-note">{{ "Your session is saved after every move." if mode == "saved" else "Your session is kept on this laptop after every move." }}</p>
       <button type="button" class="s-btn" data-close="s-pause">Resume</button>
       <button type="button" class="s-btn ghost" data-open="s-settings">Settings</button>
+      <button type="button" class="s-btn ghost" data-open="s-keys">Keyboard shortcuts</button>
       <button type="button" class="s-btn ghost" id="s-replay-walk">Replay the walkthrough</button>
       <a class="s-btn ghost" href="/session/almanac/{{ pack }}" target="_blank" rel="noopener" hx-boost="false">The Almanac (opens a new tab)</a>
       <a class="s-btn ghost" href="/session" hx-boost="false">Save and leave</a>
       <button type="button" class="s-btn ghost" id="s-abandon">Abandon this session</button>
     </div>
+  </div>
+  <div class="s-overlay" id="s-keys" hidden role="dialog" aria-modal="true" aria-labelledby="s-keys-h">
+    <div class="s-doc"><h2 id="s-keys-h">Keyboard shortcuts</h2>
+      <table class="s-keys"><tbody><tr><th scope="row"><kbd>F</kbd></th><td>Full screen on or off (hold Escape to leave it)</td></tr><tr><th scope="row"><kbd>E</kbd></th><td>End the turn</td></tr><tr><th scope="row"><kbd>1 – 8</kbd></th><td>Open the panels, in order down the side</td></tr><tr><th scope="row"><kbd>1 – 9</kbd></th><td>With a card or conversation open: choose its answers, in order</td></tr><tr><th scope="row"><kbd>T</kbd></th><td>Talk to the delegation you have open</td></tr><tr><th scope="row"><kbd>M</kbd></th><td>The map key</td></tr><tr><th scope="row"><kbd>Y · A · N</kbd></th><td>At the Summit: vote Yes, Abstain or No</td></tr><tr><th scope="row"><kbd>Space</kbd></th><td>At the Summit: let the President move on</td></tr><tr><th scope="row"><kbd>Escape</kbd></th><td>Close what is open, or pause</td></tr><tr><th scope="row"><kbd>?</kbd></th><td>This list</td></tr></tbody></table>
+      <div class="s-row"><button type="button" class="s-btn" data-close="s-keys">Done</button></div></div>
   </div>
   <div class="s-overlay" id="s-file" hidden role="dialog" aria-modal="true" aria-labelledby="s-file-h">
     <div class="s-doc wide s-dossier"><p class="s-eyebrow">Country file</p><h2 id="s-file-h">–</h2><div id="s-file-body"></div>
