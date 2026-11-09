@@ -121,19 +121,19 @@ INSIGNIA = {
 PATHS = {
     "mandate": {"name": "Mandate", "for": "The hardliner",
                 "what": "Your secret instructions are in the final text, and it passes.",
-                "gold": "it passes with your main aim and your second aim in, and your red line out."},
+                "gold": "a perfect score: it passes with your main and second aims in, your red line out, and every delegation voting yes."},
     "consensus": {"name": "Consensus", "for": "The broker",
                   "what": "It passes with the widest support, across regional groups.",
-                  "gold": "it passes with three in four voting yes, two regional groups endorsing you, and your main aim in."},
+                  "gold": "a perfect score: it passes unanimously, three regional groups endorse you, and your main aim is in."},
     "architect": {"name": "Architect", "for": "The drafter",
                   "what": "The resolution bears your mark: your clauses and your amendments.",
-                  "gold": "it passes with three clauses of your own in it, at least half the text yours or amended by you, and three in five voting yes."},
+                  "gold": "a perfect score: it passes, the whole text is yours or amended by you, every one of your clauses carries the room, and three of them are wholly your own."},
     "kingmaker": {"name": "Kingmaker", "for": "The analyst",
                   "what": "You read the room accurately, keep every promise and end with high Standing.",
-                  "gold": "your whip sheet is four-fifths right, you break no promise, and your Standing ends at 7 or more."},
+                  "gold": "a perfect score: your whip sheet is entirely right, you break no promise, and your Standing ends at the top."},
     "ambassador": {"name": "Ambassador", "for": "The envoy",
                    "what": "You did the job you're paid for: you used your time and talked to the whole room.",
-                   "gold": "the resolution passes, you used nearly every action you had, and you engaged most of the room."},
+                   "gold": "a perfect score: it passes, you used every action you had, you engaged the whole room, and everyone you engaged votes yes."},
 }
 
 CHAPTERS = {

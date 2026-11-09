@@ -6,6 +6,8 @@
   "use strict";
   var page = document.body.getAttribute("data-page");
   var A = (window.socSession && window.socSession.audio) || { play: function () {}, settings: function () { return {}; }, set: function () {}, motionOn: function () { return false; } };
+  var nf = function () {};
+  var FX = (window.socSession && window.socSession.fx) || { roll: nf, flip: nf, ink: nf, light: nf, react: nf, medals: nf, paper: nf };
   var stage = document.getElementById("b-stage");
   var GUEST = "soc-session-guest", SLOTS = 3;
 
@@ -300,7 +302,7 @@
     function meter(id, value) {
       var li = $(id), b = li.querySelector("b"), old = b.textContent;
       b.textContent = value;
-      if (old !== "–" && old !== String(value)) { restart(li, "bump"); if (id === "m-influence" && +value > +old) A.play("coin"); }
+      if (old !== "–" && old !== String(value)) { restart(li, "bump"); FX.roll(li, old, value); if (id === "m-influence" && +value > +old) A.play("coin"); }
     }
     function chapterCard(v, prev) {
       if (v.phase === "done") return;                              // the results take over
@@ -674,11 +676,14 @@
       // the map
       Object.keys(tokens).forEach(function (iso) {
         var t = tokens[iso], d = v.tokens[iso] || {};
+        var wasLean = t.classList.contains("lean-for") ? "for" : t.classList.contains("lean-against") ? "against" : "";
         t.classList.toggle("you", !!d.you); t.classList.toggle("rival", !!d.rival); t.classList.toggle("signed", !!d.signed);
         t.classList.toggle("lean-for", !d.you && !d.rival && d.est === "yes"); t.classList.toggle("lean-against", !d.you && !d.rival && d.est === "no");
         t.classList.toggle("trust-pos", d.relation > 0); t.classList.toggle("trust-neg", d.relation < 0);
         t.classList.toggle("committed", !!(d.commitments || []).length); t.classList.toggle("truce", !!d.truce);
         t.classList.toggle("endorsed-you", v.regions.some(function (r) { return r.owner === "you" && r.members.indexOf(iso) >= 0; }));
+        var nowLean = t.classList.contains("lean-for") ? "for" : t.classList.contains("lean-against") ? "against" : "";
+        if (prev && nowLean !== wasLean) setTimeout(function () { FX.flip(t); }, 200 + Math.random() * 500);   // the token turns over
         var line = t.querySelector(".b-line");
         if (line) line.textContent = d.you ? "You" : d.rival ? "Rival" : d.est === "yes" ? "For" : d.est === "no" ? "Against" : d.est ? "Unsure" : "";
       });
@@ -786,6 +791,7 @@
         row.appendChild(m);
       });
       b.appendChild(row);
+      FX.medals(row);                                                // they drop one at a time, gold last
       b.appendChild(h("p", "s-sub s-center", "You aimed for " + p.name + ": " + p.what + "  Predictions right: " + r.whip_right + " of " + r.whip_judged +
                                              " · promises kept " + r.kept_promises + ", broken " + r.broken_promises + " · Standing " + r.respect + " · Expertise " + r.expertise + "."));
       if (d.history && d.history.length > 1) b.appendChild(chart(d.history));
@@ -978,7 +984,7 @@
       }
       $("s-advice-text").textContent = x.text;
       if (x.tele && A.motionOn()) typeOut($("s-advice-text"), x.text);
-      a.hidden = false; restart(a, "s-advice-in"); if (adviceFace) restart(adviceFace, "g-react");
+      a.hidden = false; restart(a, "s-advice-in"); FX.paper(a, x.tele ? "telegram" : null); if (adviceFace) restart(adviceFace, "g-react");
       A.play("flip");
       adviceTimer = setTimeout(function () { if (!a.matches(":hover") && !a.contains(document.activeElement)) { hideAdvice(); setTimeout(adviceNext, 400); } }, 9000);
     }
@@ -1203,6 +1209,7 @@
       var key = b.className.match(/s-stage-\w+/)[0];
       if (lastLook && lastLook !== key) { var fr = document.querySelector(".s-stage .b-frame"); if (fr) restart(fr, "s-stage-anim"); }
       lastLook = key;
+      FX.light(key.slice(8));                                        // morning, afternoon, lamplight, the chandelier
       if (!landsTagged) {
         Object.keys(lands).forEach(function (iso) { var t = v.tokens[iso]; if (t && t.rcode) lands[iso].forEach(function (l) { l.classList.add("rg-" + t.rcode.toLowerCase()); }); });
         landsTagged = true;

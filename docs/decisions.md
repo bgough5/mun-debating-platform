@@ -388,6 +388,30 @@ Ben: "there also should be groups that get saved, ie i create a debating juniors
 
 
 
+### D-104 The Session: measured medal bands, and a room that moves — Decided (9–10 Nov 2026, Ben)
+
+Ben asked for medals that mean something: the highest score, the median and the standard deviation on each path, rounded to whole numbers.
+
+- **Points:** every game scores 0–100 on each path from objective numbers only (`engine.score`, `points`).
+  - Architect counts only your clauses that carry the room.
+  - Ambassador adds whether the delegations you engaged vote yes.
+- **Bands** (`R["bands"]`, bronze/silver/gold):
+  - mandate 92/96/100, consensus 85/92/100, architect 54/79/100, kingmaker 88/94/100, ambassador 80/94/100.
+  - Measured over 2,169 bot games (sim of 10 Nov). On each path the population is the bot style that plays it best.
+  - Bronze is that style's median, silver one standard deviation above, gold two above. Each is capped at the highest score seen; silver goes halfway when the cap brings it level with gold.
+  - Gold therefore means a perfect score on that path.
+- **Why the best style, not all bots:** measured over all bots, random play won Architect gold in 20% of games, because random bots never close a stage early and so play about three times as many turns. Measured per best style, random play earns gold in 3% of games and competent bots in 2–20%.
+- **Motion** (`session-fx.js`), all skipped when motion is off:
+  - meters roll like mechanical counters, and tokens turn over when a lean changes;
+  - clauses are written on in ink as they are read, struck text is crossed out in red, and changes appear as margin notes;
+  - the light changes with the hour: morning, afternoon, lamplight, and the Summit's chandelier;
+  - faces nod, shake or raise a brow at how an argument landed;
+  - medals drop one at a time, gold last;
+  - telegrams slide in like paper under a door, and the news unfolds like a newspaper.
+
+Not decided:
+- whether a Standard silver should also open the next scenario, now that gold is rare.
+
 ### D-103 The Session: player accounts, five paths always live, people who speak, avatars in depth — Decided (9 Nov 2026, Ben)
 
 Decided:
@@ -407,7 +431,7 @@ Decided:
   - Delegates get more variety from the same scramble, never with a headscarf or dyed hair at random.
 
 Not decided:
-- whether medals should be harder now that the result is the best of five paths;
+- whether medals should be harder now that the result is the best of five paths (settled in D-104);
 - whether erasing accounts unused for a year should become automatic.
 
 ### D-102 The Session after Ben's playtests: conversations, one Standing, the grand look, a record and approaches — Decided (6–8 Nov 2026, Ben)

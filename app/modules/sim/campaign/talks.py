@@ -148,7 +148,7 @@ def conv_view(scn, g) -> dict | None:
              for k in ARGS if k != cv["first"]]
     opts += [{"code": "ask", "label": PRESS_WORDS["ask"]}, {"code": "close", "label": PRESS_WORDS["close"]}]
     return {"iso3": cv["iso3"], "name": scn.member(cv["iso3"]).name, "first": cv["first"], "first_name": ARGS[cv["first"]]["name"],
-            "reply": cv["reply"], "options": opts}
+            "reply": cv["reply"], "options": opts, "tone": cv.get("tone")}
 
 
 def a_talk(scn, g, a):
@@ -170,7 +170,8 @@ def a_talk(scn, g, a):
         felt = r[arg] * REPEAT ** _used(g, iso, arg)
         reply = ("Before you go on: the clause you want is a red line for us. We'll listen, but we won't move far." if red
                  else memory + rng.choice(REACT[_word(r[arg]) if felt >= r[arg] * 0.99 else ("some" if felt >= SOME else "weak")]))
-        g["conv"] = {"iso3": iso, "first": arg, "reply": reply, "red": red, "cost": cost, "goodwill": goodwill}
+        g["conv"] = {"iso3": iso, "first": arg, "reply": reply, "red": red, "cost": cost, "goodwill": goodwill,
+                     "tone": "red" if red else _word(felt)}                # how it landed, for the delegate's face
         return {"conv": conv_view(scn, g)}
     cv = g.get("conv")
     if not cv:
@@ -209,7 +210,7 @@ def a_talk(scn, g, a):
     g["region_last"][scn.member(iso).region] = "you"
     E._log(g, "you", f"You talked with {scn.member(iso).name}: you opened with {ARGS[first]['name'].lower()} and {how}.", "action", iso)
     out = {"heard": heard, "moved": round(moved, 2), "cost": cv["cost"], "red_line": bool(cv.get("red")), "landed": landed,
-           "talked": iso, "how": how}
+           "talked": iso, "how": how, "q": round(q, 2)}
     if choice == "ask" or (g["length"] != "quick" and g["chapter"] >= 2):
         out["leans"] = {scn.member(rv["iso3"]).name: round(E.lean(scn, g, rv["iso3"], iso), 2) for rv in g["rivals"]}
     if (choice == "ask" or (g["length"] != "quick" and g["chapter"] >= 3)) and E.final_clause(g)["tags"]:

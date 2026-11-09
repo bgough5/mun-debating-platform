@@ -34,6 +34,9 @@ see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun
   first-timers) and optionally save them as a group; choose junior, middle or senior (suggested from year levels).
 - **Play solo (D-099):** Model UN on the board, alone against the computer, from any scenario. Signed-in students'
   games are saved; anyone can play as a guest from the sign-in page with no code, and nothing about a guest is kept.
+- **The Session's medals and motion (D-104):** every game scores 0–100 on five paths; the medal bands were measured over
+  bot games (gold is a perfect score). Meters roll, tokens turn, ink writes the clauses, the light follows the hour, faces
+  react, medals drop and telegrams arrive (`app/static/js/session-fx.js`); all of it stops when motion is off.
 - **The Session (D-101):** an hour-long solo campaign at `/session`: chapters of lobbying and drafting, then a
   Summit voted clause by clause, then a debrief. Each chapter has a crisis; delegations bring offers; rivals have
   personalities and play to win, with hidden plans that your advisers (posted, hired, promoted) find out; you

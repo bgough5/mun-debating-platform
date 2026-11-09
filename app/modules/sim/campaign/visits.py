@@ -383,17 +383,42 @@ def _extra(scn, g, rng):
     return out
 
 
+# what a delegate says after your caucus speech: by the speech you gave and how it landed with them
+CAUCUS_LINES = {
+    "rally": {"pleased": ["That is the language we came here for.", "Well said. Our people would cheer that.", "Now that is a cause worth standing behind."],
+              "unmoved": ["Fine words. We'll want to see the text.", "Inspiring, perhaps. It doesn't change our instructions.", "A good speech. Speeches don't vote."],
+              "annoyed": ["Grand words don't pay for anything.", "We've heard a lot of big pictures this week.", "Spare us the poetry, Ambassador."]},
+    "reassure": {"pleased": ["Practical. Thank you for listening to us.", "That answers what our capital asked.", "Calm and sensible. We can work with that."],
+                 "unmoved": ["Reasonable enough. We'll see.", "Noted. Our concerns are elsewhere.", "Sensible, but it isn't what keeps our minister awake."],
+                 "annoyed": ["You're telling us not to worry. We worry.", "That was a lot of reassurance and no substance.", "Too careful by half."]},
+    "demand": {"pleased": ["Straight talk. We respect that.", "Firm. Good: we know where you stand.", "That is how serious delegations speak."],
+               "unmoved": ["You'll need more than a demand.", "We heard you. We haven't decided.", "Strong words. Let's see the votes."],
+               "annoyed": ["We don't take orders in this room.", "Is that a threat, Ambassador?", "My government won't be lectured."]},
+}
+
+
 def answer_more(scn, g, v, c, out):
     iso, name = v["iso3"], scn.member(v["iso3"]).name
     if v["kind"] == "caucus":
         reactions = {}
         for i in v["members"]:
             ln = E.lean(scn, g, "you", i)
-            d = ({"rally": 0.15 if ln > 0 else 0.03, "reassure": 0.1 if abs(ln) < 0.5 else 0.03,
-                  "demand": 0.2 if ln > 0.3 else -0.1}[c])
+            # each delegation hears the speech through what it listens to (talks.receptive, from its country's traits):
+            # rallying speaks to values and solidarity, reassurance to economics and the rules, a demand to power
+            r = T.receptive(scn, g, i)
+            fit = {"rally": max(r["values"], r["region"]), "reassure": max(r["interest"], r["precedent"]), "demand": r["security"]}[c]
+            mult = 0.5 + 0.75 * fit                                     # 1.25 when it lands, 0.6 when it barely does
+            rel = relation(g, i)
+            rng = random.Random(f"{g['seed']}:caucus:{g.get('tick', 0)}:{i}")
+            if c == "demand":                                          # a demand lands only with friends who respect power
+                d = 0.2 * mult if ln > 0.3 and rel >= 0 else -0.1 * (1.6 - fit) - (0.05 if rel < 0 else 0)
+            else:
+                d = ({"rally": 0.15 if ln > 0 else 0.03, "reassure": 0.1 if abs(ln) < 0.5 else 0.03}[c]) * mult
+            d += rng.uniform(-0.025, 0.025)                            # the person in the seat, not only the country
             E._sway(g, "you", i, d)
-            reactions[i] = {"name": scn.member(i).name, "feeling": feeling(g, i),
-                            "reaction": "pleased" if d >= 0.1 else "unmoved" if d > 0 else "annoyed"}
+            how = "pleased" if d >= 0.1 else "unmoved" if d > 0 else "annoyed"
+            reactions[i] = {"name": scn.member(i).name, "feeling": feeling(g, i), "reaction": how,
+                            "said": rng.choice(CAUCUS_LINES[c][how])}
         out["reactions"] = reactions
         E._log(g, "you", f"You addressed the {E.REGIONS.get(g.get('meeting'), 'regional')} caucus.", "action")
     elif v["kind"] == "capital":

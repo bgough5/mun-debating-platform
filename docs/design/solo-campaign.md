@@ -961,3 +961,52 @@ Ben: "all of them are being marked already, let's make it you can just go for al
 - **The new rule:** gold now means the text bears your mark. You need at least three clauses of your own, at least half the text yours or amended by you (`architect_gold` = 0.5), and three in five voting yes.
 - **Silver:** two clauses of your own and 40%.
 - **Bronze:** 20%.
+
+## 34. Medal bands measured, and the room in motion (9–10 Nov 2026)
+
+**Points.** `engine.score` gives 0–100 on every path:
+
+| Path | Points |
+|---|---|
+| Mandate | 35 main aim, 20 second aim, 20 red line out, 25 × yes share; × 1 passed, 0.75 for a statement, 0.5 failed |
+| Consensus | 60 × yes share, 25 × regional groups (up to 3), 15 main aim; same multiplier |
+| Architect | 70 × the share of your credited clauses that carry the room, 10 per clause wholly yours that carries (up to 3); same multiplier |
+| Kingmaker | 60 × whip accuracy (scaled by how many you judged), 2 × Standing, 20 for no broken promise (10 for one) |
+| Ambassador | 40 actions used, 30 room engaged, 30 engaged delegations voting yes; × 0.8 if it fails |
+
+**Bands** (`R["bands"]`): measured over 2,169 bot games on 10 Nov.
+
+| Path | Bronze | Silver | Gold | Measured over |
+|---|---|---|---|---|
+| Mandate | 92 | 96 | 100 | analyst |
+| Consensus | 85 | 92 | 100 | analyst |
+| Architect | 54 | 79 | 100 | random |
+| Kingmaker | 88 | 94 | 100 | analyst |
+| Ambassador | 80 | 94 | 100 | random |
+
+How each row is set: bronze is the median for the style that plays the path best, silver one standard deviation above, and gold two above. Each is capped at the highest score seen and rounded. Silver goes halfway when the cap brings it level with gold.
+
+**Medal rates under these bands** (best of the five paths):
+
+| Bot style | Gold | Silver+ | Bronze+ |
+|---|---|---|---|
+| Analyst | 20% | 40% | 80% |
+| Broker | 3% | 26% | 72% |
+| Drafter | 2% | 13% | 55% |
+| Hardliner | 2% | 21% | 55% |
+| Random | 3% | 26% | 65% |
+
+Measured over all bots together, random play took Architect gold in 20% of games: random bots never close a stage early, so they play about 15 turns to a competent bot's 5.
+
+Open question: gold opens the next scenario, and it is now rare.
+
+**Motion** (`session-fx.js`):
+- the meters roll;
+- tokens turn over;
+- ink is written on, struck out and noted in the margin;
+- the light of each stage;
+- faces react;
+- medals drop, lowest first and gold last;
+- telegrams and the news arrive.
+
+Every effect shows something that happened in the game, the text a reader sees is always the plain value, and nothing plays when motion is off.

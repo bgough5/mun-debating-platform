@@ -7,6 +7,13 @@
   window.socSession.mods = window.socSession.mods || {};
   window.socSession.mods.dialogue = function (c) {
     var $ = c.$, h = c.h, A = c.A, G = c.G;
+    function FX() { return window.socSession.fx || { react: function () {} }; }
+    // a face reacts to what was just said: its expression, then a nod, a shake or a raised brow
+    function reactIn(holder, expr, how, wait) {
+      var svg = holder && holder.querySelector("svg.g-face"); if (!svg) return;
+      if (expr && G) G.face(svg, expr);
+      setTimeout(function () { FX().react(svg, how); }, wait || 250);
+    }
 
     // ---------- conversations ----------
     var seen = {}, queue = [], showing = null, waiting = null, line = null;
@@ -130,9 +137,11 @@
         if (G) card.appendChild(G.portrait(r.reaction === "pleased" ? "delighted" : r.reaction === "annoyed" ? "concerned" : "calm", "delegate " + likeness(iso)));
         var nm = h("b"); nm.appendChild(pin(iso)); nm.appendChild(document.createTextNode(r.name)); card.appendChild(nm);
         card.appendChild(h("span", "s-feel f-" + r.feeling.toLowerCase(), r.reaction + " · " + r.feeling));
+        if (r.said) card.appendChild(h("q", "s-member-said", r.said));
         room.appendChild(card);
+        reactIn(card, null, r.reaction === "pleased" ? "nod" : r.reaction === "annoyed" ? "shake" : "brow", 500 + i * 160);
       });
-      var doc = document.querySelector("#s-visit .s-doc"); doc.className = "s-doc s-reeldoc" + (out.reactions ? " k-caucus" : "");
+      var doc =document.querySelector("#s-visit .s-doc"); doc.className = "s-doc s-reeldoc" + (out.reactions ? " k-caucus" : "");
       $("s-visit-face").textContent = "";
       $("s-visit-step").textContent = ""; $("s-visit-who").textContent = "";
       $("s-visit-h").textContent = out.reactions ? "How the room took it" : "Their reply";
@@ -214,6 +223,7 @@
       var ok = h("button", "s-btn", "Thank you, Mr President"); ok.type = "button";
       ok.addEventListener("click", function () { c.close("s-proc"); showing = null; setTimeout(next, 400); });
       row.appendChild(ok); A.play(out.right ? "chime" : "tick");
+      reactIn(face, null, out.right ? "nod" : "shake");
     }
     $("s-proc").addEventListener("keydown", function (e) { if (e.key === "Escape") e.stopPropagation(); });   // answer it, or it waits
 
@@ -261,6 +271,8 @@
       });
       if ($("s-visit").hidden) c.open("s-visit");
       say($("s-visit-face"), $("s-visit-p"), "You opened with " + cv.first_name.toLowerCase() + ". \u201c" + cv.reply + "\u201d", row, cv.iso3);
+      var T = { strong: ["delighted", "nod"], some: ["thinking", "brow"], weak: ["concerned", "shake"], red: ["concerned", "shake"] }[cv.tone];
+      if (T) reactIn($("s-visit-face"), T[0], T[1]);
     }
     function talkEnd(v, out) {
       var iso = out.talked, t = v.tokens[iso] || {};
@@ -269,6 +281,8 @@
       var ok = h("button", "s-btn", "Done"); ok.type = "button"; ok.addEventListener("click", leaveTalk); row.appendChild(ok);
       if ($("s-visit").hidden) c.open("s-visit");
       say($("s-visit-face"), p, "\u201c" + out.heard + "\u201d", row, iso);
+      if (out.q !== undefined) reactIn($("s-visit-face"), out.q >= 0.9 ? "delighted" : out.q >= 0.5 ? "eyebrow" : "concerned",
+                                       out.q >= 0.9 ? "smile" : out.q >= 0.5 ? "brow" : "shake");
       var intel = h("span", "s-intel-box");
       var landed = TALKS().pitchAnswer(out); if (landed) intel.appendChild(h("span", "s-intel", "Your arguments: " + landed));
       if (out.would_vote) intel.appendChild(h("span", "s-intel", "On the whole text as it stands, they would vote " + out.would_vote + "."));

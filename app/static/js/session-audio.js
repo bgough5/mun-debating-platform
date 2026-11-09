@@ -7,7 +7,7 @@
 (function () {
   "use strict";
   var KEY = "soc-session-settings";
-  var DEFAULTS = { sound: false, music: false, voices: true, motion: "auto", text: "normal", timer: true, tips: true, talk: true };
+  var DEFAULTS = { sound: false, music: false, voices: true, motion: "auto", text: "normal", timer: true, tips: true, talk: true, fullscreen: true };
   var ctx = null, master = null, musicBus = null, musicTimer = null, murmurNode = null;
 
   function settings() {
@@ -106,6 +106,8 @@
       bp.frequency.setValueAtTime(900, t); bp.frequency.exponentialRampToValueAtTime(3200, t + 0.3); n.connect(bp); env(c, bp, t, 0.18, 0.32); n.start(t); n.stop(t + 0.36);
       return "Paper";
     },
+    medal: function (c, t) { knock(c, t, 0.7); bell(c, t + 0.03, 523.25, 1.1, 0.14); return "A medal lands"; },
+    medal_gold: function (c, t) { knock(c, t, 1); bell(c, t + 0.03, 784, 1.8, 0.2); bell(c, t + 0.3, 1046.5, 2.4, 0.22); return "Gold"; },
     coin: function (c, t) { tone(c, "sine", 1318.5, t, 0.22, 0.25); tone(c, "sine", 1760, t + 0.07, 0.2, 0.5); return "Influence"; },
     tick: function (c, t) { tone(c, "square", 1800, t, 0.05, 0.03); return ""; },
     sweep: function (c, t) {

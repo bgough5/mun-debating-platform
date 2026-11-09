@@ -210,3 +210,25 @@ def test_talk_fades_but_deals_bind(scn):
     g["influence"] = 5
     t = E.deal_terms(scn, g, a)
     assert "influence" in t["give"] and "standing" in t["get"]                               # trade Influence and Standing
+
+
+def test_a_caucus_hears_your_speech_through_each_country(scn):
+    """Ben, 10 Nov: in a bloc meeting each delegation reacts in its own way: what its country listens to
+    (talks.receptive), how it feels about you, and the person in the seat; each says something of its own."""
+    seen_lines, mixed = set(), 0
+    for seed in range(1, 12):
+        for speech in ("rally", "reassure", "demand"):
+            g = E.new_game(scn, scn.isos[0], seed=seed)
+            reg = scn.member(scn.isos[0]).region
+            members = [i for i in E._region_members(scn, reg) if i not in E._others(g) and i != g["iso3"]]
+            if len(members) < 3:
+                continue
+            g["visits"] = [{"id": "vc", "kind": "caucus", "iso3": members[0], "members": members, "text": "",
+                            "options": [{"code": k, "label": k, "cost": 0} for k in ("rally", "reassure", "demand")]}]
+            g, out = E.apply(scn, g, {"do": "visit", "id": "vc", "choice": speech})
+            rs = out["reactions"]
+            assert all(r["said"] in V.CAUCUS_LINES[speech][r["reaction"]] for r in rs.values())
+            seen_lines |= {r["said"] for r in rs.values()}
+            mixed += len({r["reaction"] for r in rs.values()}) > 1
+    assert mixed >= 10, mixed                          # the same speech divides the room
+    assert len(seen_lines) >= 15, len(seen_lines)

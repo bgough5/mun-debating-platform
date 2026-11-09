@@ -1,7 +1,9 @@
 /* The Session (D-101): hover cards on the map's tokens, and keyboard shortcuts (Ben's picks, 6 Nov 2026).
    Hover or focus a token for a small card: its name, how it leans, your relationship, and what it listens to if you
-   know. Keys: E ends the turn, 1-8 open the visible panels in order, T talks to the delegation you have open.
-   The game page passes in what this needs (`c`). */
+   know. Keys (listed in the game on ? and in the pause menu): F full screen, E ends the turn, 1-8 open the visible
+   panels in order (or, with a card or conversation open, choose its answers), T talks to the delegation you have
+   open, M the map key, and at the Summit Y/A/N vote and Space lets the President move on. Full screen starts on the
+   first click or key press (setting `fullscreen`). The game page passes in what this needs (`c`). */
 (function () {
   "use strict";
   window.socSession = window.socSession || {};
@@ -44,13 +46,68 @@
     map.addEventListener("focusout", hide);
     map.addEventListener("click", hide);
 
+    // ---------- full screen, like a game (Ben, 10 Nov) ----------
+    // Browsers allow full screen only from a click or key press on this page, so the first one goes full screen.
+    // Chrome and Edge then let the game keep Escape (hold it to leave full screen); leaving by choice stops the
+    // automatic return until the game is next opened. Automated test browsers are left alone.
+    var root = document.documentElement, leftByChoice = false;
+    function isFull() { return !!document.fullscreenElement; }
+    function enterFull() {
+      if (isFull() || !root.requestFullscreen) return;
+      root.requestFullscreen({ navigationUI: "hide" }).then(function () {
+        if (navigator.keyboard && navigator.keyboard.lock) navigator.keyboard.lock(["Escape"]).catch(function () {});
+      }).catch(function () {});
+    }
+    function toggleFull() { if (isFull()) { leftByChoice = true; document.exitFullscreen().catch(function () {}); } else { leftByChoice = false; enterFull(); } }
+    function autoFull(e) {
+      if (navigator.webdriver || leftByChoice || isFull() || c.A.settings().fullscreen === false) return;
+      if (e.type === "keydown" && (e.key === "Escape" || e.key.toLowerCase() === "f")) return;
+      enterFull();
+    }
+    document.addEventListener("pointerdown", autoFull, true);
+    document.addEventListener("keydown", autoFull, true);
+    document.addEventListener("fullscreenchange", function () {
+      if (!isFull()) { leftByChoice = true; if (navigator.keyboard && navigator.keyboard.unlock) navigator.keyboard.unlock(); }
+    });
+
     // ---------- shortcuts ----------
     function typing(el) { return el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)); }
-    function busy() { return document.querySelector(".s-overlay:not([hidden])") || !$("s-walk").hidden; }
+    function topOverlay() {
+      var shown = Array.prototype.filter.call(document.querySelectorAll(".s-overlay"), function (o) { return !o.hidden; });
+      return shown[shown.length - 1] || null;
+    }
+    function usable(b) { return b && !b.disabled && !b.hidden && b.offsetParent !== null; }
+    // in a conversation, a question or a card: 1-9 choose its answers in order
+    function pickInOverlay(o, n) {
+      var row = o.querySelector("#s-visit-opts, #s-proc-opts, .s-row, .s-visit-opts");
+      var bs = Array.prototype.filter.call((row || o).querySelectorAll("button"), usable);
+      var b = bs[n - 1]; if (b) { b.click(); return true; }
+      return false;
+    }
     document.addEventListener("keydown", function (e) {
-      if (e.ctrlKey || e.metaKey || e.altKey || typing(document.activeElement) || busy()) return;
-      var v = c.view(); if (!v || v.phase === "done") return;
+      if (e.ctrlKey || e.metaKey || e.altKey || typing(document.activeElement)) return;
       var k = e.key.toLowerCase();
+      if (k === "f") { e.preventDefault(); toggleFull(); return; }
+      if (k === "?" || (k === "/" && e.shiftKey)) { e.preventDefault(); c.open("s-keys"); return; }
+      if (!$("s-walk").hidden) return;
+      var o = topOverlay();
+      if (o) {
+        if (/^[1-9]$/.test(k) && o.id !== "s-settings" && o.id !== "s-keys" && pickInOverlay(o, +k)) e.preventDefault();
+        return;
+      }
+      var v = c.view(); if (!v || v.phase === "done") return;
+      if (v.phase !== "chapter" && /^[yan]$/.test(k)) {             // the Summit: vote Yes, Abstain or No
+        var vb = document.querySelector("#c-summit .s-votes .v-" + { y: "yes", a: "abstain", n: "no" }[k]);
+        if (usable(vb)) { e.preventDefault(); vb.click(); }
+        return;
+      }
+      if (k === " " && document.activeElement && document.activeElement.tagName === "BUTTON") return;   // Space presses that button
+      if (k === " " && v.phase !== "chapter") {                       // the Summit: the President moves on
+        var go = Array.prototype.filter.call(document.querySelectorAll("#c-summit > .s-btn"), usable)[0];
+        if (go) { e.preventDefault(); go.click(); }
+        return;
+      }
+      if (k === "m") { var mk = $("s-key-btn"); if (usable(mk)) { e.preventDefault(); mk.click(); } return; }
       if (k === "e" && v.phase === "chapter") { var et = $("s-end-turn"); if (et && !et.hidden && !et.disabled) { e.preventDefault(); et.click(); } return; }
       if (/^[1-8]$/.test(k)) {
         var shown = c.TABS.filter(function (t) { var b = $("t-" + t); return b && !b.hidden; });

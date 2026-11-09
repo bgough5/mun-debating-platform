@@ -39,6 +39,21 @@
       return ol;
     }
 
+    // ink on parchment: as the President reads, each clause is written on; struck text is crossed out in red ink and
+    // the changes appear as notes in the margin
+    function ink(box, step) {
+      var FX = window.socSession.fx; if (!FX) return;
+      if (step === "reading" || step === "final_reading") {
+        var t = 0.15;
+        box.querySelectorAll(".s-sdraft > li").forEach(function (li) {
+          var p = li.querySelector(".s-stext"); if (p) { FX.ink(p, t); t += 0.32; }
+          li.querySelectorAll(".s-tracked").forEach(function (n) { FX.ink(n, t); t += 0.22; });
+          if (li.classList.contains("struck") && FX.on()) { li.style.setProperty("--fx-strike", t + "s"); li.classList.add("fx-strike"); t += 0.3; }
+        });
+      } else if (step === "amendments") {
+        FX.ink(box.querySelector(".s-amend-text"), 0.1);
+      }
+    }
     function render(v, out) {
       var S = v.summit; if (!S) return;
       var box = $("c-summit"); box.textContent = "";
@@ -205,6 +220,7 @@
         row.appendChild(btn("No statement", "s-btn ghost", function () { c.move({ do: "statement", skip: true }); }));
         box.appendChild(row);
       }
+      if (key !== shown) ink(box, S.step);
       shown = key;
       var rl = $("c-result-list"); rl.textContent = "";                 // the amendments so far
       $("c-results").hidden = !(S.done && S.done.length);
