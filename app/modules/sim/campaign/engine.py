@@ -38,6 +38,12 @@ R = {   # every number the balance harness tunes lives here
     "favour_trust": 2, "offer_cost": 2, "offer_step": 0.5, "propose_cost": 1, "amend_cost": 1, "strike_cost": 2,
     "draft_max": 10, "sponsors": 3, "signatories_share": 0.2, "sponsor_lean": 0.6, "objective_influence": 3,
     "rival_amendments": 1, "bloc_whip_step": 0.25, "abstain_trust": 1, "abstain_cost": 2,
+    # medal bands (Ben, 9 Nov): measured over 2,169 bot games (tools/campaign_sim.py, 10 Nov), on each path from the bot
+    # style that plays that path best: bronze at its median, silver one standard deviation above, gold two above, capped
+    # at the highest score seen and rounded (silver halfway when the cap brings it level with gold). Random play earns
+    # gold in 3% of games, competent play in 2-20%.
+    "bands": {"mandate": (92, 96, 100), "consensus": (85, 92, 100), "architect": (54, 79, 100),
+              "kingmaker": (88, 94, 100), "ambassador": (80, 94, 100)},
 }
 
 
@@ -1548,16 +1554,24 @@ def score(scn: Scenario, g: dict) -> dict:
     paths = {"mandate": mandate, "consensus": consensus, "architect": architect, "kingmaker": kingmaker, "ambassador": ambassador}
     # Points out of 100 on each path, from objective numbers only (Ben, 9 Nov); medals come from bands measured over
     # bot games (R["bands"]: bronze at the median, silver one standard deviation above, gold two above).
+    # quality, not volume: only your clauses that carry the room count for the Architect, and the Ambassador's
+    # legwork counts most where the delegations you engaged end up voting with you
+    carry = {r["clause"]: r["yes"] > r["no"] for r in s.get("results", [])}
+    cq = [x for c, x in zip([c for c in kept if c in clauses], credit) if carry.get(c, False)]
+    own_q = sum(cq) / len(credit) if credit else 0.0
+    kept_q = sum(1 for x in cq if x == 1.0)
+    eng = [i for i in g.get("engaged", []) if i in f.get("votes", {}) and i != g["iso3"]]
+    won = sum(1 for i in eng if f["votes"][i] == "yes") / len(eng) if eng else 0.0
     stated = bool(st.get("adopted")) and not passed
     carried = 1.0 if passed else 0.75 if stated else 0.5
     in_text = tags if passed or not stated else st["tags"]
     got_t = [must in in_text, also in in_text, red not in in_text]
     points = {
-        "mandate": round(100 * (0.40 * got_t[0] + 0.25 * got_t[1] + 0.25 * got_t[2] + 0.10 * passed) * carried),
+        "mandate": round((35 * got_t[0] + 20 * got_t[1] + 20 * got_t[2] + 25 * share) * carried),
         "consensus": round((60 * share + 25 * min(mine_regions, 3) / 3 + 15 * got[0]) * carried),
-        "architect": round((70 * own + 10 * min(own_kept, 3)) * carried),
+        "architect": round((70 * own_q + 10 * min(kept_q, 3)) * carried),
         "kingmaker": round(60 * acc * min(1.0, len(judged) / need) + 2 * g["respect"] + (20 if broken == 0 else 10 if broken == 1 else 0)),
-        "ambassador": round((50 * used + 50 * engaged) * (1.0 if passed else 0.8)),
+        "ambassador": round((40 * used + 30 * engaged + 30 * won) * (1.0 if passed else 0.8)),
     }
     if R.get("bands"):
         paths = {p: medal(p, n) for p, n in points.items()}

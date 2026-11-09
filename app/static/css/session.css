@@ -1309,8 +1309,8 @@
 .s-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0; }
 .s-stats dt { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .s-stats dd { margin: 0 0 6px; font: 700 30px var(--serif); }
-.s-ladder, .s-medals { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; }
-.s-ladder li, .s-medals li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 10px; background: var(--white); border: 1px solid var(--line); }
+.s-ladder, .s-profile .s-medals { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; }
+.s-ladder li, .s-profile .s-medals li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 10px; background: var(--white); border: 1px solid var(--line); }
 .s-ladder li.locked { opacity: .6; }
 .s-ladder li.gold { border-color: var(--gilt-md); box-shadow: inset 4px 0 0 var(--gilt); }
 .s-medal.m-gold { background: var(--gilt-lt); } .s-medal.m-silver { background: var(--line); } .s-medal.m-bronze { background: var(--land-ivory-dk); }
@@ -1451,3 +1451,119 @@
 .s-form input[type="text"], .s-form input[type="password"] { width: 100%; padding: 8px 10px; font: 400 17px var(--book); border: 1px solid var(--gilt-md); background: var(--white); color: var(--ink); }
 .s-form input:focus-visible { outline: 3px solid var(--un-blue-lt); outline-offset: 1px; }
 .s-form .s-btn { justify-self: start; }
+
+/* ---------- motion (Ben, 9 Nov; session-fx.js): every effect shows something that happened, and none plays when
+   motion is off (.s-nomotion above, and the system setting below) ---------- */
+/* mechanical counters: the digits roll like the wheels of a meter; the real number stays underneath for readers */
+.s-meter.fx-rolling { position: relative; }
+.s-meter.fx-rolling > b { opacity: 0; }
+.fx-odo { position: absolute; display: flex; justify-content: flex-start; overflow: hidden; pointer-events: none; font: inherit; line-height: inherit; }
+.s-meter .fx-odo { color: var(--gilt-hi); }
+.s-stage .s-meter .fx-odo span, .s-meter .fx-odo span { display: block; font: inherit; letter-spacing: 0; text-transform: none; color: inherit; margin: 0; padding: 0; opacity: 1; }
+.s-stage .s-meter .fx-odo .fx-strip, .s-meter .fx-odo .fx-strip { display: flex; flex-direction: column; }
+.fx-col { display: block; height: 1lh; overflow: hidden; line-height: inherit; }
+.fx-strip { display: flex; flex-direction: column; line-height: inherit; animation: fx-roll .75s cubic-bezier(.3, 1.25, .5, 1) both; }
+.fx-strip span { display: block; height: 1lh; line-height: inherit; }
+@keyframes fx-roll { from { transform: translateY(0); } to { transform: translateY(calc(-1lh * var(--fx-n))); } }
+.fx-odo.up { text-shadow: 0 0 10px color-mix(in srgb, var(--enamel-yes-lt) 70%, transparent); }
+.fx-odo.down { text-shadow: 0 0 10px color-mix(in srgb, var(--enamel-no-lt) 70%, transparent); }
+/* a token turns over, edge-on and back, with a glint as it lands */
+.b-token.fx-flip .b-tok-in { animation: fx-flip .62s cubic-bezier(.4, 0, .3, 1); }
+@keyframes fx-flip { 0% { transform: scaleX(1); } 45% { transform: scaleX(0) scaleY(1.08); } 55% { transform: scaleX(0) scaleY(1.08); filter: brightness(1.6); } 100% { transform: scaleX(1); filter: none; } }
+
+/* ink on parchment: words are written on, then dry from wet black to the ink of the page */
+.fx-ink { animation: fx-ink .9s ease-out both; animation-delay: var(--fx-ink, 0s); }
+@keyframes fx-ink {
+  0% { clip-path: inset(0 100% 0 0); filter: blur(1.2px); color: var(--walnut-dk); }
+  70% { clip-path: inset(0 0 0 0); filter: blur(.4px); }
+  100% { clip-path: inset(0 0 0 0); filter: none; }
+}
+.s-sclause.struck { text-decoration: none; position: relative; }
+.s-sclause.struck .s-stext { text-decoration: line-through; text-decoration-color: var(--stamp); text-decoration-thickness: 2px; }
+.s-sclause.fx-strike .s-stext { text-decoration: none; background: linear-gradient(var(--stamp), var(--stamp)) no-repeat 0 55% / 0 2px;
+  animation: fx-strike .55s ease-in both; animation-delay: var(--fx-strike, 0s); }
+@keyframes fx-strike { to { background-size: 100% 2px; } }
+.s-sdraft .s-tracked { font-style: italic; color: var(--stamp); border-left-color: var(--stamp); transform: rotate(-.4deg); transform-origin: left center; }
+
+/* the light of the hour: a wash over the map that changes with the stage, never over the panels */
+.fx-light { position: absolute; inset: 0; z-index: 3; pointer-events: none; mix-blend-mode: soft-light; opacity: 0; transition: opacity 1.6s ease; }
+.fx-light[data-light] { opacity: 1; }
+.fx-light[data-light="morning"] { background: linear-gradient(118deg, color-mix(in srgb, var(--gilt-hi) 55%, transparent) 0%, transparent 46%),
+  linear-gradient(118deg, transparent 54%, color-mix(in srgb, var(--un-blue-lt) 22%, transparent)); }
+.fx-light[data-light="afternoon"] { background: linear-gradient(242deg, color-mix(in srgb, var(--gilt) 60%, transparent) 0%, transparent 55%),
+  radial-gradient(ellipse 80% 70% at 85% 10%, color-mix(in srgb, var(--lit) 40%, transparent), transparent 70%); }
+.fx-light[data-light="lamp"] { background: radial-gradient(ellipse 34% 40% at 30% 42%, color-mix(in srgb, var(--lit) 55%, transparent), transparent 75%),
+  radial-gradient(ellipse 34% 40% at 72% 58%, color-mix(in srgb, var(--lit) 45%, transparent), transparent 75%),
+  radial-gradient(ellipse at center, transparent 45%, color-mix(in srgb, var(--walnut-dk) 70%, transparent) 100%); }
+.fx-light[data-light="chandelier"] { background: radial-gradient(ellipse 60% 55% at 50% -6%, color-mix(in srgb, var(--gilt-hi) 75%, transparent), transparent 70%),
+  radial-gradient(ellipse at center, transparent 50%, color-mix(in srgb, var(--ebony-xd) 65%, transparent) 100%);
+  animation: fx-candle 5.5s ease-in-out infinite; }
+@keyframes fx-candle { 0%, 100% { opacity: 1; } 30% { opacity: .9; } 55% { opacity: .97; } 80% { opacity: .88; } }
+/* now and then the light catches the brass */
+.fx-glint { position: relative; overflow: hidden; }
+.fx-glint::after { content: ""; position: absolute; inset: -20%; pointer-events: none; transform: translateX(-120%) skewX(-20deg);
+  background: linear-gradient(90deg, transparent 30%, color-mix(in srgb, var(--gilt-hi) 70%, transparent) 50%, transparent 70%); animation: fx-glint 1.2s ease-in-out; }
+@keyframes fx-glint { to { transform: translateX(120%) skewX(-20deg); } }
+
+/* faces that react: a nod, a shake of the head, a raised brow, a pleased tilt (the head turns about the neck) */
+.g-face.fx-nod .g-bust, .g-face.fx-shake .g-bust, .g-face.fx-smile .g-bust { transform-box: view-box; transform-origin: 120px 205px; }
+.g-face.fx-nod .g-bust { animation: fx-nod .9s ease-in-out; }
+.g-face.fx-shake .g-bust { animation: fx-shake 1s ease-in-out; }
+.g-face.fx-smile .g-bust { animation: fx-smile 1.1s ease-in-out; }
+.g-face.fx-brow [data-part="browL"], .g-face.fx-brow [data-part="browR"] { animation: fx-brow 1.1s ease-in-out; }
+@keyframes fx-nod { 0%, 100% { transform: none; } 22% { transform: translateY(5px); } 44% { transform: translateY(-1px); } 66% { transform: translateY(4px); } }
+@keyframes fx-shake { 0%, 100% { transform: none; } 18% { transform: rotate(-5deg); } 40% { transform: rotate(5deg); } 62% { transform: rotate(-4deg); } 82% { transform: rotate(2deg); } }
+@keyframes fx-smile { 0%, 100% { transform: none; } 35%, 70% { transform: rotate(4deg) translateY(-2px); } }
+@keyframes fx-brow { 0%, 100% { transform: none; } 25%, 70% { transform: translateY(-6px); } }
+
+/* medals with weight: each falls, spins on its edge, lands with a bounce and a shadow; gold comes last */
+.s-medal.fx-drop { position: relative; }
+.s-medal.fx-drop i { animation: fx-medal 1.1s cubic-bezier(.55, 0, .45, 1) both; }
+.s-medal.fx-drop::before { content: ""; position: absolute; top: 96px; left: 50%; width: 92px; height: 14px; margin-left: -46px; border-radius: 50%;
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--walnut-dk) 55%, transparent), transparent 70%);
+  animation: fx-shadow 1.1s cubic-bezier(.55, 0, .45, 1) both; animation-delay: var(--fx-land, 0s); }
+.s-medal.fx-drop i.g3 { animation-name: fx-medal-gold; animation-duration: 1.5s; }
+@keyframes fx-medal {
+  0% { opacity: 0; transform: translateY(-260px) rotateY(0) scale(1.1); }
+  12% { opacity: 1; }
+  56% { transform: translateY(0) rotateY(540deg) scale(1); }
+  68% { transform: translateY(-22px) rotateY(630deg); }
+  80% { transform: translateY(0) rotateY(720deg); }
+  90% { transform: translateY(-5px) rotateY(720deg); }
+  100% { opacity: 1; transform: translateY(0) rotateY(720deg); }
+}
+@keyframes fx-medal-gold {
+  0% { opacity: 0; transform: translateY(-300px) rotateY(0) scale(1.2); }
+  10% { opacity: 1; }
+  48% { transform: translateY(0) rotateY(900deg) scale(1.08); }
+  60% { transform: translateY(-26px) rotateY(990deg) scale(1.08); }
+  72% { transform: translateY(0) rotateY(1080deg) scale(1.08); filter: brightness(1.5) drop-shadow(0 0 18px var(--gilt-hi)); }
+  86% { transform: translateY(-6px) rotateY(1080deg) scale(1.04); }
+  100% { opacity: 1; transform: translateY(0) rotateY(1080deg) scale(1); filter: none; }
+}
+@keyframes fx-shadow { 0% { opacity: 0; transform: scale(.2); } 56% { opacity: 1; transform: scale(1); } 68% { transform: scale(.75); } 80%, 100% { opacity: 1; transform: scale(1); } }
+
+/* paper arrives: a telegram slides in low, like paper under a door; the news unfolds like a newspaper */
+.s-overlay .s-doc.fx-telegram, .s-advice.fx-telegram { animation: fx-door .85s cubic-bezier(.2, .9, .3, 1) both; transform-origin: 50% 100%; }
+@keyframes fx-door {
+  0% { opacity: 0; transform: translate(-30px, 220px) rotate(-5deg) scaleY(.35); clip-path: inset(70% 0 0 0); }
+  45% { opacity: 1; transform: translate(-6px, 60px) rotate(-2deg) scaleY(.6); clip-path: inset(0 0 0 0); }
+  75% { transform: translateY(-6px) rotate(.6deg) scaleY(1.02); }
+  100% { opacity: 1; transform: none; clip-path: inset(0 0 0 0); }
+}
+.s-overlay .s-doc.fx-news { animation: fx-unfold 1s cubic-bezier(.25, .9, .3, 1) both; transform-origin: 50% 0; }
+@keyframes fx-unfold {
+  0% { opacity: 0; transform: perspective(1200px) rotateX(-88deg) scale(.7); }
+  40% { opacity: 1; transform: perspective(1200px) rotateX(-30deg) scale(.92); }
+  70% { transform: perspective(1200px) rotateX(6deg) scale(1.01); }
+  100% { opacity: 1; transform: none; }
+}
+#s-reel .s-doc.fx-news #s-reel-h { font-family: var(--serif); letter-spacing: .04em; border-bottom: 3px double var(--engraving); padding-bottom: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-strip, .b-token.fx-flip .b-tok-in, .fx-ink, .s-sclause.fx-strike .s-stext, .fx-light, .fx-glint::after, .g-face.fx-nod .g-bust,
+  .g-face.fx-shake .g-bust, .g-face.fx-smile .g-bust, .g-face.fx-brow [data-part], .s-medal.fx-drop i, .s-medal.fx-drop::before,
+  .s-doc.fx-telegram, .s-advice.fx-telegram, .s-doc.fx-news { animation: none !important; }
+  .s-sclause.fx-strike .s-stext { background-size: 100% 2px; }
+}
+.s-nomotion .s-sclause.fx-strike .s-stext { background-size: 100% 2px; }

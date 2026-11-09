@@ -565,3 +565,48 @@ def test_talking_picking_and_signing(browser, live):
             page.click("#s-signed-row button")
     assert not errors, errors
     ctx.close()
+
+
+def _fx_game(browser, live, motion):
+    ctx = browser.new_context(viewport={"width": 1600, "height": 900})
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(live.url + "/session/new")
+    page.evaluate("m => localStorage.setItem('soc-session-settings', JSON.stringify({tips: false, talk: false, motion: m}))", motion)
+    page.reload()
+    page.click('[data-pick="pack"][data-value="comet_halcyon"]')
+    page.click('[data-step="1"] [data-next]')
+    page.wait_for_selector("#s-seats-box .s-seat")
+    page.click('.s-seat[data-value="NZL"]')
+    for n in (2, 3, 4, 5):
+        page.click(f'[data-step="{n}"] [data-next]')
+    page.click("#s-begin")
+    page.wait_for_selector("#s-chapter-card:not([hidden])")
+    _close_card(page)
+    page.click('#b-map .b-token[data-iso="IND"]')
+    page.wait_for_selector("#c-country h3:has-text('India')")
+    page.click("#c-country .s-talk-btn")
+    page.locator("#s-visit .s-argcard").first.click()
+    return ctx, page, errors
+
+
+def test_the_room_moves_and_the_numbers_stay_true(browser, live):
+    """Motion (Ben, 9 Nov): the light of the hour, a rolling counter whose real number readers always see, and a face
+    that reacts to how an argument landed. With motion off, none of it plays."""
+    ctx, page, errors = _fx_game(browser, live, "on")
+    page.wait_for_selector("#m-influence .fx-odo", state="attached", timeout=3000)
+    assert page.inner_text("#m-influence b").strip().isdigit()                       # the wheels are a copy, aria-hidden
+    assert page.get_attribute("#m-influence .fx-odo", "aria-hidden") == "true"
+    assert page.get_attribute("#fx-light", "data-light") == "morning"
+    page.wait_for_function("document.getElementById('s-visit-h').textContent === 'They react'")
+    page.wait_for_function("/fx-(nod|shake|brow|smile)/.test(document.querySelector('#s-visit-face svg.g-face').getAttribute('class'))", timeout=3000)
+    assert not errors, errors
+    ctx.close()
+    ctx, page, errors = _fx_game(browser, live, "off")
+    page.wait_for_function("document.getElementById('s-visit-h').textContent === 'They react'")
+    page.wait_for_timeout(600)
+    assert page.locator(".fx-odo").count() == 0 and "fx-" not in (page.get_attribute("#s-visit-face svg.g-face", "class") or "")
+    assert page.evaluate("document.body.classList.contains('s-nomotion')")
+    assert not errors, errors
+    ctx.close()

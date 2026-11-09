@@ -16,7 +16,7 @@
       if (v.stage && !v.stage.made && v.stage.turns_left === 0)
         out.push({ who: "president", face: "eyebrow", title: "The last turn of " + v.chapter_name, text: "Delegates, this is the last turn of " + v.chapter_name + ". After it, the committee moves on, breakthrough or not." });
       if (v.event && v.event.title) {
-        var ev = { who: "president", face: v.question ? "thinking" : "calm", title: v.event.title, text: (v.event.body || "") + (v.question ? " A procedure question is waiting on your Brief." : ""), hypo: v.event.hypothetical };
+        var ev = { who: "president", news: true, face: v.question ? "thinking" : "calm", title: v.event.title, text: (v.event.body || "") + (v.question ? " A procedure question is waiting on your Brief." : ""), hypo: v.event.hypothetical };
         out.push(ev);
       }
       if (v.meeting) out.push({ who: "president", face: "calm", title: "The " + v.meeting.name + " meets", text: "Delegates are welcome to attend. Open Blocs to see the room and attend." });
@@ -55,7 +55,8 @@
       $("s-reel-n").textContent = (at + 1) + " of " + items.length;
       $("s-reel-next").textContent = at === items.length - 1 ? "To work" : "Next";
       $("s-reel-skip").hidden = at === items.length - 1;
-      c.restart(document.querySelector("#s-reel .s-doc"), "s-reel-in");
+      var doc = document.querySelector("#s-reel .s-doc"); c.restart(doc, "s-reel-in");
+      if (window.socSession.fx) window.socSession.fx.paper(doc, x.tele ? "telegram" : x.news ? "news" : null);   // paper arrives
       A.play(x.tele ? "paper" : x.who === "president" ? "gavel" : "flip");
       $("s-reel-next").focus();
     }
