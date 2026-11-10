@@ -286,9 +286,11 @@
         var votes = r.out && (r.out.votes || (r.out.final && r.out.final.votes));
         if (votes && Object.keys(votes).length) {
           var passed = r.out.final ? r.out.final.passed : r.out.passed;
+          var wasOpen = panelOpen();
+          closePanel();                                          // the panel steps aside: the room votes, the stamp falls
           draw(r.view, r.out, action);
           // the room votes: the panel steps aside so the tokens and the stamp can be seen, then comes back (10 Nov)
-          var aside = closePanel();
+          var aside = closePanel() || wasOpen;
           var wait = sweep(votes, passed, !r.out.final);
           var sum = r.out.final ? r.out.final.summary : r.out.summary;
           say((r.out.amendment && action.do !== "amend_vote" ? "The floor amendment was " + r.out.amendment + ". " : "") +
