@@ -11,8 +11,8 @@
   <button type="submit" class="big">Sign in</button>
 </form>
 <p class="small muted">Lost your card? Your teacher can show you your code. Staff: <a href="/login">sign in here</a>.</p>
-{% if modules.chair %}<section class="card guest-play" aria-labelledby="h-guest"><h2 id="h-guest">{{ icon("committee") }} No code? Play solo as a guest</h2>
+{% if modules.chair %}<section class="card guest-play" aria-labelledby="h-guest"><h2 id="h-guest">{{ icon("committee") }} No code? Play The Session as a guest</h2>
 <p>The Session: an hour-long Model UN campaign on the board, against rival delegations. As a guest it's kept on this laptop only; sign in to keep it anywhere.</p>
-<p><a class="button secondary" href="/session" hx-boost="false">{{ icon("play") }} Play solo</a> <a href="/play" hx-boost="false">or a ten-minute Quick vote</a></p></section>{% endif %}
+<p><a class="button secondary" href="/session" hx-boost="false">{{ icon("play") }} Play The Session</a> <a href="/play" hx-boost="false">or a ten-minute Quick vote</a></p></section>{% endif %}
 </div>
 {% endblock %}

@@ -829,3 +829,5 @@ mark.cm-spot { box-shadow: 0 0 0 2px var(--maroon); }
   .coach { position: static; max-height: none; }
 }
 @media (prefers-reduced-motion: reduce) { .coach *, .coach { animation: none !important; transition: none !important; } }
+/* the front page: The Session first, across the full width (11 Nov) */
+.grid > .play-session { grid-column: 1 / -1; border-top: 4px solid var(--gold); }

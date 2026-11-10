@@ -12,8 +12,58 @@
                    open: ["Open", "Listen first and acknowledge the other side. The room respects it: +1 Standing."],
                    bridge: ["Bridge", "Speak to the undecided, with something for each of them."] };
     var KIND = { strike: "Strike", remove: "Strike part", add: "Add", soften: "Soften", strengthen: "Strengthen" };
-    var timer = null, shown = null;
+    var timer = null, shown = null, seq = null, G = c.G;
     function stop() { if (timer) { clearTimeout(timer); timer = null; } }
+    function on() { return A.motionOn ? A.motionOn() : true; }
+
+    // ---------- pacing (Ben, 10 Nov): the Summit breathes like a chamber ----------
+    // A step is a list of beats: each reveals something, then waits. `show(next, s)` reveals it and calls `next` when
+    // its pause is over; `all()` reveals it at once (skip, or a re-render of the same step). Nothing starts until the
+    // panel is on screen. Skip (a button, or Space through session-keys.js) shows everything left. Motion off: the
+    // same beats in order, with shorter pauses and no typing.
+    function cancelSeq() { if (seq) { seq.dead = true; if (seq.tm) clearTimeout(seq.tm); if (seq.spk) seq.spk.finish(); seq = null; } }
+    function ready() { var card = $("s-chapter-card"); return document.body.classList.contains("s-panel-open") && (!card || card.hidden); }
+    function run(box, beats, fin, fresh) {
+      if (!fresh || !beats.length) { beats.forEach(function (b) { b.all(); }); fin(); return; }
+      var skip = btn("Skip", "s-btn ghost small s-skip", function () { finish(); });
+      skip.setAttribute("aria-label", "Skip the pause (Space)");
+      box.insertBefore(skip, box.firstChild);
+      var s = seq = { dead: false, tm: null, spk: null, i: 0 };
+      s.later = function (fn, ms) { s.tm = setTimeout(fn, ms); };
+      function over() { s.dead = true; if (s.tm) clearTimeout(s.tm); if (skip.parentNode) skip.parentNode.removeChild(skip); if (seq === s) seq = null; }
+      function finish() { if (s.dead) return; if (s.spk) s.spk.finish(); over(); beats.forEach(function (b) { b.all(); }); box.classList.add("s-skipped"); fin(); }
+      function step() {
+        if (s.dead) return;
+        if (s.i >= beats.length) { over(); fin(); return; }
+        beats[s.i++].show(step, s);
+      }
+      function begin() { if (s.dead) return; if (!ready()) { s.tm = setTimeout(begin, 150); return; } step(); }
+      begin();
+    }
+    function wait(el, ms, sound) {                                // reveal an element, then pause
+      el.hidden = true;
+      return { all: function () { el.hidden = false; },
+               show: function (next, s) { el.hidden = false; if (sound) A.play(sound); s.later(next, on() ? ms : Math.round(ms * 0.35)); } };
+    }
+    function pres(box, text, pause) {                              // the President speaks a line
+      var d = h("div", "s-chief-says s-chief-note s-pres-line"), f = h("div", "s-chief-face"), p = h("p"), svg = null;
+      if (G) { svg = G.portrait("eyebrow", "president"); f.appendChild(svg); }
+      d.appendChild(f); d.appendChild(p); d.hidden = true; box.appendChild(d);
+      return { all: function () { d.hidden = false; if (!p.textContent) p.textContent = text; },
+               show: function (next, s) {
+                 d.hidden = false;
+                 var ms = on() ? pause : Math.round(pause * 0.4);
+                 if (G && G.speak) s.spk = G.speak(svg, p, text, function () { if (!s.dead) s.later(next, ms); }, { pitch: G.voiceOf("president") });
+                 else { p.textContent = text; s.later(next, ms); }
+               } };
+    }
+    function announce(box, out, beats) {                           // the result of the vote that was just taken
+      if (!out || !out.votes || !out.amendment || !Object.keys(out.votes).length) return;
+      var n = { yes: 0, no: 0, abstain: 0 };
+      Object.keys(out.votes).forEach(function (k) { n[out.votes[k]] = (n[out.votes[k]] || 0) + 1; });
+      beats.push(pres(box, "The amendment is " + (out.passed ? "adopted" : "rejected") + ": " + n.yes + " in favour, " + n.no + " against" +
+        (n.abstain ? ", " + n.abstain + " abstaining" : "") + ".", 900));
+    }
 
     function strip(S, box) {                                    // where we are in the procedure
       var ol = h("ol", "s-proc-strip"); ol.setAttribute("aria-label", "The Summit's order of business");
@@ -42,7 +92,7 @@
     // ink on parchment: as the President reads, each clause is written on; struck text is crossed out in red ink and
     // the changes appear as notes in the margin
     function ink(box, step) {
-      var FX = window.socSession.fx; if (!FX) return;
+      var FX = window.socSession.fx; if (!FX) return 0;
       if (step === "reading" || step === "final_reading") {
         var t = 0.15;
         box.querySelectorAll(".s-sdraft > li").forEach(function (li) {
@@ -50,15 +100,30 @@
           li.querySelectorAll(".s-tracked").forEach(function (n) { FX.ink(n, t); t += 0.22; });
           if (li.classList.contains("struck") && FX.on()) { li.style.setProperty("--fx-strike", t + "s"); li.classList.add("fx-strike"); t += 0.3; }
         });
-      } else if (step === "amendments") {
-        FX.ink(box.querySelector(".s-amend-text"), 0.1);
+        return t;
       }
+      return 0;
+    }
+    function readBeats(box, list, step) {                         // the clauses are written on, then the President moves on
+      if (!on()) {                                                // plain text, clause by clause
+        return Array.prototype.map.call(list.children, function (li) { return wait(li, 520, "paper"); });
+      }
+      list.hidden = true;
+      return [{ all: function () { list.hidden = false; },
+               show: function (next, s) { list.hidden = false; var t = ink(box, step); s.later(next, Math.round(t * 1000) + 900); } }];
     }
     function render(v, out) {
       var S = v.summit; if (!S) return;
       var box = $("c-summit"); box.textContent = "";
       var key = S.step + ":" + (S.cur ? S.cur.id + ":" + S.cur.stage : "");
-      if (key !== shown) stop();
+      var fresh = key !== shown, beats = [], fin = function () {};
+      cancelSeq();
+      box.classList.remove("s-skipped");
+      if (fresh) {
+        stop();
+        var panes = document.querySelector("#s-rail .s-panes");            // each step of the procedure opens at its top
+        if (panes && shown !== null) panes.scrollTop = 0;
+      }
       if (v.phase === "done") {
         box.appendChild(h("h2", "", "The session is over"));
         var fin = S.statement && S.statement.adopted ? "The resolution failed, but a Presidential Statement was agreed." :
@@ -75,9 +140,10 @@
         S.statements.forEach(function (st) {
           var li = h("li", st.view > 0 ? "for" : st.view < 0 ? "against" : "");
           li.appendChild(h("b", "", st.name)); li.appendChild(h("span", "", "“" + st.text + "”")); ul.appendChild(li);
+          beats.push(wait(li, 1100, "paper"));
         });
         box.appendChild(ul);
-        box.appendChild(h("p", "s-small", "Your turn. How will " + v.you.name + " speak?"));
+        var turn = h("p", "s-small", "Your turn. How will " + v.you.name + " speak?"); box.appendChild(turn);
         var ta = h("textarea"); ta.className = "s-speech"; ta.setAttribute("aria-label", "Your statement, if you want to write it (not saved or marked)");
         ta.placeholder = "Your words, if you want to write them. For your own practice: not saved, not marked."; box.appendChild(ta);
         var stc = h("div", "s-stances");
@@ -88,11 +154,16 @@
           stc.appendChild(b);
         });
         box.appendChild(stc);
+        var rest = [turn, ta, stc]; rest.forEach(function (e) { e.hidden = true; });
+        fin = function () { rest.forEach(function (e) { e.hidden = false; }); };
       } else if (S.step === "reading") {
         box.appendChild(h("h2", "", "The draft, read in full"));
         box.appendChild(h("p", "", "The President reads the draft resolution, clause by clause, with its sponsors."));
-        box.appendChild(draftList(S, true));
-        box.appendChild(btn("The President moves to the caucus", "s-btn", function () { c.move({ do: "proceed" }); A.play("gavel"); }));
+        var rl0 = draftList(S, true); box.appendChild(rl0);
+        var go0 = btn("The President moves to the caucus", "s-btn", function () { c.move({ do: "proceed" }); A.play("gavel"); });
+        box.appendChild(go0); go0.hidden = true;
+        beats = readBeats(box, rl0, "reading");
+        fin = function () { go0.hidden = false; };
       } else if (S.step === "caucus") {
         box.appendChild(h("h2", "", "Caucus"));
         box.appendChild(h("p", "", "Before the amendments, move for a caucus. Rivals will use it too."));
@@ -126,10 +197,14 @@
       } else if (S.step === "amendments") {
         if (S.caucus && out && out.caucus) {
           var cu = h("div", "s-caucus-result"); cu.appendChild(h("b", "", S.caucus.kind === "moderated" ? "The speakers' list" : "On the floor"));
-          S.caucus.speakers.forEach(function (sp) { cu.appendChild(h("p", "s-small", (sp.name === v.you.name ? "" : sp.name + " ") + sp.text)); });
+          S.caucus.speakers.forEach(function (sp) { var cp = h("p", "s-small", (sp.name === v.you.name ? "" : sp.name + " ") + sp.text); cu.appendChild(cp); beats.push(wait(cp, 1400, "paper")); });
           box.appendChild(cu);
         }
-        var cur = S.cur;
+        announce(box, out, beats);
+        var cur = S.cur, gated = [];
+        if (cur && cur.stage === "debate") {
+          beats.push(pres(box, (cur.by_you ? "Ambassador, you have moved an amendment to clause " : "The delegation of " + cur.by + " moves an amendment to clause ") + cur.clause.n + ".", 700));
+        }
         if (cur) {
           var hd = h("h2", "", "Amendment"); hd.appendChild(h("span", "s-count", (S.done.length + 1) + " of " + (S.done.length + 1 + S.queue.length))); box.appendChild(hd);
           var card = h("div", "s-amend-card" + (cur.threat ? " threat" : ""));
@@ -139,7 +214,10 @@
           if (!cur.by_you) card.appendChild(h("p", "s-small", cur.side > 0 ? "It would help your instructions." : cur.side < 0 ? "It would cut against your instructions." : "Your instructions don't turn on it."));
           box.appendChild(card);
           if (cur.stage === "debate") {
-            box.appendChild(h("p", "s-small", "The debate: " + cur.by + " speaks for it. What will you do?"));
+            card.hidden = true;
+            beats.push({ all: function () { card.hidden = false; },
+                         show: function (next, s) { card.hidden = false; A.play("paper"); var FX = window.socSession.fx; if (FX) FX.ink(card.querySelector(".s-amend-text"), 0.1); s.later(next, on() ? 1200 : 600); } });
+            var dq = h("p", "s-small", "The debate: " + cur.by + " speaks for it. What will you do?"); box.appendChild(dq);
             var dec = h("div", "s-decide");
             function opt(k, label, ok) { dec.appendChild(btn(label, "s-chip", function () { c.move({ do: "debate", choice: k }); A.play("paper"); }, !ok)); }
             opt("for", "Speak for it", true);
@@ -149,12 +227,19 @@
             if (cur.your_clause && !cur.by_you && cur.side >= 0) opt("accept", "Accept it as friendly", true);
             opt("silent", "Stay silent", true);
             box.appendChild(dec);
+            gated = [dq, dec]; gated.forEach(function (e) { e.hidden = true; });
+            fin = function () { gated.forEach(function (e) { e.hidden = false; }); };
           } else {
             var deb = S.debate || { speeches: [] }, sp = h("ul", "s-speakers");
-            deb.speeches.forEach(function (x) { sp.appendChild(h("li", "s-" + x.side, x.name + (x.side === "reply" ? " exercised a right of reply" : " spoke " + x.side + " it"))); });
+            deb.speeches.forEach(function (x) {
+              var li = h("li", "s-" + x.side, x.name + (x.side === "reply" ? " exercised a right of reply" : " spoke " + x.side + " it"));
+              sp.appendChild(li); beats.push(wait(li, 1200, "paper"));
+            });
             box.appendChild(sp);
-            if (cur.advice) box.appendChild(h("p", "s-legal", "Your legal adviser (" + cur.advice.sure + "): it would " + (cur.advice.passes ? "pass." : "fail.")));
-            box.appendChild(h("p", "s-small", "The vote on the amendment. Cast " + v.you.name + "'s vote."));
+            if (!deb.speeches.length) beats.push(pres(box, "No delegation asks for the floor.", 800));
+            if (cur.advice) { var lg = h("p", "s-legal", "Your legal adviser (" + cur.advice.sure + "): it would " + (cur.advice.passes ? "pass." : "fail.")); box.appendChild(lg); beats.push(wait(lg, 900)); }
+            beats.push(pres(box, "The debate is closed. The amendment is put to the vote.", 500));
+            var vq = h("p", "s-small", "The vote on the amendment. Cast " + v.you.name + "'s vote."); box.appendChild(vq); gated.push(vq);
             var extra = null, ex = h("div", "s-decide");
             function exOpt(k, label, ok) {
               var b = btn(label, "s-chip", function () { extra = extra === k ? null : k; ex.querySelectorAll(".s-chip").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b && extra === k)); }); A.play("tick"); }, !ok);
@@ -162,17 +247,21 @@
             }
             exOpt("offer", "With a last offer (" + S.offer_cost + " Influence)", S.influence >= S.offer_cost);
             exOpt("favour", "Call in a favour (" + S.favours.length + ")", S.favours.length > 0);
-            box.appendChild(ex);
+            box.appendChild(ex); gated.push(ex);
             var vt = h("div", "s-votes");
             [["yes", "Yes"], ["abstain", "Abstain"], ["no", "No"]].forEach(function (x) {
               vt.appendChild(btn(x[1], "s-btn v-" + x[0], function () { stop(); c.move({ do: "amend_vote", vote: x[0], extra: extra }); }));
             });
-            box.appendChild(vt);
-            if (A.settings().timer && key !== shown) {
-              var bar = h("div", "s-timer"); bar.appendChild(h("i")); bar.style.setProperty("--secs", "20s"); box.appendChild(bar);
-              requestAnimationFrame(function () { bar.classList.add("run"); });
-              timer = setTimeout(function () { c.move({ do: "amend_vote", vote: cur.side > 0 ? "yes" : cur.side < 0 ? "no" : "abstain" }); }, 20000);
-            }
+            box.appendChild(vt); gated.push(vt);
+            gated.forEach(function (e) { e.hidden = true; });
+            fin = function () {                                  // the decision, and only now its 20 seconds
+              gated.forEach(function (e) { e.hidden = false; });
+              if (A.settings().timer && fresh) {
+                var bar = h("div", "s-timer"); bar.appendChild(h("i")); bar.style.setProperty("--secs", "20s"); box.appendChild(bar);
+                requestAnimationFrame(function () { bar.classList.add("run"); });
+                timer = setTimeout(function () { c.move({ do: "amend_vote", vote: cur.side > 0 ? "yes" : cur.side < 0 ? "no" : "abstain" }); }, 20000);
+              }
+            };
           }
         }
         if (S.options && S.options.length) {
@@ -190,8 +279,12 @@
       } else if (S.step === "final_reading") {
         box.appendChild(h("h2", "", "The final text"));
         box.appendChild(h("p", "", "The President reads the resolution as amended. Every change is marked."));
-        box.appendChild(draftList(S, false));
-        box.appendChild(btn("The President calls the final vote", "s-btn", function () { c.move({ do: "proceed" }); A.play("gavel"); }));
+        announce(box, out, beats);
+        var rl1 = draftList(S, false); box.appendChild(rl1);
+        var go1 = btn("The President calls the final vote", "s-btn", function () { c.move({ do: "proceed" }); A.play("gavel"); });
+        box.appendChild(go1); go1.hidden = true;
+        beats = beats.concat(readBeats(box, rl1, "final_reading"));
+        fin = function () { go1.hidden = false; };
       } else if (S.step === "final") {
         box.appendChild(h("h2", "", "The final vote"));
         box.appendChild(h("p", "", S.kept.length ? "The resolution, as amended, commits countries to: " + S.kept.join("; ").toLowerCase() + "." :
@@ -220,8 +313,8 @@
         row.appendChild(btn("No statement", "s-btn ghost", function () { c.move({ do: "statement", skip: true }); }));
         box.appendChild(row);
       }
-      if (key !== shown) ink(box, S.step);
       shown = key;
+      run(box, beats, fin, fresh);
       var rl = $("c-result-list"); rl.textContent = "";                 // the amendments so far
       $("c-results").hidden = !(S.done && S.done.length);
       (S.done || []).forEach(function (d) {

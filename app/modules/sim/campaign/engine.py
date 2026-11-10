@@ -105,6 +105,7 @@ def _moods(scn: Scenario, seed: int) -> dict:
 
 
 # Phase 8: rivals that plan, your staff, counter-moves and the golden rule.
+R.update({"hire_ap": 1, "post_cost": 1, "post_leave_sway": 0.05})   # every staff move costs something (Ben, 10 Nov)
 R.update({"hire_cost": 4, "staff_max": 5, "secure_cost": 2, "secure_max": 3, "poach_cost": 2, "poach_step": 0.15,
           "reply_respect": 5, "attack": 0.12, "golden_respect": 2, "architect_gold": 0.45})
 # Phase 9: the deal table and your capital.
@@ -645,10 +646,11 @@ def _when(g: dict) -> str:
 def _start_turn(scn: Scenario, g: dict) -> None:
     g["talks"] = None
     rng = _rng(g)
-    # No random news each turn since 8 Nov 2026 (each stage's crisis stays): every other turn the Chair puts a
-    # procedure question instead. The old deck is kept in content for reference.
+    # No random news each turn since 8 Nov 2026 (each stage's crisis stays). The Chair puts one procedure question a
+    # stage, on turn 2 or 3 (Ben, 10 Nov: every other turn crowded out the conversations). The old deck stays in content.
+    ask_on = random.Random(f"{g['seed']}:proc:{g['chapter']}").choice((2, 3))
     ev = {"id": "procedure", "title": "A procedure moment", "body": "", "teaches": "Knowing the rules of procedure is a power in the room.",
-          "effect": {"question": True} if g["turn"] % 2 == 0 else {}}
+          "effect": {"question": True} if g["turn"] == ask_on else {}}
     g["mods"] = {}
     eff = ev["effect"]
     g["ap"] = sum(x["n"] for x in ap_sources(scn, g)) + eff.get("ap", 0)
@@ -861,7 +863,11 @@ def apply(scn: Scenario, game: dict, action: dict) -> tuple[dict, dict]:
         g["engaged"].append(action["iso3"])
     if do not in ("end_turn", "advance") and _check_breakthrough(scn, g):
         out["breakthrough"] = True
-    if g["phase"] == "chapter" and do not in ("end_turn", "advance", "stay", "visit", "mark", "whip", "post", "answer") and not g.get("conv"):
+    if g["phase"] == "chapter" and g.get("grievances") and not g.get("conv"):      # a broken word comes back at once (10 Nov)
+        vid = V.confront(scn, g)
+        if vid:
+            out["visit"] = vid
+    elif g["phase"] == "chapter" and do not in ("end_turn", "advance", "stay", "visit", "mark", "whip", "post", "answer") and not g.get("conv"):
         vid = V.after_move(scn, g, action)
         if vid:
             out["visit"] = vid
@@ -877,10 +883,10 @@ def a_lobby(scn, g, a):
     mu = scn.dist([must]).get(iso, (0, 1))[0]
     if mu <= R["redline"]:
         moved = _sway(g, "you", iso, R["redline_step"])
-        heard = "That is a red line for us. We won't move on it, though we respect your efforts."
+        heard = VO.red_line(scn, g, iso, "close")
     else:
         moved = _sway(g, "you", iso, R["lobby_step_read"] if iso in g["read"] else R["lobby_step"])
-        heard = LINES[bucket(mu + g["sway"]["you"][iso])]
+        heard = VO.stance(scn, g, iso, bucket(mu + g["sway"]["you"][iso]))
     g["region_last"][scn.member(iso).region] = "you"
     _log(g, "you", f"You lobbied {scn.member(iso).name}.", "action", iso)
     out = {"heard": heard, "moved": round(moved, 2), "cost": cost, "red_line": mu <= R["redline"]}
@@ -1029,6 +1035,7 @@ def _betray(scn, g, iso: str, why: str) -> None:
         rv["truce"] = False
         rv["grudge"], rv["fury"] = 2, g.get("tick", 0) + 1
     _log(g, iso, f"Betrayal: {why} {scn.member(iso).name} won't forget it, and the room has noticed.", "warning", iso)
+    g.setdefault("grievances", []).append({"iso3": iso, "kind": "betray", "why": why})     # they come to call you to account
 
 
 def _break_promises_if_changed(scn, g, clause, new_tags, actor: str = "you") -> None:
@@ -1039,7 +1046,10 @@ def _break_promises_if_changed(scn, g, clause, new_tags, actor: str = "you") -> 
         if p["clause"] == clause["id"] and p["kept"] is None:
             if actor == "you":
                 p["kept"] = False
-                _betray(scn, g, p["iso3"], "you promised to back that clause, then changed it.")
+                if p.get("sworn"):                                       # you swore it again to their face
+                    g["respect"] = max(0, g["respect"] - 1)
+                _betray(scn, g, p["iso3"], "you promised to back that clause, swore it again, then changed it." if p.get("sworn")
+                        else "you promised to back that clause, then changed it.")
             else:
                 p["kept"] = "void"
     if actor != "you":
@@ -1814,7 +1824,7 @@ def a_hire(scn, g, a):
         raise GameError("Choose an analyst, a regional expert or a legal adviser.")
     if len(g["staff"]) >= R["staff_max"]:
         raise GameError(f"Your mission has room for {R['staff_max']} advisers.")
-    _spend(g, 0, R["hire_cost"])
+    _spend(g, R["hire_ap"], R["hire_cost"])                  # the interviews take your time as well as the salary
     used = {x["name"] for x in g["staff"]}
     name = next(n for n in K.STAFF_NAMES if n not in used)
     n = max((int(x["id"][1:]) for x in g["staff"]), default=0) + 1
@@ -1837,9 +1847,20 @@ def a_post(scn, g, a):
             raise GameError(f"{other['name']} already studies {scn.member(iso).name}.")
     if iso == adv.get("post"):
         return {}
-    adv.update(post=iso, since=g.get("tick", 0), report=None, claim=None)
+    _move_adviser(scn, g, adv, iso)
     _log(g, "you", f"{adv['name']} now studies {scn.member(iso).name}." if iso else f"{adv['name']} is back at the mission.", "action", iso)
     return {}
+
+
+def _move_adviser(scn, g, adv, iso, paid: bool = False) -> None:
+    """Posting an adviser costs the travel (Influence) when they go to a delegation; the delegation they leave notices,
+    and their familiarity starts again (a report needs a full turn in post)."""
+    if iso and not paid:
+        _spend(g, 0, R["post_cost"])
+    old = adv.get("post")
+    if old and old != iso:
+        _sway(g, "you", old, -R["post_leave_sway"])
+    adv.update(post=iso, since=g.get("tick", 0), report=None, claim=None)
 
 
 def a_reserve(scn, g, a):
@@ -2200,6 +2221,7 @@ def _end_stage(scn: Scenario, g: dict, early: bool = False) -> None:
 
 from app.modules.sim.campaign import talks as T  # noqa: E402  (talks uses the engine's primitives above)
 from app.modules.sim.campaign import visits as V  # noqa: E402
+from app.modules.sim.campaign import voices as VO  # noqa: E402  (each delegation's own way of speaking)
 from app.modules.sim.campaign import summit as SM  # noqa: E402  (the Summit as the UN runs it, D-102)
 
 

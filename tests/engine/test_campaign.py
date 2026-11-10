@@ -180,8 +180,8 @@ def test_no_statement_outside_the_council(scenarios):
 
 
 def test_no_random_news_each_turn_but_procedure_moments(scenarios):
-    """Ben, 8 Nov: the random news each turn is gone (each stage's crisis stays); every other turn the Chair asks a
-    procedure question instead."""
+    """Ben, 8 Nov: the random news each turn is gone (each stage's crisis stays). Ben, 10 Nov: the Chair asks one
+    procedure question a stage, on turn 2 or 3, so the conversations lead."""
     scn = scenarios["comet_halcyon"]
     g = E.new_game(scn, scn.isos[0], seed=21)
     events = []
@@ -190,7 +190,8 @@ def test_no_random_news_each_turn_but_procedure_moments(scenarios):
         if g["phase"] != "chapter" or g["chapter"] != 1:
             break
         events.append((g["turn"], (g["event"] or {}).get("id"), g.get("question")))
-    assert all((ev == "procedure" and q) if turn % 2 == 0 else ev is None for turn, ev, q in events), events
+    asked = [turn for turn, ev, q in events if ev == "procedure" and q]
+    assert len(asked) == 1 and asked[0] in (2, 3), events
     assert g["crisis"]                                                                 # the stage's crisis stays
 
 def test_every_commitment_can_be_proposed(scenarios):

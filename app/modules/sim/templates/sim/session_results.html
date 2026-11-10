@@ -13,5 +13,5 @@
     <td>{{ paths[r.path].name }}</td>{% for code in paths %}<td>{{ grades[r.paths.get(code, 0)] }}</td>{% endfor %}
     <td>{{ "Adopted" if r.passed else "Failed" }}</td><td>{{ r.whip }}</td><td>{{ r.when|when }}</td></tr>{% endfor %}
 </table></div>
-{% else %}{{ empty_state("No finished sessions yet.", "Students play The Session from Play solo in their menu.", None, None, "award") }}{% endif %}
+{% else %}{{ empty_state("No finished sessions yet.", "Students play The Session from The Session in their menu.", None, None, "award") }}{% endif %}
 {% endblock %}

@@ -40,7 +40,7 @@
         {% if actor.is_coordinator %}<li><a href="/admin" {% if req_path.startswith('/admin') or req_path.startswith('/intel') %}aria-current="page"{% endif %}>{{ icon("settings") }} Admin</a></li>{% endif %}
       {% elif actor and actor.kind == 'student' %}
         <li><a href="/me" {% if req_path == '/me' %}aria-current="page"{% endif %}>{{ icon("student") }} My page</a></li>
-        {% if modules.chair %}<li><a href="/session" hx-boost="false" {% if req_path.startswith('/me/sim') or req_path.startswith('/play') %}aria-current="page"{% endif %}>{{ icon("committee") }} Play solo</a></li>{% endif %}
+        {% if modules.chair %}<li><a href="/session" hx-boost="false" {% if req_path.startswith('/me/sim') or req_path.startswith('/play') %}aria-current="page"{% endif %}>{{ icon("committee") }} The Session</a></li>{% endif %}
         {% if modules.debating %}<li><a href="/me/prep" {% if req_path.startswith('/me/prep') or req_path.startswith('/me/practice') %}aria-current="page"{% endif %}>{{ icon("practice") }} Prep &amp; practise</a></li>{% endif %}
       {% endif %}
       </ul>

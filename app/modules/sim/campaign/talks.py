@@ -18,6 +18,7 @@ import random
 from app.modules.sim.campaign import content as K
 from app.modules.sim.campaign import econ as X
 from app.modules.sim.campaign import engine as E
+from app.modules.sim.campaign import voices as VO
 
 # ---------------------------------------------------------------- unlocks by stage
 
@@ -80,11 +81,10 @@ def a_lobby(scn, g, a):
     mu = E.mu_of(scn, g, iso, [must])
     if mu <= E.R["redline"]:
         moved = E._sway(g, "you", iso, E.R["redline_step"])
-        heard = "That is a red line for us. We won't move on it, though we respect your efforts."
+        heard = VO.red_line(scn, g, iso, "close")
     else:
         moved = E._sway(g, "you", iso, E.R["pitch_step"] * (0.3 + 0.7 * quality))
-        heard = (("That argument resonates with us. " if quality >= 0.9 else "Some of that lands with us. " if quality >= 0.5 else
-                  "With respect, that isn't what moves our capital. ") if args else "") + E.LINES[E.bucket(mu + g["sway"]["you"][iso])]
+        heard = _answer(scn, g, iso, quality if args else None, mu)
     g["region_last"][scn.member(iso).region] = "you"
     E._log(g, "you", f"You pitched to {scn.member(iso).name}" + (": " + " and ".join(ARGS[x]["name"].lower() for x in args) if args else "") + ".",
            "action", iso)
@@ -102,14 +102,15 @@ def a_lobby(scn, g, a):
 # You open with one argument and they react; where you take it next decides how far it moves them. Bots still pitch
 # with `a_lobby`, and both share the same strengths (`receptive`) and the same step (`pitch_step`).
 
-REACT = {
-    "strong": ["That matters to us. Go on.", "You have our attention. That is exactly what our capital worries about.",
-               "Now that is a point we can take home."],
-    "some": ["Perhaps. It isn't the whole story for us.", "There is something in that. What else?",
-             "We hear you, though our capital weighs other things more."],
-    "weak": ["With respect, that isn't what moves our capital.", "Hm. That isn't really our concern.",
-             "I'm not sure that's the argument for us."],
-}
+# What they say comes from `voices`: each delegation reacts and answers in its own register (10 Nov).
+
+
+def _answer(scn, g, iso, q, mu) -> str:
+    """How your case landed (q; None when no arguments were made) and where they stand now, as one coherent thought."""
+    level = None if q is None else "strong" if q >= 0.9 else "some" if q >= 0.5 else "weak"
+    return VO.answer(scn, g, iso, level, E.bucket(mu + g["sway"]["you"][iso]))
+
+
 PRESS_WORDS = {"press": "Press the point", "ask": "Ask where they stand", "close": "Thank them and leave it there"}
 
 
@@ -169,8 +170,8 @@ def a_talk(scn, g, a):
         rng = random.Random(f"{g['seed']}:talk:{g['n']}:{iso}")
         memory, goodwill = _memory(scn, g, iso, arg)
         felt = r[arg] * REPEAT ** _used(g, iso, arg)
-        reply = ("Before you go on: the clause you want is a red line for us. We'll listen, but we won't move far." if red
-                 else memory + rng.choice(REACT[_word(r[arg]) if felt >= r[arg] * 0.99 else ("some" if felt >= SOME else "weak")]))
+        reply = (VO.red_line(scn, g, iso, "open") if red
+                 else memory + VO.react(scn, g, iso, _word(r[arg]) if felt >= r[arg] * 0.99 else ("some" if felt >= SOME else "weak"), rng))
         g["conv"] = {"iso3": iso, "first": arg, "reply": reply, "red": red, "cost": cost, "goodwill": goodwill,
                      "tone": "red" if red else _word(felt)}                # how it landed, for the delegate's face
         return {"conv": conv_view(scn, g)}
@@ -199,11 +200,10 @@ def a_talk(scn, g, a):
     mu = E.mu_of(scn, g, iso, [g["mandate"]["must"]])
     if cv.get("red"):
         moved = E._sway(g, "you", iso, E.R["redline_step"])
-        heard = "We've said what we can. That clause is a red line for us."
+        heard = VO.red_line(scn, g, iso, "close")
     else:
         moved = E._sway(g, "you", iso, E.R["pitch_step"] * (0.3 + 0.7 * q))
-        heard = (("You've made a real case. " if q >= 0.9 else "You've given us something to think about. " if q >= 0.5 else
-                  "I don't think we're persuaded. ") + E.LINES[E.bucket(mu + g["sway"]["you"][iso])])
+        heard = _answer(scn, g, iso, q, mu)
     if q >= 0.5:
         for adv in g.get("staff", []):
             if adv.get("post") == iso:

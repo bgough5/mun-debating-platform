@@ -796,6 +796,19 @@
 .s-stage .s-paths { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
 .s-stage .s-path b { font-size: 18px; }
 .s-stage .s-path span { font-size: 15px; }
+/* a short laptop screen (1366x657): the five ways to win sit in one compact row, so nothing is cut off (Fable's review, item 13) */
+@media (max-height: 760px) {
+  .s-stage .s-title-main { padding-top: 12px; }
+  .s-stage .s-hero { gap: 10px; }
+  .s-stage .s-hero .s-lede { font-size: 16px; line-height: 1.4; }
+  .s-stage .s-paths { grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 8px; }
+  .s-stage .s-path { padding: 8px 10px; }
+  .s-stage .s-path b { font-size: 16px; }
+  .s-stage .s-path span { font-size: 14px; line-height: 1.3; }
+  .s-stage .s-menu { gap: 10px; }
+  .s-stage .s-menu .s-btn { padding: 9px 18px; }
+  .s-stage .s-menu .s-doc { padding-top: 12px; padding-bottom: 12px; }
+}
 .s-stage .s-setup-main { padding: 14px 28px 0; gap: 12px; }
 .s-stage .s-steps li { font-size: 14px; padding: 0 10px; }
 .s-stage .s-steps .s-coin { width: 30px; height: 30px; font-size: 15px; }
@@ -1454,6 +1467,21 @@
 .s-form input:focus-visible { outline: 3px solid var(--un-blue-lt); outline-offset: 1px; }
 .s-form .s-btn { justify-self: start; }
 
+/* ---------- the Summit's pace (Ben, 10 Nov; session-summit.js): beats appear one at a time, and Skip shows the rest ---------- */
+#c-summit [hidden] { display: none !important; }
+#c-summit .s-skip { float: right; margin: 0 0 6px 8px; }
+#c-summit .s-skip:hover { background: var(--gilt-hi); color: var(--ivory-ink); }
+#c-summit .s-pres-line { margin: 8px 0; padding: 6px 14px; }
+#c-summit .s-pres-line .g-face { width: 52px; height: 60px; }
+#c-summit .s-pres-line p { font-size: 16px; }
+#c-summit .s-speakers li, #c-summit .s-statements li, #c-summit .s-sdraft > li { animation: s-beat .35s ease-out both; }
+@keyframes s-beat { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+#c-summit.s-skipped .fx-ink, #c-summit.s-skipped .s-sclause.fx-strike .s-stext { animation: none; }
+.s-nomotion #c-summit .s-speakers li, .s-nomotion #c-summit .s-statements li, .s-nomotion #c-summit .s-sdraft > li { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  #c-summit .s-speakers li, #c-summit .s-statements li, #c-summit .s-sdraft > li { animation: none; }
+}
+
 /* ---------- motion (Ben, 9 Nov; session-fx.js): every effect shows something that happened, and none plays when
    motion is off (.s-nomotion above, and the system setting below) ---------- */
 /* mechanical counters: the digits roll like the wheels of a meter; the real number stays underneath for readers */
@@ -1574,3 +1602,28 @@
 .s-keys th, .s-keys td { padding: 5px 12px 5px 0; text-align: left; border-bottom: 1px solid var(--line); }
 .s-keys th { white-space: nowrap; font-weight: 400; }
 .s-keys kbd { display: inline-block; min-width: 28px; padding: 2px 8px; font: 700 15px var(--book); text-align: center; color: var(--ink); background: var(--white); border: 1px solid var(--walnut); border-bottom-width: 3px; }
+
+/* ---------- flow review, 10 Nov 2026 (docs/reviews/session-flow-review-2026-11-10.md) ---------- */
+/* the verdict stamp sits over the map, centred for the command-bar layout (it was placed for the old wide rail) */
+.s-stage .s-verdict { left: 24px; right: 122px; top: 20px; bottom: 10px; }
+/* motion off: the stamp is shown plain (session.js takes it away), the ticker holds still, the chart's lines are drawn */
+.s-nomotion .s-verdict.show span { opacity: 1; }
+.s-nomotion .s-chart .s-line { stroke-dasharray: none; stroke-dashoffset: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .s-verdict.show span { opacity: 1; }
+  .s-chart .s-line { stroke-dasharray: none; stroke-dashoffset: 0; }
+  .s-tick-run { padding-left: 0; }
+}
+/* conversation and reel cards settle into place: a short rise, no spring and no tilt (the stage and breakthrough
+   cards keep their fuller entrance, since each appears once) */
+.s-reel-in { animation: s-settle .36s cubic-bezier(.2, .7, .3, 1) both; }
+@keyframes s-settle { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+/* the setup's scenario cards: the title has the full width unless the Chosen badge needs its corner; four across on a laptop */
+.s-stage .s-picks { grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
+.s-stage .s-pick h3 { padding-right: 0; }
+.s-stage .s-pick[aria-pressed="true"] h3 { padding-right: 96px; }
+/* the walkthrough's five paths */
+.s-g-paths { grid-template-columns: repeat(5, 1fr); }
+@media (max-width: 1150px) { .s-g-paths { grid-template-columns: repeat(3, 1fr); } }
+/* a beta copy's watermark (app/beta.py) */
+.s-beta-mark { position: fixed; z-index: 70; left: 50%; bottom: 2px; transform: translateX(-50%); margin: 0; padding: 1px 10px; font: 12px var(--book); color: var(--parchment); background: color-mix(in srgb, var(--walnut-dk) 80%, transparent); pointer-events: none; }

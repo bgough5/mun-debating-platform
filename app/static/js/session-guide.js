@@ -158,6 +158,7 @@
   window.socSession = window.socSession || {};
   // speak (9 Nov): write `text` into `el` letter by letter while the portrait's mouth moves and a voice blips; call
   // `done` when the line is finished. Returns { finish } to complete it at once. Instant when motion is reduced.
+  var active = [];                                                // lines being written now (Space and Skip ahead, 10 Nov)
   function speak(svg, el, text, done, opts) {
     opts = opts || {};
     var A = window.socSession.audio, reduce = A && A.motionOn ? !A.motionOn() :
@@ -165,14 +166,17 @@
     var pitch = opts.pitch || 220, i = 0, timer = null, over = false;
     var span = document.createElement("span"); span.className = "g-said";
     el.appendChild(span);
+    var handle = { finish: end, done: function () { return over; } };
     function end() {
       if (over) return; over = true;
       if (timer) clearInterval(timer);
+      var k = active.indexOf(handle); if (k >= 0) active.splice(k, 1);
       span.textContent = text;
       if (svg) svg.classList.remove("talking");
       if (done) done();
     }
-    if (reduce || !text) { end(); return { finish: end, done: function () { return true; } }; }
+    if (reduce || !text) { end(); return handle; }
+    active.push(handle);
     if (svg) svg.classList.add("talking");
     timer = setInterval(function () {
       i = Math.min(text.length, i + (opts.fast ? 3 : 1));
@@ -180,11 +184,14 @@
       if (A && A.blip && i % 3 === 0 && /\S/.test(text.charAt(i - 1))) A.blip(pitch);
       if (i >= text.length) end();
     }, opts.ms || 26);
-    return { finish: end, done: function () { return over; } };
+    return handle;
   }
+  // Skip ahead (10 Nov): finish every line being written now; true if there was one
+  function skip() { if (!active.length) return false; active.slice().forEach(function (x) { x.finish(); }); return true; }
+  function typing() { return active.length > 0; }
   function voiceOf(key) {                                         // a speaker's own pitch, the same every time
     var n = 0; String(key || "").split("").forEach(function (ch, k) { n += (k + 3) * ch.charCodeAt(0); });
     return 150 + (n % 9) * 22;
   }
-  window.socSession.guide = { portrait: portrait, face: face_, EXPRESSIONS: EXPRESSIONS, speak: speak, voiceOf: voiceOf };
+  window.socSession.guide = { portrait: portrait, face: face_, EXPRESSIONS: EXPRESSIONS, speak: speak, skip: skip, typing: typing, voiceOf: voiceOf };
 })();

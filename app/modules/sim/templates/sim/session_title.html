@@ -34,7 +34,6 @@
         {% endif %}
       </div>
       <a class="s-btn ghost" href="/session/profile" hx-boost="false">Your record <small>medals, countries, what's unlocked</small></a>
-      <a class="s-btn ghost" href="/play" hx-boost="false">Quick vote <small>one clause, ten minutes</small></a>
       <a class="s-btn ghost" href="/session/almanac" hx-boost="false">Almanac <small>countries, procedure, how votes work</small></a>
       <button type="button" class="s-btn ghost" data-open="s-settings">Settings <small>sound, music, motion</small></button>
     </nav>
@@ -50,7 +49,7 @@
         <li><span class="s-coin">3</span>Sponsors</li>
         <li class="summit"><span class="s-coin">★</span>The Summit</li>
       </ol>
-      <div class="s-paths" aria-label="Four ways to win">
+      <div class="s-paths" aria-label="Five ways to win">
         {% for code, p in paths.items() %}<div class="s-path"><b>{{ p.name }}</b><span>{{ p.what }}</span></div>{% endfor %}
       </div>
     </section>

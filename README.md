@@ -12,6 +12,18 @@ see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun
 `docs/phase-reports.md` for what is built and the measured exit criteria of each phase, and
 `docs/pilot-checklist.md` for what must happen before any class uses it.
 
+## Just want to play The Session?
+
+The Session is a Model UN campaign for one player, inside this platform.
+
+1. Install **Python 3.12** from [python.org](https://www.python.org/downloads/) (on Windows, tick "Add python.exe to PATH").
+2. Get this repository: the green **Code** button → **Download ZIP** (then unzip it), or clone it.
+3. Double-click **`play_session.bat`**. The first start sets itself up (it needs the internet once); after that it
+   starts the platform in the background and opens The Session in its own window.
+
+Everything runs on your own computer, and saved games stay in the `data` folder. Found a bug, or have an idea?
+Open an issue on GitHub (**Issues** → **New issue**): one per thing, with the scenario, country and difficulty if it helps.
+
 ## What's in it
 
 - **Model UN:** conferences, committees, delegations; a resolution workspace (one editor per paragraph, amendments,
@@ -38,7 +50,8 @@ see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun
   bot games (gold is a perfect score). Meters roll, tokens turn, ink writes the clauses, the light follows the hour, faces
   react, medals drop and telegrams arrive (`app/static/js/session-fx.js`); all of it stops when motion is off.
 - **The Session (D-101):** an hour-long solo campaign at `/session`: chapters of lobbying and drafting, then a
-  Summit voted clause by clause, then a debrief. Each chapter has a crisis; delegations bring offers; rivals have
+  Summit run as the UN runs it (statements, the draft read, a caucus, amendments one at a time, one final vote), then
+  a debrief. A flow, motion and layout review from 10 Nov 2026 is in `docs/reviews/session-flow-review-2026-11-10.md`. Each chapter has a crisis; delegations bring offers; rivals have
   personalities and play to win, with hidden plans that your advisers (posted, hired, promoted) find out; you
   answer them by holding an action in reserve, securing delegations and replying at the summit; positions shift. The
   golden rule (half a loaf is better than none) is in the scoring. Every country has a dossier of real World

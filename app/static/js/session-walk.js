@@ -33,7 +33,8 @@
     }
     function artPaths(v) {
       var g = h("div", "s-g-paths");
-      [["mandate", "Mandate", "The hardliner"], ["consensus", "Consensus", "The broker"], ["architect", "Architect", "The drafter"], ["kingmaker", "Kingmaker", "The analyst"]].forEach(function (p, i) {
+      [["mandate", "Mandate", "The hardliner"], ["consensus", "Consensus", "The broker"], ["architect", "Architect", "The drafter"], ["kingmaker", "Kingmaker", "The analyst"],
+       ["ambassador", "Ambassador", "The diplomat"]].forEach(function (p, i) {
         var d = h("div", "s-g-path"); d.style.animationDelay = (0.1 + i * 0.15) + "s";
         d.appendChild(h("i", "", "★")); d.appendChild(h("b", "", p[1])); d.appendChild(h("span", "", p[2]));
         g.appendChild(d);
@@ -95,11 +96,9 @@
           text: [list([["Get in: ", "a clause that " + lc(v.mandate.must.label) + "."], ["Also get in: ", "a clause that " + lc(v.mandate.also.label) + "."],
                        ["Keep out: ", "anything that " + lc(v.mandate.red.label) + ". That is your red line."]]),
                  "Nobody else can see these orders. Your rivals have their own, roughly the opposite of yours."] },
-        { face: "wry", title: "Four ways to win", art: artPaths,
-          text: ["Every session is graded on all five, from no medal to gold, and a gold on any of them is a gold. You don't choose one: they are all live, all game."] },
-        { at: "#c-paths", tab: "brief", face: "thinking", title: "Five ways to win",
+        { at: "#c-paths", tab: "brief", face: "wry", title: "Five ways to win",
           text: [list((v.paths || []).map(function (p) { return [p.name + ": ", p.what]; })),
-                 "Ways to win, on your Brief, gives a rough reading of each. Push in one direction, and change course whenever the room changes."] },
+                 "Every session is graded on all five, from no medal to gold, and a gold on any of them is a gold. You don't choose one: Ways to win, on your Brief, gives a rough reading of each, and you can change course whenever the room changes."] },
         { at: ".s-meters", face: "calm", title: "Your standing",
           text: [list([["Influence ₳ ", "is your currency: pitches, deals and side events cost it."],
                        ["Standing ✦ ", "is how the room and your own government see you. It adds actions at 5 and 8. Your Foreign Minister's telegrams move it too; fall to zero and you're recalled."],
@@ -134,9 +133,9 @@
       S.summit = [
         { face: "eyebrow", title: "The first rule of the UN", art: artSummit,
           text: ["Don't say no to something just because it isn't exactly what you wanted. A resolution that carries some of your aims is better than none: half a loaf is better than no bread.",
-                 "Each clause is voted on separately, then the whole text. Before each vote you can make a last offer, call in a favour, answer a rival, or deal with a floor amendment. Only your red line is a reason to vote no.", ""], last: true }
+                 "The Summit runs as the UN does: position statements, the draft read in full, a caucus, then amendments one at a time, each debated and voted, and one final vote on the whole text. Before an amendment's vote you can make a last offer or call in a favour. Only your red line is a reason to vote no.", ""], last: true }
       ];
-      var out = set === "intro" ? (quick ? S.intro.concat(S.stage2, S.stage3) : S.intro) : (S[set] || []);
+      var out = set === "intro" ? S.intro : (S[set] || []);      // a Quick session meets the later tools when it first opens them
       out = out.map(function (s) { return { face: s.face, title: s.title, at: s.at, tab: s.tab, pick: s.pick, art: s.art, demo: s.demo,
                                           text: s.text.filter(function (t) { return t !== ""; }) }; });
       if (out.length) out[out.length - 1].last = true;

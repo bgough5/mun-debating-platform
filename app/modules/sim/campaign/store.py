@@ -297,6 +297,7 @@ def view(scn: Scenario, g: dict) -> dict:
              "deal_vote": (g.get("deal_votes") or {}).get(iso)}
         t["dossier"] = X.profile(iso)
         t["relation"] = VI.relation(g, iso)
+        t["manner"] = E.VO.manner(scn, g, iso)               # how its delegate speaks (voices: one register all game)
         t["talked"] = sorted({x for h in g.get("talked", {}).get(iso, []) for x in h["args"]})
         t["commitments"] = [c["what"] for c in T.ledger(scn, g, iso)]
         if iso in g["read"]:
@@ -388,7 +389,7 @@ def view(scn: Scenario, g: dict) -> dict:
         "costs": {"propose": 0 if g["respect"] >= 8 else E.R["propose_cost"], "amend": 0 if "friendly" in g["skills"] else E.R["amend_cost"],
                   "strike": E.R["strike_cost"], "side_event": E.R["side_event_cost"], "abstain": E.R["abstain_cost"],
                   "draft_max": E.R["draft_max"], "sponsors": E.R["sponsors"], "favour_trust": E.R["favour_trust"],
-                  "hire": E.R["hire_cost"], "staff_max": E.R["staff_max"], "secure": E.R["secure_cost"], "secure_max": E.R["secure_max"],
+                  "hire": E.R["hire_cost"], "hire_ap": E.R["hire_ap"], "post": E.R["post_cost"], "staff_max": E.R["staff_max"], "secure": E.R["secure_cost"], "secure_max": E.R["secure_max"],
                   "reply_respect": E.R["reply_respect"], "deal_ap": E.R["deal_ap"], "deal_funding": E.R["deal_funding"],
                   "candidacy_max": E.R["candidacy_max"]},
         "draft_ok": {"clauses": len(g["draft"]), "mine": sum(1 for c in g["draft"] if c["author"] == "you")},
