@@ -796,6 +796,19 @@
 .s-stage .s-paths { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
 .s-stage .s-path b { font-size: 18px; }
 .s-stage .s-path span { font-size: 15px; }
+/* a short laptop screen (1366x657): the five ways to win sit in one compact row, so nothing is cut off (Fable's review, item 13) */
+@media (max-height: 760px) {
+  .s-stage .s-title-main { padding-top: 12px; }
+  .s-stage .s-hero { gap: 10px; }
+  .s-stage .s-hero .s-lede { font-size: 16px; line-height: 1.4; }
+  .s-stage .s-paths { grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 8px; }
+  .s-stage .s-path { padding: 8px 10px; }
+  .s-stage .s-path b { font-size: 16px; }
+  .s-stage .s-path span { font-size: 14px; line-height: 1.3; }
+  .s-stage .s-menu { gap: 10px; }
+  .s-stage .s-menu .s-btn { padding: 9px 18px; }
+  .s-stage .s-menu .s-doc { padding-top: 12px; padding-bottom: 12px; }
+}
 .s-stage .s-setup-main { padding: 14px 28px 0; gap: 12px; }
 .s-stage .s-steps li { font-size: 14px; padding: 0 10px; }
 .s-stage .s-steps .s-coin { width: 30px; height: 30px; font-size: 15px; }
