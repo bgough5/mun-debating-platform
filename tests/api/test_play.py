@@ -21,7 +21,7 @@ def start_guest(c, pack="comet_halcyon", iso="NZL"):
 
 def test_a_guest_plays_without_a_code_and_nothing_is_kept(app):
     c = guest(app)
-    assert "Play solo as a guest" in c.get("/join").text and "/session" in c.get("/").text and "/play" in c.get("/join").text
+    assert "Play The Session as a guest" in c.get("/join").text and "/session" in c.get("/").text and "/play" in c.get("/join").text
     page = c.get("/play").text
     assert "playing as a guest" in page and "Comet Halcyon-7" in page and "Migration" in page.replace("migration", "Migration")
     practices_before = db_one(app, "SELECT COUNT(*) AS n FROM sim_practice")["n"]
@@ -63,7 +63,7 @@ def test_a_guest_game_cant_be_bent(app):
 def test_a_signed_in_students_game_is_saved_and_theirs(app, coord):
     st = db_one(app, "SELECT id FROM student WHERE active = 1 ORDER BY id DESC LIMIT 1")["id"]
     a = join_as(app, st)
-    assert "Play solo" in a.get("/me").text
+    assert "The Session" in a.get("/me").text
     r = a.post("/play/start", {"pack": "veloria", "iso3_veloria": "FRA"}, follow_redirects=False)
     assert r.headers["location"].startswith("/play/s/")
     pid = int(r.headers["location"].rsplit("/", 1)[1])

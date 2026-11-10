@@ -12,6 +12,18 @@ see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun
 `docs/phase-reports.md` for what is built and the measured exit criteria of each phase, and
 `docs/pilot-checklist.md` for what must happen before any class uses it.
 
+## Just want to play The Session?
+
+The Session is a Model UN campaign for one player, inside this platform.
+
+1. Install **Python 3.12** from [python.org](https://www.python.org/downloads/) (on Windows, tick "Add python.exe to PATH").
+2. Get this repository: the green **Code** button → **Download ZIP** (then unzip it), or clone it.
+3. Double-click **`play_session.bat`**. The first start sets itself up (it needs the internet once); after that it
+   starts the platform in the background and opens The Session in its own window.
+
+Everything runs on your own computer, and saved games stay in the `data` folder. Found a bug, or have an idea?
+Open an issue on GitHub (**Issues** → **New issue**): one per thing, with the scenario, country and difficulty if it helps.
+
 ## What's in it
 
 - **Model UN:** conferences, committees, delegations; a resolution workspace (one editor per paragraph, amendments,
