@@ -19,6 +19,13 @@ def main() -> None:
     ap.add_argument("--demo", action="store_true", help="open the demo dataset (fake data only)")
     ap.add_argument("--data-dir", default=None, help="folder for databases, backups and local config")
     args = ap.parse_args()
+    from app import beta
+    b = beta.info()
+    if beta.expired(b):
+        print(f"
+  This beta copy of The Session ended on {b['until']}. Please ask Ben Gough for a new one.
+")
+        raise SystemExit(1)
     settings = Settings() if not args.data_dir else Settings(data_dir=__import__("pathlib").Path(args.data_dir))
     settings.load()
     if args.demo and settings.dataset != "demo":

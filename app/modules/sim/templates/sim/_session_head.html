@@ -31,6 +31,7 @@
 
 {# Settings: kept in this browser only. Sound, music and the room are off until the player turns them on. #}
 {% macro settings_panel() %}
+{% if beta %}<p class="s-beta-mark" aria-label="Beta copy">Beta copy for {{ beta.tester }} · not for sharing · until {{ beta.until }}</p>{% endif %}
 <div class="s-overlay" id="s-settings" hidden role="dialog" aria-modal="true" aria-labelledby="s-settings-h">
   <div class="s-doc">
     <h2 id="s-settings-h">Settings</h2>
