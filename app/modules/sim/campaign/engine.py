@@ -446,20 +446,110 @@ def stance(scn: Scenario, g: dict, actor: str, clause: dict) -> int:
     return 1 if mu >= 0.4 else -1 if mu <= -0.4 else 0
 
 
-def latent(scn: Scenario, g: dict, iso: str, clause: dict, stances: dict | None = None, mood: bool = True) -> float:
+# The vote on the day (Ben's playtest, 10 Nov; design doc section 35). What a delegation does when the roll is called
+# is its position as the player can see it, plus a hidden part: its mood for the session (fixed, and an adviser in post
+# or Read the room can learn it) and a last-minute change of heart drawn when the Summit opens. The hidden part is
+# bounded by the delegation's doubt, which is small for one that stands on its own position or is bound by a signature,
+# a promise or a deal, and large for one held only by goodwill or pulled both ways. So a clear vote can only change for
+# a reason the player can see, and a vote near the line is never certain.
+R.update({"doubt": 0.45, "doubt_model": 0.3, "doubt_talk": 0.55, "doubt_bound": 0.5, "doubt_min": 0.15,
+          "mood_part": 0.8, "mood_clip": 1.5, "day_part": 0.6, "day_clip": 1.33, "sure_lean": 0.25})
+
+
+def _clip(x: float, lim: float) -> float:
+    return max(-lim, min(lim, x))
+
+
+def _stances(scn: Scenario, g: dict, clause: dict) -> dict:
+    return {a: stance(scn, g, a, clause) for a in ["you", *[r["iso3"] for r in g["rivals"]]]}
+
+
+def bound(g: dict, iso: str) -> bool:
+    """Whether a delegation has given its own word: it sponsors your draft, signed a commitment, pledged, owes you a
+    favour or struck a deal. Its vote on the day wavers far less than one held by talk. (A signatory only wants the
+    draft debated, and a promise is your word to them, so neither binds.)"""
+    return (iso in g["sponsors"] or iso in g.get("pledges", []) or iso in g.get("secured", [])
+            or iso in g["favours"] or iso in (g.get("deal_votes") or {}))
+
+
+def doubt(scn: Scenario, g: dict, iso: str, clause: dict, stances: dict | None = None) -> float:
+    """How far a delegation's vote can move on the day, as a width on the position scale: a little for everyone
+    (more where the model itself is unsure of the country), more again for goodwill that nothing binds."""
+    sigma = scn.dist(clause["tags"]).get(iso, (0.0, 1.5))[1]
+    w = R["doubt"] * (1 + R["doubt_model"] * (_clip(sigma, 1.5) - 0.5 if sigma > 0.5 else 0.0))
+    if bound(g, iso):
+        w *= R["doubt_bound"]
+    else:
+        stances = stances if stances is not None else _stances(scn, g, clause)
+        talk = sum(abs(g["sway"].get(a, {}).get(iso, 0.0) * s) for a, s in stances.items())
+        w += R["doubt_talk"] * min(1.0, talk)
+    return max(R["doubt_min"], w)
+
+
+def _hidden(scn: Scenario, g: dict, iso: str, clause: dict, stances: dict | None = None) -> tuple[float, float]:
+    """The two hidden parts of a delegation's vote: its mood for the session, and its change of heart on the day
+    (zero until the Summit opens)."""
+    w = doubt(scn, g, iso, clause, stances)
+    day = ((g.get("summit") or {}).get("day") or {}).get(iso, 0.0)
+    return (w * R["mood_part"] * _clip(g["moods"].get(iso, 0.0), R["mood_clip"]),
+            w * R["day_part"] * _clip(day, R["day_clip"]))
+
+
+def knows_mood(g: dict, iso: str) -> bool:
+    """Whether the player has a way to know a delegation's mood: an adviser who has been in post there for a full
+    turn, or its file read with Read the room."""
+    if "read_room" in g["skills"] and iso in g["read"]:
+        return True
+    return any(a.get("post") == iso and g.get("tick", 0) > a.get("since", 0) for a in g.get("staff", []))
+
+
+def latent(scn: Scenario, g: dict, iso: str, clause: dict, stances: dict | None = None, mood: bool = True,
+           known: bool = False) -> float:
+    """A delegation's position on a clause. `mood=False` is what the player can see; `known=True` adds the mood where
+    the player has a way to know it (`knows_mood`)."""
     mu, sigma = scn.dist(clause["tags"]).get(iso, (0.0, 1.5))
-    mu += drift(g, iso, clause["tags"])
-    x = mu + (sigma * g["moods"].get(iso, 0.0) if mood else 0.0)
-    stances = stances if stances is not None else {a: stance(scn, g, a, clause) for a in ["you", *[r["iso3"] for r in g["rivals"]]]}
+    x = mu + drift(g, iso, clause["tags"])
+    stances = stances if stances is not None else _stances(scn, g, clause)
     for actor, s in stances.items():
         x += g["sway"].get(actor, {}).get(iso, 0.0) * s
     owner = g["endorse"].get((scn.member(iso).region if scn.member(iso) else ""))
     if owner:
         x += R["endorse_pull"] * stances.get(owner, 0)
+    if mood:
+        x += sum(_hidden(scn, g, iso, clause, stances))
+    elif known and knows_mood(g, iso):
+        x += _hidden(scn, g, iso, clause, stances)[0]
     f = clause.get("force", 0)
     if f:                                                     # "Encourages" softens, "Urges" sharpens (the Summit, 8 Nov)
         x = x * 0.7 + 0.25 if f < 0 else x * 1.3 - 0.15
     return x
+
+
+def reading(scn: Scenario, g: dict, iso: str, clause: dict | None = None, stances: dict | None = None) -> dict:
+    """How a delegation would vote as far as the player can tell, and how sure that is: "firm" (nothing hidden can
+    change it), "leaning" (it probably holds) or "open" (it could go either way). Honest by construction: the hidden
+    part of the vote cannot reach further than the margin a firm reading needs."""
+    clause = clause or final_clause(g)
+    stances = stances if stances is not None else _stances(scn, g, clause)
+    x = latent(scn, g, iso, clause, stances, mood=False, known=True)
+    w = doubt(scn, g, iso, clause, stances)
+    reach = w * R["day_part"] * R["day_clip"] + (0.0 if knows_mood(g, iso) else w * R["mood_part"] * R["mood_clip"])
+    f = clause.get("force", 0)
+    reach *= 0.7 if f < 0 else 1.3 if f > 0 else 1.0
+    whole, red = clause.get("id") == "final", red_line(scn, iso, clause["tags"])
+    if whole and iso in g["favours"] and stances["you"]:      # a favour owed votes with you on the whole text
+        return {"vote": "yes" if stances["you"] > 0 else "no", "sure": "firm"}
+    vote = _deal_vote(scn, g, iso, clause, vote_of(scn, x))
+    deal = (g.get("deal_votes") or {}).get(iso) if whole and not red else None
+    if deal == "yes":                                         # a deal for its yes is kept
+        return {"vote": vote, "sure": "firm"}
+    pledged = iso in g.get("pledges", []) and stances["you"] > 0 and not red
+    if vote == "no" and pledged:
+        vote = "abstain"
+    floor = bool(deal) or pledged                             # a deal or a pledge to abstain rules out its no
+    margin = abs(x - scn.c_yes) if floor else min(abs(x - scn.c_yes), abs(x - scn.c_no))
+    sure = "firm" if margin >= reach else "leaning" if margin >= reach * R["sure_lean"] else "open"
+    return {"vote": vote, "sure": sure}
 
 
 def vote_of(scn: Scenario, x: float) -> str:
@@ -495,8 +585,13 @@ def chance(scn: Scenario, g: dict, clause: dict, runs: int = 300) -> dict:
     """The whip dial: how likely a clause is to pass, as you can see it (moods unknown, so they are sampled)."""
     stances = {a: stance(scn, g, a, clause) for a in ["you", *[r["iso3"] for r in g["rivals"]]]}
     rng = random.Random(f"{g['seed']}:dial:{clause['id']}:{g['n']}")
-    base = {m.iso3: latent(scn, g, m.iso3, clause, stances, mood=False) for m in scn.members}
-    sig = {i: s for i, (_, s) in scn.dist(clause["tags"]).items()}
+    base = {m.iso3: latent(scn, g, m.iso3, clause, stances, mood=False, known=True) for m in scn.members}
+    wide = {m.iso3: doubt(scn, g, m.iso3, clause, stances) for m in scn.members}
+    k = 0.7 if clause.get("force", 0) < 0 else 1.3 if clause.get("force", 0) > 0 else 1.0
+
+    def hidden(iso):                                          # the same hidden parts the vote on the day will have
+        mood = 0.0 if knows_mood(g, iso) else R["mood_part"] * _clip(rng.gauss(0, 1), R["mood_clip"])
+        return k * wide[iso] * (mood + R["day_part"] * _clip(rng.gauss(0, 1), R["day_clip"]))
     passed = 0
     yes_total = 0
     for _ in range(runs):
@@ -506,7 +601,7 @@ def chance(scn: Scenario, g: dict, clause: dict, runs: int = 300) -> dict:
                 s = stances["you"] if m.iso3 == g["iso3"] else stances[m.iso3]
                 votes[m.iso3] = {1: "yes", -1: "no", 0: "abstain"}[s]
             else:
-                votes[m.iso3] = vote_of(scn, base[m.iso3] + sig.get(m.iso3, 1.0) * rng.gauss(0, 1))
+                votes[m.iso3] = vote_of(scn, base[m.iso3] + hidden(m.iso3))
         out = tally(scn.rule, votes, len(votes))
         passed += int(out.passed)
         yes_total += out.yes
@@ -792,7 +887,8 @@ def a_lobby(scn, g, a):
     if g["length"] != "quick" and g["chapter"] >= 2:          # from Bloc meetings: its lean towards each rival
         out["leans"] = {scn.member(r["iso3"]).name: round(lean(scn, g, r["iso3"], iso), 2) for r in g["rivals"]}
     if g["length"] != "quick" and g["chapter"] >= 3 and final_clause(g)["tags"]:   # in Sponsors: how it would vote now
-        out["would_vote"] = vote_of(scn, latent(scn, g, iso, final_clause(g), mood=False))
+        rd = reading(scn, g, iso)
+        out["would_vote"], out["would_sure"] = rd["vote"], rd["sure"]
     return out
 
 
@@ -1157,23 +1253,28 @@ def final_clause(g: dict) -> dict:
 
 
 def projection(scn: Scenario, g: dict) -> dict:
-    """The vote on the whole draft as things stand, leaving out every delegation's hidden mood on the day: what the
-    tug-of-war bar shows, and what rivals plan against."""
+    """The vote on the whole draft as things stand, as far as the player can tell (`reading`): what the tug-of-war
+    bar shows. `unsure` counts the delegations whose vote isn't firm."""
     final = final_clause(g)
     if not final["tags"]:
-        return {"yes": 0, "no": 0, "abstain": len(scn.members), "passed": False, "votes": {}, "summary": "There is no draft yet."}
+        return {"yes": 0, "no": 0, "abstain": len(scn.members), "passed": False, "votes": {}, "summary": "There is no draft yet.",
+                "unsure": 0}
     st = {a: stance(scn, g, a, final) for a in ["you", *[r["iso3"] for r in g["rivals"]]]}
     word = {1: "yes", -1: "no", 0: "abstain"}
     votes = {}
+    unsure = 0
     for m in scn.members:
         if m.iso3 == g["iso3"]:
             votes[m.iso3] = word[st["you"]]
         elif m.iso3 in st:
             votes[m.iso3] = word[st[m.iso3]]
         else:
-            votes[m.iso3] = _deal_vote(scn, g, m.iso3, final, vote_of(scn, latent(scn, g, m.iso3, final, st, mood=False)))
+            rd = reading(scn, g, m.iso3, final, st)
+            votes[m.iso3] = rd["vote"]
+            unsure += rd["sure"] != "firm"
     res = tally(scn.rule, votes, len(votes))
-    return {"yes": res.yes, "no": res.no, "abstain": res.abstain, "passed": res.passed, "votes": votes, "summary": res.summary}
+    return {"yes": res.yes, "no": res.no, "abstain": res.abstain, "passed": res.passed, "votes": votes, "summary": res.summary,
+            "unsure": unsure}
 
 
 STYLE_WEIGHT = {"hawk": {"amend": 1.3, "strike": 1.3}, "broker": {"side": 1.6, "lobby": 1.15, "poach": 1.2},
@@ -2182,8 +2283,8 @@ def debrief(scn: Scenario, g: dict) -> dict:
         iso = m.iso3
         if iso == g["iso3"] or iso in st:
             continue
-        mu, sigma = scn.dist(tags).get(iso, (0.0, 1.5))
-        mood = sigma * g["moods"].get(iso, 0.0)
+        mu = scn.dist(tags).get(iso, (0.0, 1.5))[0] + drift(g, iso, tags)
+        mood = sum(_hidden(scn, g, iso, final, st))           # its mood and its change of heart on the day
         yours = g["sway"]["you"].get(iso, 0.0) * st["you"]
         theirs = sum(g["sway"][r["iso3"]].get(iso, 0.0) * st[r["iso3"]] for r in g["rivals"])
         owner = g["endorse"].get(m.region)

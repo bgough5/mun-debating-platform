@@ -36,6 +36,8 @@ def open_summit(scn, g: dict) -> None:
     g["summit"] = {"step": "statements", "statements": _statements(scn, g), "speech": None, "caucus": None,
                    "queue": [], "cur": None, "stage": None, "debate": None, "done": [], "closed": [], "mine": 0,
                    "po_used": False, "results": [], "final": None, "tracked": [], "my_votes": {}}
+    rng = E._rng(g)                                           # each delegation's change of heart on the day (section 35)
+    g["summit"]["day"] = {iso: round(rng.gauss(0, 1), 4) for iso in sorted(scn.isos)}
 
 
 def _ensure(scn, g: dict) -> dict:
@@ -177,8 +179,16 @@ def s_caucus(scn, g, a):
             E._sway(g, "you", iso, 0.2)
             speakers.append({"iso3": iso, "name": scn.member(iso).name, "text": "You had a quiet word on the floor."})
         rng = E._rng(g)
+        final = E.final_clause(g)
+
+        def near(i):                                          # how close a delegation's vote is to turning
+            x = E.latent(scn, g, i, final, mood=False)
+            return (E.reading(scn, g, i, final)["sure"] == "firm", min(abs(x - scn.c_yes), abs(x - scn.c_no)), i)
+
         for rv in [r for r in g["rivals"] if not r.get("truce")]:
             pick = [i for i in free if i not in isos]
+            if pick and final["tags"]:                        # a rival works the floor where a vote can still be turned
+                pick = sorted(pick, key=near)[:3]
             if pick:
                 iso = rng.choice(pick)
                 E._sway(g, rv["iso3"], iso, 0.2)

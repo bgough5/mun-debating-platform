@@ -93,7 +93,8 @@ def a_lobby(scn, g, a):
     if g["length"] != "quick" and g["chapter"] >= 2:
         out["leans"] = {scn.member(rv["iso3"]).name: round(E.lean(scn, g, rv["iso3"], iso), 2) for rv in g["rivals"]}
     if g["length"] != "quick" and g["chapter"] >= 3 and E.final_clause(g)["tags"]:
-        out["would_vote"] = E.vote_of(scn, E.latent(scn, g, iso, E.final_clause(g), mood=False))
+        rd = E.reading(scn, g, iso)
+        out["would_vote"], out["would_sure"] = rd["vote"], rd["sure"]
     return out
 
 
@@ -214,7 +215,8 @@ def a_talk(scn, g, a):
     if choice == "ask" or (g["length"] != "quick" and g["chapter"] >= 2):
         out["leans"] = {scn.member(rv["iso3"]).name: round(E.lean(scn, g, rv["iso3"], iso), 2) for rv in g["rivals"]}
     if (choice == "ask" or (g["length"] != "quick" and g["chapter"] >= 3)) and E.final_clause(g)["tags"]:
-        out["would_vote"] = E.vote_of(scn, E.latent(scn, g, iso, E.final_clause(g), mood=False))
+        rd = E.reading(scn, g, iso)
+        out["would_vote"], out["would_sure"] = rd["vote"], rd["sure"]
     return out
 
 
