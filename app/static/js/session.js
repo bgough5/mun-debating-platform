@@ -243,7 +243,15 @@
     var TABS = ["brief", "draft", "dele", "coalition", "summit", "whip", "staff", "record"];
     var rail = $("s-rail");
     function panelOpen() { return rail.classList.contains("open"); }
+    // a Quick session's walkthrough covers the basics only; the later tools are introduced when first opened (10 Nov)
+    function laterIntro(name) {
+      var v = V; if (!v || v.length !== "quick" || v.phase !== "chapter" || !guideOn() || !$("s-walk").hidden) return;
+      var set = !seenIntro.stage2 && (name === "coalition" || name === "staff" || name === "dele") ? "stage2" :
+        seenIntro.stage2 && !seenIntro.stage3 && name === "coalition" && v.turn >= 3 ? "stage3" : null;
+      if (set) { seenIntro[set] = true; setTimeout(function () { WALK.start(V, null, set); }, 350); }
+    }
     function setTab(name, focus, dock) {
+      laterIntro(name);
       TABS.forEach(function (t) {
         var b = $("t-" + t), on = t === name;
         b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; $("p-" + t).hidden = !on;
@@ -321,7 +329,7 @@
         "Breakthrough: " + v.stage.goal + " Deadline: " + v.stage.deadline + " turns.");
       $("s-cc-look").textContent = summit ? "I'll preside. Speak when you're called, and cast your country's vote on each amendment and on the whole text." : v.stage.look;
       var pf = $("s-cc-pres"); pf.textContent = ""; if (G) pf.appendChild(G.portrait(summit ? "eyebrow" : "delighted", "president"));
-      stagePanel = summit ? null : (v.length === "quick" || v.chapter === 1 ? "draft" : "coalition");
+      stagePanel = summit || v.length === "quick" || v.chapter === 1 ? null : "coalition";   // the first sight is the open table (Fable, 12)
       var cr = !summit && v.crisis && v.crisis.chapter === v.chapter ? v.crisis : null;
       $("s-cc-crisis").hidden = !cr;
       if (cr) { $("s-cc-crisis-h").textContent = cr.title; $("s-cc-crisis-p").textContent = cr.body; $("s-cc-crisis-t").textContent = cr.teaches; }

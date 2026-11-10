@@ -135,7 +135,7 @@
           text: ["Don't say no to something just because it isn't exactly what you wanted. A resolution that carries some of your aims is better than none: half a loaf is better than no bread.",
                  "The Summit runs as the UN does: position statements, the draft read in full, a caucus, then amendments one at a time, each debated and voted, and one final vote on the whole text. Before an amendment's vote you can make a last offer or call in a favour. Only your red line is a reason to vote no.", ""], last: true }
       ];
-      var out = set === "intro" ? (quick ? S.intro.concat(S.stage2, S.stage3) : S.intro) : (S[set] || []);
+      var out = set === "intro" ? S.intro : (S[set] || []);      // a Quick session meets the later tools when it first opens them
       out = out.map(function (s) { return { face: s.face, title: s.title, at: s.at, tab: s.tab, pick: s.pick, art: s.art, demo: s.demo,
                                           text: s.text.filter(function (t) { return t !== ""; }) }; });
       if (out.length) out[out.length - 1].last = true;

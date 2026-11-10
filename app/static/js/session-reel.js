@@ -21,7 +21,8 @@
         var ev = { who: "president", news: true, face: "calm", title: v.event.title, text: v.event.body || "", hypo: v.event.hypothetical };
         out.push(ev);
       }
-      if (v.meeting) out.push({ who: "president", face: "calm", title: "The " + v.meeting.name + " meets", text: "Delegates are welcome to attend. Open Blocs to see the room and attend." });
+      var caucusComing = c.A.settings().talk !== false && (v.visits || []).some(function (x) { return x.kind === "caucus"; });
+      if (v.meeting && !caucusComing) out.push({ who: "president", face: "calm", title: "The " + v.meeting.name + " meets", text: "Delegates are welcome to attend. Open Blocs to see the room and attend." });
       news.filter(function (x) { return x.kind === "telegram"; }).forEach(function (x) {
         out.push({ who: "minister", face: x.mood === "approve" ? "delighted" : x.mood === "furious" ? "concerned" : "eyebrow", title: "Telegram from your capital", text: x.text, tele: true });
       });
