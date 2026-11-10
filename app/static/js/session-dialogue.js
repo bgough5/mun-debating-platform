@@ -29,6 +29,8 @@
       if (!line) { el.textContent = text; row.hidden = false; if (skip) skip.hidden = true; }
     }
     function finishLine() { if (line) { line.finish(); return true; } return false; }
+    // a talk's result ("Your arguments: … landed") belongs to that talk alone: clear it before any other card is drawn
+    function clearIntel() { document.querySelectorAll("#s-visit .s-intel-box").forEach(function (x) { x.remove(); }); }
     // a delegate's look, the same every game (the same sum as visits.likeness in Python): respectful variety only
     function likeness(iso) {
       var n = 0; for (var i = 0; i < iso.length; i++) n += (i + 7) * iso.charCodeAt(i);
@@ -75,6 +77,7 @@
       var x = (v.visits || []).filter(function (y) { return y.id === id; })[0];
       if (!x) { next(); return; }
       showing = x.id;
+      clearIntel();
       var doc = document.querySelector("#s-visit .s-doc");
       doc.className = "s-doc s-reeldoc k-" + x.kind;
       var face = $("s-visit-face"); face.textContent = ""; face.classList.toggle("s-visit-pair", x.kind === "press");
@@ -131,6 +134,7 @@
       waiting = null;
       if (out && out.continues) { next(); return; }
       if (!out || !(out.reactions || out.reply)) { setTimeout(next, 500); return; }
+      clearIntel();
       var room = $("s-visit-room"); room.textContent = ""; room.hidden = !out.reactions;
       Object.keys(out.reactions || {}).forEach(function (iso, i) {
         var r = out.reactions[iso], card = h("div", "s-member r-" + r.reaction); card.style.animationDelay = (i * 0.12) + "s";
@@ -231,6 +235,7 @@
     var talking = null;
     function talkFrame(iso, h2, text) {
       var v = c.view(), t = v.tokens[iso];
+      clearIntel();
       var doc = document.querySelector("#s-visit .s-doc"); doc.className = "s-doc s-reeldoc k-talk";
       var face = $("s-visit-face"); face.textContent = ""; face.classList.remove("s-visit-pair");
       if (G) face.appendChild(G.portrait(h2 === "Their answer" ? "calm" : "thinking", "delegate " + likeness(iso)));

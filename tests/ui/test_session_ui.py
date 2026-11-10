@@ -48,7 +48,7 @@ def _through_the_summit(page, check=None):
     """The Summit as the UN runs it (D-102): statements, the draft read, a caucus, the amendments (debate, then vote),
     the final text, then the final vote. `check(name)` runs axe at each kind of step once."""
     seen = set()
-    for _ in range(40):
+    for _ in range(90):                          # the panel steps aside for each vote's sweep (10 Nov), so steps take longer
         page.wait_for_timeout(400)
         if page.is_visible("#s-advice"):
             page.click("#s-advice-ok")
