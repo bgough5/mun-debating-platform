@@ -285,8 +285,11 @@
         var votes = r.out && (r.out.votes || (r.out.final && r.out.final.votes));
         if (votes && Object.keys(votes).length) {
           var passed = r.out.final ? r.out.final.passed : r.out.passed;
+          var wasOpen = panelOpen();
+          closePanel();                                          // the panel steps aside: the room votes, the stamp falls
           draw(r.view, r.out, action);
           var wait = sweep(votes, passed);
+          if (wasOpen && r.view.phase === "summit") setTimeout(function () { if (V && V.phase === "summit") setTab("summit"); }, wait);   // and returns: the President announces it
           var sum = r.out.final ? r.out.final.summary : r.out.summary;
           say((r.out.amendment && action.do !== "amend_vote" ? "The floor amendment was " + r.out.amendment + ". " : "") +
               (r.out.final ? "The resolution: " : action.do === "amend_vote" ? "The amendment: " : "The clause: ") + (passed ? "adopted. " : "rejected. ") + (sum || ""));
@@ -762,7 +765,7 @@
         restart(vd, "show"); A.play("stamp");
         setTimeout(function () { A.play(passed ? "fanfare" : "sting"); }, 300);
       }, order.length * step + 200);
-      return order.length * step + 2900;
+      return order.length * step + (A.motionOn() ? 2900 : 1800);
     }
 
     function result(v) {
