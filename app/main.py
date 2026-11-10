@@ -94,6 +94,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     timing_log = os.environ.get("SOC_TIMING_LOG")
 
+    from app import beta as _beta                              # a beta zip of The Session (only with beta.json present)
+    beta_info = _beta.info()
+    app.state.beta = beta_info
+    if beta_info:
+        from app.web.templating import env as _env
+        _env.globals["beta"] = beta_info
+
+        @app.middleware("http")
+        async def beta_home(request: Request, call_next):
+            if request.url.path == "/":
+                from fastapi.responses import RedirectResponse
+                return RedirectResponse("/session", status_code=303)
+            return await call_next(request)
+
     @app.middleware("http")
     async def session_middleware(request: Request, call_next):
         t0 = time.perf_counter()

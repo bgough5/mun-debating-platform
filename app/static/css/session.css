@@ -1625,3 +1625,5 @@
 /* the walkthrough's five paths */
 .s-g-paths { grid-template-columns: repeat(5, 1fr); }
 @media (max-width: 1150px) { .s-g-paths { grid-template-columns: repeat(3, 1fr); } }
+/* a beta copy's watermark (app/beta.py) */
+.s-beta-mark { position: fixed; z-index: 70; left: 50%; bottom: 2px; transform: translateX(-50%); margin: 0; padding: 1px 10px; font: 12px var(--book); color: var(--parchment); background: color-mix(in srgb, var(--walnut-dk) 80%, transparent); pointer-events: none; }

@@ -10,3 +10,6 @@ data/
 .pytest_cache/
 test-results/
 .venv-smoke/
+
+# beta zips of The Session (tools/build_session_beta.py)
+dist/
