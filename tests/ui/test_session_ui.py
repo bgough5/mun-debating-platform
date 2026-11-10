@@ -716,12 +716,12 @@ def test_space_skips_a_line_being_spoken(browser, live):
         page.wait_for_timeout(150)
     assert typing, "no reel card typed a line"
     assert page.text_content("#s-reel-line-skip").strip() == "Skip ahead (Space)"
-    assert not axe(page, "session_reel_skip")
-    before = page.inner_text("#s-reel-n")
+    before = page.inner_text("#s-reel-n")                                     # Space at once, while the line still types
     page.focus("#s-reel-next")
     page.keyboard.press(" ")
     page.wait_for_function("document.getElementById('s-reel-line-skip').hidden")
     assert page.is_visible("#s-reel") and page.inner_text("#s-reel-n") == before          # Space did not press Next
+    assert not axe(page, "session_reel_skip")
     assert page.evaluate("!!document.querySelector('#s-reel-p .g-said') && document.querySelector('#s-reel-p .g-said').textContent.length > 0")
     assert not errors, errors
     ctx.close()

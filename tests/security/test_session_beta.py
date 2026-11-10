@@ -18,6 +18,8 @@ def test_a_beta_copy_opens_on_the_game_and_is_watermarked(settings, tmp_path, mo
     f = tmp_path / "beta.json"
     f.write_text(json.dumps({"tester": "Alex P", "until": "2099-01-01"}), encoding="utf-8")
     monkeypatch.setattr(beta, "FILE", f)
+    from app.web.templating import env
+    env.cache.clear()                    # imported macros are cached: in a real beta copy the setting comes before any page
     app = create_app(settings)
     try:
         with new_client(app) as c:
@@ -25,8 +27,8 @@ def test_a_beta_copy_opens_on_the_game_and_is_watermarked(settings, tmp_path, mo
             assert r.status_code == 303 and r.headers["location"] == "/session"
             assert "Beta copy for Alex P" in c.get("/session").text
     finally:
-        from app.web.templating import env
         env.globals.pop("beta", None)
+        env.cache.clear()
 
 
 def test_a_beta_copy_stops_after_its_date():

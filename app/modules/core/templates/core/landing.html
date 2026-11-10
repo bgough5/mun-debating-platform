@@ -2,12 +2,12 @@
 {% block content %}
 <h1>South Oakleigh Debating &amp; Model UN</h1>
 <div class="grid">
-  <section class="card"><h2>{{ icon("people") }} Students</h2><p>Type the code from your sign-in card. It already knows your name.</p><p><a class="button big" href="/join">Sign in</a></p>
-</section>
   {% if modules.chair %}<section class="card play-session"><h2>{{ icon("vote") }} The Session</h2>
     <p>Model UN for one: draft a resolution, win over the room and face the Summit. Sign in or create an account to keep your
       progress, or play as a guest.</p>
     <p><a class="button big" href="/session" hx-boost="false">Play The Session</a></p></section>{% endif %}
+  <section class="card"><h2>{{ icon("people") }} Students</h2><p>Type the code from your sign-in card. It already knows your name.</p><p><a class="button big" href="/join">Sign in</a></p>
+</section>
   <section class="card"><h2>{{ icon("people") }} Staff</h2><p>Coordinator and staff sign in with a passphrase.</p><p><a class="button big secondary" href="/login">Staff sign in</a></p></section>
   <section class="card"><h2>{{ icon("practice") }} Classic practice game</h2><p>The original Whip Count game, kept as it was.</p><p><a href="/practice-game">Open the classic practice game</a></p></section>
 </div>
