@@ -22,9 +22,7 @@ def main() -> None:
     from app import beta
     b = beta.info()
     if beta.expired(b):
-        print(f"
-  This beta copy of The Session ended on {b['until']}. Please ask Ben Gough for a new one.
-")
+        print("  This beta copy of The Session ended on " + b["until"] + ". Please ask Ben Gough for a new one.")
         raise SystemExit(1)
     settings = Settings() if not args.data_dir else Settings(data_dir=__import__("pathlib").Path(args.data_dir))
     settings.load()
