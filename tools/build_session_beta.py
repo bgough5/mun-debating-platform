@@ -128,10 +128,10 @@ def build(tester: str, until: str, out: Path, keep: Path | None = None) -> Path:
         for cache in app.rglob("__pycache__"):
             shutil.rmtree(cache, ignore_errors=True)
         (stage / "beta.json").write_text(json.dumps({"tester": tester, "until": until, "built": built}), encoding="utf-8")
-        (stage / "Start The Session.bat").write_text(START_BAT.replace("\n", "\r\n"), encoding="utf-8")
+        (stage / "Start The Session.bat").write_text(START_BAT.replace("\n", "\r\n"), encoding="utf-8", newline="")
         (stage / "Start The Session.command").write_text(START_COMMAND, encoding="utf-8", newline="\n")
-        (stage / "READ ME.txt").write_text(README.format(tester=tester, built=built, until=until).replace("\n", "\r\n"), encoding="utf-8")
-        (stage / "BETA TERMS.txt").write_text(TERMS.format(tester=tester, until=until, year=date.today().year).replace("\n", "\r\n"), encoding="utf-8")
+        (stage / "READ ME.txt").write_text(README.format(tester=tester, built=built, until=until).replace("\n", "\r\n"), encoding="utf-8", newline="")
+        (stage / "BETA TERMS.txt").write_text(TERMS.format(tester=tester, until=until, year=date.today().year).replace("\n", "\r\n"), encoding="utf-8", newline="")
         out.mkdir(parents=True, exist_ok=True)
         slug = re.sub(r"[^A-Za-z0-9]+", "-", tester).strip("-") or "tester"
         zpath = out / f"The-Session-beta-{slug}-{built}.zip"
