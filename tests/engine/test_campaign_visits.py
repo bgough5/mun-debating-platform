@@ -232,3 +232,23 @@ def test_a_caucus_hears_your_speech_through_each_country(scn):
             mixed += len({r["reaction"] for r in rs.values()}) > 1
     assert mixed >= 10, mixed                          # the same speech divides the room
     assert len(seen_lines) >= 15, len(seen_lines)
+
+
+def test_a_broken_word_brings_them_to_your_door(scn):
+    """Ben, 10 Nov: when a lie comes out or you break your word, that delegation comes to call you to account, and
+    each answer has a price: amends cost Influence, standing firm cools their region, explaining may backfire."""
+    g = E.new_game(scn, scn.isos[0], seed=4)
+    iso = next(i for i in scn.isos if i not in E._others(g) and i != g["iso3"])
+    g["visits"] = []
+    E._betray(scn, g, iso, "You broke your word.")
+    vid = V.confront(scn, g)
+    v = next(x for x in g["visits"] if x["id"] == vid)
+    assert v["kind"] == "confront" and v["iso3"] == iso and not g.get("grievances")
+    assert [o["code"] for o in v["options"]] == ["apologise", "explain", "stand"] and v["options"][0]["cost"] == 2
+    infl, trust = g["influence"], g["trust"][iso]
+    g, out = E.apply(scn, g, {"do": "visit", "id": vid, "choice": "apologise"})
+    assert g["influence"] == infl - 2 and g["trust"][iso] == trust + 1 and out["reply"]
+    # a betrayal made by a move brings them straight away
+    g["grievances"] = [{"iso3": iso, "kind": "lie", "about": iso}]
+    g, out = E.apply(scn, g, {"do": "mark", "iso3": iso, "clause": "final", "vote": "yes"})
+    assert out.get("visit") and any(x["kind"] == "confront" for x in g["visits"])

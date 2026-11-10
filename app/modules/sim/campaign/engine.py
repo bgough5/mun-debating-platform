@@ -550,10 +550,11 @@ def _when(g: dict) -> str:
 def _start_turn(scn: Scenario, g: dict) -> None:
     g["talks"] = None
     rng = _rng(g)
-    # No random news each turn since 8 Nov 2026 (each stage's crisis stays): every other turn the Chair puts a
-    # procedure question instead. The old deck is kept in content for reference.
+    # No random news each turn since 8 Nov 2026 (each stage's crisis stays). The Chair puts one procedure question a
+    # stage, on turn 2 or 3 (Ben, 10 Nov: every other turn crowded out the conversations). The old deck stays in content.
+    ask_on = random.Random(f"{g['seed']}:proc:{g['chapter']}").choice((2, 3))
     ev = {"id": "procedure", "title": "A procedure moment", "body": "", "teaches": "Knowing the rules of procedure is a power in the room.",
-          "effect": {"question": True} if g["turn"] % 2 == 0 else {}}
+          "effect": {"question": True} if g["turn"] == ask_on else {}}
     g["mods"] = {}
     eff = ev["effect"]
     g["ap"] = sum(x["n"] for x in ap_sources(scn, g)) + eff.get("ap", 0)
@@ -766,7 +767,11 @@ def apply(scn: Scenario, game: dict, action: dict) -> tuple[dict, dict]:
         g["engaged"].append(action["iso3"])
     if do not in ("end_turn", "advance") and _check_breakthrough(scn, g):
         out["breakthrough"] = True
-    if g["phase"] == "chapter" and do not in ("end_turn", "advance", "stay", "visit", "mark", "whip", "post", "answer") and not g.get("conv"):
+    if g["phase"] == "chapter" and g.get("grievances") and not g.get("conv"):      # a broken word comes back at once (10 Nov)
+        vid = V.confront(scn, g)
+        if vid:
+            out["visit"] = vid
+    elif g["phase"] == "chapter" and do not in ("end_turn", "advance", "stay", "visit", "mark", "whip", "post", "answer") and not g.get("conv"):
         vid = V.after_move(scn, g, action)
         if vid:
             out["visit"] = vid
@@ -933,6 +938,7 @@ def _betray(scn, g, iso: str, why: str) -> None:
         rv["truce"] = False
         rv["grudge"], rv["fury"] = 2, g.get("tick", 0) + 1
     _log(g, iso, f"Betrayal: {why} {scn.member(iso).name} won't forget it, and the room has noticed.", "warning", iso)
+    g.setdefault("grievances", []).append({"iso3": iso, "kind": "betray", "why": why})     # they come to call you to account
 
 
 def _break_promises_if_changed(scn, g, clause, new_tags, actor: str = "you") -> None:

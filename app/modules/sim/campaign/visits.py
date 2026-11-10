@@ -39,7 +39,7 @@ def knows(g, iso) -> str | None:
 
 
 MAX_VISITORS = 4                                              # two to four a turn (Ben, 8 Nov: more, with consequences)
-TIER = {"capital": 0, "caucus": 0, "press": 1, "collect": 1, "ultimatum": 1, "old_sins": 1}
+TIER = {"confront": 0, "capital": 0, "caucus": 0, "press": 1, "collect": 1, "ultimatum": 1, "old_sins": 1}
 
 
 def _offer_visit(scn, g, o):
@@ -142,6 +142,7 @@ def turn_start(scn, g):
             E._sway(g, "you", lie["iso3"], -0.3)
             E._log(g, lie["iso3"], f"{scn.member(lie['iso3']).name} found out you misled them about {scn.member(lie['about']).name}. "
                                    "They trust you less, and the room has noticed.", "warning", lie["iso3"])
+            g.setdefault("grievances", []).append({"iso3": lie["iso3"], "kind": "lie", "about": lie["about"]})
     g["visitors"] = 0
     if g["chapter"] == 1 and g["turn"] == 1:                 # the very first turn is yours alone
         g["offers"] = []
@@ -166,7 +167,63 @@ def turn_start(scn, g):
     g["visits"] = g["visits"][:max(most, sum(TIER.get(x["kind"]) == 0 for x in g["visits"]))]
     shown = {x.get("offer") for x in g["visits"]}
     g["offers"] = [o for o in g.get("offers", []) if o["id"] in shown]
+    confront(scn, g)                                          # a lie that came out: they come first, outside the cap
     g["visitors"] = len(g["visits"])
+
+
+def confront(scn, g):
+    """A delegation you lied to or broke your word with comes to call you to account (Ben, 10 Nov): you hear how they
+    took it, and choose how to answer. Apologising costs Influence and mends a little; explaining is free but may make it
+    worse; standing by it costs nothing with them, and cools their region a little more. Returns the first new visit."""
+    first = None
+    for gr in g.pop("grievances", []) or []:
+        iso = gr["iso3"]
+        if iso == g["iso3"] or any(v.get("kind") == "confront" and v["iso3"] == iso for v in g.get("visits", [])):
+            continue
+        name = scn.member(iso).name
+        if gr["kind"] == "lie":
+            said = (f"{name}'s delegate, coldly: “You told us {scn.member(gr['about']).name} was backing your draft. It wasn't. "
+                    "We passed that on to our capital, and we look foolish.”")
+        else:
+            said = (f"{name}'s delegate is waiting for you, and doesn't sit down: “You gave us your word, and you broke it. "
+                    "My capital wants to know why it should ever deal with you again.”")
+        v = {"id": f"v{g.get('tick', 0)}-confront-{iso}", "kind": "confront", "iso3": iso, "text": said,
+             "options": [{"code": "apologise", "label": "Apologise, and make amends (2 Influence)", "cost": 2},
+                         {"code": "explain", "label": "Explain the pressure you were under", "cost": 0},
+                         {"code": "stand", "label": "Stand by what you did", "cost": 0}]}
+        g.setdefault("visits", []).insert(0, v)
+        first = first or v["id"]
+    return first
+
+
+def _answer_confront(scn, g, v, c, out):
+    iso, name = v["iso3"], scn.member(v["iso3"]).name
+    tmax = E.R["trust_max"]
+    if c == "apologise":
+        g["trust"][iso] = min(tmax, g["trust"].get(iso, 0) + 1)
+        E._sway(g, "you", iso, 0.15)
+        _rep(g, "honest")
+        out["reply"] = "“We accept your apology, and what comes with it. Don't make us regret it.”"
+        E._log(g, "you", f"You apologised to {name} and made amends.", "action", iso)
+    elif c == "explain":
+        r = g.get("rep", {})
+        p = 0.6 if r.get("honest", 0) > r.get("bluff", 0) else 0.35
+        if _rng(g, "confront" + iso).random() < p:
+            g["trust"][iso] = min(tmax, g["trust"].get(iso, 0) + 1)
+            out["reply"] = "“We know what pressure feels like in this building. Once, Ambassador. Only once.”"
+            E._log(g, "you", f"You explained yourself to {name}. They accepted it, this once.", "action", iso)
+        else:
+            E._sway(g, "you", iso, -0.1)
+            out["reply"] = "“Excuses. We expected better from you.”"
+            E._log(g, "you", f"You explained yourself to {name}. They weren't convinced.", "warning", iso)
+    else:
+        _rep(g, "hard")
+        for i in E._region_members(scn, scn.member(iso).region):
+            if i != iso and i not in E._others(g) and i != g["iso3"]:
+                E._sway(g, "you", i, -0.05)
+        out["reply"] = "“Then we know exactly where we stand with you. So will our neighbours.”"
+        E._log(g, "you", f"You stood by what you did. {name} has told its regional group.", "warning", iso)
+    return out
 
 
 def after_move(scn, g, action):
@@ -266,6 +323,8 @@ def a_visit(scn, g, a):
             if truth != "yes":
                 g.setdefault("lies", []).append({"iso3": iso, "about": about})
             E._log(g, "you", f"You told {name} that {scn.member(about).name} is backing your draft.", "action", iso)
+    elif v["kind"] == "confront":
+        out = _answer_confront(scn, g, v, c, out)
     elif v["kind"] in MORE:
         out = answer_new(scn, g, v, c, out)
     elif v["kind"] == "offer":
@@ -302,6 +361,8 @@ def bot_answer(g, rng, competent):
             choice = v["options"][0]["code"]
         elif v["kind"] == "persuade":
             choice = rng.choice(v["options"])["code"]
+        elif v["kind"] == "confront":
+            choice = "apologise" if g["influence"] >= 4 else "explain"
         else:
             choice = "decline"
         yield {"do": "visit", "id": v["id"], "choice": choice}

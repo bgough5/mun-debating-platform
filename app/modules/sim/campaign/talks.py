@@ -83,8 +83,8 @@ def a_lobby(scn, g, a):
         heard = "That is a red line for us. We won't move on it, though we respect your efforts."
     else:
         moved = E._sway(g, "you", iso, E.R["pitch_step"] * (0.3 + 0.7 * quality))
-        heard = (("That argument resonates with us. " if quality >= 0.9 else "Some of that lands with us. " if quality >= 0.5 else
-                  "With respect, that isn't what moves our capital. ") if args else "") + E.LINES[E.bucket(mu + g["sway"]["you"][iso])]
+        heard = (_answer(quality, E.bucket(mu + g["sway"]["you"][iso]), ("That argument resonates with us.", "Some of that lands with us.",
+                         "With respect, that isn't what moves our capital.")) if args else E.LINES[E.bucket(mu + g["sway"]["you"][iso])])
     g["region_last"][scn.member(iso).region] = "you"
     E._log(g, "you", f"You pitched to {scn.member(iso).name}" + (": " + " and ".join(ARGS[x]["name"].lower() for x in args) if args else "") + ".",
            "action", iso)
@@ -110,6 +110,19 @@ REACT = {
              "I'm not sure that's the argument for us."],
 }
 PRESS_WORDS = {"press": "Press the point", "ask": "Ask where they stand", "close": "Thank them and leave it there"}
+
+
+def _answer(q: float, b: int, leads: tuple) -> str:
+    """How they took your case, then where they stand, read as one thought (Ben, 10 Nov: "unhappy" followed by "we
+    strongly support you" read as a contradiction). leads: what they say to a strong, a middling and a weak case."""
+    lead = leads[0] if q >= 0.9 else leads[1] if q >= 0.5 else leads[2]
+    if q < 0.5 and b >= 1:                                   # not persuaded by you, but the text serves them
+        return lead + (" Even so, we will back this text: it serves our own goals, whatever we think of the case you made."
+                       if b == 2 else " Still, the text is close enough to our goals that we can support it, with some changes.")
+    if q >= 0.9 and b <= -1:                                 # a fine case that can't overcome their instructions
+        return lead + (" We respect it. But our instructions are clear: we cannot accept this text as it stands."
+                       if b == -2 else " We respect it, but we still have serious concerns about where the text is going.")
+    return lead + " " + E.LINES[b]
 
 
 def _word(x):
@@ -201,8 +214,8 @@ def a_talk(scn, g, a):
         heard = "We've said what we can. That clause is a red line for us."
     else:
         moved = E._sway(g, "you", iso, E.R["pitch_step"] * (0.3 + 0.7 * q))
-        heard = (("You've made a real case. " if q >= 0.9 else "You've given us something to think about. " if q >= 0.5 else
-                  "I don't think we're persuaded. ") + E.LINES[E.bucket(mu + g["sway"]["you"][iso])])
+        heard = _answer(q, E.bucket(mu + g["sway"]["you"][iso]), ("You've made a real case.", "You've given us something to think about.",
+                                                                    "I don't think we're persuaded."))
     if q >= 0.5:
         for adv in g.get("staff", []):
             if adv.get("post") == iso:

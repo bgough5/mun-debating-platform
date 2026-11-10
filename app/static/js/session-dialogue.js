@@ -67,8 +67,8 @@
     var HEAD = { press: "A word in your ear", ally: "A friend at your shoulder", ask: "A quiet question", info: "Something to sell",
       caucus: "The caucus: your address", capital: "A call from your capital", offer: "A deal at your door",
       ultimatum: "An ultimatum", bargain: "A bloc's bargain", mediate: "A dispute to settle", leak: "In confidence",
-      old_sins: "The press remembers", olive: "An olive branch", staff: "Your staff", media: "The press", collect: "A promise to keep", persuade: "Make the case" };
-    var MOOD = { ultimatum: "concerned", bargain: "calm", mediate: "thinking", leak: "wry", old_sins: "eyebrow", olive: "calm", staff: "calm", offer: "wry", press: "eyebrow", ally: "delighted", ask: "thinking", info: "wry", caucus: "calm", capital: "eyebrow", media: "wry", collect: "calm", persuade: "thinking" };
+      old_sins: "The press remembers", confront: "Called to account", olive: "An olive branch", staff: "Your staff", media: "The press", collect: "A promise to keep", persuade: "Make the case" };
+    var MOOD = { confront: "concerned", ultimatum: "concerned", bargain: "calm", mediate: "thinking", leak: "wry", old_sins: "eyebrow", olive: "calm", staff: "calm", offer: "wry", press: "eyebrow", ally: "delighted", ask: "thinking", info: "wry", caucus: "calm", capital: "eyebrow", media: "wry", collect: "calm", persuade: "thinking" };
     function next() {
       if (showing || waiting || !queue.length) return;
       if (document.querySelector(".s-overlay:not([hidden])") || !$("s-walk").hidden) { setTimeout(next, 700); return; }
