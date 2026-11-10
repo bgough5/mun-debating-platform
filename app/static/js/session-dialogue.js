@@ -83,6 +83,8 @@
       var face = $("s-visit-face"); face.textContent = ""; face.classList.toggle("s-visit-pair", x.kind === "press");
       var mood = x.step > 1 ? (x.kind === "press" ? "concerned" : "thinking") : MOOD[x.kind];
       var them = portraitOf(x, mood); if (them) face.appendChild(them);
+      if (x.who === "staff") { var adv = (v.staff || []).filter(function (s) { return s.id === x.adviser; })[0];   // your adviser's own icon (10 Nov)
+        if (adv) face.appendChild(c.staffIcon(adv.kind, adv.stars, 120)); }
       if (x.kind === "press" && G && v.you) {                      // face to face, across the table
         face.appendChild(h("span", "s-vs", "and"));
         var mine = window.socSession.avatar && window.socSession.avatar();          // your own ambassador, if you built one
@@ -104,7 +106,7 @@
       });
       var row = $("s-visit-opts"); row.textContent = ""; row.classList.remove("s-cards5");
       x.options.forEach(function (o, i) {
-        var b = h("button", "s-btn" + (i && x.kind !== "persuade" ? " ghost" : ""), o.label + (o.cost ? " (" + o.cost + " Influence)" : "")); b.type = "button";
+        var b = h("button", "s-btn ghost", o.label + (o.cost ? " (" + o.cost + " Influence)" : "")); b.type = "button";     // every answer alike (10 Nov)
         if ((o.cost && v.influence < o.cost) || (o.ap && v.ap < o.ap)) b.disabled = true;
         b.addEventListener("click", function () { answer(x, o.code); });
         row.appendChild(b);
@@ -122,7 +124,7 @@
     if (skipBtn) skipBtn.addEventListener("click", function () { finishLine(); });
     $("s-visit-p").addEventListener("click", function () { finishLine(); });
     $("s-visit").addEventListener("keydown", function (e) {
-      if ((e.key === " " || e.key === "Enter") && line) { e.preventDefault(); finishLine(); }
+      if (e.key === "Enter" && line) { e.preventDefault(); finishLine(); }      // Space: session-keys.js
     });
     $("s-visit").addEventListener("keydown", function (e) {           // Escape ends it politely: the last answer
       if (e.key === "Escape") { e.stopPropagation(); var v = c.view(), x = (v.visits || []).filter(function (y) { return y.id === showing; })[0];
@@ -215,7 +217,9 @@
       });
       c.open("s-proc"); c.restart(document.querySelector("#s-proc .s-doc"), "s-reel-in"); A.play("gavel");
       $("s-proc-p").textContent = "";
-      if (G && G.speak) { row.hidden = true; G.speak(face.querySelector("svg"), $("s-proc-p"), v.question.ask, function () { row.hidden = false; }, { pitch: G.voiceOf("president") }); }
+      var sk = $("s-proc-skip"); if (sk) sk.hidden = true;
+      if (G && G.speak) { row.hidden = true; if (sk) sk.hidden = false;
+        procLine = G.speak(face.querySelector("svg"), $("s-proc-p"), v.question.ask, function () { row.hidden = false; if (sk) sk.hidden = true; }, { pitch: G.voiceOf("president") }); }
       else $("s-proc-p").textContent = v.question.ask;
     }
     function procAnswer(out) {
@@ -230,6 +234,8 @@
       reactIn(face, null, out.right ? "nod" : "shake");
     }
     $("s-proc").addEventListener("keydown", function (e) { if (e.key === "Escape") e.stopPropagation(); });   // answer it, or it waits
+    var procLine = null, procSkip = $("s-proc-skip");                 // Skip ahead on the President's question (10 Nov)
+    if (procSkip) procSkip.addEventListener("click", function () { if (procLine) procLine.finish(); });
 
     // ---------- talking with a delegation (Ben, 6 Nov): open with an argument, they react, you take it on ----------
     var talking = null;
@@ -270,7 +276,7 @@
     function talkReply(cv) {
       var row = talkFrame(cv.iso3, "They react", "");
       cv.options.forEach(function (o, i) {
-        var b = h("button", "s-btn" + (i ? " ghost" : ""), o.label); b.type = "button";
+        var b = h("button", "s-btn ghost", o.label); b.type = "button";      // every answer alike (10 Nov)
         b.addEventListener("click", function () { c.move({ do: "talk", step: "follow", choice: o.code }); A.play("paper"); });
         row.appendChild(b);
       });

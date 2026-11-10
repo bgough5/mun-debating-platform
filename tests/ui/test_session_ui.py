@@ -612,6 +612,51 @@ def test_the_room_moves_and_the_numbers_stay_true(browser, live):
     ctx.close()
 
 
+def test_space_skips_a_line_being_spoken(browser, live):
+    """10 Nov (playtest): a spoken line has a Skip ahead button while it types; Space finishes it without also pressing
+    the focused button (here, Next on the turn reel)."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 900})
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(live.url + "/session/new")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false, talk: true, motion: 'on'}))")
+    page.reload()
+    page.click('[data-pick="pack"][data-value="comet_halcyon"]')
+    page.click('[data-step="1"] [data-next]')
+    page.wait_for_selector("#s-seats-box .s-seat")
+    page.click('.s-seat[data-value="NZL"]')
+    for n in (2, 3, 4, 5):
+        page.click(f'[data-step="{n}"] [data-next]')
+    page.click("#s-begin")
+    page.wait_for_selector("#s-chapter-card:not([hidden])")
+    _close_card(page)
+    page.click("#s-end-turn")
+    page.wait_for_function("document.getElementById('s-where').textContent.indexOf('turn 2') >= 0")
+    page.wait_for_selector("#s-reel:not([hidden])")
+    # step through the reel until a card with words is typing out
+    typing = False
+    for _ in range(12):
+        if page.is_visible("#s-reel-line-skip"):
+            typing = True
+            break
+        if not page.is_visible("#s-reel"):
+            break
+        page.click("#s-reel-next")
+        page.wait_for_timeout(150)
+    assert typing, "no reel card typed a line"
+    assert page.text_content("#s-reel-line-skip").strip() == "Skip ahead (Space)"
+    assert not axe(page, "session_reel_skip")
+    before = page.inner_text("#s-reel-n")
+    page.focus("#s-reel-next")
+    page.keyboard.press(" ")
+    page.wait_for_function("document.getElementById('s-reel-line-skip').hidden")
+    assert page.is_visible("#s-reel") and page.inner_text("#s-reel-n") == before          # Space did not press Next
+    assert page.evaluate("!!document.querySelector('#s-reel-p .g-said') && document.querySelector('#s-reel-p .g-said').textContent.length > 0")
+    assert not errors, errors
+    ctx.close()
+
+
 def test_keyboard_shortcuts_and_full_screen(browser, live):
     """Ben, 10 Nov: ? lists the keys; number keys answer a conversation; the Settings have Full screen; a test
     browser is never taken full screen."""

@@ -8,7 +8,7 @@
   window.socSession.mods = window.socSession.mods || {};
   window.socSession.mods.reel = function (c) {
     var $ = c.$, h = c.h, A = c.A, G = c.G;
-    var items = [], at = 0, done = null;
+    var items = [], at = 0, done = null, line = null;
 
     function build(v, prev, news) {
       var out = [], staff = (v.staff || [])[0];
@@ -34,6 +34,8 @@
       if (shifts.length) out.push({ who: "staff", adv: adv(), face: "eyebrow", title: "Positions are shifting", text: "", list: shifts.map(function (x) { return x.text; }) });
       return out;
     }
+    var lineSkip = $("s-reel-line-skip");                            // Skip ahead: finish the line being written (10 Nov)
+    if (lineSkip) lineSkip.addEventListener("click", function () { if (line) line.finish(); });
     function play(list, then) {
       if (!list.length || !G) { if (then) then(); return; }
       // never over another card (a visit that slipped in first, a file): wait for it, as the visits do
@@ -48,9 +50,12 @@
       $("s-reel-who").textContent = x.who === "president" ? "The President of the committee" : x.who === "minister" ? "Your Foreign Minister" :
         x.who === "staff" && x.adv ? x.adv.name + ", " + x.adv.kind_name : "The Chief of Protocol";
       $("s-reel-h").textContent = x.title;
-      var p = $("s-reel-p"); p.textContent = "";
+      if (line) { line.finish(); line = null; }                      // a line still being written is completed first
+      var p = $("s-reel-p"), sk = $("s-reel-line-skip"); p.textContent = ""; if (sk) sk.hidden = true;
       if (x.hypo) p.appendChild(h("span", "s-hypo", "Hypothetical"));
-      if (x.text && G && G.speak) G.speak(face.querySelector("svg.g-face"), p, x.text, null, { pitch: G.voiceOf(x.who) });
+      if (x.text && G && G.speak) { if (sk) sk.hidden = false;
+        var said = G.speak(face.querySelector("svg.g-face"), p, x.text, function () { if (sk) sk.hidden = true; }, { pitch: G.voiceOf(x.who) });
+        line = said.done() ? null : said; }
       else if (x.text) p.appendChild(document.createTextNode(x.text));
       var ul = $("s-reel-list"); ul.textContent = "";
       (x.list || []).forEach(function (t) { ul.appendChild(h("li", "", t)); });
