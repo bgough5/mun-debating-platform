@@ -19,7 +19,7 @@ def guest(app) -> Client:
 def test_anyone_can_open_the_title_and_set_up(app):
     c = guest(app)
     t = c.get("/session")
-    assert t.status_code == 200 and "<h1" in t.text and "The Session" in t.text and "New session" in t.text and "Quick vote" in t.text
+    assert t.status_code == 200 and "<h1" in t.text and "The Session" in t.text and "New session" in t.text and "Quick vote" not in t.text   # Quick vote lives in Model UN (11 Nov)
     n = c.get("/session/new").text
     assert "Comet Halcyon-7" in n and "Beginner" in n and "Expert" in n and "Take your seat" in n
     seats = c.get("/session/seats/comet_halcyon").text
