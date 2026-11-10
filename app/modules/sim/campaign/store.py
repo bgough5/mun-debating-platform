@@ -296,6 +296,7 @@ def view(scn: Scenario, g: dict) -> dict:
              "deal_vote": (g.get("deal_votes") or {}).get(iso)}
         t["dossier"] = X.profile(iso)
         t["relation"] = VI.relation(g, iso)
+        t["manner"] = E.VO.manner(scn, g, iso)               # how its delegate speaks (voices: one register all game)
         t["talked"] = sorted({x for h in g.get("talked", {}).get(iso, []) for x in h["args"]})
         t["commitments"] = [c["what"] for c in T.ledger(scn, g, iso)]
         if iso in g["read"]:

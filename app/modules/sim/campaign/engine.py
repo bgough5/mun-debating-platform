@@ -788,10 +788,10 @@ def a_lobby(scn, g, a):
     mu = scn.dist([must]).get(iso, (0, 1))[0]
     if mu <= R["redline"]:
         moved = _sway(g, "you", iso, R["redline_step"])
-        heard = "That is a red line for us. We won't move on it, though we respect your efforts."
+        heard = VO.red_line(scn, g, iso, "close")
     else:
         moved = _sway(g, "you", iso, R["lobby_step_read"] if iso in g["read"] else R["lobby_step"])
-        heard = LINES[bucket(mu + g["sway"]["you"][iso])]
+        heard = VO.stance(scn, g, iso, bucket(mu + g["sway"]["you"][iso]))
     g["region_last"][scn.member(iso).region] = "you"
     _log(g, "you", f"You lobbied {scn.member(iso).name}.", "action", iso)
     out = {"heard": heard, "moved": round(moved, 2), "cost": cost, "red_line": mu <= R["redline"]}
@@ -2120,6 +2120,7 @@ def _end_stage(scn: Scenario, g: dict, early: bool = False) -> None:
 
 from app.modules.sim.campaign import talks as T  # noqa: E402  (talks uses the engine's primitives above)
 from app.modules.sim.campaign import visits as V  # noqa: E402
+from app.modules.sim.campaign import voices as VO  # noqa: E402  (each delegation's own way of speaking)
 from app.modules.sim.campaign import summit as SM  # noqa: E402  (the Summit as the UN runs it, D-102)
 
 

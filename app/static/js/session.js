@@ -541,6 +541,8 @@
       if (f.shifts && f.shifts.length) b.appendChild(h("p", "s-shifted", "Since the session began: " + f.shifts.map(function (x) { return x.dir + " towards anything that " + lcf(x.label); }).join("; ") + "."));
       var dz = V && V.tokens[f.iso3] && V.tokens[f.iso3].dossier;
       if (dz && dz.known) b.appendChild(dossierBox(dz, true));
+      var mn = V && V.tokens[f.iso3] && V.tokens[f.iso3].manner;
+      if (mn) b.appendChild(h("p", "s-manner", "Its delegate's manner: " + mn.name + " (" + mn.what + ")."));
       if (f.listens_to && f.listens_to.length) b.appendChild(h("p", "s-listens", "Pitch it: it listens to " + f.listens_to.join(" and ").toLowerCase() + "."));
       if (f.red_lines.length) b.appendChild(h("p", "", "Red lines (they say they can never accept): " + f.red_lines.join("; ") + "."));
       if (f.sources.length) {
