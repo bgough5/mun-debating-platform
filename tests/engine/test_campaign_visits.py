@@ -6,6 +6,7 @@ from app.db import SYSTEM
 from app.modules.sim import play
 from app.modules.sim.campaign import engine as E
 from app.modules.sim.campaign import visits as V
+from app.modules.sim.campaign import voices as VO
 from app.modules.sim.campaign.scenario import load
 
 
@@ -227,7 +228,7 @@ def test_a_caucus_hears_your_speech_through_each_country(scn):
                             "options": [{"code": k, "label": k, "cost": 0} for k in ("rally", "reassure", "demand")]}]
             g, out = E.apply(scn, g, {"do": "visit", "id": "vc", "choice": speech})
             rs = out["reactions"]
-            assert all(r["said"] in V.CAUCUS_LINES[speech][r["reaction"]] for r in rs.values())
+            assert all(r["said"] in VO.caucus_lines(speech, r["reaction"]) for r in rs.values())   # each in its own voice
             seen_lines |= {r["said"] for r in rs.values()}
             mixed += len({r["reaction"] for r in rs.values()}) > 1
     assert mixed >= 10, mixed                          # the same speech divides the room
