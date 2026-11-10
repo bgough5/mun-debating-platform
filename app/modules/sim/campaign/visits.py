@@ -499,8 +499,12 @@ def answer_more(scn, g, v, c, out):
             E._log(g, "capital", "Your Minister listens. “Understood. Do what you can.”", "telegram")
     elif v["kind"] == "media":
         cl = next((x for x in g["draft"] if x["id"] == v["clause"]), None)
-        if c == "open":
+        if c == "open":                                        # candour earns Standing, and shows your hand (10 Nov)
             g["respect"] = min(E.R["respect_max"], g["respect"] + 1)
+            if cl:
+                for i in _free(scn, g):
+                    if E.mu_of(scn, g, i, cl["tags"]) < 0:
+                        E._sway(g, "you", i, -0.05)
         elif c == "firm" and cl:
             for i in _free(scn, g):
                 E._sway(g, "you", i, 0.08 if E.mu_of(scn, g, i, cl["tags"]) > 0 else -0.04)
@@ -508,9 +512,12 @@ def answer_more(scn, g, v, c, out):
             g["respect"] = max(0, g["respect"] - 1)
         E._log(g, "you", "You spoke to the press" + (": openly." if c == "open" else ": firmly." if c == "firm" else ": and walked away." if c == "walk" else ": no comment."), "action")
     elif v["kind"] == "collect":
-        if c == "reassure":
+        if c == "reassure":                                    # your word, sworn again: worth more, and dearer to break
             g["trust"][iso] = min(E.R["trust_max"], g["trust"][iso] + 1)
             _rep(g, "honest")
+            for p in g["promises"]:
+                if p["iso3"] == iso and p["kept"] is None:
+                    p["sworn"] = True
         elif c == "insist":
             fond = E.lean(scn, g, "you", iso) > 0.2
             if fond:
@@ -662,13 +669,13 @@ def _more(scn, g, rng) -> list[dict]:
                                     {"code": "refuse", "label": "Not today", "cost": 0}]})
     # your own staff: an adviser asks to be posted where their expertise fits
     idle = [x for x in g.get("staff", []) if not x.get("post")]
-    if idle and free and rng.random() < 0.35:
+    if idle and free and not T.locked(g, "post") and rng.random() < 0.35:     # not before Staff is open (Ben, 10 Nov)
         adv = idle[0]
         target = (rng.choice(g["rivals"])["iso3"] if adv["kind"] == "analyst" and g["rivals"] else rng.choice(free))
         out.append({"id": f"v{tick}-staff-{adv['id']}", "kind": "staff", "iso3": g["iso3"], "who": "staff", "adviser": adv["id"], "target": target,
                     "text": f"{adv['name']}, your {K.STAFF_KINDS[adv['kind']]['name'].lower()}: \u201cAmbassador, post me to "
                             f"{scn.member(target).name}. I know that delegation, and I'd learn a great deal.\u201d",
-                    "options": [{"code": "post", "label": f"Post them to {scn.member(target).name}", "cost": 0},
+                    "options": [{"code": "post", "label": f"Post them to {scn.member(target).name} (travel: {E.R['post_cost']} Influence)", "cost": E.R["post_cost"]},
                                 {"code": "not_now", "label": "Not now", "cost": 0}]})
     return out
 
@@ -764,7 +771,8 @@ def answer_new(scn, g, v, c, out):
     elif k == "staff":
         adv = next((x for x in g.get("staff", []) if x["id"] == v["adviser"]), None)
         if adv and c == "post":
-            adv["post"], adv["since"] = v["target"], g.get("tick", 0)
+            E._move_adviser(scn, g, adv, v["target"], paid=True)    # the travel (paid as the answer's cost), and who they leave
+            E._xp(g, adv, f"{adv['name']} got the posting they asked for.")    # keen: they learn faster
             E._log(g, "staff", f"{adv['name']} is now studying {scn.member(v['target']).name}.", "staff")
         elif adv:
             adv["xp"] = max(0, adv["xp"] - 1)

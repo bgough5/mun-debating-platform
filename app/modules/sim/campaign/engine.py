@@ -105,6 +105,7 @@ def _moods(scn: Scenario, seed: int) -> dict:
 
 
 # Phase 8: rivals that plan, your staff, counter-moves and the golden rule.
+R.update({"hire_ap": 1, "post_cost": 1, "post_leave_sway": 0.05})   # every staff move costs something (Ben, 10 Nov)
 R.update({"hire_cost": 4, "staff_max": 5, "secure_cost": 2, "secure_max": 3, "poach_cost": 2, "poach_step": 0.15,
           "reply_respect": 5, "attack": 0.12, "golden_respect": 2, "architect_gold": 0.45})
 # Phase 9: the deal table and your capital.
@@ -949,7 +950,10 @@ def _break_promises_if_changed(scn, g, clause, new_tags, actor: str = "you") -> 
         if p["clause"] == clause["id"] and p["kept"] is None:
             if actor == "you":
                 p["kept"] = False
-                _betray(scn, g, p["iso3"], "you promised to back that clause, then changed it.")
+                if p.get("sworn"):                                       # you swore it again to their face
+                    g["respect"] = max(0, g["respect"] - 1)
+                _betray(scn, g, p["iso3"], "you promised to back that clause, swore it again, then changed it." if p.get("sworn")
+                        else "you promised to back that clause, then changed it.")
             else:
                 p["kept"] = "void"
     if actor != "you":
@@ -1719,7 +1723,7 @@ def a_hire(scn, g, a):
         raise GameError("Choose an analyst, a regional expert or a legal adviser.")
     if len(g["staff"]) >= R["staff_max"]:
         raise GameError(f"Your mission has room for {R['staff_max']} advisers.")
-    _spend(g, 0, R["hire_cost"])
+    _spend(g, R["hire_ap"], R["hire_cost"])                  # the interviews take your time as well as the salary
     used = {x["name"] for x in g["staff"]}
     name = next(n for n in K.STAFF_NAMES if n not in used)
     n = max((int(x["id"][1:]) for x in g["staff"]), default=0) + 1
@@ -1742,9 +1746,20 @@ def a_post(scn, g, a):
             raise GameError(f"{other['name']} already studies {scn.member(iso).name}.")
     if iso == adv.get("post"):
         return {}
-    adv.update(post=iso, since=g.get("tick", 0), report=None, claim=None)
+    _move_adviser(scn, g, adv, iso)
     _log(g, "you", f"{adv['name']} now studies {scn.member(iso).name}." if iso else f"{adv['name']} is back at the mission.", "action", iso)
     return {}
+
+
+def _move_adviser(scn, g, adv, iso, paid: bool = False) -> None:
+    """Posting an adviser costs the travel (Influence) when they go to a delegation; the delegation they leave notices,
+    and their familiarity starts again (a report needs a full turn in post)."""
+    if iso and not paid:
+        _spend(g, 0, R["post_cost"])
+    old = adv.get("post")
+    if old and old != iso:
+        _sway(g, "you", old, -R["post_leave_sway"])
+    adv.update(post=iso, since=g.get("tick", 0), report=None, claim=None)
 
 
 def a_reserve(scn, g, a):

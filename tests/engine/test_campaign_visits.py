@@ -252,3 +252,24 @@ def test_a_broken_word_brings_them_to_your_door(scn):
     g["grievances"] = [{"iso3": iso, "kind": "lie", "about": iso}]
     g, out = E.apply(scn, g, {"do": "mark", "iso3": iso, "clause": "final", "vote": "yes"})
     assert out.get("visit") and any(x["kind"] == "confront" for x in g["visits"])
+
+
+def test_every_staff_move_costs_something(scn):
+    """Ben, 10 Nov: hiring takes an action as well as Influence; posting an adviser costs the travel, and the
+    delegation they leave notices; no adviser asks to be posted before Staff is open."""
+    g = E.new_game(scn, scn.isos[0], seed=6, length="quick")
+    g["influence"], ap = 20, g["ap"]
+    g, _ = E.apply(scn, g, {"do": "hire", "kind": "analyst"})
+    assert g["ap"] == ap - E.R["hire_ap"] and g["influence"] == 20 - E.R["hire_cost"]
+    adv = g["staff"][0]
+    a, b = [i for i in scn.isos if i not in E._others(g) and i != g["iso3"]][:2]
+    infl = g["influence"]
+    g, _ = E.apply(scn, g, {"do": "post", "adviser": adv["id"], "iso3": a})
+    assert g["influence"] == infl - E.R["post_cost"]
+    before = g["sway"]["you"].get(a, 0.0)
+    g, _ = E.apply(scn, g, {"do": "post", "adviser": adv["id"], "iso3": b})
+    assert g["sway"]["you"].get(a, 0.0) < before                                  # the delegation left behind notices
+    g2 = E.new_game(scn, scn.isos[0], seed=6)                                     # a Standard session's first stage
+    for seed in range(40):
+        rng = V._rng(g2, f"s{seed}")
+        assert not any(x["kind"] == "staff" for x in V._more(scn, g2, rng))

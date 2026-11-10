@@ -1101,11 +1101,12 @@
       });
       var n = (v.staff || []).length, full = n >= v.costs.staff_max;
       $("c-hire-note").textContent = (v.unlock.post ? "Posting and hiring advisers " + v.unlock.post.toLowerCase().replace("that opens", "open") + " " : "") +
-        n + " of " + v.costs.staff_max + " advisers. A new adviser starts as a junior and costs " + v.costs.hire + " Influence.";
+        n + " of " + v.costs.staff_max + " advisers. A new adviser starts as a junior and costs " + v.costs.hire + " Influence and an action. " +
+        "Posting an adviser to a delegation costs " + v.costs.post + " Influence for the travel; the delegation they leave notices.";
       var hr = $("c-hire-row"); hr.textContent = "";
       (v.staff_kinds || []).forEach(function (k) {
-        hr.appendChild(btn(k.name + " (" + v.costs.hire + " Influence)", "s-btn ghost small", function () { move({ do: "hire", kind: k.code }); },
-                           full || v.influence < v.costs.hire || v.phase !== "chapter" || !!v.unlock.hire));
+        hr.appendChild(btn(k.name + " (" + v.costs.hire + " Influence, " + v.costs.hire_ap + " action)", "s-btn ghost small", function () { move({ do: "hire", kind: k.code }); },
+                           full || v.influence < v.costs.hire || v.ap < v.costs.hire_ap || v.phase !== "chapter" || !!v.unlock.hire));
       });
     }
     function pins(v) {
