@@ -293,7 +293,7 @@
           var sum = r.out.final ? r.out.final.summary : r.out.summary;
           say((r.out.amendment && action.do !== "amend_vote" ? "The floor amendment was " + r.out.amendment + ". " : "") +
               (r.out.final ? "The resolution: " : action.do === "amend_vote" ? "The amendment: " : "The clause: ") + (passed ? "adopted. " : "rejected. ") + (sum || ""));
-          if (r.view.phase === "done") setTimeout(function () { result(r.view); }, wait);
+          if (r.view.phase === "done") setTimeout(function () { if (aside) setTab("summit"); result(r.view); }, wait);   // the panel waits behind the result
           else if (aside) setTimeout(function () { if (V && V.phase !== "done" && !panelOpen() && $("s-walk").hidden) setTab("summit"); }, wait);
           return;
         }
