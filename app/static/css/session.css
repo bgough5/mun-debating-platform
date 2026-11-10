@@ -1574,3 +1574,26 @@
 .s-keys th, .s-keys td { padding: 5px 12px 5px 0; text-align: left; border-bottom: 1px solid var(--line); }
 .s-keys th { white-space: nowrap; font-weight: 400; }
 .s-keys kbd { display: inline-block; min-width: 28px; padding: 2px 8px; font: 700 15px var(--book); text-align: center; color: var(--ink); background: var(--white); border: 1px solid var(--walnut); border-bottom-width: 3px; }
+
+/* ---------- flow review, 10 Nov 2026 (docs/reviews/session-flow-review-2026-11-10.md) ---------- */
+/* the verdict stamp sits over the map, centred for the command-bar layout (it was placed for the old wide rail) */
+.s-stage .s-verdict { left: 24px; right: 122px; top: 20px; bottom: 10px; }
+/* motion off: the stamp is shown plain (session.js takes it away), the ticker holds still, the chart's lines are drawn */
+.s-nomotion .s-verdict.show span { opacity: 1; }
+.s-nomotion .s-chart .s-line { stroke-dasharray: none; stroke-dashoffset: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .s-verdict.show span { opacity: 1; }
+  .s-chart .s-line { stroke-dasharray: none; stroke-dashoffset: 0; }
+  .s-tick-run { padding-left: 0; }
+}
+/* conversation and reel cards settle into place: a short rise, no spring and no tilt (the stage and breakthrough
+   cards keep their fuller entrance, since each appears once) */
+.s-reel-in { animation: s-settle .36s cubic-bezier(.2, .7, .3, 1) both; }
+@keyframes s-settle { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+/* the setup's scenario cards: the title has the full width unless the Chosen badge needs its corner; four across on a laptop */
+.s-stage .s-picks { grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
+.s-stage .s-pick h3 { padding-right: 0; }
+.s-stage .s-pick[aria-pressed="true"] h3 { padding-right: 96px; }
+/* the walkthrough's five paths */
+.s-g-paths { grid-template-columns: repeat(5, 1fr); }
+@media (max-width: 1150px) { .s-g-paths { grid-template-columns: repeat(3, 1fr); } }

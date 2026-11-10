@@ -15,8 +15,10 @@
       var adv = function (who) { return who || staff; };
       if (v.stage && !v.stage.made && v.stage.turns_left === 0)
         out.push({ who: "president", face: "eyebrow", title: "The last turn of " + v.chapter_name, text: "Delegates, this is the last turn of " + v.chapter_name + ". After it, the committee moves on, breakthrough or not." });
-      if (v.event && v.event.title) {
-        var ev = { who: "president", news: true, face: v.question ? "thinking" : "calm", title: v.event.title, text: (v.event.body || "") + (v.question ? " A procedure question is waiting on your Brief." : ""), hypo: v.event.hypothetical };
+      // a procedure question is asked in the President's own window straight after the reel, so the reel doesn't read
+      // it out first as news (it did until 10 Nov: the player read every question twice)
+      if (v.event && v.event.title && !(v.question && v.event.id === "procedure")) {
+        var ev = { who: "president", news: true, face: "calm", title: v.event.title, text: v.event.body || "", hypo: v.event.hypothetical };
         out.push(ev);
       }
       if (v.meeting) out.push({ who: "president", face: "calm", title: "The " + v.meeting.name + " meets", text: "Delegates are welcome to attend. Open Blocs to see the room and attend." });
@@ -34,6 +36,8 @@
     }
     function play(list, then) {
       if (!list.length || !G) { if (then) then(); return; }
+      // never over another card (a visit that slipped in first, a file): wait for it, as the visits do
+      if (document.querySelector(".s-overlay:not([hidden])") || !$("s-walk").hidden) { setTimeout(function () { play(list, then); }, 600); return; }
       items = list; at = 0; done = then || null;
       c.open("s-reel"); show();
     }

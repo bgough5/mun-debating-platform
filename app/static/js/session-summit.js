@@ -58,7 +58,11 @@
       var S = v.summit; if (!S) return;
       var box = $("c-summit"); box.textContent = "";
       var key = S.step + ":" + (S.cur ? S.cur.id + ":" + S.cur.stage : "");
-      if (key !== shown) stop();
+      if (key !== shown) {
+        stop();
+        var panes = document.querySelector("#s-rail .s-panes");            // each step of the procedure opens at its top
+        if (panes && shown !== null) panes.scrollTop = 0;
+      }
       if (v.phase === "done") {
         box.appendChild(h("h2", "", "The session is over"));
         var fin = S.statement && S.statement.adopted ? "The resolution failed, but a Presidential Statement was agreed." :

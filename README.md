@@ -38,7 +38,8 @@ see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun
   bot games (gold is a perfect score). Meters roll, tokens turn, ink writes the clauses, the light follows the hour, faces
   react, medals drop and telegrams arrive (`app/static/js/session-fx.js`); all of it stops when motion is off.
 - **The Session (D-101):** an hour-long solo campaign at `/session`: chapters of lobbying and drafting, then a
-  Summit voted clause by clause, then a debrief. Each chapter has a crisis; delegations bring offers; rivals have
+  Summit run as the UN runs it (statements, the draft read, a caucus, amendments one at a time, one final vote), then
+  a debrief. A flow, motion and layout review from 10 Nov 2026 is in `docs/reviews/session-flow-review-2026-11-10.md`. Each chapter has a crisis; delegations bring offers; rivals have
   personalities and play to win, with hidden plans that your advisers (posted, hired, promoted) find out; you
   answer them by holding an action in reserve, securing delegations and replying at the summit; positions shift. The
   golden rule (half a loaf is better than none) is in the scoring. Every country has a dossier of real World
