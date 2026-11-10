@@ -17,6 +17,7 @@ import random
 from app.modules.sim.campaign import content as K
 from app.modules.sim.campaign import engine as E
 from app.modules.sim.campaign import talks as T
+from app.modules.sim.campaign import voices as VO
 
 
 def _rng(g, salt):
@@ -39,7 +40,7 @@ def knows(g, iso) -> str | None:
 
 
 MAX_VISITORS = 4                                              # two to four a turn (Ben, 8 Nov: more, with consequences)
-TIER = {"capital": 0, "caucus": 0, "press": 1, "collect": 1, "ultimatum": 1, "old_sins": 1}
+TIER = {"confront": 0, "capital": 0, "caucus": 0, "press": 1, "collect": 1, "ultimatum": 1, "old_sins": 1}
 
 
 def _offer_visit(scn, g, o):
@@ -62,7 +63,7 @@ def _make(scn, g, kind, iso, rng):
         rv = next(r for r in g["rivals"] if r["iso3"] == iso)
         angry = rv.get("grudge", 0)
         text = (f"{name}'s delegate takes you aside" + (", still smarting from last time" if angry else "") +
-                f": “We need a clause that {_label(scn, rv['want'])}. Stand aside on it, and we'll ease off you this turn. " +
+                f": “{'' if angry else VO.greet(scn, g, iso, 'press') + ' '}We need a clause that {_label(scn, rv['want'])}. Stand aside on it, and we'll ease off you this turn. " +
                 ("This is the last time we ask nicely.”" if angry else "Or we can do this the hard way.”"))
         opts = [{"code": "agree", "label": "Agree: you won't vote against it", "cost": 0},
                 {"code": "counter", "label": "Counter: only if they stop going after your own clause", "cost": 0},
@@ -71,8 +72,7 @@ def _make(scn, g, kind, iso, rng):
         return {"id": vid, "kind": kind, "iso3": iso, "text": text, "options": opts, "tag": rv["want"]}
     if kind == "ally":
         region = E.REGIONS.get(scn.member(iso).region, "its regional group")
-        text = (f"{name}'s delegate: “We're with you. Put something behind it and we'll work the {region} for you. "
-                f"Or just tell us you'll stand by the clause we care about.”")
+        text = f"{name}'s delegate: “{VO.visit(scn, g, iso, 'ally', region=region)}”"
         opts = [{"code": "back", "label": f"Back them: they work the {region}", "cost": 2},
                 {"code": "promise", "label": "Promise to back their clause", "cost": 0},
                 {"code": "decline", "label": "Thank them, not now", "cost": 0}]
@@ -80,8 +80,7 @@ def _make(scn, g, kind, iso, rng):
     if kind == "ask":
         others = [i for i in scn.isos if i not in (iso, g["iso3"])]
         about = rng.choice(others)
-        text = (f"{name}'s delegate, quietly: “Where does {scn.member(about).name} stand on your draft? "
-                f"We'd rather not be the last to know.”")
+        text = f"{name}'s delegate, quietly: “{VO.visit(scn, g, iso, 'ask', about=scn.member(about).name)}”"
         aname = scn.member(about).name
         src = knows(g, about)
         if src:
@@ -97,8 +96,7 @@ def _make(scn, g, kind, iso, rng):
                     {"code": "lie", "label": f"Bluff: tell them {aname} is backing your draft", "cost": 0}]
         return {"id": vid, "kind": kind, "iso3": iso, "text": text, "options": opts, "about": about}
     rv = next((r for r in g["rivals"] if not r.get("truce")), None)
-    text = (f"{name}'s delegate: “We hear things. For a little support, we'll tell you what "
-            f"{scn.member(rv['iso3']).name if rv else 'the others'} is planning next.”")
+    text = f"{name}'s delegate: “{VO.visit(scn, g, iso, 'info', rival=scn.member(rv['iso3']).name if rv else 'the others')}”"
     opts = [{"code": "pay", "label": "Pay for the intelligence", "cost": 1}, {"code": "decline", "label": "Decline", "cost": 0}]
     return {"id": vid, "kind": "info", "iso3": iso, "text": text, "options": opts, "about": rv["iso3"] if rv else None}
 
@@ -142,6 +140,7 @@ def turn_start(scn, g):
             E._sway(g, "you", lie["iso3"], -0.3)
             E._log(g, lie["iso3"], f"{scn.member(lie['iso3']).name} found out you misled them about {scn.member(lie['about']).name}. "
                                    "They trust you less, and the room has noticed.", "warning", lie["iso3"])
+            g.setdefault("grievances", []).append({"iso3": lie["iso3"], "kind": "lie", "about": lie["about"]})
     g["visitors"] = 0
     if g["chapter"] == 1 and g["turn"] == 1:                 # the very first turn is yours alone
         g["offers"] = []
@@ -163,10 +162,68 @@ def turn_start(scn, g):
     rng.shuffle(g["visits"])
     g["visits"].sort(key=lambda x: TIER.get(x["kind"], 2))
     most = rng.choice([2, 3, 3, 4]) + (1 if g.get("approach") == "envoy" else 0)
+    if g.get("question"):                                     # the President's question is this turn's interruption (Fable, 9c)
+        most = min(most, 2)
     g["visits"] = g["visits"][:max(most, sum(TIER.get(x["kind"]) == 0 for x in g["visits"]))]
     shown = {x.get("offer") for x in g["visits"]}
     g["offers"] = [o for o in g.get("offers", []) if o["id"] in shown]
+    confront(scn, g)                                          # a lie that came out: they come first, outside the cap
     g["visitors"] = len(g["visits"])
+
+
+def confront(scn, g):
+    """A delegation you lied to or broke your word with comes to call you to account (Ben, 10 Nov): you hear how they
+    took it, and choose how to answer. Apologising costs Influence and mends a little; explaining is free but may make it
+    worse; standing by it costs nothing with them, and cools their region a little more. Returns the first new visit."""
+    first = None
+    for gr in g.pop("grievances", []) or []:
+        iso = gr["iso3"]
+        if iso == g["iso3"] or any(v.get("kind") == "confront" and v["iso3"] == iso for v in g.get("visits", [])):
+            continue
+        name = scn.member(iso).name
+        if gr["kind"] == "lie":
+            said = (f"{name}'s delegate, coldly: “You told us {scn.member(gr['about']).name} was backing your draft. It wasn't. "
+                    "We passed that on to our capital, and we look foolish.”")
+        else:
+            said = (f"{name}'s delegate is waiting for you, and doesn't sit down: “You gave us your word, and you broke it. "
+                    "My capital wants to know why it should ever deal with you again.”")
+        v = {"id": f"v{g.get('tick', 0)}-confront-{iso}", "kind": "confront", "iso3": iso, "text": said,
+             "options": [{"code": "apologise", "label": "Apologise, and make amends (2 Influence)", "cost": 2},
+                         {"code": "explain", "label": "Explain the pressure you were under", "cost": 0},
+                         {"code": "stand", "label": "Stand by what you did", "cost": 0}]}
+        g.setdefault("visits", []).insert(0, v)
+        first = first or v["id"]
+    return first
+
+
+def _answer_confront(scn, g, v, c, out):
+    iso, name = v["iso3"], scn.member(v["iso3"]).name
+    tmax = E.R["trust_max"]
+    if c == "apologise":
+        g["trust"][iso] = min(tmax, g["trust"].get(iso, 0) + 1)
+        E._sway(g, "you", iso, 0.15)
+        _rep(g, "honest")
+        out["reply"] = "“We accept your apology, and what comes with it. Don't make us regret it.”"
+        E._log(g, "you", f"You apologised to {name} and made amends.", "action", iso)
+    elif c == "explain":
+        r = g.get("rep", {})
+        p = 0.6 if r.get("honest", 0) > r.get("bluff", 0) else 0.35
+        if _rng(g, "confront" + iso).random() < p:
+            g["trust"][iso] = min(tmax, g["trust"].get(iso, 0) + 1)
+            out["reply"] = "“We know what pressure feels like in this building. Once, Ambassador. Only once.”"
+            E._log(g, "you", f"You explained yourself to {name}. They accepted it, this once.", "action", iso)
+        else:
+            E._sway(g, "you", iso, -0.1)
+            out["reply"] = "“Excuses. We expected better from you.”"
+            E._log(g, "you", f"You explained yourself to {name}. They weren't convinced.", "warning", iso)
+    else:
+        _rep(g, "hard")
+        for i in E._region_members(scn, scn.member(iso).region):
+            if i != iso and i not in E._others(g) and i != g["iso3"]:
+                E._sway(g, "you", i, -0.05)
+        out["reply"] = "“Then we know exactly where we stand with you. So will our neighbours.”"
+        E._log(g, "you", f"You stood by what you did. {name} has told its regional group.", "warning", iso)
+    return out
 
 
 def after_move(scn, g, action):
@@ -250,15 +307,14 @@ def a_visit(scn, g, a):
             E._log(g, "you", f"You told {name} honestly: {scn.member(about).name} would vote {truth}.", "action", iso)
         elif c == "guess":
             guess = E.vote_of(scn, E.lean(scn, g, "you", about) + _rng(g, v["id"]).gauss(0, 0.6))
-            out["reply"] = (f"\u201cThank you. We'll see if you're right.\u201d" if guess == truth else
-                            f"\u201cHm. That isn't what we've heard.\u201d")
+            out["reply"] = "\u201c" + VO.reply(scn, g, iso, "right" if guess == truth else "off") + "\u201d"
             if guess != truth:
                 g["trust"][iso] = max(-E.R["trust_max"], g["trust"][iso] - 1)
             E._log(g, "you", f"You gave {name} your best guess about {scn.member(about).name}.", "action", iso)
         elif c == "dunno":
             _rep(g, "honest")
             g["trust"][iso] = min(E.R["trust_max"], g["trust"][iso] + 1)
-            out["reply"] = "\u201cHonest of you. We'll remember that.\u201d"
+            out["reply"] = "\u201c" + VO.reply(scn, g, iso, "honest") + "\u201d"
             E._log(g, "you", f"You told {name} you don't know where {scn.member(about).name} stands.", "action", iso)
         elif c == "lie":
             _rep(g, "bluff")
@@ -266,6 +322,8 @@ def a_visit(scn, g, a):
             if truth != "yes":
                 g.setdefault("lies", []).append({"iso3": iso, "about": about})
             E._log(g, "you", f"You told {name} that {scn.member(about).name} is backing your draft.", "action", iso)
+    elif v["kind"] == "confront":
+        out = _answer_confront(scn, g, v, c, out)
     elif v["kind"] in MORE:
         out = answer_new(scn, g, v, c, out)
     elif v["kind"] == "offer":
@@ -302,6 +360,8 @@ def bot_answer(g, rng, competent):
             choice = v["options"][0]["code"]
         elif v["kind"] == "persuade":
             choice = rng.choice(v["options"])["code"]
+        elif v["kind"] == "confront":
+            choice = "apologise" if g["influence"] >= 4 else "explain"
         else:
             choice = "decline"
         yield {"do": "visit", "id": v["id"], "choice": choice}
@@ -371,19 +431,20 @@ def _extra(scn, g, rng):
         g.setdefault("reminded", []).append(p["iso3"])
         n = next((i + 1 for i, c in enumerate(g["draft"]) if c["id"] == p["clause"]), None)
         out.append({"id": f"v{g.get('tick', 0)}-collect-{p['iso3']}", "kind": "collect", "iso3": p["iso3"],
-                    "text": f"{scn.member(p['iso3']).name}'s delegate: “You promised to back clause {n}. We're counting on you at the vote.”",
+                    "text": f"{scn.member(p['iso3']).name}'s delegate: “{VO.visit(scn, g, p['iso3'], 'collect', n=n)}”",
                     "options": [{"code": "reassure", "label": "“You have my word.”", "cost": 0},
                                 {"code": "ask", "label": "“And I'm counting on your yes in return.”", "cost": 0}]})
     waver = [i for i in _free(scn, g) if abs(E.lean(scn, g, "you", i) - E.R["lean_min"]) < 0.25]
     if waver and rng.random() < 0.5:
         iso = rng.choice(waver)
         out.append({"id": f"v{g.get('tick', 0)}-persuade-{iso}", "kind": "persuade", "iso3": iso,
-                    "text": f"{scn.member(iso).name}'s delegate is on the fence: “Convince me. Why should my government back your draft?”",
+                    "text": f"{scn.member(iso).name}'s delegate is on the fence: “{VO.visit(scn, g, iso, 'persuade')}”",
                     "options": [{"code": k, "label": T.ARGS[k]["name"], "cost": 0} for k in T.ARGS]})
     return out
 
 
-# what a delegate says after your caucus speech: by the speech you gave and how it landed with them
+# what a delegate says after your caucus speech: by the speech you gave and how it landed with them. Each delegation now
+# says it in its own register (`voices.caucus`); this shared bank is no longer used by the game.
 CAUCUS_LINES = {
     "rally": {"pleased": ["That is the language we came here for.", "Well said. Our people would cheer that.", "Now that is a cause worth standing behind."],
               "unmoved": ["Fine words. We'll want to see the text.", "Inspiring, perhaps. It doesn't change our instructions.", "A good speech. Speeches don't vote."],
@@ -418,7 +479,7 @@ def answer_more(scn, g, v, c, out):
             E._sway(g, "you", i, d)
             how = "pleased" if d >= 0.1 else "unmoved" if d > 0 else "annoyed"
             reactions[i] = {"name": scn.member(i).name, "feeling": feeling(g, i), "reaction": how,
-                            "said": rng.choice(CAUCUS_LINES[c][how])}
+                            "said": VO.caucus(scn, g, i, c, how, rng)}
         out["reactions"] = reactions
         E._log(g, "you", f"You addressed the {E.REGIONS.get(g.get('meeting'), 'regional')} caucus.", "action")
     elif v["kind"] == "capital":
@@ -438,8 +499,12 @@ def answer_more(scn, g, v, c, out):
             E._log(g, "capital", "Your Minister listens. “Understood. Do what you can.”", "telegram")
     elif v["kind"] == "media":
         cl = next((x for x in g["draft"] if x["id"] == v["clause"]), None)
-        if c == "open":
+        if c == "open":                                        # candour earns Standing, and shows your hand (10 Nov)
             g["respect"] = min(E.R["respect_max"], g["respect"] + 1)
+            if cl:
+                for i in _free(scn, g):
+                    if E.mu_of(scn, g, i, cl["tags"]) < 0:
+                        E._sway(g, "you", i, -0.05)
         elif c == "firm" and cl:
             for i in _free(scn, g):
                 E._sway(g, "you", i, 0.08 if E.mu_of(scn, g, i, cl["tags"]) > 0 else -0.04)
@@ -447,9 +512,12 @@ def answer_more(scn, g, v, c, out):
             g["respect"] = max(0, g["respect"] - 1)
         E._log(g, "you", "You spoke to the press" + (": openly." if c == "open" else ": firmly." if c == "firm" else ": and walked away." if c == "walk" else ": no comment."), "action")
     elif v["kind"] == "collect":
-        if c == "reassure":
+        if c == "reassure":                                    # your word, sworn again: worth more, and dearer to break
             g["trust"][iso] = min(E.R["trust_max"], g["trust"][iso] + 1)
             _rep(g, "honest")
+            for p in g["promises"]:
+                if p["iso3"] == iso and p["kept"] is None:
+                    p["sworn"] = True
         elif c == "insist":
             fond = E.lean(scn, g, "you", iso) > 0.2
             if fond:
@@ -574,8 +642,9 @@ def _more(scn, g, rng) -> list[dict]:
     if plan and free and rng.random() < 0.3:
         src = rng.choice(free)
         out.append({"id": f"v{tick}-leak-{src}", "kind": "leak", "iso3": src, "rival": plan[0],
-                    "text": f"{scn.member(src).name}'s delegate, quietly: \u201cYou didn't hear this from me. "
-                            f"{scn.member(plan[0]).name} will go after {E._target_name(scn, g, plan[1]['kind'], plan[1]['target'])} next.\u201d",
+                    "text": f"{scn.member(src).name}'s delegate, quietly: \u201c" + VO.visit(
+                        scn, g, src, "leak", rival=scn.member(plan[0]).name,
+                        target=E._target_name(scn, g, plan[1]["kind"], plan[1]["target"])) + "\u201d",
                     "options": [{"code": "keep", "label": "Thank them, and keep it in confidence", "cost": 0},
                                 {"code": "expose", "label": "Expose the plan in the room", "cost": 0}]})
     # old sins: a betrayal or a bluff that came out reaches the press
@@ -595,19 +664,18 @@ def _more(scn, g, rng) -> list[dict]:
         if cl:
             n = g["draft"].index(cl) + 1
             out.append({"id": f"v{tick}-olive-{iso}", "kind": "olive", "iso3": iso, "clause": cl["id"],
-                        "text": f"{scn.member(iso).name}'s delegate: \u201cWe've been hard on each other. Back clause {n}, "
-                                "and we'll abstain on your draft rather than vote against it.\u201d",
+                        "text": f"{scn.member(iso).name}'s delegate: \u201c{VO.visit(scn, g, iso, 'olive', n=n)}\u201d",
                         "options": [{"code": "accept", "label": "Shake on it", "cost": 0},
                                     {"code": "refuse", "label": "Not today", "cost": 0}]})
     # your own staff: an adviser asks to be posted where their expertise fits
     idle = [x for x in g.get("staff", []) if not x.get("post")]
-    if idle and free and rng.random() < 0.35:
+    if idle and free and not T.locked(g, "post") and rng.random() < 0.35:     # not before Staff is open (Ben, 10 Nov)
         adv = idle[0]
         target = (rng.choice(g["rivals"])["iso3"] if adv["kind"] == "analyst" and g["rivals"] else rng.choice(free))
         out.append({"id": f"v{tick}-staff-{adv['id']}", "kind": "staff", "iso3": g["iso3"], "who": "staff", "adviser": adv["id"], "target": target,
                     "text": f"{adv['name']}, your {K.STAFF_KINDS[adv['kind']]['name'].lower()}: \u201cAmbassador, post me to "
                             f"{scn.member(target).name}. I know that delegation, and I'd learn a great deal.\u201d",
-                    "options": [{"code": "post", "label": f"Post them to {scn.member(target).name}", "cost": 0},
+                    "options": [{"code": "post", "label": f"Post them to {scn.member(target).name} (travel: {E.R['post_cost']} Influence)", "cost": E.R["post_cost"]},
                                 {"code": "not_now", "label": "Not now", "cost": 0}]})
     return out
 
@@ -703,7 +771,8 @@ def answer_new(scn, g, v, c, out):
     elif k == "staff":
         adv = next((x for x in g.get("staff", []) if x["id"] == v["adviser"]), None)
         if adv and c == "post":
-            adv["post"], adv["since"] = v["target"], g.get("tick", 0)
+            E._move_adviser(scn, g, adv, v["target"], paid=True)    # the travel (paid as the answer's cost), and who they leave
+            E._xp(g, adv, f"{adv['name']} got the posting they asked for.")    # keen: they learn faster
             E._log(g, "staff", f"{adv['name']} is now studying {scn.member(v['target']).name}.", "staff")
         elif adv:
             adv["xp"] = max(0, adv["xp"] - 1)

@@ -6,6 +6,7 @@ from app.db import SYSTEM
 from app.modules.sim import play
 from app.modules.sim.campaign import engine as E
 from app.modules.sim.campaign import visits as V
+from app.modules.sim.campaign import voices as VO
 from app.modules.sim.campaign.scenario import load
 
 
@@ -227,8 +228,49 @@ def test_a_caucus_hears_your_speech_through_each_country(scn):
                             "options": [{"code": k, "label": k, "cost": 0} for k in ("rally", "reassure", "demand")]}]
             g, out = E.apply(scn, g, {"do": "visit", "id": "vc", "choice": speech})
             rs = out["reactions"]
-            assert all(r["said"] in V.CAUCUS_LINES[speech][r["reaction"]] for r in rs.values())
+            assert all(r["said"] in VO.caucus_lines(speech, r["reaction"]) for r in rs.values())   # each in its own voice
             seen_lines |= {r["said"] for r in rs.values()}
             mixed += len({r["reaction"] for r in rs.values()}) > 1
     assert mixed >= 10, mixed                          # the same speech divides the room
     assert len(seen_lines) >= 15, len(seen_lines)
+
+
+def test_a_broken_word_brings_them_to_your_door(scn):
+    """Ben, 10 Nov: when a lie comes out or you break your word, that delegation comes to call you to account, and
+    each answer has a price: amends cost Influence, standing firm cools their region, explaining may backfire."""
+    g = E.new_game(scn, scn.isos[0], seed=4)
+    iso = next(i for i in scn.isos if i not in E._others(g) and i != g["iso3"])
+    g["visits"] = []
+    E._betray(scn, g, iso, "You broke your word.")
+    vid = V.confront(scn, g)
+    v = next(x for x in g["visits"] if x["id"] == vid)
+    assert v["kind"] == "confront" and v["iso3"] == iso and not g.get("grievances")
+    assert [o["code"] for o in v["options"]] == ["apologise", "explain", "stand"] and v["options"][0]["cost"] == 2
+    infl, trust = g["influence"], g["trust"][iso]
+    g, out = E.apply(scn, g, {"do": "visit", "id": vid, "choice": "apologise"})
+    assert g["influence"] == infl - 2 and g["trust"][iso] == trust + 1 and out["reply"]
+    # a betrayal made by a move brings them straight away
+    g["grievances"] = [{"iso3": iso, "kind": "lie", "about": iso}]
+    g, out = E.apply(scn, g, {"do": "mark", "iso3": iso, "clause": "final", "vote": "yes"})
+    assert out.get("visit") and any(x["kind"] == "confront" for x in g["visits"])
+
+
+def test_every_staff_move_costs_something(scn):
+    """Ben, 10 Nov: hiring takes an action as well as Influence; posting an adviser costs the travel, and the
+    delegation they leave notices; no adviser asks to be posted before Staff is open."""
+    g = E.new_game(scn, scn.isos[0], seed=6, length="quick")
+    g["influence"], ap = 20, g["ap"]
+    g, _ = E.apply(scn, g, {"do": "hire", "kind": "analyst"})
+    assert g["ap"] == ap - E.R["hire_ap"] and g["influence"] == 20 - E.R["hire_cost"]
+    adv = g["staff"][0]
+    a, b = [i for i in scn.isos if i not in E._others(g) and i != g["iso3"]][:2]
+    infl = g["influence"]
+    g, _ = E.apply(scn, g, {"do": "post", "adviser": adv["id"], "iso3": a})
+    assert g["influence"] == infl - E.R["post_cost"]
+    before = g["sway"]["you"].get(a, 0.0)
+    g, _ = E.apply(scn, g, {"do": "post", "adviser": adv["id"], "iso3": b})
+    assert g["sway"]["you"].get(a, 0.0) < before                                  # the delegation left behind notices
+    g2 = E.new_game(scn, scn.isos[0], seed=6)                                     # a Standard session's first stage
+    for seed in range(40):
+        rng = V._rng(g2, f"s{seed}")
+        assert not any(x["kind"] == "staff" for x in V._more(scn, g2, rng))

@@ -44,14 +44,20 @@ def _calm(page):
         page.wait_for_timeout(300)
 
 
-def _through_the_summit(page, check=None):
+def _through_the_summit(page, check=None, skip=True):
     """The Summit as the UN runs it (D-102): statements, the draft read, a caucus, the amendments (debate, then vote),
-    the final text, then the final vote. `check(name)` runs axe at each kind of step once."""
+    the final text, then the final vote. `check(name)` runs axe at each kind of step once. The Summit paces itself
+    (10 Nov): each step shows its parts one at a time, so this clicks Skip when it is there, unless `skip` is False."""
     seen = set()
-    for _ in range(40):
-        page.wait_for_timeout(400)
+    import time
+    deadline = time.time() + 180                                             # the pacing is real time
+    while time.time() < deadline:
+        page.wait_for_timeout(300)
         if page.is_visible("#s-advice"):
             page.click("#s-advice-ok")
+            continue
+        if skip and page.is_visible("#c-summit .s-skip"):
+            page.click("#c-summit .s-skip")
             continue
         head = page.inner_text("#c-summit h2") if page.locator("#c-summit h2").count() else ""
         line = head.splitlines()[0].strip() if head else ""
@@ -59,19 +65,22 @@ def _through_the_summit(page, check=None):
             seen.add(line)
             check(line)
         if head.startswith("Position statements"):
-            page.click(".s-stance:has-text('Open')")
+            if page.is_visible(".s-stance:has-text('Open')"):
+                page.click(".s-stance:has-text('Open')")
         elif head.startswith("The draft, read"):
-            page.click("#c-summit button:has-text('caucus')")
+            if page.is_visible("#c-summit button:has-text('caucus')"):
+                page.click("#c-summit button:has-text('caucus')")
         elif head.startswith("Caucus"):
             page.click("#c-summit button:has-text('Move for a moderated caucus')")
         elif head.startswith("Amendment"):
-            if page.locator("#c-summit .s-decide button:has-text('Stay silent')").count():
+            if page.is_visible("#c-summit .s-decide button:has-text('Stay silent')"):
                 page.click("#c-summit .s-decide button:has-text('Stay silent')")
-            else:
+            elif page.is_visible("#c-summit .s-votes button:has-text('Abstain')"):
                 page.click("#c-summit .s-votes button:has-text('Abstain')")
                 page.wait_for_timeout(1500)                      # the sweep
         elif head.startswith("The final text"):
-            page.click("#c-summit button:has-text('final vote')")
+            if page.is_visible("#c-summit button:has-text('final vote')"):
+                page.click("#c-summit button:has-text('final vote')")
         elif head.startswith("The final vote"):
             page.click("#c-summit .s-votes button:has-text('Yes')")
             return
@@ -272,6 +281,67 @@ def test_a_quick_session_reaches_the_summit_and_ends_with_medals(browser, live):
     assert not axe(page, "session_result")
     page.click("#s-result [data-close]")
     assert page.is_visible("#c-summit button:has-text('See your results')")
+    assert not errors, errors
+    ctx.close()
+
+
+def _quick_to_the_summit(browser, live, motion):
+    """A Quick session as a guest, up to the open Summit panel, with motion forced `motion` ('on' or 'off')."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 900})
+    page = ctx.new_page()
+    page.goto(live.url + "/session/new")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false, talk: false, timer: false, motion: '%s'}))" % motion)
+    page.click('[data-pick="pack"][data-value="comet_halcyon"]')
+    page.click('[data-step="1"] [data-next]')
+    page.wait_for_selector("#s-seats-box .s-seat")
+    page.click('.s-seat[data-value="NZL"]')
+    page.click('[data-step="2"] [data-next]')
+    page.click('[data-pick="length"][data-value="quick"]')
+    for n in (3, 4, 5):
+        page.click(f'[data-step="{n}"] [data-next]')
+    page.click("#s-begin")
+    page.wait_for_selector("#s-chapter-card:not([hidden])")
+    _close_card(page)
+    _to_the_summit(page)
+    _close_card(page)
+    return ctx, page
+
+
+@pytest.mark.parametrize("motion", ["off", "on"])
+def test_the_summit_takes_its_time_and_every_pause_can_be_skipped(browser, live, motion):
+    """10 Nov (Ben's playtest): the Summit breathes. The draft is read before the President moves on, each speech
+    appears in turn before the vote buttons, the result of each amendment is announced before the next is moved,
+    and Skip (or Space) shows what is left. A bot that clicks as soon as it can still gets through."""
+    import time
+    ctx, page = _quick_to_the_summit(browser, live, motion)
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    t0 = time.time()
+    page.click(".s-stance:has-text('Open')")
+    page.wait_for_selector("#c-summit h2:has-text('The draft, read')")
+    assert page.is_visible("#c-summit .s-skip")
+    assert page.is_hidden("#c-summit button:has-text('caucus')")              # not until the reading has had its time
+    page.keyboard.press("Space")                                             # Space skips the pause
+    page.wait_for_selector("#c-summit button:has-text('caucus')", timeout=3000)
+    assert page.is_hidden("#c-summit .s-skip")
+    page.click("#c-summit button:has-text('caucus')")
+    page.click("#c-summit button:has-text('Move for a moderated caucus')")
+    page.wait_for_selector("#c-summit h2:has-text('Amendment')", timeout=10000)
+    page.wait_for_selector("#c-summit .s-pres-line:not([hidden])", timeout=10000)
+    assert page.is_hidden("#c-summit .s-decide")                              # the amendment is moved first, then debated
+    page.wait_for_selector("#c-summit .s-decide:not([hidden])", timeout=20000)
+    assert page.is_hidden("#c-summit .s-skip")
+    page.click("#c-summit .s-decide button:has-text('Speak for it')")
+    page.wait_for_selector("#c-summit .s-speakers li:not([hidden])", timeout=10000)
+    assert page.is_hidden("#c-summit .s-votes")                               # the speeches first, then the vote
+    page.wait_for_selector("#c-summit .s-votes:not([hidden])", timeout=20000)
+    page.click("#c-summit .s-votes button:has-text('Abstain')")
+    page.wait_for_selector("#c-summit .s-pres-line:has-text('The amendment is')", timeout=15000)   # the result, announced
+    _through_the_summit(page, skip=False)
+    took = time.time() - t0
+    print(f"SUMMIT motion={motion}: {took:.1f}s with a bot that never skips")
+    assert took < 150
+    page.wait_for_selector("#s-result:not([hidden])", timeout=15000)
     assert not errors, errors
     ctx.close()
 
@@ -608,6 +678,51 @@ def test_the_room_moves_and_the_numbers_stay_true(browser, live):
     page.wait_for_timeout(600)
     assert page.locator(".fx-odo").count() == 0 and "fx-" not in (page.get_attribute("#s-visit-face svg.g-face", "class") or "")
     assert page.evaluate("document.body.classList.contains('s-nomotion')")
+    assert not errors, errors
+    ctx.close()
+
+
+def test_space_skips_a_line_being_spoken(browser, live):
+    """10 Nov (playtest): a spoken line has a Skip ahead button while it types; Space finishes it without also pressing
+    the focused button (here, Next on the turn reel)."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 900})
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(live.url + "/session/new")
+    page.evaluate("localStorage.setItem('soc-session-settings', JSON.stringify({tips: false, talk: true, motion: 'on'}))")
+    page.reload()
+    page.click('[data-pick="pack"][data-value="comet_halcyon"]')
+    page.click('[data-step="1"] [data-next]')
+    page.wait_for_selector("#s-seats-box .s-seat")
+    page.click('.s-seat[data-value="NZL"]')
+    for n in (2, 3, 4, 5):
+        page.click(f'[data-step="{n}"] [data-next]')
+    page.click("#s-begin")
+    page.wait_for_selector("#s-chapter-card:not([hidden])")
+    _close_card(page)
+    page.click("#s-end-turn")
+    page.wait_for_function("document.getElementById('s-where').textContent.indexOf('turn 2') >= 0")
+    page.wait_for_selector("#s-reel:not([hidden])")
+    # step through the reel until a card with words is typing out
+    typing = False
+    for _ in range(12):
+        if page.is_visible("#s-reel-line-skip"):
+            typing = True
+            break
+        if not page.is_visible("#s-reel"):
+            break
+        page.click("#s-reel-next")
+        page.wait_for_timeout(150)
+    assert typing, "no reel card typed a line"
+    assert page.text_content("#s-reel-line-skip").strip() == "Skip ahead (Space)"
+    assert not axe(page, "session_reel_skip")
+    before = page.inner_text("#s-reel-n")
+    page.focus("#s-reel-next")
+    page.keyboard.press(" ")
+    page.wait_for_function("document.getElementById('s-reel-line-skip').hidden")
+    assert page.is_visible("#s-reel") and page.inner_text("#s-reel-n") == before          # Space did not press Next
+    assert page.evaluate("!!document.querySelector('#s-reel-p .g-said') && document.querySelector('#s-reel-p .g-said').textContent.length > 0")
     assert not errors, errors
     ctx.close()
 

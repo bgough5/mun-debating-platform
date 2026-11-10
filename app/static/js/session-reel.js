@@ -8,18 +8,21 @@
   window.socSession.mods = window.socSession.mods || {};
   window.socSession.mods.reel = function (c) {
     var $ = c.$, h = c.h, A = c.A, G = c.G;
-    var items = [], at = 0, done = null;
+    var items = [], at = 0, done = null, line = null;
 
     function build(v, prev, news) {
       var out = [], staff = (v.staff || [])[0];
       var adv = function (who) { return who || staff; };
       if (v.stage && !v.stage.made && v.stage.turns_left === 0)
         out.push({ who: "president", face: "eyebrow", title: "The last turn of " + v.chapter_name, text: "Delegates, this is the last turn of " + v.chapter_name + ". After it, the committee moves on, breakthrough or not." });
-      if (v.event && v.event.title) {
-        var ev = { who: "president", news: true, face: v.question ? "thinking" : "calm", title: v.event.title, text: (v.event.body || "") + (v.question ? " A procedure question is waiting on your Brief." : ""), hypo: v.event.hypothetical };
+      // a procedure question is asked in the President's own window straight after the reel, so the reel doesn't read
+      // it out first as news (it did until 10 Nov: the player read every question twice)
+      if (v.event && v.event.title && !(v.question && v.event.id === "procedure")) {
+        var ev = { who: "president", news: true, face: "calm", title: v.event.title, text: v.event.body || "", hypo: v.event.hypothetical };
         out.push(ev);
       }
-      if (v.meeting) out.push({ who: "president", face: "calm", title: "The " + v.meeting.name + " meets", text: "Delegates are welcome to attend. Open Blocs to see the room and attend." });
+      var caucusComing = c.A.settings().talk !== false && (v.visits || []).some(function (x) { return x.kind === "caucus"; });
+      if (v.meeting && !caucusComing) out.push({ who: "president", face: "calm", title: "The " + v.meeting.name + " meets", text: "Delegates are welcome to attend. Open Blocs to see the room and attend." });
       news.filter(function (x) { return x.kind === "telegram"; }).forEach(function (x) {
         out.push({ who: "minister", face: x.mood === "approve" ? "delighted" : x.mood === "furious" ? "concerned" : "eyebrow", title: "Telegram from your capital", text: x.text, tele: true });
       });
@@ -32,8 +35,12 @@
       if (shifts.length) out.push({ who: "staff", adv: adv(), face: "eyebrow", title: "Positions are shifting", text: "", list: shifts.map(function (x) { return x.text; }) });
       return out;
     }
+    var lineSkip = $("s-reel-line-skip");                            // Skip ahead: finish the line being written (10 Nov)
+    if (lineSkip) lineSkip.addEventListener("click", function () { if (line) line.finish(); });
     function play(list, then) {
       if (!list.length || !G) { if (then) then(); return; }
+      // never over another card (a visit that slipped in first, a file): wait for it, as the visits do
+      if (document.querySelector(".s-overlay:not([hidden])") || !$("s-walk").hidden) { setTimeout(function () { play(list, then); }, 600); return; }
       items = list; at = 0; done = then || null;
       c.open("s-reel"); show();
     }
@@ -44,9 +51,12 @@
       $("s-reel-who").textContent = x.who === "president" ? "The President of the committee" : x.who === "minister" ? "Your Foreign Minister" :
         x.who === "staff" && x.adv ? x.adv.name + ", " + x.adv.kind_name : "The Chief of Protocol";
       $("s-reel-h").textContent = x.title;
-      var p = $("s-reel-p"); p.textContent = "";
+      if (line) { line.finish(); line = null; }                      // a line still being written is completed first
+      var p = $("s-reel-p"), sk = $("s-reel-line-skip"); p.textContent = ""; if (sk) sk.hidden = true;
       if (x.hypo) p.appendChild(h("span", "s-hypo", "Hypothetical"));
-      if (x.text && G && G.speak) G.speak(face.querySelector("svg.g-face"), p, x.text, null, { pitch: G.voiceOf(x.who) });
+      if (x.text && G && G.speak) { if (sk) sk.hidden = false;
+        var said = G.speak(face.querySelector("svg.g-face"), p, x.text, function () { if (sk) sk.hidden = true; }, { pitch: G.voiceOf(x.who) });
+        line = said.done() ? null : said; }
       else if (x.text) p.appendChild(document.createTextNode(x.text));
       var ul = $("s-reel-list"); ul.textContent = "";
       (x.list || []).forEach(function (t) { ul.appendChild(h("li", "", t)); });

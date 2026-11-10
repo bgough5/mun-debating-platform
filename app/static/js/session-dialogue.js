@@ -29,6 +29,8 @@
       if (!line) { el.textContent = text; row.hidden = false; if (skip) skip.hidden = true; }
     }
     function finishLine() { if (line) { line.finish(); return true; } return false; }
+    // a talk's result ("Your arguments: … landed") belongs to that talk alone: clear it before any other card is drawn
+    function clearIntel() { document.querySelectorAll("#s-visit .s-intel-box").forEach(function (x) { x.remove(); }); }
     // a delegate's look, the same every game (the same sum as visits.likeness in Python): respectful variety only
     function likeness(iso) {
       var n = 0; for (var i = 0; i < iso.length; i++) n += (i + 7) * iso.charCodeAt(i);
@@ -65,8 +67,8 @@
     var HEAD = { press: "A word in your ear", ally: "A friend at your shoulder", ask: "A quiet question", info: "Something to sell",
       caucus: "The caucus: your address", capital: "A call from your capital", offer: "A deal at your door",
       ultimatum: "An ultimatum", bargain: "A bloc's bargain", mediate: "A dispute to settle", leak: "In confidence",
-      old_sins: "The press remembers", olive: "An olive branch", staff: "Your staff", media: "The press", collect: "A promise to keep", persuade: "Make the case" };
-    var MOOD = { ultimatum: "concerned", bargain: "calm", mediate: "thinking", leak: "wry", old_sins: "eyebrow", olive: "calm", staff: "calm", offer: "wry", press: "eyebrow", ally: "delighted", ask: "thinking", info: "wry", caucus: "calm", capital: "eyebrow", media: "wry", collect: "calm", persuade: "thinking" };
+      old_sins: "The press remembers", confront: "Called to account", olive: "An olive branch", staff: "Your staff", media: "The press", collect: "A promise to keep", persuade: "Make the case" };
+    var MOOD = { confront: "concerned", ultimatum: "concerned", bargain: "calm", mediate: "thinking", leak: "wry", old_sins: "eyebrow", olive: "calm", staff: "calm", offer: "wry", press: "eyebrow", ally: "delighted", ask: "thinking", info: "wry", caucus: "calm", capital: "eyebrow", media: "wry", collect: "calm", persuade: "thinking" };
     function next() {
       if (showing || waiting || !queue.length) return;
       if (document.querySelector(".s-overlay:not([hidden])") || !$("s-walk").hidden) { setTimeout(next, 700); return; }
@@ -75,11 +77,14 @@
       var x = (v.visits || []).filter(function (y) { return y.id === id; })[0];
       if (!x) { next(); return; }
       showing = x.id;
+      clearIntel();
       var doc = document.querySelector("#s-visit .s-doc");
       doc.className = "s-doc s-reeldoc k-" + x.kind;
       var face = $("s-visit-face"); face.textContent = ""; face.classList.toggle("s-visit-pair", x.kind === "press");
       var mood = x.step > 1 ? (x.kind === "press" ? "concerned" : "thinking") : MOOD[x.kind];
       var them = portraitOf(x, mood); if (them) face.appendChild(them);
+      if (x.who === "staff") { var adv = (v.staff || []).filter(function (s) { return s.id === x.adviser; })[0];   // your adviser's own icon (10 Nov)
+        if (adv) face.appendChild(c.staffIcon(adv.kind, adv.stars, 120)); }
       if (x.kind === "press" && G && v.you) {                      // face to face, across the table
         face.appendChild(h("span", "s-vs", "and"));
         var mine = window.socSession.avatar && window.socSession.avatar();          // your own ambassador, if you built one
@@ -101,7 +106,7 @@
       });
       var row = $("s-visit-opts"); row.textContent = ""; row.classList.remove("s-cards5");
       x.options.forEach(function (o, i) {
-        var b = h("button", "s-btn" + (i && x.kind !== "persuade" ? " ghost" : ""), o.label + (o.cost ? " (" + o.cost + " Influence)" : "")); b.type = "button";
+        var b = h("button", "s-btn ghost", o.label + (o.cost ? " (" + o.cost + " Influence)" : "")); b.type = "button";     // every answer alike (10 Nov)
         if ((o.cost && v.influence < o.cost) || (o.ap && v.ap < o.ap)) b.disabled = true;
         b.addEventListener("click", function () { answer(x, o.code); });
         row.appendChild(b);
@@ -119,7 +124,7 @@
     if (skipBtn) skipBtn.addEventListener("click", function () { finishLine(); });
     $("s-visit-p").addEventListener("click", function () { finishLine(); });
     $("s-visit").addEventListener("keydown", function (e) {
-      if ((e.key === " " || e.key === "Enter") && line) { e.preventDefault(); finishLine(); }
+      if (e.key === "Enter" && line) { e.preventDefault(); finishLine(); }      // Space: session-keys.js
     });
     $("s-visit").addEventListener("keydown", function (e) {           // Escape ends it politely: the last answer
       if (e.key === "Escape") { e.stopPropagation(); var v = c.view(), x = (v.visits || []).filter(function (y) { return y.id === showing; })[0];
@@ -131,6 +136,7 @@
       waiting = null;
       if (out && out.continues) { next(); return; }
       if (!out || !(out.reactions || out.reply)) { setTimeout(next, 500); return; }
+      clearIntel();
       var room = $("s-visit-room"); room.textContent = ""; room.hidden = !out.reactions;
       Object.keys(out.reactions || {}).forEach(function (iso, i) {
         var r = out.reactions[iso], card = h("div", "s-member r-" + r.reaction); card.style.animationDelay = (i * 0.12) + "s";
@@ -211,7 +217,9 @@
       });
       c.open("s-proc"); c.restart(document.querySelector("#s-proc .s-doc"), "s-reel-in"); A.play("gavel");
       $("s-proc-p").textContent = "";
-      if (G && G.speak) { row.hidden = true; G.speak(face.querySelector("svg"), $("s-proc-p"), v.question.ask, function () { row.hidden = false; }, { pitch: G.voiceOf("president") }); }
+      var sk = $("s-proc-skip"); if (sk) sk.hidden = true;
+      if (G && G.speak) { row.hidden = true; if (sk) sk.hidden = false;
+        procLine = G.speak(face.querySelector("svg"), $("s-proc-p"), v.question.ask, function () { row.hidden = false; if (sk) sk.hidden = true; }, { pitch: G.voiceOf("president") }); }
       else $("s-proc-p").textContent = v.question.ask;
     }
     function procAnswer(out) {
@@ -226,11 +234,14 @@
       reactIn(face, null, out.right ? "nod" : "shake");
     }
     $("s-proc").addEventListener("keydown", function (e) { if (e.key === "Escape") e.stopPropagation(); });   // answer it, or it waits
+    var procLine = null, procSkip = $("s-proc-skip");                 // Skip ahead on the President's question (10 Nov)
+    if (procSkip) procSkip.addEventListener("click", function () { if (procLine) procLine.finish(); });
 
     // ---------- talking with a delegation (Ben, 6 Nov): open with an argument, they react, you take it on ----------
     var talking = null;
     function talkFrame(iso, h2, text) {
       var v = c.view(), t = v.tokens[iso];
+      clearIntel();
       var doc = document.querySelector("#s-visit .s-doc"); doc.className = "s-doc s-reeldoc k-talk";
       var face = $("s-visit-face"); face.textContent = ""; face.classList.remove("s-visit-pair");
       if (G) face.appendChild(G.portrait(h2 === "Their answer" ? "calm" : "thinking", "delegate " + likeness(iso)));
@@ -265,7 +276,7 @@
     function talkReply(cv) {
       var row = talkFrame(cv.iso3, "They react", "");
       cv.options.forEach(function (o, i) {
-        var b = h("button", "s-btn" + (i ? " ghost" : ""), o.label); b.type = "button";
+        var b = h("button", "s-btn ghost", o.label); b.type = "button";      // every answer alike (10 Nov)
         b.addEventListener("click", function () { c.move({ do: "talk", step: "follow", choice: o.code }); A.play("paper"); });
         row.appendChild(b);
       });

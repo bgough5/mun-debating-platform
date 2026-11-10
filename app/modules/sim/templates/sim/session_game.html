@@ -139,6 +139,7 @@
   <div class="s-overlay" id="s-proc" hidden role="dialog" aria-modal="true" aria-labelledby="s-proc-h">
     <div class="s-doc s-reeldoc k-proc"><div class="s-reel-face" id="s-proc-face" aria-hidden="true"></div>
       <div><p class="s-eyebrow">The President of the committee</p><h2 id="s-proc-h">A point of procedure</h2><p id="s-proc-p"></p>
+        <button type="button" class="s-btn ghost small s-skip-line" id="s-proc-skip" hidden>Skip ahead (Space)</button>
         <div class="s-visit-opts" id="s-proc-opts"></div></div></div>
   </div>
   <div class="s-overlay" id="s-signed" hidden role="dialog" aria-modal="true" aria-labelledby="s-signed-h">
@@ -149,12 +150,13 @@
   <div class="s-overlay" id="s-visit" hidden role="dialog" aria-modal="true" aria-labelledby="s-visit-h">
     <div class="s-doc s-reeldoc"><div class="s-reel-face" id="s-visit-face" aria-hidden="true"></div>
       <div><p class="s-visit-step" id="s-visit-step"></p><p class="s-eyebrow" id="s-visit-who">–</p><h2 id="s-visit-h">–</h2><p id="s-visit-p"></p><div class="s-visit-room" id="s-visit-room" hidden></div>
-        <button type="button" class="s-btn ghost small s-skip-line" id="s-visit-skip" hidden>Skip ahead »</button>
+        <button type="button" class="s-btn ghost small s-skip-line" id="s-visit-skip" hidden>Skip ahead (Space)</button>
         <div class="s-visit-opts" id="s-visit-opts"></div><p class="s-sub" id="s-visit-n"></p></div></div>
   </div>
   <div class="s-overlay" id="s-reel" hidden role="dialog" aria-modal="true" aria-labelledby="s-reel-h">
     <div class="s-doc s-reeldoc"><div class="s-reel-face" id="s-reel-face" aria-hidden="true"></div>
-      <div><p class="s-eyebrow" id="s-reel-who">–</p><h2 id="s-reel-h">–</h2><p id="s-reel-p"></p><ul class="s-reel-list" id="s-reel-list" hidden></ul>
+      <div><p class="s-eyebrow" id="s-reel-who">–</p><h2 id="s-reel-h">–</h2><p id="s-reel-p"></p>
+        <button type="button" class="s-btn ghost small s-skip-line" id="s-reel-line-skip" hidden>Skip ahead (Space)</button><ul class="s-reel-list" id="s-reel-list" hidden></ul>
         <div class="s-row"><button type="button" class="s-btn" id="s-reel-next">Next</button>
           <button type="button" class="s-btn ghost" id="s-reel-skip">Skip the rest</button><span class="s-sub" id="s-reel-n"></span></div></div></div>
   </div>
@@ -178,7 +180,7 @@
   </div>
   <div class="s-overlay" id="s-keys" hidden role="dialog" aria-modal="true" aria-labelledby="s-keys-h">
     <div class="s-doc"><h2 id="s-keys-h">Keyboard shortcuts</h2>
-      <table class="s-keys"><tbody><tr><th scope="row"><kbd>F</kbd></th><td>Full screen on or off (hold Escape to leave it)</td></tr><tr><th scope="row"><kbd>E</kbd></th><td>End the turn</td></tr><tr><th scope="row"><kbd>1 – 8</kbd></th><td>Open the panels, in order down the side</td></tr><tr><th scope="row"><kbd>1 – 9</kbd></th><td>With a card or conversation open: choose its answers, in order</td></tr><tr><th scope="row"><kbd>T</kbd></th><td>Talk to the delegation you have open</td></tr><tr><th scope="row"><kbd>M</kbd></th><td>The map key</td></tr><tr><th scope="row"><kbd>Y · A · N</kbd></th><td>At the Summit: vote Yes, Abstain or No</td></tr><tr><th scope="row"><kbd>Space</kbd></th><td>At the Summit: let the President move on</td></tr><tr><th scope="row"><kbd>Escape</kbd></th><td>Close what is open, or pause</td></tr><tr><th scope="row"><kbd>?</kbd></th><td>This list</td></tr></tbody></table>
+      <table class="s-keys"><tbody><tr><th scope="row"><kbd>F</kbd></th><td>Full screen on or off (hold Escape to leave it)</td></tr><tr><th scope="row"><kbd>E</kbd></th><td>End the turn</td></tr><tr><th scope="row"><kbd>1 – 8</kbd></th><td>Open the panels, in order down the side</td></tr><tr><th scope="row"><kbd>1 – 9</kbd></th><td>With a card or conversation open: choose its answers, in order</td></tr><tr><th scope="row"><kbd>T</kbd></th><td>Talk to the delegation you have open</td></tr><tr><th scope="row"><kbd>M</kbd></th><td>The map key</td></tr><tr><th scope="row"><kbd>Y · A · N</kbd></th><td>At the Summit: vote Yes, Abstain or No</td></tr><tr><th scope="row"><kbd>Space</kbd></th><td>Skip ahead in a line being spoken. At the Summit: let the President move on</td></tr><tr><th scope="row"><kbd>Escape</kbd></th><td>Close what is open, or pause</td></tr><tr><th scope="row"><kbd>?</kbd></th><td>This list</td></tr></tbody></table>
       <div class="s-row"><button type="button" class="s-btn" data-close="s-keys">Done</button></div></div>
   </div>
   <div class="s-overlay" id="s-file" hidden role="dialog" aria-modal="true" aria-labelledby="s-file-h">

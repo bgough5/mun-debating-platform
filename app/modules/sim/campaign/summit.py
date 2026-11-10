@@ -59,30 +59,27 @@ def _statements(scn, g: dict) -> list[dict]:
     """The rivals and the two strongest voices for and against open the debate. Each statement shows where they stand."""
     out = []
     final = E.final_clause(g)
-    AGAINST = ["We cannot accept a text that {x}. We will move to amend it.",
-               "My delegation will not support any text that {x}. We have an amendment ready.",
-               "A resolution that {x} would set a dangerous precedent. We will seek to change it."]
-    WAIT = ["Our support depends on whether this text {x}.", "We will judge this draft by one test: whether it {x}."]
-    for k, rv in enumerate(g["rivals"]):
+    say = E.VO.statement                                     # each delegation takes the floor in its own register
+    for rv in g["rivals"]:
         name = scn.member(rv["iso3"]).name
         if rv.get("truce"):
             out.append({"iso3": rv["iso3"], "name": name, "view": 1,
-                        "text": "We have reached an understanding on this text, and we will support it."})
+                        "text": say(scn, g, rv["iso3"], "truce")})
         elif rv["block"] in final["tags"]:
             out.append({"iso3": rv["iso3"], "name": name, "view": -1,
-                        "text": AGAINST[k % len(AGAINST)].format(x=E._lc(scn.tags[rv['block']]).rstrip('.'))})
+                        "text": say(scn, g, rv["iso3"], "against", x=E._lc(scn.tags[rv['block']]).rstrip('.'))})
         else:
             out.append({"iso3": rv["iso3"], "name": name, "view": 0,
-                        "text": WAIT[k % len(WAIT)].format(x=E._lc(scn.tags[rv['want']]).rstrip('.'))})
+                        "text": say(scn, g, rv["iso3"], "wait", x=E._lc(scn.tags[rv['want']]).rstrip('.'))})
     free = [i for i in scn.isos if i not in E._others(g) and i != g["iso3"]]
     if final["tags"] and free:
         xs = sorted(free, key=lambda i: E.latent(scn, g, i, final, mood=False))
         lo, hi = xs[0], xs[-1]
         out.append({"iso3": hi, "name": scn.member(hi).name, "view": _view_of(scn, g, hi),
-                    "text": "This draft answers the problem before us. We urge every delegation to support it."})
+                    "text": say(scn, g, hi, "for")})
         if lo != hi:
             out.append({"iso3": lo, "name": scn.member(lo).name, "view": _view_of(scn, g, lo),
-                        "text": "This draft goes too far for us as it stands. We will listen to the amendments."})
+                        "text": say(scn, g, lo, "toofar")})
     return out
 
 

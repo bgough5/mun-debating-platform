@@ -33,6 +33,7 @@
     var m = $("p-msg"); if (!m || Date.now() < errUntil || !log || !log.length) return;
     var items = log.slice(-8).reverse().map(function (x) { return x.text; });
     m.className = "p-msg ticker"; m.textContent = "";
+    if (!A.motionOn()) { m.textContent = items[0]; return; }          // motion off: the latest line, still (10 Nov)
     var run = document.createElement("span"); run.className = "s-tick-run"; run.textContent = items.join("     ·     ");
     m.appendChild(run);
   }
@@ -242,7 +243,15 @@
     var TABS = ["brief", "draft", "dele", "coalition", "summit", "whip", "staff", "record"];
     var rail = $("s-rail");
     function panelOpen() { return rail.classList.contains("open"); }
+    // a Quick session's walkthrough covers the basics only; the later tools are introduced when first opened (10 Nov)
+    function laterIntro(name) {
+      var v = V; if (!v || v.length !== "quick" || v.phase !== "chapter" || !guideOn() || !$("s-walk").hidden) return;
+      var set = !seenIntro.stage2 && (name === "coalition" || name === "staff" || name === "dele") ? "stage2" :
+        seenIntro.stage2 && !seenIntro.stage3 && name === "coalition" && v.turn >= 3 ? "stage3" : null;
+      if (set) { seenIntro[set] = true; setTimeout(function () { WALK.start(V, null, set); }, 350); }
+    }
     function setTab(name, focus, dock) {
+      laterIntro(name);
       TABS.forEach(function (t) {
         var b = $("t-" + t), on = t === name;
         b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; $("p-" + t).hidden = !on;
@@ -285,12 +294,17 @@
         var votes = r.out && (r.out.votes || (r.out.final && r.out.final.votes));
         if (votes && Object.keys(votes).length) {
           var passed = r.out.final ? r.out.final.passed : r.out.passed;
+          var wasOpen = panelOpen();
+          closePanel();                                          // the panel steps aside: the room votes, the stamp falls
           draw(r.view, r.out, action);
-          var wait = sweep(votes, passed);
+          // the room votes: the panel steps aside so the tokens and the stamp can be seen, then comes back (10 Nov)
+          var aside = closePanel() || wasOpen;
+          var wait = sweep(votes, passed, !r.out.final);
           var sum = r.out.final ? r.out.final.summary : r.out.summary;
           say((r.out.amendment && action.do !== "amend_vote" ? "The floor amendment was " + r.out.amendment + ". " : "") +
               (r.out.final ? "The resolution: " : action.do === "amend_vote" ? "The amendment: " : "The clause: ") + (passed ? "adopted. " : "rejected. ") + (sum || ""));
-          if (r.view.phase === "done") setTimeout(function () { result(r.view); }, wait);
+          if (r.view.phase === "done") setTimeout(function () { if (aside) setTab("summit"); result(r.view); }, wait);   // the panel waits behind the result
+          else if (aside) setTimeout(function () { if (V && V.phase !== "done" && !panelOpen() && $("s-walk").hidden) setTab("summit"); }, wait);
           return;
         }
         draw(r.view, r.out, action);
@@ -311,11 +325,11 @@
       $("s-cc-eyebrow").textContent = summit ? "The final act" : (v.length === "quick" ? "One working session" : "Stage " + v.chapter + " of " + v.chapters);
       $("s-cc-h").textContent = summit ? "The Summit" : v.chapter_name;
       var pre = prev && prev.phase === "chapter" ? (prev.chapter_name + ": " + (was ? "breakthrough made. +3 Influence. " : "the deadline passed without a breakthrough. ")) : "";
-      $("s-cc-goal").textContent = pre + (summit ? "The draft goes to the vote, clause by clause, then as a whole." :
+      $("s-cc-goal").textContent = pre + (summit ? "The draft goes before the whole committee: position statements, the text read in full, a caucus, then the amendments one by one, and the final vote." :
         "Breakthrough: " + v.stage.goal + " Deadline: " + v.stage.deadline + " turns.");
-      $("s-cc-look").textContent = summit ? "I'll preside. Every clause is voted on, then the whole text." : v.stage.look;
+      $("s-cc-look").textContent = summit ? "I'll preside. Speak when you're called, and cast your country's vote on each amendment and on the whole text." : v.stage.look;
       var pf = $("s-cc-pres"); pf.textContent = ""; if (G) pf.appendChild(G.portrait(summit ? "eyebrow" : "delighted", "president"));
-      stagePanel = summit ? null : (v.length === "quick" || v.chapter === 1 ? "draft" : "coalition");
+      stagePanel = summit || v.length === "quick" || v.chapter === 1 ? null : "coalition";   // the first sight is the open table (Fable, 12)
       var cr = !summit && v.crisis && v.crisis.chapter === v.chapter ? v.crisis : null;
       $("s-cc-crisis").hidden = !cr;
       if (cr) { $("s-cc-crisis-h").textContent = cr.title; $("s-cc-crisis-p").textContent = cr.body; $("s-cc-crisis-t").textContent = cr.teaches; }
@@ -537,6 +551,8 @@
       if (f.shifts && f.shifts.length) b.appendChild(h("p", "s-shifted", "Since the session began: " + f.shifts.map(function (x) { return x.dir + " towards anything that " + lcf(x.label); }).join("; ") + "."));
       var dz = V && V.tokens[f.iso3] && V.tokens[f.iso3].dossier;
       if (dz && dz.known) b.appendChild(dossierBox(dz, true));
+      var mn = V && V.tokens[f.iso3] && V.tokens[f.iso3].manner;
+      if (mn) b.appendChild(h("p", "s-manner", "Its delegate's manner: " + mn.name + " (" + mn.what + ")."));
       if (f.listens_to && f.listens_to.length) b.appendChild(h("p", "s-listens", "Pitch it: it listens to " + f.listens_to.join(" and ").toLowerCase() + "."));
       if (f.red_lines.length) b.appendChild(h("p", "", "Red lines (they say they can never accept): " + f.red_lines.join("; ") + "."));
       if (f.sources.length) {
@@ -582,7 +598,7 @@
       for (var i = 0; i < Math.max(v.ap, 0); i++) ap.appendChild(h("i", "on"));
       $("m-ap").setAttribute("aria-label", v.ap + " actions left this turn");
       $("c-chapter-h").textContent = v.phase === "summit" ? "The Summit" : (v.length === "quick" ? "Working session" : "Stage " + v.chapter + ": " + v.chapter_name);
-      $("c-goal").textContent = v.phase === "chapter" ? v.goal : "The draft goes to the vote, clause by clause, then as a whole.";
+      $("c-goal").textContent = v.phase === "chapter" ? v.goal : "Statements, the draft read in full, a caucus, the amendments one by one, then the final vote on the whole text.";
       $("c-turn").textContent = v.phase === "chapter" ? "Turn " + v.turn + " of " + v.turns + ". " + (v.stage && v.stage.made ? "Breakthrough made: move on, or keep working until the deadline." :
         "The Chair moves on after turn " + v.turns + ", breakthrough or not.") : "";
       sources(v); rooms(v); sheets(v); stageLook(v); breakthroughCard(v, prev);
@@ -741,7 +757,7 @@
 
     function summitPane(v, out) { SUMMIT.render(v, out); }       // the Summit's own module (D-102)
 
-    function sweep(votes, passed) {
+    function sweep(votes, passed, brief) {
       Object.keys(tokens).forEach(function (iso) { tokens[iso].classList.remove("v-yes", "v-no", "v-abstain"); });
       var order = Object.keys(votes).sort(function (a, b) {
         var ta = tokens[a], tb = tokens[b];
@@ -756,13 +772,16 @@
           var line = t.querySelector(".b-line"); if (line) line.textContent = { yes: "Yes", no: "No", abstain: "Abstain" }[votes[iso]] || "";
         }, k * step);
       });
+      // the stamp: it fades on its own with motion on; with motion off it is shown plain, then taken away
+      var hold = !A.motionOn() ? 1400 : brief ? 2000 : 2900;
       setTimeout(function () {
         var vd = $("s-verdict"); vd.className = "s-verdict " + (passed ? "yes" : "no");
         vd.querySelector("span").textContent = passed ? "Adopted" : "Rejected";
         restart(vd, "show"); A.play("stamp");
         setTimeout(function () { A.play(passed ? "fanfare" : "sting"); }, 300);
+        setTimeout(function () { vd.classList.remove("show"); }, hold);
       }, order.length * step + 200);
-      return order.length * step + 2900;
+      return order.length * step + 200 + hold;
     }
 
     function result(v) {
@@ -787,13 +806,13 @@
         var g = r.paths[k], m = h("div", "s-medal" + (k === p.code ? " chosen" : ""));
         var coin = h("i", "g" + g, GRADE[g]); coin.style.animationDelay = (0.15 + i * 0.18) + "s";
         m.appendChild(coin); m.appendChild(h("b", "", k.charAt(0).toUpperCase() + k.slice(1)));
-        m.appendChild(h("span", "", k === p.code ? "your aim" : ""));
+        m.appendChild(h("span", "", k === p.code ? "your best path" : ""));
         row.appendChild(m);
       });
       b.appendChild(row);
       FX.medals(row);                                                // they drop one at a time, gold last
-      b.appendChild(h("p", "s-sub s-center", "You aimed for " + p.name + ": " + p.what + "  Predictions right: " + r.whip_right + " of " + r.whip_judged +
-                                             " · promises kept " + r.kept_promises + ", broken " + r.broken_promises + " · Standing " + r.respect + " · Expertise " + r.expertise + "."));
+      b.appendChild(h("p", "s-sub s-center", "Your best path was " + p.name + ": " + p.what + "  Predictions right: " + r.whip_right + " of " + r.whip_judged +
+                                             " · promises kept " + r.kept_promises + ", broken " + r.broken_promises + " · Standing " + r.respect + "."));
       if (d.history && d.history.length > 1) b.appendChild(chart(d.history));
       if (d.clauses && d.clauses.length) b.appendChild(deeds(d.clauses));
       if (d.moments && d.moments.length) {
@@ -1094,11 +1113,12 @@
       });
       var n = (v.staff || []).length, full = n >= v.costs.staff_max;
       $("c-hire-note").textContent = (v.unlock.post ? "Posting and hiring advisers " + v.unlock.post.toLowerCase().replace("that opens", "open") + " " : "") +
-        n + " of " + v.costs.staff_max + " advisers. A new adviser starts as a junior and costs " + v.costs.hire + " Influence.";
+        n + " of " + v.costs.staff_max + " advisers. A new adviser starts as a junior and costs " + v.costs.hire + " Influence and an action. " +
+        "Posting an adviser to a delegation costs " + v.costs.post + " Influence for the travel; the delegation they leave notices.";
       var hr = $("c-hire-row"); hr.textContent = "";
       (v.staff_kinds || []).forEach(function (k) {
-        hr.appendChild(btn(k.name + " (" + v.costs.hire + " Influence)", "s-btn ghost small", function () { move({ do: "hire", kind: k.code }); },
-                           full || v.influence < v.costs.hire || v.phase !== "chapter" || !!v.unlock.hire));
+        hr.appendChild(btn(k.name + " (" + v.costs.hire + " Influence, " + v.costs.hire_ap + " action)", "s-btn ghost small", function () { move({ do: "hire", kind: k.code }); },
+                           full || v.influence < v.costs.hire || v.ap < v.costs.hire_ap || v.phase !== "chapter" || !!v.unlock.hire));
       });
     }
     function pins(v) {
