@@ -84,9 +84,12 @@
       var b = bs[n - 1]; if (b) { b.click(); return true; }
       return false;
     }
+    var spaceSkipped = false;                                        // a Space that finished a line: its key-up is swallowed too
+    document.addEventListener("keyup", function (e) { if (e.key === " " && spaceSkipped) { spaceSkipped = false; e.preventDefault(); } }, true);
     document.addEventListener("keydown", function (e) {
       if (e.ctrlKey || e.metaKey || e.altKey || typing(document.activeElement)) return;
-      var k = e.key.toLowerCase();
+      var k = e.key.toLowerCase(), G = window.socSession.guide;
+      if (k === " " && G && G.typing && G.typing()) { e.preventDefault(); spaceSkipped = true; G.skip(); return; }   // Space finishes a line being spoken, wherever focus is
       if (k === "f") { e.preventDefault(); toggleFull(); return; }
       if (k === "?" || (k === "/" && e.shiftKey)) { e.preventDefault(); c.open("s-keys"); return; }
       if (!$("s-walk").hidden) return;
