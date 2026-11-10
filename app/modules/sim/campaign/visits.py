@@ -164,6 +164,8 @@ def turn_start(scn, g):
     rng.shuffle(g["visits"])
     g["visits"].sort(key=lambda x: TIER.get(x["kind"], 2))
     most = rng.choice([2, 3, 3, 4]) + (1 if g.get("approach") == "envoy" else 0)
+    if g.get("question"):                                     # the President's question is this turn's interruption (Fable, 9c)
+        most = min(most, 2)
     g["visits"] = g["visits"][:max(most, sum(TIER.get(x["kind"]) == 0 for x in g["visits"]))]
     shown = {x.get("offer") for x in g["visits"]}
     g["offers"] = [o for o in g.get("offers", []) if o["id"] in shown]
