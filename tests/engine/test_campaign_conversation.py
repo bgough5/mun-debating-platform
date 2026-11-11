@@ -126,6 +126,10 @@ def test_every_bank_has_every_register_with_room_to_vary():
     assert all("{n}" in s for k in ("owed", "dislike") for ls in C.CONCERN[k].values() for s in ls)
     assert all("{label}" in s for ls in C.CONCERN["want"].values() for s in ls)
     assert all("red line" in s for ls in C.CONCERN["redline"].values() for s in ls)   # the term is always taught
+    for reg in VO.REGISTERS:                                     # the voice banks talks draw on most: six a slot
+        slots = [VO.BUT[reg], VO.STILL[reg], VO.GREET[reg], *VO.REACT[reg].values(), *VO.VERDICT[reg].values(),
+                 *VO.STANCE[reg].values(), *VO.RED[reg].values()]
+        assert all(len(set(x)) == len(x) >= 6 for x in slots), reg
 
 
 def test_a_talk_is_spoken_in_the_delegations_own_register(scn):
