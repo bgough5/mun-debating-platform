@@ -1010,3 +1010,72 @@ Open question: gold opens the next scenario, and it is now rare.
 - telegrams and the news arrive.
 
 Every effect shows something that happened in the game, the text a reader sees is always the plain value, and nothing plays when motion is off.
+
+## 35. The vote on the day (11 Nov 2026)
+
+From Ben's playtest of 10 Nov (item 10): votes were too easy to predict exactly. Measured first: on the two fictional scenarios the likely vote shown at the Summit's opening came true 86–92% of the time and the analyst bot's whip sheet was 90–95% right; on the six real-issue scenarios the hidden mood was so large (it scaled with the model's spread, up to 1.5) that even clear votes flipped 15–28% of the time with nothing to see. So the room was certain where Ben played and arbitrary elsewhere.
+
+**The rule now.** A delegation's vote is its position as you can see it, plus a hidden part made of two things:
+
+- its **mood** for the session (fixed at the start; an adviser in post there for a full turn, or its file with Read the room, learns it);
+- its **change of heart on the day**, drawn from the game's seeded counter when the Summit opens (`summit["day"]`), so a game replays the same way and `apply` stays pure.
+
+The hidden part is bounded by the delegation's **doubt** (`engine.doubt`), a width on the position scale:
+
+| What | Effect on doubt |
+|---|---|
+| Every delegation | `R["doubt"]` 0.6, up to 1.3 times that where the model itself is unsure of the country |
+| Goodwill that nothing binds (yours or a rival's, added together) | up to `R["doubt_talk"]` 0.6 more: talk is soft, and a delegation pulled both ways is the least settled |
+| Its own word (it sponsors your draft, signed a commitment, pledged, owes a favour, struck a deal) | half the base, and no talk term |
+| Floor | `R["doubt_min"]` 0.15: never nothing |
+
+A signatory only wants the draft debated, and a promise is your word to them, so neither binds. The hidden part can reach at most twice the doubt (mood 0.8 × 1.5 plus the day 0.6 × 1.33).
+
+**What the player is shown** (`engine.reading`, used by the tokens, the hover card, the delegation panel, talk answers, the caucus floor and the tug bar):
+
+| Reading | Meaning | Measured at the roll call (3,648 votes) |
+|---|---|---|
+| For / Against / Abstaining (firm) | the hidden part cannot reach the line | 100% right (1,172 of 1,172) |
+| Leaning for / against / to abstain | it probably holds | 87.5% right |
+| Wavering | within a quarter of its reach of the line | 49% right |
+
+A firm vote can therefore only change for a reason the player can see: the text changes, goodwill moves (a rival's work, the caucus, the debate), a position shifts, or the player's own vote. Where the player knows the mood, the reading includes it and only the chance on the day is left. The tug bar adds how many votes "could still move".
+
+Also: in an unmoderated caucus each rival now works one of the three delegations nearest the line (it was any delegation at random). The whip dial (`chance`) samples the same hidden parts. The debrief's "mood" column is the whole hidden part.
+
+**Measured** (bots, all eight scenarios; before is `main` at 59dee45):
+
+| | Before | After |
+|---|---|---|
+| Analyst's whip accuracy, all scenarios (64 games) | 0.735 | 0.741 |
+| Analyst's whip accuracy, Veloria / Comet Halcyon (8 games each) | 0.948 / 0.904 | 0.917 / 0.890 |
+| Perfect whip sheets, Veloria / Comet Halcyon | 4 of 8 / 4 of 8 | 3 of 8 / 3 of 8 |
+| Analyst's Kingmaker points, mean / median (about 440 games) | 81.9 / 88 | 83.0 / 89 |
+| Analyst's Kingmaker gold under the 10 Nov bands | 19% | 15% |
+| Clear votes (0.6 or more past the line at the Summit's opening) that flipped | 15.1% | not comparable: firm readings at the roll call, 0% |
+
+The honest reading of these numbers: across all scenarios a whip sheet is about as hard as it was (the real-issue scenarios lost arbitrary flips and gained wavering middles); on the fictional scenarios it is a little harder, and no longer guaranteed, but most of those rooms stand far from the line, so most of the sheet is still firm. The eight-game figures are small samples.
+
+**Bands re-measured** (2,128 games, same method as section 34):
+
+| Path | Bronze | Silver | Gold | Was | Note |
+|---|---|---|---|---|---|
+| Mandate | 93 | 96 | 100 | 92, 96, 100 | |
+| Consensus | 85 | 92 | 100 | 85, 92, 100 | the rule gave silver 99 (the spread fell to 13.6, just under the cap); held at 92 so silver doesn't sit one point under gold |
+| Architect | 49 | 73 | 100 | 54, 79, 100 | measured on random play, which varies run to run (45, 69 on `main` before this change); the rule gave gold 97, held at 100 because gold is a perfect score |
+| Kingmaker | 89 | 94 | 100 | 88, 94, 100 | |
+| Ambassador | 80 | 92 | 100 | 80, 94, 100 | |
+
+**Medal rates** (best of the five paths; before is `main` under the 10 Nov bands, after is this change under the new bands):
+
+| Bot style | Gold | Silver+ | Bronze+ | Kingmaker alone: gold, silver+, bronze+ |
+|---|---|---|---|---|
+| Analyst | 20% → 16% | 40% → 43% | 79% → 81% | 19%, 30%, 51% → 15%, 32%, 51% |
+| Broker | 3% → 3% | 26% → 28% | 71% → 77% | none (it keeps no whip sheet) |
+| Drafter | 2% → 3% | 13% → 16% | 54% → 59% | none |
+| Hardliner | 2% → 2% | 21% → 21% | 56% → 53% | none |
+| Random | 3% → 4% | 21% → 32% | 63% → 69% | none |
+
+Random play's silver rose because the Architect and Ambassador silver bands fell, not because of the votes.
+
+Not measured: a person's play. A player can mark the sheet up to the roll call; the 87.5% and 49% above are the ceiling for doing that with the readings alone.

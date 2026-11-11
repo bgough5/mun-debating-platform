@@ -41,9 +41,10 @@ R = {   # every number the balance harness tunes lives here
     # medal bands (Ben, 9 Nov): measured over 2,169 bot games (tools/campaign_sim.py, 10 Nov), on each path from the bot
     # style that plays that path best: bronze at its median, silver one standard deviation above, gold two above, capped
     # at the highest score seen and rounded (silver halfway when the cap brings it level with gold). Random play earns
-    # gold in 3% of games, competent play in 2-20%.
-    "bands": {"mandate": (92, 96, 100), "consensus": (85, 92, 100), "architect": (54, 79, 100),
-              "kingmaker": (88, 94, 100), "ambassador": (80, 94, 100)},
+    # gold in 4% of games, competent play in 2-16%. Re-measured on 11 Nov over 2,128 games after the vote on the day
+    # (section 35). Gold stays a perfect score on every path; Consensus silver is held at 92 (the rule gave 99).
+    "bands": {"mandate": (93, 96, 100), "consensus": (85, 92, 100), "architect": (49, 73, 100),
+              "kingmaker": (89, 94, 100), "ambassador": (80, 92, 100)},
 }
 
 
