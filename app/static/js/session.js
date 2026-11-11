@@ -493,7 +493,7 @@
         }
         box.appendChild(c); return;
       }
-      fact("On the draft", d.est === "yes" ? "Likely for" : d.est === "no" ? "Likely against" : d.est ? "Unsure" : "No draft yet");
+      fact("On the draft", d.est_word || (d.est === "yes" ? "Likely for" : d.est === "no" ? "Likely against" : d.est ? "Unsure" : "No draft yet"));
       fact("Relationship", relation(d.relation));
       if ((d.commitments || []).length) fact("Commitments", d.commitments.join("; "));
       if (d.deal && d.deal.asks) fact("Wants in a deal", d.deal.asks.map(function (k) { return ASK[k]; }).join(", "));
@@ -502,7 +502,7 @@
       if (d.signed) flags.push("signed as your " + d.signed);
       if (d.predicted) flags.push("you predicted: " + d.predicted);
       if (flags.length) fact("Also", flags.join("; "));
-      c.appendChild(h("p", "s-status", (d.est === "yes" ? "Likely for" : d.est === "no" ? "Likely against" : d.est ? "Unsure" : "No draft yet") +
+      c.appendChild(h("p", "s-status", (d.est_word || (d.est === "yes" ? "Likely for" : d.est === "no" ? "Likely against" : d.est ? "Unsure" : "No draft yet")) +
         " · " + relation(d.relation).toLowerCase() + ((d.commitments || []).length ? " · committed" : "")));
       var grid = h("div", "s-acts-grid"), noAp = !v.ap;
       grid.appendChild(TALK.pitchBox(v, d, picked));
@@ -662,7 +662,7 @@
         q.appendChild(h("cite", "", "The delegate of " + (v.tokens[heardIso] || {}).name + (out.red_line ? " (a red line: they barely moved)" : "")));
         var landed = TALK.pitchAnswer(out); if (landed) q.appendChild(h("span", "s-intel", "Your pitch: " + landed));
         if (out.leans) q.appendChild(h("span", "s-intel", "Leaning towards each rival: " + Object.keys(out.leans).map(function (k) { return k + " " + (out.leans[k] > 0.3 ? "warm" : out.leans[k] < -0.3 ? "cold" : "neutral"); }).join(", ") + "."));
-        if (out.would_vote) q.appendChild(h("span", "s-intel", "On the whole text as it stands, it would vote " + out.would_vote + "."));
+        if (out.would_vote) q.appendChild(h("span", "s-intel", "On the whole text as it stands: " + (out.would_says || out.would_vote) + "."));
         restart(q, "s-in");
       }
       if (out && out.file) showFile(out.file);
@@ -701,7 +701,7 @@
         var nowLean = t.classList.contains("lean-for") ? "for" : t.classList.contains("lean-against") ? "against" : "";
         if (prev && nowLean !== wasLean) setTimeout(function () { FX.flip(t); }, 200 + Math.random() * 500);   // the token turns over
         var line = t.querySelector(".b-line");
-        if (line) line.textContent = d.you ? "You" : d.rival ? "Rival" : d.est === "yes" ? "For" : d.est === "no" ? "Against" : d.est ? "Unsure" : "";
+        if (line) line.textContent = d.you ? "You" : d.rival ? "Rival" : d.est_sure === "open" ? "Wavering" : d.est_sure === "leaning" ? (d.est === "yes" ? "Leaning for" : d.est === "no" ? "Leaning against" : "Unsure") : d.est === "yes" ? "For" : d.est === "no" ? "Against" : d.est ? "Abstaining" : "";
       });
       // spheres of influence: like borders on a campaign map, the land of each delegation takes the colour of whoever it leans to
       Object.keys(lands).forEach(function (iso) {
@@ -1069,7 +1069,8 @@
       var bar = box.querySelectorAll(".s-tug-bar i"), of = Math.max(1, t.of);
       bar[0].style.width = (100 * t.yes / of) + "%"; bar[1].style.width = (100 * t.abstain / of) + "%"; bar[2].style.width = (100 * t.no / of) + "%";
       var veto = /vetoed by ([^–—;.]+)/.exec(t.summary || "");
-      $("s-tug-n").textContent = t.yes + " yes · " + t.abstain + " abstain · " + t.no + " no" + (veto ? " · vetoed by " + veto[1].trim() : "");
+      $("s-tug-n").textContent = t.yes + " yes · " + t.abstain + " abstain · " + t.no + " no" + (veto ? " · vetoed by " + veto[1].trim() : "") +
+        (t.unsure && !t.final ? " · " + t.unsure + " could still move" : "");
       var st = $("s-tug-stamp");
       st.textContent = t.passed ? "Would pass" : "Would fail"; st.className = "s-tug-stamp " + (t.passed ? "pass" : "fail");
       var ai = $("s-tug-aims"); if (ai) ai.textContent = t.aims !== undefined ? "Your instructions: " + t.aims + " of 3 in the text" : "";

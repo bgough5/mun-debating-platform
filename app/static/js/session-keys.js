@@ -26,7 +26,7 @@
       if (t.you) lines.push("Your delegation");
       else if (t.rival) lines.push(t.truce ? "Rival, at peace with you" : "Rival delegation");
       else {
-        lines.push(t.est === "yes" ? "Likely for your draft" : t.est === "no" ? "Likely against your draft" : t.est ? "Unsure about your draft" : "No draft yet");
+        lines.push(t.est_word ? "On your draft: " + t.est_word.toLowerCase() : t.est === "yes" ? "Likely for your draft" : t.est === "no" ? "Likely against your draft" : t.est ? "Unsure about your draft" : "No draft yet");
         if (t.relation !== undefined) lines.push("Relationship: " + REL[t.relation + 2]);
         if (t.listens_to && t.listens_to.length) lines.push("Listens to " + t.listens_to.join(" and ").toLowerCase());
         if (t.talked && t.talked.length) lines.push("You've talked " + t.talked.map(function (k) { return (v.args[k] || {}).name; }).join(", ").toLowerCase());

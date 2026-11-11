@@ -94,7 +94,7 @@ def a_lobby(scn, g, a):
         out["leans"] = {scn.member(rv["iso3"]).name: round(E.lean(scn, g, rv["iso3"], iso), 2) for rv in g["rivals"]}
     if g["length"] != "quick" and g["chapter"] >= 3 and E.final_clause(g)["tags"]:
         rd = E.reading(scn, g, iso)
-        out["would_vote"], out["would_sure"] = rd["vote"], rd["sure"]
+        out["would_vote"], out["would_sure"], out["would_says"] = rd["vote"], rd["sure"], E.reading_words(rd)["says"]
     return out
 
 
@@ -216,7 +216,7 @@ def a_talk(scn, g, a):
         out["leans"] = {scn.member(rv["iso3"]).name: round(E.lean(scn, g, rv["iso3"], iso), 2) for rv in g["rivals"]}
     if (choice == "ask" or (g["length"] != "quick" and g["chapter"] >= 3)) and E.final_clause(g)["tags"]:
         rd = E.reading(scn, g, iso)
-        out["would_vote"], out["would_sure"] = rd["vote"], rd["sure"]
+        out["would_vote"], out["would_sure"], out["would_says"] = rd["vote"], rd["sure"], E.reading_words(rd)["says"]
     return out
 
 

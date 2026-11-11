@@ -453,7 +453,7 @@ def stance(scn: Scenario, g: dict, actor: str, clause: dict) -> int:
 # bounded by the delegation's doubt, which is small for one that stands on its own position or is bound by a signature,
 # a promise or a deal, and large for one held only by goodwill or pulled both ways. So a clear vote can only change for
 # a reason the player can see, and a vote near the line is never certain.
-R.update({"doubt": 0.45, "doubt_model": 0.3, "doubt_talk": 0.55, "doubt_bound": 0.5, "doubt_min": 0.15,
+R.update({"doubt": 0.6, "doubt_model": 0.3, "doubt_talk": 0.6, "doubt_bound": 0.5, "doubt_min": 0.15,
           "mood_part": 0.8, "mood_clip": 1.5, "day_part": 0.6, "day_clip": 1.33, "sure_lean": 0.25})
 
 
@@ -524,6 +524,19 @@ def latent(scn: Scenario, g: dict, iso: str, clause: dict, stances: dict | None 
     if f:                                                     # "Encourages" softens, "Urges" sharpens (the Summit, 8 Nov)
         x = x * 0.7 + 0.25 if f < 0 else x * 1.3 - 0.15
     return x
+
+
+SURE_WORD = {"firm": {"yes": "For", "no": "Against", "abstain": "Abstaining"},
+             "leaning": {"yes": "Leaning for", "no": "Leaning against", "abstain": "Leaning to abstain"},
+             "open": {"yes": "Wavering (for, just)", "no": "Wavering (against, just)", "abstain": "Wavering (abstaining for now)"}}
+SURE_SAYS = {"firm": "firmly {v}", "leaning": "leaning {v}, and it could still move", "open": "it could go either way ({v} for now)"}
+
+
+def reading_words(rd: dict) -> dict:
+    """A reading in words: a label for a token or a fact line, and a phrase for "On the whole text as it stands: ..."."""
+    if not rd.get("vote"):
+        return {"word": None, "says": None}
+    return {"word": SURE_WORD[rd["sure"]][rd["vote"]], "says": SURE_SAYS[rd["sure"]].format(v=rd["vote"])}
 
 
 def reading(scn: Scenario, g: dict, iso: str, clause: dict | None = None, stances: dict | None = None) -> dict:
@@ -894,7 +907,7 @@ def a_lobby(scn, g, a):
         out["leans"] = {scn.member(r["iso3"]).name: round(lean(scn, g, r["iso3"], iso), 2) for r in g["rivals"]}
     if g["length"] != "quick" and g["chapter"] >= 3 and final_clause(g)["tags"]:   # in Sponsors: how it would vote now
         rd = reading(scn, g, iso)
-        out["would_vote"], out["would_sure"] = rd["vote"], rd["sure"]
+        out["would_vote"], out["would_sure"], out["would_says"] = rd["vote"], rd["sure"], reading_words(rd)["says"]
     return out
 
 

@@ -178,7 +178,7 @@
         un.appendChild(h("p", "s-small", "Leave your seat: a quiet word with up to two delegations on the floor."));
         var pick = h("div", "s-floor"), chosen = [];
         S.floor.forEach(function (f) {
-          var b = h("button", "s-chip", f.name + (f.lean ? " · " + (f.lean === "yes" ? "for" : f.lean === "no" ? "against" : "undecided") : "")); b.type = "button";
+          var b = h("button", "s-chip", f.name + (f.lean ? " · " + (f.word ? f.word.toLowerCase() : f.lean === "yes" ? "for" : f.lean === "no" ? "against" : "undecided") : "")); b.type = "button";
           b.setAttribute("aria-pressed", "false");
           b.addEventListener("click", function () {
             var i = chosen.indexOf(f.iso3);

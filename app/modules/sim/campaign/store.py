@@ -294,6 +294,7 @@ def view(scn: Scenario, g: dict) -> dict:
              "studied_by": next((a["name"] for a in g.get("staff", []) if a.get("post") == iso), None),
              "sphere": _sphere(scn, g, iso),
              "est": rd["vote"], "est_sure": rd["sure"],            # how it would vote as far as you can tell, and how sure that is
+             "est_word": E.reading_words(rd)["word"],
              "deal_vote": (g.get("deal_votes") or {}).get(iso)}
         t["dossier"] = X.profile(iso)
         t["relation"] = VI.relation(g, iso)
@@ -544,7 +545,7 @@ def _summit_view(scn: Scenario, g: dict) -> dict | None:
         out["topics"] = [{"code": t, "label": scn.tags[t], "mine": SM._my_view(g, t)} for t in SM.caucus_topics(scn, g)]
         final = E.final_clause(g)
         out["floor"] = sorted(({"iso3": i, "name": names[i], "lean": E.reading(scn, g, i, final)["vote"] if final["tags"] else None,
-                                "sure": E.reading(scn, g, i, final)["sure"] if final["tags"] else None}
+                                "word": E.reading_words(E.reading(scn, g, i, final))["word"] if final["tags"] else None}
                                for i in scn.isos if i not in E._others(g) and i != g["iso3"]), key=lambda x: x["name"])
     if s["step"] == "amendments":
         am = s.get("cur")
