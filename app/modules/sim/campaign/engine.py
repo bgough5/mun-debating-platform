@@ -43,8 +43,8 @@ R = {   # every number the balance harness tunes lives here
     # at the highest score seen and rounded (silver halfway when the cap brings it level with gold). Random play earns
     # gold in 4% of games, competent play in 2-16%. Re-measured on 11 Nov over 2,128 games after the vote on the day
     # (section 35). Gold stays a perfect score on every path; Consensus silver is held at 92 (the rule gave 99).
-    "bands": {"mandate": (93, 96, 100), "consensus": (85, 92, 100), "architect": (49, 73, 100),
-              "kingmaker": (89, 94, 100), "ambassador": (80, 92, 100)},
+    "bands": {"mandate": (93, 96, 100), "consensus": (85, 92, 100), "architect": (49, 79, 100),
+              "kingmaker": (89, 94, 100), "ambassador": (80, 94, 100)},   # Ben, 11 Nov: the higher silver kept on these two
 }
 
 
@@ -1121,6 +1121,8 @@ def a_favour(scn, g, a):
 
 def a_whip(scn, g, a):
     iso = a.get("iso3")
+    if g["phase"] != "chapter":
+        raise GameError("The whip sheet is locked: the Summit has opened.")
     _country(scn, g, iso)
     if a.get("vote") not in VOTES:
         raise GameError("Predict yes, no or abstain.")
@@ -2242,6 +2244,8 @@ from app.modules.sim.campaign import summit as SM  # noqa: E402  (the Summit as 
 def a_mark(scn, g, a):
     """The whip sheet: note how you think a delegation will vote on a clause (or on the final text). Free."""
     iso, col, vote = a.get("iso3"), a.get("clause") or "final", a.get("vote")
+    if g["phase"] != "chapter":                               # Ben, 11 Nov: the sheet is fixed when the Summit opens
+        raise GameError("The whip sheet is locked: the Summit has opened.")
     if not scn.member(iso) or iso == g["iso3"]:
         raise GameError("Choose another delegation.")
     if vote not in (*VOTES, None, ""):

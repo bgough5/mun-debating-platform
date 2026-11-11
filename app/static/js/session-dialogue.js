@@ -163,6 +163,7 @@
     function sheet(v) {
       var box = $("c-sheet"); if (!box) return;
       box.textContent = "";
+      if (v.phase !== "chapter") box.appendChild(h("p", "s-small s-warnline", "Locked: your predictions were fixed when the Summit opened."));
       var cols = v.draft.map(function (cl, i) { return [cl.id, "C" + (i + 1)]; }).concat([["final", "Whole"]]);
       var t = h("table", "s-sheet-t"), hr = h("tr");
       hr.appendChild(h("th", "", "Delegation"));
@@ -176,6 +177,7 @@
             var cur = ((v.sheet || {})[col[0]] || {})[iso] || "";
             var td = h("td"), b = h("button", "s-mark " + (cur || "none"), SHORT[cur]); b.type = "button";
             b.setAttribute("aria-label", v.tokens[iso].name + ", " + (col[0] === "final" ? "whole resolution" : "clause " + col[1].slice(1)) + ": " + (cur || "not marked"));
+            if (v.phase !== "chapter") b.disabled = true;               // locked when the Summit opens (Ben, 11 Nov)
             b.addEventListener("click", function () { c.move({ do: "mark", iso3: iso, clause: col[0], vote: CYCLE[cur] || null }); A.play("tick"); });
             td.appendChild(b); tr.appendChild(td);
           });

@@ -86,3 +86,14 @@ def test_no_line_repeats_while_fresh_ones_remain(scn):
     rng = random.Random(1)
     got = [VO.pick(g, "test", bank, rng) for _ in range(4)]
     assert sorted(got) == bank                                                    # all four before any repeats
+
+
+def test_the_whip_sheet_locks_when_the_summit_opens(scn):
+    """Ben, 11 Nov: predictions are fixed when the Summit opens, so its debate and caucus can catch you out."""
+    g = E.new_game(scn, scn.isos[0], seed=6)
+    iso = _free(scn, g)[0]
+    g, _ = E.apply(scn, g, {"do": "mark", "iso3": iso, "clause": "final", "vote": "yes"})
+    assert g["whip"][iso] == "yes"
+    g["phase"] = "summit"
+    with pytest.raises(E.GameError, match="locked"):
+        E.apply(scn, g, {"do": "mark", "iso3": iso, "clause": "final", "vote": "no"})

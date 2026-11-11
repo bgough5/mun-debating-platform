@@ -524,7 +524,7 @@
       }
       var pr = h("div", "s-predict wide"); pr.appendChild(h("span", "", "Your whip sheet, whole text (free):"));
       ["yes", "abstain", "no"].forEach(function (x) {
-        var b = btn(x, "s-chip", function () { move({ do: "mark", iso3: picked, clause: "final", vote: d.predicted === x ? null : x }); });
+        var b = btn(x, "s-chip", function () { move({ do: "mark", iso3: picked, clause: "final", vote: d.predicted === x ? null : x }); }, v.phase !== "chapter");   // locked at the Summit
         b.setAttribute("aria-pressed", String(d.predicted === x)); pr.appendChild(b);
       });
       grid.appendChild(pr);
