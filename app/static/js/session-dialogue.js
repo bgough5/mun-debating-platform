@@ -230,8 +230,9 @@
       $("s-proc-h").textContent = out.right ? "Correct" : "Not quite";
       $("s-proc-p").textContent = (out.right ? "" : "The answer: " + out.answer + ". ") + out.why;
       var row = $("s-proc-opts"); row.textContent = "";
-      var ok = h("button", "s-btn", "Thank you, Mr President"); ok.type = "button";
-      ok.addEventListener("click", function () { c.close("s-proc"); showing = null; setTimeout(next, 400); });
+      var v = c.view(), over = v && v.phase === "done";          // the answer cost your last Standing on Hard: the session ends
+      var ok = h("button", "s-btn", over ? "See what happens" : "Thank you, Mr President"); ok.type = "button";
+      ok.addEventListener("click", function () { c.close("s-proc"); showing = null; if (over) c.result(v); else setTimeout(next, 400); });
       row.appendChild(ok); A.play(out.right ? "chime" : "tick");
       reactIn(face, null, out.right ? "nod" : "shake");
     }

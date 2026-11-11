@@ -868,8 +868,11 @@ def apply(scn: Scenario, game: dict, action: dict) -> tuple[dict, dict]:
         raise GameError("That isn't something you can do now.")
     standing = g["respect"]
     out = handler(scn, g, action) or {}
-    if g["respect"] <= 0 < standing and g["phase"] != "done" and not g.get("recall"):
-        _recall(scn, g)
+    if g["respect"] <= 0 and g["phase"] != "done":           # Standing at 0 always has a consequence (Ben, 11 Nov: a wrong
+        if not g.get("recall"):                               # answer at 1 Standing left the game stuck)
+            _recall(scn, g)
+        else:                                                 # already recalled this turn: it can't fall further
+            g["respect"] = g["capital"] = 1
     g["stats"][do] = g["stats"].get(do, 0) + 1
     if isinstance(action.get("iso3"), str) and do not in ("post", "end_turn"):
         g.setdefault("touched", []).append(action["iso3"])

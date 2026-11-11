@@ -308,7 +308,7 @@
           return;
         }
         draw(r.view, r.out, action);
-        if (r.view.phase === "done") setTimeout(function () { result(r.view); }, action.do === "statement" ? 600 : 1800);
+        if (r.view.phase === "done" && action.do !== "answer") setTimeout(function () { result(r.view); }, action.do === "statement" ? 600 : 1800);   // an answer's window leads there itself
         if (action.do === "end_turn") A.play("gavel"); else if (SOUND[action.do]) A.play(SOUND[action.do]);
       }).catch(function (e) { sayError(e.message); A.play("tick"); });
     }

@@ -778,3 +778,29 @@ def test_keyboard_shortcuts_and_full_screen(browser, live):
     assert page.locator("[data-set='fullscreen']").count() == 2
     assert not errors, errors
     ctx.close()
+
+
+def test_how_it_works_tours_every_mechanic(browser, live):
+    """Ben, 11 Nov: a brief, skippable tour of every mechanic, one card each, from the title menu (and once before a
+    first game); the whip sheet explains itself."""
+    ctx = browser.new_context(viewport={"width": 1366, "height": 657})
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(live.url + "/session")
+    page.click("button[data-primer]")
+    page.wait_for_selector("#s-primer:not([hidden])")
+    n = page.evaluate("window.socSession.primer.cards")
+    assert n >= 10 and page.inner_text("#s-primer-n") == f"1 of {n}"
+    assert not axe(page, "session_primer")
+    for _ in range(n - 1):
+        page.keyboard.press("ArrowRight")
+    assert page.inner_text("#s-primer-n") == f"{n} of {n}" and page.text_content("#s-primer-next") == "Let's begin"
+    assert "Medals" in page.inner_text("#s-primer-h")
+    page.keyboard.press("ArrowLeft")
+    page.keyboard.press("Escape")                                                # skippable at any point
+    assert page.is_hidden("#s-primer") and page.evaluate("localStorage.getItem('soc-session-primer-seen')") == "1"
+    html = page.request.get(live.url + "/session/guest/comet_halcyon?slot=0").text()
+    assert "A whip counts the votes before they are cast" in html and "locks when the Summit opens" in html
+    assert not errors, errors
+    ctx.close()

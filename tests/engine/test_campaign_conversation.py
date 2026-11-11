@@ -97,3 +97,22 @@ def test_the_whip_sheet_locks_when_the_summit_opens(scn):
     g["phase"] = "summit"
     with pytest.raises(E.GameError, match="locked"):
         E.apply(scn, g, {"do": "mark", "iso3": iso, "clause": "final", "vote": "no"})
+
+
+def test_a_wrong_answer_at_one_standing_never_strands_the_game(scn):
+    """Ben, 11 Nov: a procedure question answered wrongly with 1 Standing left broke the game."""
+    from app.modules.sim.campaign import content as K
+    q = K.QUESTIONS[0]
+    wrong = (q["answer"] + 1) % len(q["options"])
+    for diff in ("standard", "hard"):
+        g = E.new_game(scn, scn.isos[0], difficulty=diff, seed=3)
+        g["respect"], g["question"] = 1, q["id"]
+        g, _ = E.apply(scn, g, {"do": "answer", "option": wrong})
+        if diff == "hard":
+            assert g["phase"] == "done" and g["result"]["recalled"]
+        else:
+            assert g["recall"] == 1 and g["respect"] >= 1                         # recalled for a turn, never stuck at 0
+    g = E.new_game(scn, scn.isos[0], seed=3)
+    g["respect"], g["recall"], g["question"] = 1, 1, q["id"]                       # already recalled this turn
+    g, _ = E.apply(scn, g, {"do": "answer", "option": wrong})
+    assert g["respect"] == 1 and g["phase"] == "chapter"

@@ -1635,3 +1635,18 @@
 .s-talk-group .s-btn span { font: 400 13px/1.3 var(--book); text-transform: none; letter-spacing: 0; }
 .s-talk-group .s-btn.known b::after { content: " ✓"; color: var(--green); }
 .s-talk-group .s-btn.used { opacity: .8; }
+/* the whip sheet explained (11 Nov) */
+.s-whip-how { margin: 4px 0 10px; padding-left: 18px; font-size: 14px; line-height: 1.4; }
+.s-whip-how li { margin: 2px 0; }
+/* How it works (11 Nov): one card per mechanic */
+.s-overlay.s-primer { z-index: 55; }
+.s-primer[hidden] { display: none; }
+.s-primer-doc { width: 640px; }
+.s-primer-doc h2 { margin: 2px 0 8px; }
+.s-primer-p { font-size: 18px; line-height: 1.5; min-height: 5.4em; margin: 0 0 12px; }
+.s-primer-dots { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0 0 14px; }
+.s-primer-dots li { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--gilt-dk); }
+.s-primer-dots li.done { background: var(--gilt-md); }
+.s-primer-dots li.on { background: var(--gilt); box-shadow: 0 0 0 2px var(--gilt-hi); }
+.s-primer-row { align-items: center; gap: 10px; }
+.s-primer-row #s-primer-n { margin-right: auto; }
