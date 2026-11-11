@@ -615,3 +615,272 @@ STATEMENT = {
                  "We are watching one thing in this draft: whether it {x}."],
         "truce": ["We have reached an understanding on this text, and we will support it."]},
 }
+
+
+# ================================================================ more lines (12 Nov)
+# The banks that talks draw on most, widened to six lines a slot so `pick` has room before anything repeats. They are
+# added to the banks above (at the end, so the lines a saved game has already heard keep their numbers). Same rules.
+
+_REACT = {
+    "measured": {
+        "strong": ["That is precisely the question my capital asks. Continue.", "You are on firm ground there. Please go on.",
+                   "That argument bears directly on the text. I am listening."],
+        "some": ["That is relevant, though it is not central for us.", "I can note that. It will not decide the matter.",
+                 "There is a point there. I would not rest much on it."],
+        "weak": ["That reasoning does not fit our instructions.", "I do not find that argument in my brief.",
+                 "That is beside the point, as we read the text."]},
+    "warm": {
+        "strong": ["Oh, that's music to our ears. Do go on.", "You've put your finger on it, my friend.",
+                   "That's close to our hearts. Tell me more."],
+        "some": ["That's a kind thought, and partly right for us.", "We'd agree with some of that, certainly.",
+                 "It helps a little. Go on."],
+        "weak": ["Bless you for trying, but that isn't our worry.", "I can't honestly say that touches us.",
+                 "That one doesn't speak to us, I'm sorry to say."]},
+    "blunt": {
+        "strong": ["Yes. That one matters to us. Go on.", "That's what I wanted to hear. More.", "Right. Now you have my attention."],
+        "some": ["It's something. Not much.", "All right. That's a small plus.", "Could matter. Depends what comes with it."],
+        "weak": ["Doesn't move us.", "Try a different one.", "That's nothing to us."]},
+    "grave": {
+        "strong": ["That speaks to my government's central concern. Go on.", "You touch on a matter of weight for us. Continue.",
+                   "My capital will wish to hear more of that."],
+        "some": ["It is a consideration. It is not the chief one.", "My government would grant you that much.",
+                 "The point is taken. It settles little."],
+        "weak": ["My government attaches no weight to that.", "That argument is of small interest to my capital.",
+                 "You will not move my government on that ground."]},
+    "urgent": {
+        "strong": ["Yes, yes. That is what keeps us awake. Go on.", "You have named the very thing we fear. Continue.",
+                   "That is our whole case, Ambassador. Please go on."],
+        "some": ["It matters, yes. It is not what frightens us most.", "We care about that. We care about other things more.",
+                 "That helps a little. Our need is greater."],
+        "weak": ["That does nothing for the people we answer to.", "We cannot spend time on that, I'm afraid.",
+                 "That is not the danger we came here about."]},
+    "guarded": {
+        "strong": ["That's one my capital asks about. Go on.", "Now that I can report with interest. Continue.",
+                   "Hm. You're warmer than you know. Go on."],
+        "some": ["It may count for something. I can't say how much.", "I'll note it. No more than that.",
+                 "There's a little in that for us."],
+        "weak": ["That won't mean much at home.", "I can't do anything with that.", "No. That isn't one of ours."]},
+}
+
+_VERDICT = {
+    "measured": {
+        "strong": ["Your argument was precise, and it met our instructions.", "I can report that case as it stands. It was sound.",
+                   "The case was made with care, and it holds."],
+        "some": ["There were points of merit in what you said.", "Your case was sound in places.",
+                 "I have noted the stronger parts of that."],
+        "weak": ["That reasoning does not meet our concerns.", "I cannot report that the case was persuasive.",
+                 "The argument did not address our instructions."]},
+    "warm": {
+        "strong": ["Oh, well said. My capital will love that.", "You made that case beautifully, my friend.",
+                   "I couldn't have put our own case better."],
+        "some": ["There was a good deal in that for us.", "Some of that touched us, I'll admit.",
+                 "You got part of the way to our hearts."],
+        "weak": ["It was kindly put, but it missed us.", "I wanted to be convinced, and I wasn't.",
+                 "That didn't speak to our worries, I'm afraid."]},
+    "blunt": {
+        "strong": ["Strong case. I can sell that at home.", "That was worth the time.", "Good pitch. It lands."],
+        "some": ["Bits of that were worth hearing.", "Not bad. Not enough on its own.", "There's something there to work with."],
+        "weak": ["That was the wrong pitch.", "Nothing in that for us.", "That one fell flat."]},
+    "grave": {
+        "strong": ["That was a serious case, seriously made.", "My government will find much to respect in that.",
+                   "You have given my capital reason to listen."],
+        "some": ["Parts of your case merit my government's attention.", "You made some points my capital will note.",
+                 "It was not without weight."],
+        "weak": ["That case does not meet my government's concerns.", "I cannot commend that argument to my capital.",
+                 "You have not given my government a reason."]},
+    "urgent": {
+        "strong": ["Yes. That is what we needed to hear said.", "You made our case as if it were your own.",
+                   "That gives us real hope, Ambassador."],
+        "some": ["Part of that matters to us, truly.", "You came close to what we need.", "There is help for us in some of that."],
+        "weak": ["That does not reach the heart of our trouble.", "We hoped for more than that.",
+                 "That was not about the danger we face."]},
+    "guarded": {
+        "strong": ["That was better than I expected. I'll say so at home.", "A strong case. I don't say that often.",
+                   "I can report that one well."],
+        "some": ["Some of that may be useful to me.", "I'll note the better parts.", "There was a little there worth reporting."],
+        "weak": ["That won't carry far at home.", "I've little to report from that.", "I don't think that moved anything."]},
+}
+
+_BUT = {
+    "measured": ["Our objection to the wording stands, even so.", "The draft itself still presents a difficulty, however.",
+                 "None of that cures the defect we see in the text."],
+    "warm": ["Sadly, the draft still worries us.", "I wish that settled our trouble with the text. It doesn't.",
+             "But the text is still hard for us, I'm afraid."],
+    "blunt": ["The draft still hurts us, though.", "Doesn't change the text. That's the trouble.",
+              "Still, the draft is the sticking point."],
+    "grave": ["My government's objection to the text is unchanged, however.", "The draft remains unacceptable in parts, nonetheless.",
+              "That does not lessen our concern at the text."],
+    "urgent": ["But the draft would still harm us as it stands.", "Even so, the text leaves our fears unanswered.",
+               "The danger in this draft is still there, though."],
+    "guarded": ["The text is still a difficulty, though. I can say that.",
+                "Even so, I can't report that the draft is any easier for us.",
+                "It doesn't shift our trouble with the draft, I'm afraid."],
+}
+
+_STILL = {
+    "measured": ["The draft, however, meets the aims in our instructions.", "Fortunately the text serves our interests on its own terms.",
+                 "Our goals are met by the text itself, in any case."],
+    "warm": ["Never mind: the draft gives us what we need.", "Luckily for us both, the text suits us nicely.",
+             "But the draft works for us, so all is well."],
+    "blunt": ["Doesn't matter. The draft meets our needs.", "Still, the text suits us fine.",
+              "The draft serves our interests. That's enough."],
+    "grave": ["The draft, nonetheless, serves my government's interests.", "The text meets our aims, however, and that is what counts.",
+              "My government's purposes are served by the draft as it stands."],
+    "urgent": ["But the text gives our people what they need.", "Still, this draft answers our problem, argument or no argument.",
+               "Even so, the draft meets the need that brought us here."],
+    "guarded": ["The draft suits us anyway. I can say that.", "As it happens, the text meets our needs.",
+                "Still, the draft serves our interests, so I shan't complain."],
+}
+
+_STANCE = {
+    "measured": {
+        2: ["Our support is settled, and we shall state it in the debate.",
+            "We are in favour without reservation, and will say so from our seat.",
+            "My instructions are to support you, on the record and in full."],
+        1: ["We are inclined to support you. The wording needs some attention.", "Our support is likely, given a few drafting changes.",
+            "We lean towards yes. Certain phrases still need work."],
+        0: ["My instructions are not final. An abstention cannot be excluded.", "We have not settled our position. We may abstain.",
+            "Our vote is undecided. It could go either way, or to an abstention."],
+        -1: ["The text as it is moving raises real concerns for us.", "We have reservations, and they are growing.",
+             "Our difficulty with this draft is considerable."],
+        -2: ["Our instructions are to vote against. They are not open to me.", "We oppose this text, and we will record that vote.",
+             "My delegation cannot vote for the text. That is final."]},
+    "warm": {
+        2: ["You have all our support, and we'll say it loudly in the debate.",
+            "We're with you, heart and soul. We'll speak up when the time comes.", "Our vote is yours, my friend, and our voice too."],
+        1: ["We're leaning your way. A few small changes would settle it.", "I think we can support you. The text just needs a little work.",
+            "We'd like to be on your side. Help us with a few changes."],
+        0: ["We're truly undecided. It may come to an abstention.", "My capital can't make up its mind. We might well abstain.",
+            "I wish I could tell you. It could go either way."],
+        -1: ["I'm sorry, but this draft is troubling us more and more.",
+             "We're uneasy, my friend. The text is going somewhere we can't follow.",
+             "I won't hide it from you: we're worried about this draft."],
+        -2: ["It's a no from us, I'm sorry to say. Our capital won't budge.", "We'll have to vote against, and it grieves me.",
+             "My friend, we're against this text. I can't soften it."]},
+    "blunt": {
+        2: ["We're with you. Full stop. We'll say it out loud.", "Our vote's yours. We'll speak for the text too.",
+            "Count on us. Vote and voice."],
+        1: ["We lean yes. Tidy up the text and you have us.", "You'll likely get our support. The draft needs fixing first.",
+            "We're on your side, more or less. Change a few things."],
+        0: ["Undecided. Could be an abstention.", "No instructions yet. We may abstain.", "Could go either way. Ask me later."],
+        -1: ["This draft is a problem for us.", "We've got serious doubts about this.",
+             "The text is going the wrong way for us. That's a concern."],
+        -2: ["We're against. That won't change.", "It's a no. Our capital said so in plain words.",
+             "We can't vote for this. End of story."]},
+    "grave": {
+        2: ["My government supports you without reserve, and will declare it in the debate.",
+            "Our vote and our voice are with you. The committee shall hear both.",
+            "My government gives this text its full support, openly and on the floor."],
+        1: ["My government leans towards support. It will expect changes.", "We are disposed to support you, if the text is amended.",
+            "Support from my government is likely. The draft must first improve."],
+        0: ["My capital has not instructed me. We may abstain.", "My government weighs the matter still. An abstention is possible.",
+            "Our vote is not yet settled. It may go either way."],
+        -1: ["My government has serious reservations about this draft.", "The course of this text gives my capital real concern.",
+             "My government is troubled, Ambassador, and increasingly so."],
+        -2: ["My government will vote against. That is settled.", "We oppose this text, and nothing said today alters that.",
+             "My capital cannot accept the draft. I am instructed to say no."]},
+    "urgent": {
+        2: ["We are with you to the end, and we will say it in front of everyone.",
+            "You have our full support. We will speak for this text with all we have.",
+            "Our vote is yours, and we will not be quiet about it."],
+        1: ["We lean towards you. Please, improve the text a little.", "We can support you, we think. A few changes would make us sure.",
+            "We want to be on your side. The draft needs to come a little further."],
+        0: ["We do not know yet. We may be forced to abstain.",
+            "Our capital is still deciding, and we are running out of time. We may abstain.",
+            "It could go either way for us. So much depends on the text."],
+        -1: ["We are worried, Ambassador. This draft is moving away from us.", "This text is becoming a real problem for our people.",
+             "Our concerns are serious, and they are growing."],
+        -2: ["We must say no. We could not face our people otherwise.", "We will vote against. On this we cannot bend.",
+             "This draft is against everything we came for. We cannot accept it."]},
+    "guarded": {
+        2: ["I'm able to say we support you. We'll say it in the room as well.", "We're with you. I don't often say that so plainly.",
+            "You can have our vote, and a few words in the debate too."],
+        1: ["We lean towards you. I can't make it firmer without changes.", "I'd expect us to support you, if the wording moves.",
+            "We lean to yes more than no. It depends on the text."],
+        0: ["No decision yet. An abstention wouldn't surprise me.", "I've no instructions to share. We may abstain.",
+            "It could go either way. I really can't say more."],
+        -1: ["There are concerns at home about this text. Serious ones.", "I can say we're troubled by the draft.",
+             "We have doubts. I'd rather not list them."],
+        -2: ["It's a no. I can't explain further.", "My instructions are to vote against. That's all I can tell you.",
+             "We can't accept the draft. I've no room to say otherwise."]},
+}
+
+_RED = {
+    "measured": {
+        "open": ["Let me be precise at the outset: that clause is a red line for us. I will listen, but our room is very small.",
+                 "For the record, the clause you seek is a red line in my instructions. Please continue, though we cannot go far.",
+                 "I must note that your clause crosses a red line for my delegation. We can hear the argument. We cannot move much.",
+                 "You should know before you begin that this clause is a red line for us. I will take notes, but expect little movement."],
+        "close": ["I have heard the whole case. The clause is still a red line for us.",
+                  "Your argument is recorded. It does not move a red line, and that clause is one.",
+                  "We have reached the limit of my instructions. That clause is a red line.",
+                  "Thank you for the care you took. A red line is a red line, and we cannot cross this one."]},
+    "warm": {
+        "open": ["Oh, my friend, I have to say it first: that clause is a red line for us. Tell me anyway, but we can't go far.",
+                 "Before you go on, and I say it gently: your clause is a red line at home. I'll listen, of course.",
+                 "You know I like to help, but that clause is a red line for us. Speak, and I'll hear you. We can't move much.",
+                 "I'd rather be honest now than later: that clause is a red line for us. We'll listen, though we can't move far."],
+        "close": ["I'm so sorry. I listened with an open heart, and it's still a red line for us.",
+                  "You argued it well, my friend. It is a red line all the same.",
+                  "I wish I had better news. That clause stays a red line for us.",
+                  "Thank you for understanding. A red line is a red line, even between friends."]},
+    "blunt": {
+        "open": ["Before you start: that clause is a red line for us. Say your piece. We won't move far.",
+                 "Fair warning: your clause is a red line. I'll hear you. Don't expect much.",
+                 "That clause? A red line for us. Go ahead, but we're not moving far.",
+                 "Know this first: your clause is a red line for us. Talk, if you want. It won't shift us far."],
+        "close": ["Heard you. Still a red line.", "Nothing you said moves a red line. That clause is one.",
+                  "No. The clause is a red line for us, and that's that.", "Good try. A red line doesn't move."]},
+    "grave": {
+        "open": ["Let there be no misunderstanding: that clause is a red line for my government. Speak, but do not expect us to move far.",
+                 "Before you proceed, Ambassador, know that your clause is a red line for my capital. I will hear you. We will not move far.",
+                 "My government regards the clause you want as a red line. I shall listen out of courtesy. We cannot move far.",
+                 "I say this at once and plainly: your clause is a red line for my government. You may make your case. Little will change."],
+        "close": ["I have listened. The clause remains a red line for my government.",
+                  "My government does not move its red lines, Ambassador, and that clause is one.",
+                  "You argued with skill. The clause is a red line for my government even so.",
+                  "That is all I can say. The clause is a red line, and my capital will not cross it."]},
+    "urgent": {
+        "open": ["I must say this first: that clause is a red line for us. We will hear you, but we cannot give way.",
+                 "Please know before you begin: your clause is a red line for our people. We will listen. We cannot move far.",
+                 "Forgive me, but that clause is a red line for us, and it is not for sale. Speak, and we will listen.",
+                 "You should hear it now: the clause you want is a red line for us. We have almost no room to move."],
+        "close": ["We listened, truly. It is a red line for us, and it has to stay one.",
+                  "I am sorry. That clause is a red line for us, because of what it would cost our people.",
+                  "Nothing can change it, Ambassador. That clause is a red line for us.",
+                  "You tried in good faith. A red line is a red line, and we cannot cross it."]},
+    "guarded": {
+        "open": ["I'd better say it now: that clause is a red line for us. I'll listen. I can't promise anything.",
+                 "You should know your clause is a red line for my capital. Go on, but I've very little room.",
+                 "That clause is a red line for us, I'm afraid. I'll hear what you have. I can't move far.",
+                 "First, a caution: the clause you're after is a red line for us. Speak if you like. I can offer little."],
+        "close": ["I listened. It's still a red line for us.", "That's all I'm able to say. The clause is a red line.",
+                  "Nothing I heard changes a red line, and that clause is one.",
+                  "It stays a red line for us. I can't go further than that."]},
+}
+
+_GREET = {
+    "measured": ["Ambassador, may I raise a matter with you?", "A word on the text, Ambassador, if you have time.",
+                 "Ambassador, I have a question for you."],
+    "warm": ["There you are, Ambassador! Just the person I wanted.", "Ambassador, my friend, come and sit a moment.",
+             "Ambassador! How good to find you free."],
+    "blunt": ["Ambassador. One thing.", "Need a word, Ambassador.", "Ambassador. This won't take long."],
+    "grave": ["Ambassador. I wish to speak with you.", "A matter of importance, Ambassador.",
+              "Ambassador. My capital asks that we talk."],
+    "urgent": ["Ambassador, thank goodness. I need a moment.", "Ambassador, please. There isn't much time.",
+               "Ambassador, I must speak with you now."],
+    "guarded": ["Ambassador. Have you a moment, in private?", "A word, Ambassador. Not here.",
+                "Ambassador. I'd like to ask you something, quietly."],
+}
+
+for _reg in REGISTERS:
+    for _level in ("strong", "some", "weak"):
+        REACT[_reg][_level] += _REACT[_reg][_level]
+        VERDICT[_reg][_level] += _VERDICT[_reg][_level]
+    for _b in (2, 1, 0, -1, -2):
+        STANCE[_reg][_b] += _STANCE[_reg][_b]
+    for _when in ("open", "close"):
+        RED[_reg][_when] += _RED[_reg][_when]
+    BUT[_reg] += _BUT[_reg]
+    STILL[_reg] += _STILL[_reg]
+    GREET[_reg] += _GREET[_reg]
