@@ -21,6 +21,7 @@ import random
 from app.modules.sim.campaign import engine as E
 from app.modules.sim.campaign import talks as T
 from app.modules.sim.campaign import voices as VO
+from app.modules.sim.campaign.conv_lines import CALLBACK, CONCERN, THIRD, TONE_REPLY, WITHHOLD   # the lines, by register
 
 TONES = {
     "empathise": ("Empathise", "Acknowledge their position. Safe and warm, but it moves them little."),
@@ -31,47 +32,8 @@ TONES = {
 }
 BARGAIN_COST, SEAL_COST, REPAIR_COST = 2, 1, 1
 
-# what they lead with (placeholders filled from the game; Fable writes these in each delegation's voice)
-CONCERN = {
-    "betrayed": ["You broke your word to us. Why should we listen now?", "We haven't forgotten what happened last time. Speak carefully.",
-                 "My capital asked me not to talk to you at all. I'm here anyway. Make it worth it."],
-    "redline": ["Your main aim is a line my government will not cross. Let's be honest about that.",
-                "Before you start: what you want most is what we can't accept.", "We both know where we stand on your main aim."],
-    "courted": ["{rival} was here an hour ago, with a generous offer.", "{rival} has been very attentive to us this week.",
-                "I'll be frank: {rival} wants our vote too, and asks less of us."],
-    "owed": ["You promised to back clause {n}. We're counting on it.", "Clause {n}, Ambassador. You gave us your word.",
-             "We trust clause {n} still has your support?"],
-    "dislike": ["Clause {n} troubles us. As it stands, it's hard for us to accept.", "Our capital has real doubts about clause {n}.",
-                "I need to talk to you about clause {n}. It's a problem for us."],
-    "want": ["What we'd really like to see is a clause that {label}.", "Our capital keeps asking for a clause that {label}.",
-             "Give us a clause that {label}, and you'd find us much easier to work with."],
-    "listening": ["We're listening, Ambassador.", "What can we do for you?", "You have our attention, for a few minutes."],
-}
-CALLBACK = {
-    "kept": ["You kept your word to us before. That counts for something.", "You've been as good as your word with us."],
-    "deal": ["We have our understanding, and we're keeping to it.", "Our arrangement stands, Ambassador."],
-    "lied": ["Last time, what you told us turned out not to be true.", "We checked what you told us last time. It wasn't so."],
-}
-TONE_REPLY = {
-    "empathise": {"good": ["Thank you. Not everyone here bothers to understand us.", "That's kind of you to say. It helps."],
-                  "bad": ["Understanding is pleasant. It isn't a reason to vote.", "Kind words, Ambassador. We need more than that."]},
-    "challenge": {"good": ["Fair. We needed someone to say it plainly.", "Hm. You may be right. Go on."],
-                  "bad": ["I don't care for your tone, Ambassador.", "We won't be lectured. Not by you."]},
-    "bargain": {"good": ["Now that is an offer we can take home.", "Interesting. That changes the arithmetic for us."],
-                "bad": ["An offer, yes. Not enough of one."]},
-    "flatter": {"good": ["You're very gracious. My government appreciates being heard.", "That is generous, and not untrue."],
-                "bad": ["Please, Ambassador. Spare us the compliments.", "Flattery won't get you far with us."]},
-    "warn": {"good": ["If the room is really moving, we'd rather not be left behind.", "Noted. We don't want to be on the wrong side of this."],
-             "bad": ["Is that a threat? The room isn't where you think it is.", "We'll take our chances, thank you."]},
-    "address": {"good": ["Thank you for taking that seriously. It matters to us.", "That goes a long way with us."],
-                "bad": ["Words. We'll see what you actually do.", "I hear you. I'm not yet reassured."]},
-}
-WITHHOLD = ["We'd rather keep our own counsel on that.", "That's a matter for our capital, Ambassador.",
-            "I'm not in a position to say. Not to you, not yet.", "You'll understand if I don't show you our cards."]
-THIRD = {
-    "warm": ["We could go further, if you could do something for us in return.", "There may be a way to make this firm between us."],
-    "cold": ["I think this conversation has run its course.", "We seem to be getting nowhere, Ambassador."],
-}
+CAPITAL_PRESS = 0.2          # the share of delegations whose capital presses them in a stage, with no change of position
+NEWS_DRIFT = 0.2             # how far a position must have shifted before the delegation mentions new instructions
 
 
 def _rng(g, iso, salt):
@@ -104,14 +66,36 @@ def concern(scn, g, iso) -> dict:
     return {"kind": "listening"}
 
 
-def _callback(g, iso) -> str | None:
+def _callback(scn, g, iso, concern_kind: str | None = None) -> dict | None:
+    """What they open with before their concern: your record with them, or corridor news. Each is said at most once a
+    stage to a delegation, most telling first, so a second talk hears something new (or nothing)."""
+    stage = g.get("chapter", 1)
+    cands = []
     if any(lie.get("iso3") == iso for lie in g.get("lies_found", [])):
-        return "lied"
+        cands.append({"kind": "lied"})
+    rival = T._courted(scn, g, iso)
+    if rival and concern_kind != "courted":                    # a rival's offer, when that isn't already their concern
+        cands.append({"kind": "offer", "rival": scn.member(rival).name})
+    moved = [v for v in g.get("drift", {}).get(iso, {}).values() if abs(v) >= NEWS_DRIFT]
+    if moved:                                                  # their position has shifted: new instructions from home
+        cands.append({"kind": "capital_warm" if sum(moved) > 0 else "capital_cool"})
     if any(p["iso3"] == iso and p["kept"] is True for p in g["promises"]):
-        return "kept"
+        cands.append({"kind": "kept"})
     if iso in (g.get("deal_votes") or {}):
-        return "deal"
+        cands.append({"kind": "deal"})
+    if random.Random(f"{g['seed']}:capital:{stage}:{iso}").random() < CAPITAL_PRESS:
+        cands.append({"kind": "capital"})                      # their capital is pressing them, whatever its position
+    heard = g.setdefault("conv_heard", {}).setdefault(iso, [])
+    for c in cands:
+        key = f"{c['kind']}:{stage}"
+        if key not in heard:
+            heard.append(key)
+            return c
     return None
+
+
+def _fill(line: str, fields: dict) -> str:
+    return line.format(**{k: v for k, v in fields.items() if k != "kind"})
 
 
 def reveal(scn, g, iso) -> int:
@@ -187,11 +171,12 @@ def greet(scn, g, iso) -> dict:
         raise E.GameError("Finish the conversation you're in first.")
     c = concern(scn, g, iso)
     rng = _rng(g, iso, "greet")
+    reg = VO.voice(scn, g, iso)
     parts = []
-    cb = _callback(g, iso)
+    cb = _callback(scn, g, iso, c["kind"])
     if cb:
-        parts.append(_line(g, "callback:" + cb, CALLBACK[cb], rng))
-    parts.append(_line(g, "concern:" + c["kind"], CONCERN[c["kind"]], rng).format(**{k: v for k, v in c.items() if k != "kind"}))
+        parts.append(_fill(_line(g, f"callback:{cb['kind']}:{reg}", CALLBACK[cb["kind"]][reg], rng), cb))
+    parts.append(_fill(_line(g, f"concern:{c['kind']}:{reg}", CONCERN[c["kind"]][reg], rng), c))
     g["conv"] = {"iso3": iso, "stage": "open", "concern": c, "reply": " ".join(parts), "moves": [], "qs": [],
                  "red": c["kind"] == "redline", "cost": 0, "trust": 0, "ask": False, "said": None}
     return {"conv": view(scn, g)}
@@ -262,7 +247,8 @@ def follow(scn, g, a) -> dict:
             cv["tone"] = level
         else:
             key = choice[5:] if choice.startswith("tone:") else "address"
-            cv["reply"] = _line(g, f"tone:{key}:{mood}", TONE_REPLY[key][mood], rng)
+            reg = VO.voice(scn, g, iso)
+            cv["reply"] = _line(g, f"tone:{key}:{mood}:{reg}", TONE_REPLY[key][mood][reg], rng)
             cv["tone"] = "strong" if mood == "good" else "weak"
         cv["stage"] = "reply"
         return {"conv": view(scn, g)}
@@ -281,7 +267,8 @@ def follow(scn, g, a) -> dict:
         cv["qs"].append(q)
         if not cv["red"] and choice not in ("close", "ask") and (q >= 1.0 or q <= 0.3):
             cv["stage"], cv["mood"] = "third", "warm" if q >= 1.0 else "cold"
-            cv["reply"] = _line(g, "third:" + cv["mood"], THIRD[cv["mood"]], rng)
+            reg = VO.voice(scn, g, iso)
+            cv["reply"] = _line(g, f"third:{cv['mood']}:{reg}", THIRD[cv["mood"]][reg], rng)
             cv["tone"] = "strong" if cv["mood"] == "warm" else "weak"
             return {"conv": view(scn, g)}
         return _finish(scn, g, q, choice)
@@ -327,7 +314,8 @@ def _finish(scn, g, q, choice) -> dict:
            "how": how, "q": round(q, 2), "landed": {}, "pledged": choice == "seal"}
     level = reveal(scn, g, iso) + (1 if cv.get("ask") else 0)
     if level < 0:
-        out["withheld"] = _line(g, "withhold", WITHHOLD, _rng(g, iso, "withhold"))
+        reg = VO.voice(scn, g, iso)
+        out["withheld"] = _line(g, f"withhold:{reg}", WITHHOLD[reg], _rng(g, iso, "withhold"))
         return out
     r = T.receptive(scn, g, iso)
     out["landed"] = {k: T._word(r[k]) for k in args}
