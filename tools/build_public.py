@@ -24,7 +24,6 @@ EXCLUDE = [
     "CLAUDE.md", "HANDOVER.md", "build_solo.py", "launch_platform.ps1", "assets/soc_launcher.ico",
     "docs/decisions.md", "docs/phase-reports.md", "docs/audit.md", "docs/privacy-summary.md", "docs/pilot-checklist.md",
     "docs/walkthrough.md", "docs/walkthrough-log.csv", "docs/reviews", "docs/screens",
-    "src/WhipCount_v2_solo_built.html", "src/WhipCount_v1_built.html",
     "tools/build_session_beta.py", "tools/install_desktop_shortcut.ps1", "tools/build_public.py",
 ]
 
@@ -44,8 +43,11 @@ REPLACE = [
     (r"South Oakleigh College's four houses, with the College's house colours \(the College design system\)", "four demo houses, in the platform's house colours"),
     (r"South Oakleigh College", "Your School"),
     (r"South Oakleigh\s*", ""),
+    (r"SOC's", "the school's"),
+    (r"SOC", "school"),
     (r"Debating Jr BGO", "Debating Juniors"),
     (r"mia@school\.vic\.edu\.au", "mia@example.invalid"),
+    (r'split\(" — SOC"\)', 'split(" — Debating")'),
     (r"soc_crest\.png", "crest.png"),
     (r"soc_logo\.png", "logo.png"),
     (r"soc_launcher\.ico", "launcher.ico"),
@@ -82,6 +84,9 @@ def _png(size: int = 256) -> bytes:
     return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0)) + chunk(b"IDAT", raw) + chunk(b"IEND", b"")
 
 
+EMBLEM64 = __import__("base64").b64encode(_png(128)).decode()
+
+
 def build(out: Path) -> None:
     out.mkdir(parents=True, exist_ok=True)
     for child in out.iterdir():                                     # a fresh tree, keeping the public repo's .git
@@ -112,6 +117,7 @@ def build(out: Path) -> None:
         new = s
         for pat, rep in REPLACE:
             new = re.sub(pat, rep, new)
+        new = re.sub(r"data:image/png;base64,[A-Za-z0-9+/=]+", lambda m: "data:image/png;base64," + EMBLEM64, new)   # embedded logos
         if new != s:
             f.write_bytes(new.encode("utf-8"))
         for n, line in enumerate(new.splitlines(), 1):
