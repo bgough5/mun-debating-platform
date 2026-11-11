@@ -31,6 +31,8 @@ EXCLUDE = [
 # order matters: the longest, most specific phrases first
 REPLACE = [
     (r"Public Speaking and Debating Coordinator,\s*South Oakleigh College", "the author"),
+    (r", drawn from a colleague's photo with his consent: [^.]*\.", ": an original, stylised character."),
+    (r" The photo is not kept anywhere in the project\.", ""),
     (r"South Oakleigh College Model United Nations", "Model United Nations"),
     (r"SOUTH OAKLEIGH COLLEGE MUN", "MODEL UN"),
     (r"South Oakleigh Debating (&amp;|&) (Model UN|MUN)", r"Debating \1 \2"),
