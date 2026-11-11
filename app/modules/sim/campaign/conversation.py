@@ -26,7 +26,7 @@ from app.modules.sim.campaign.conv_lines import CALLBACK, CONCERN, THIRD, TONE_R
 TONES = {
     "empathise": ("Empathise", "Acknowledge their position. Safe and warm, but it moves them little."),
     "challenge": ("Challenge them", "Push back hard. Lands with those already leaning your way or who like plain talk; backfires on the rest."),
-    "bargain": ("Bargain", "Offer something from your mission. Reliable, but costs 2 Influence."),
+    "bargain": ("Bargain (2 Influence)", "Offer something from your mission. Reliable, but costs 2 Influence."),
     "flatter": ("Flatter", "Appeal to their standing. Formal and warm delegations like it; plain-speaking ones don't."),
     "warn": ("Warn them", "Tell them where the room is going. Moves them if the room really is with you; it always costs trust."),
 }
