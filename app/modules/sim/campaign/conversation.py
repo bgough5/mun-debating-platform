@@ -333,7 +333,8 @@ def _finish(scn, g, q, choice) -> dict:
     out["landed"] = {k: T._word(r[k]) for k in args}
     open_stage = g["length"] == "quick" or g["chapter"] >= 2
     if level >= 1 and (open_stage or cv.get("ask")) and E.final_clause(g)["tags"]:
-        out["would_vote"] = E.vote_of(scn, E.latent(scn, g, iso, E.final_clause(g), mood=False))
+        rd = E.reading(scn, g, iso)                             # honest: firm, leaning or wavering (Fable, 11 Nov)
+        out["would_vote"], out["would_sure"], out["would_says"] = rd["vote"], rd["sure"], E.reading_words(rd)["says"]
     if level >= 2:
         out["leans"] = {scn.member(rv["iso3"]).name: round(E.lean(scn, g, rv["iso3"], iso), 2) for rv in g["rivals"]}
     return out

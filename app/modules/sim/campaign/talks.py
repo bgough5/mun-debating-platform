@@ -93,7 +93,8 @@ def a_lobby(scn, g, a):
     if g["length"] != "quick" and g["chapter"] >= 2:
         out["leans"] = {scn.member(rv["iso3"]).name: round(E.lean(scn, g, rv["iso3"], iso), 2) for rv in g["rivals"]}
     if g["length"] != "quick" and g["chapter"] >= 3 and E.final_clause(g)["tags"]:
-        out["would_vote"] = E.vote_of(scn, E.latent(scn, g, iso, E.final_clause(g), mood=False))
+        rd = E.reading(scn, g, iso)
+        out["would_vote"], out["would_sure"], out["would_says"] = rd["vote"], rd["sure"], E.reading_words(rd)["says"]
     return out
 
 

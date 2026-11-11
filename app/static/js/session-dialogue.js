@@ -301,7 +301,7 @@
                                        out.q >= 0.9 ? "smile" : out.q >= 0.5 ? "brow" : "shake");
       var intel = h("span", "s-intel-box");
       var landed = TALKS().pitchAnswer(out); if (landed) intel.appendChild(h("span", "s-intel", "Your arguments: " + landed));
-      if (out.would_vote) intel.appendChild(h("span", "s-intel", "On the whole text as it stands, they would vote " + out.would_vote + "."));
+      if (out.would_vote) intel.appendChild(h("span", "s-intel", "On the whole text as it stands: " + (out.would_says || out.would_vote) + "."));
       if (out.withheld) intel.appendChild(h("span", "s-intel", "They kept their counsel: “" + out.withheld + "”"));
       if (out.pledged) intel.appendChild(h("span", "s-intel", "They pledged their support."));
       if (out.leans) intel.appendChild(h("span", "s-intel", "Towards each rival: " + Object.keys(out.leans).map(function (k) { return k + " " + (out.leans[k] > 0.3 ? "warm" : out.leans[k] < -0.3 ? "cold" : "neutral"); }).join(", ") + "."));
