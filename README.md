@@ -1,189 +1,74 @@
-# South Oakleigh Debating & Model UN platform
+# Debating & Model UN platform
 
-One browser-based platform for South Oakleigh College's Model UN and debating work: evidence-based vote prediction,
-the resolution workspace and chair tools, debating draws and ballots, and student pathways. It runs on the
-coordinator's laptop over school Wi-Fi (D-002). Each student signs in on a school laptop with their own six-character
-code, which already knows their name (D-079); no installs, no phones.
-
-**Status:** Phases 1–6 built (except the student pilot, which needs Ben, staff and the school). Phase 7 (reliability
-and honesty fixes), Phase 8 (the committee flow Ben approved on 27 Oct 2026, D-068), Phase 9 (debating and public
-speaking for the classroom) and Phase 10 (personal sign-in codes, smooth pages, the South Oakleigh restyle) are built:
-see `docs/phase-reports.md`. The flow, with its flow charts, is `docs/design/mun-committee-flow.html`. See
-`docs/phase-reports.md` for what is built and the measured exit criteria of each phase, and
-`docs/pilot-checklist.md` for what must happen before any class uses it.
+A browser-based platform for running Model UN and debating with a class, and The Session, a Model UN campaign for one
+player. It runs on one laptop: students join from their own browsers over the local network with a personal sign-in
+code. Nothing is installed on student machines and no data leaves the laptop.
 
 ## Just want to play The Session?
-
-The Session is a Model UN campaign for one player, inside this platform.
 
 1. Install **Python 3.12** from [python.org](https://www.python.org/downloads/) (on Windows, tick "Add python.exe to PATH").
 2. Get this repository: the green **Code** button → **Download ZIP** (then unzip it), or clone it.
 3. Double-click **`play_session.bat`**. The first start sets itself up (it needs the internet once); after that it
    starts the platform in the background and opens The Session in its own window.
 
-Everything runs on your own computer, and saved games stay in the `data` folder. Found a bug, or have an idea?
-Open an issue on GitHub (**Issues** → **New issue**): one per thing, with the scenario, country and difficulty if it helps.
+Saved games stay in the `data` folder on your computer. Found a bug or have an idea? Open an issue: one per thing,
+with the scenario, country and difficulty if it helps.
 
 ## What's in it
 
-- **Model UN:** conferences, committees, delegations; a resolution workspace (one editor per paragraph, amendments,
-  version history, undo); evidence-based vote prediction (Monte Carlo pass probability, swing countries, amendment
-  comparison, lobbying tasks); calibration against real votes.
-- **Class mode:** sign-in by personal code (one laptop at a time; absent students never hold up a vote); live sessions with speakers list, timers, motions, divisions (GA and
-  Security Council rules, vetoes), minutes and a projector view; live updates over one WebSocket; 1–25 students,
-  with countries that have no student voted by the engine and labelled "computed".
-- **Debating and public speaking (Phase 9):** a classroom runner for class debates and speaking rounds (type the
-  names, set the times, project a timer that shows the bells as colour; Space and the arrow keys run it; times and
-  quick rubric scores recorded per speaker); a prep studio for students (debate cases in four-part arguments,
-  rebuttals against the other side's three likely arguments for each of the 122 motions, speech drafts from four
-  templates with word count, rehearsal and cue cards); speaking practice (impromptu topics with structure cards,
-  prepared rehearsal, rebuttal drills) with timers and bells; teacher scoring and comments on all of it.
-- **Tournaments and carnivals:** events, houses, teams, rooms, adjudicators; seeded draws (random, then power-paired);
-  rubric ballots and panels; ladders and speaker tabs; house points with reversals; run sheets and MC scripts;
-  projector view; class practice for any number of students; a 325-student carnival generator for rehearsal.
-- **Start (D-084, D-099):** the one front door for every activity, in three steps: choose Model UN (then a scenario),
-  a class debate, public speaking or your own format; tick who's taking part from one student list (or add
-  first-timers) and optionally save them as a group; choose junior, middle or senior (suggested from year levels).
-- **Play solo (D-099):** Model UN on the board, alone against the computer, from any scenario. Signed-in students'
-  games are saved; anyone can play as a guest from the sign-in page with no code, and nothing about a guest is kept.
-- **The Session's medals and motion (D-104):** every game scores 0–100 on five paths; the medal bands were measured over
-  bot games (gold is a perfect score). Meters roll, tokens turn, ink writes the clauses, the light follows the hour, faces
-  react, medals drop and telegrams arrive (`app/static/js/session-fx.js`); all of it stops when motion is off.
-- **The Session (D-101):** an hour-long solo campaign at `/session`: chapters of lobbying and drafting, then a
-  Summit run as the UN runs it (statements, the draft read, a caucus, amendments one at a time, one final vote), then
-  a debrief. A flow, motion and layout review from 10 Nov 2026 is in `docs/reviews/session-flow-review-2026-11-10.md`. Each chapter has a crisis; delegations bring offers; rivals have
-  personalities and play to win, with hidden plans that your advisers (posted, hired, promoted) find out; you
-  answer them by holding an action in reserve, securing delegations and replying at the summit; positions shift. The
-  golden rule (half a loaf is better than none) is in the scoring. Every country has a dossier of real World
-  Bank figures; you trade at the deal table (funding, trade terms, candidacies, clauses for votes, sponsorship,
-  Influence or intelligence), and your capital's confidence answers by telegram: lose it and you are recalled. Lobbying is a pitch of two arguments matched to each delegation; deals are haggled in rounds; rivals can
-  be won over with a compromise. Systems unlock stage by stage, and each turn's news arrives as one paced reel. The Chief of Protocol walks new players through the
-  whole session first, and speaks up at key moments. Since Ben's playtests (D-102), delegates come to talk and remember you, talking is a
-  conversation, Respect and the capital are one Standing, and the look is mahogany and brass. Scenarios unlock in order
-  (gold on Standard or Hard), and "Your record" (`/session/profile`) shows medals by scenario, country and path. You
-  build your ambassador, earn insignia, and choose an approach (a trade-off) before each game.
-- **People:** one student list with year levels, saved groups (for example "Debating Jr BGO", ticked in one go; D-085),
-  teacher access (which teachers see whom), staff, student pathways and milestones.
-- **Speech coach (D-100):** beside every speech box, and hideable. It has a time dial against the target, word and sentence counts, a reading level, checks for repeated words, fillers and long sentences, and persuasive techniques ticked as they're used. It can mark these in the writing, adds Model UN and debate phrases at the cursor, and reads the speech aloud in the laptop's own voice. Teachers see it read-only.
-- **Speeches and cue cards (D-087):** any speech (prepared, free-form, a debate case, a Model UN draft) as editable
-  cue cards, dot points or full, printed four to an A4 page; speeches save themselves; debate teammates read each
-  other's arguments and speeches, with a flag on likely double-ups. The Dashboard lists activities in
-  progress with Resume, which asks who's here today.
-- **Intelligence:** licence-gated UN voting-history import (locked: licences not confirmed, D-051), voting-history
-  priors, backtests against baselines, and AI features behind a provider interface that is offline by default (D-053).
-- **Hardening:** permissions audit, backups and restore, retention purge and student erasure, accessibility checks.
-- **Committee flow (Phases 6 and 8):** six stages of real committee procedure with the chair's script (editable data):
-  roll call, agenda, opening statements, the open floor, voting procedure, debrief. On the floor, motions move the
-  committee between the speakers list, moderated and unmoderated caucus (up to 10 minutes a motion) and amendment
-  debate. Amendments go from private draft to public tracked changes, signatures, suggested edits, the floor (speakers
-  for and against), a vote and adoption on every screen. Students have tabs for the floor, motions and votes, points,
-  messages to other delegations (visible to the chair), private speech drafts, the amendment board, and a friends and
-  foes sheet for each operative clause; a prepare page holds the country brief and the opening statement. Security
-  Council votes warn on a veto as it happens. Whip counts are scored against the votes actually cast; the debrief
-  shows pivotal votes and delegate profiles; practice for 1–3 students against a computed chamber.
-- **The board (D-092):** a projector view in its own window, driven by the teacher's console: a retro war-room
-  table with the world map, stage transitions (a scroll, the voting doors), the camera following the speaker, votes
-  dropped onto the map with vetoes stamped, and a wax seal for the result. **Plain view** remains for weak projectors.
-- **Onboarding and help:** a getting-started wizard, printable sign-in cards (each student's code and the address)
-  and a classroom poster, a Help dialog on every page, a glossary, a student quick-start and the staff guide inside the app.
+- **The Session** (`app/modules/sim/`): a one-hour Model UN campaign for one player. Lobby delegations that each have
+  their own voice, haggle, make promises you must keep, win regional groups, outplay rival delegations with secret
+  instructions, then face a Summit run as the UN runs it (statements, the draft read, caucus, amendments one at a time,
+  a final vote). Graded on five paths, with a record, medals and unlockable scenarios. Rules:
+  `docs/design/solo-campaign.md`.
+- **Model UN with a class** (`mun/`, `chair/`, `floor/`): scenarios as files (`docs/pack-authoring.md`), committees
+  and delegations, a shared resolution workspace with amendments and version history, a chair console (speakers list,
+  timers, motions, voting, Security Council rules), a projector board with a world map, and evidence-based vote
+  prediction.
+- **Debating and public speaking** (`debating/`): a classroom runner with timers and bells, a prep studio (cases,
+  rebuttals, speech drafts, cue cards), speaking practice, and teacher scoring and comments.
+- **Tournaments** (`debating/`, off by default): draws, ballots, ladders, speaker tabs and house points.
+- **People** (`people/`): one student list, personal sign-in codes, groups, and role-based access for staff.
+- **Practice** (`sim/`): a ten-minute Quick vote, and solo play of any scenario on the board.
 
-Guides: `docs/staff-guide.md` (for teachers), `docs/privacy-summary.md` (for school sign-off),
-`docs/permissions.md`, `docs/backup-restore.md`, `docs/pilot-checklist.md`. Design review: `docs/screens/index.md`
-(screenshots of every key page on a laptop and a large screen).
+## Run it
 
-**On Ben's laptop, first:** `powershell -ExecutionPolicy Bypass -File tools\windows_smoke.ps1` (add `-Browser` for the
-browser and accessibility tests). It installs into its own `.venv-smoke`, runs the tests, starts the platform on demo
-data, checks it answers and prints a PASS/FAIL table.
+```
+python -m pip install -r requirements.txt
+python -m app            # http://localhost:8080 ; add --demo for the demo dataset (fake data only)
+```
 
-**Keep the folder near the top of your drive**, for example `C:\Users\<you>\Documents\mun-debating-platform`. In a
-deep folder, pip fails with `[WinError 206] The filename or extension is too long`, because some packages
-(Playwright) nest files past Windows' 260-character path limit. The smoke script warns before installing if the folder
-path is over 80 characters and long paths are off. Alternatively, enable long paths (needs an administrator):
-`New-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem -Name LongPathsEnabled -Value 1 -PropertyType DWORD -Force`,
-then sign out and in again.
+On Windows, `start_platform.bat` does the same and sets itself up on first run. The first visit to the staff side asks
+you to set the coordinator passphrase. Students open the address printed in the window and type their code. Data lives
+in `data/` (not in the repository).
 
-## Run it (Windows)
-
-**One click:** the **SOC Debating & MUN** shortcut on the desktop, with the College crest. It starts the platform in a
-minimised window (close that window to stop it), then opens the staff view in Edge and the student view in an
-InPrivate window, so the two sign-ins never mix. If the platform is already running it just opens the two windows.
-Measured on Ben's laptop: 7 s from click to both windows; 62 s the very first time on a new copy, while it installs.
-To put the shortcut on a desktop: `powershell -ExecutionPolicy Bypass -File tools\install_desktop_shortcut.ps1`.
-All private windows share one sign-in, so this shows one student at a time.
-
-Or by hand: double-click `start_platform.bat` (or run `.\start_platform.ps1`). The first run creates `.venv` and installs
-`requirements.txt` (needs internet once). Then:
-
-- Staff, on the laptop: `http://localhost:8080/` — the first visit asks you to set the coordinator passphrase.
-- Students, on school laptops on the Wi-Fi: the address printed in the window, then their code (or the `/s/<code>`
-  link on their card).
-- Demo mode (fake data only, for training staff): `start_platform.bat --demo`, or Admin → Data.
-
-Any OS: `python -m pip install -r requirements.txt` then `python -m app [--demo] [--port 8080]`.
-
-Data lives in `data/` (gitignored): `real.db`, `demo.db`, `config.json` (passphrase hash, settings) and `backups/`.
+It is built for a trusted local network: it serves plain HTTP and must not be exposed to the internet. Demo mode uses
+a published demo passphrase, so never use it where real students are signed in.
 
 ## Tests
 
 ```
 python -m pip install -r requirements-dev.txt
-python -m playwright install chromium        # once, for the browser tests
-python -m pytest                              # engine, API and browser (axe) tests
-python -m pytest -m "not ui"                  # without the browser
-node tools/parity/gen_fixture.js              # regenerate the parity fixture from the frozen v2 JS
-python tools/check_exports.py                 # open every export in LibreOffice/poppler
-python tools/loadtest.py --minutes 45         # Phase 2 load test: 30 clients, writes test-results/load/
-python tools/permissions_report.py            # rewrite docs/permissions.md from the code
-python tools/restore_drill.py                 # backup and restore into a separate app process
-python tools/screenshots.py                   # screenshot gallery -> docs/screens/
-python tools/build_icons.py <lucide-static>   # rebuild the icon sprite from lucide-static (ISC)
+python -m playwright install chromium   # once, for the browser tests
+python -m pytest                         # engine, API and browser (with axe accessibility checks)
+python -m pytest -m "not ui"             # without the browser
 ```
 
 ## Layout
 
-- `app/` — the platform (spec §7.3). `engine/` (prediction, rules, calibration; pure Python), `db/` (SQL migrations,
-  CSV seeds), `modules/<name>/` (routes, services and templates per module: core, admin, people, mun, chair,
-  debating, intelligence), `templates/` and `static/` (shared layout, CSS, vendored htmx — no CDN).
-- `tests/` — pytest: `engine/`, `api/`, `ui/` (Playwright + axe). `tests/vendor/` holds axe-core for the tests.
-- `tools/` — parity fixture generator, audit scripts, export checker, load test, permissions report, restore drill,
-  synthetic UN-vote generator.
-- `docs/` — `spec.md`, `decisions.md` (wins over the spec), `audit.md`, `phase-reports.md`, and the guides above.
+- `app/`: the platform. `engine/` (prediction and rules, pure Python), `db/` (migrations, seeds, scenario packs),
+  `modules/<name>/` (routes, services and templates for each part), `templates/` and `static/` (layout, CSS, scripts,
+  fonts and icons; no CDN).
+- `tests/`: `engine/`, `api/`, `ui/` (Playwright), `security/`.
+- `tools/`: build scripts for the map, flags, icons and economic data; the balance simulator for The Session
+  (`campaign_sim.py`); load test, backup drill and permissions report.
+- `docs/`: design documents, the staff guide, pack authoring, backup and restore, the security review and the
+  permissions matrix.
+- `server/`, `client/`, `shared/`, `src/`: the original Whip Count game, kept as it was and no longer developed.
 
-The v2 game below is frozen and still runnable; the platform links to it as "Practice game".
+Python 3.12, FastAPI, SQLite, Jinja2 and htmx; no JavaScript build step.
 
-## Practice game: Whip Count v2 (frozen)
+## Licence
 
-Historical brief: **HANDOVER.md**. Frozen since July 2026 (D-007); not extended.
-
-v2 is complete: multiplayer caucus rooms (3/5/7/9 players) with typed negotiation,
-rubric marking, three-axis scoring (mandate fidelity / coalition / diplomacy), an
-open clause-pitch mechanic, physically-rewritten amendments, and a distinct visual
-identity with country flags — plus a standalone single-player build for prep/practice.
-
-### Run multiplayer
-
-`python server/server.py` — starts the WebSocket relay and serves `client/player.html`
-and `client/teacher.html`. See `server/PROTOCOL.md` for the message contract.
-
-### Single-player offline build
-
-`src/WhipCount_v2_solo_built.html` — one self-contained file, no server, no network,
-opens by double-click. Rebuild it after touching `shared/engine.js`, `shared/flags.js`,
-`src/engine.v2.html`, or a pack with:
-
-```
-python build_solo.py
-```
-
-`src/WhipCount_v1_built.html` is the earlier single-player build, kept as a historical
-fallback; it's no longer the one to hand students.
-
-### Layout (v2 files)
-
-- `HANDOVER.md` — full project brief, decisions, and build history. Read it first.
-- `shared/` — the engine, rubric, scoring, and flags modules, loaded by every client.
-- `server/` — the Python thin-relay WebSocket server (rooms/lobby/phase state only).
-- `client/` — `player.html` and `teacher.html`, the multiplayer clients.
-- `src/` — single-player dev source (`engine.v2.html`), topic packs, and built artifacts.
-- `test/` — Python unit tests (`test/test_*.py`) and browser-run JS test pages (`test/*.test.html`).
-
+Copyright © Ben Gough. All rights reserved: see `LICENSE`. Third-party fonts, icons, map, flags and data keep their own
+licences: see `THIRD_PARTY.md`.
