@@ -21,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 EXCLUDE = [
-    "CLAUDE.md", "HANDOVER.md", "build_solo.py", "launch_platform.ps1", "assets",
+    "CLAUDE.md", "HANDOVER.md", "build_solo.py", "launch_platform.ps1", "assets/soc_launcher.ico",
     "docs/decisions.md", "docs/phase-reports.md", "docs/audit.md", "docs/privacy-summary.md", "docs/pilot-checklist.md",
     "docs/walkthrough.md", "docs/walkthrough-log.csv", "docs/reviews", "docs/screens",
     "src/WhipCount_v2_solo_built.html", "src/WhipCount_v1_built.html",
@@ -40,7 +40,9 @@ REPLACE = [
     (r"South Oakleigh College design system", "the platform's design system"),
     (r"South Oakleigh College look", "the platform's look"),
     (r"South Oakleigh restyle", "restyle"),
-    (r"South Oakleigh College", "the College"),
+    (r"at South Oakleigh College", "at your school"),
+    (r"South Oakleigh College's four houses, with the College's house colours \(the College design system\)", "four demo houses, in the platform's house colours"),
+    (r"South Oakleigh College", "Your School"),
     (r"South Oakleigh\s*", ""),
     (r"Debating Jr BGO", "Debating Juniors"),
     (r"mia@school\.vic\.edu\.au", "mia@example.invalid"),
@@ -94,7 +96,8 @@ def build(out: Path) -> None:
             shutil.rmtree(p)
         elif p.exists():
             p.unlink()
-    for old, new in (("app/static/soc_crest.png", "app/static/crest.png"), ("app/static/soc_logo.png", "app/static/logo.png")):
+    for old, new in (("app/static/soc_crest.png", "app/static/crest.png"), ("app/static/soc_logo.png", "app/static/logo.png"),
+                     ("assets/soc_logo.png", "assets/logo.png")):
         if (out / old).exists():
             (out / old).unlink()
         (out / new).write_bytes(_png())
