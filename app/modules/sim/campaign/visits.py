@@ -141,6 +141,7 @@ def turn_start(scn, g):
             E._log(g, lie["iso3"], f"{scn.member(lie['iso3']).name} found out you misled them about {scn.member(lie['about']).name}. "
                                    "They trust you less, and the room has noticed.", "warning", lie["iso3"])
             g.setdefault("grievances", []).append({"iso3": lie["iso3"], "kind": "lie", "about": lie["about"]})
+            g.setdefault("lies_found", []).append({"iso3": lie["iso3"], "about": lie["about"]})   # they remember it in talks
     g["visitors"] = 0
     if g["chapter"] == 1 and g["turn"] == 1:                 # the very first turn is yours alone
         g["offers"] = []

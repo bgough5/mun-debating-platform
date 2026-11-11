@@ -261,6 +261,7 @@ def test_voices_change_no_numbers_and_games_replay_identically(scn):
     state = random.getstate()
     for iso in _others(scn, g):
         VO.voice(scn, g, iso), VO.answer(scn, g, iso, "some", 0), VO.greet(scn, g, iso), VO.caucus(scn, g, iso, "rally", "pleased")
+    g.pop("lines_used", None)                                   # the only trace: which lines have been heard (11 Nov)
     assert json.dumps(g, sort_keys=True) == before and random.getstate() == state
 
 

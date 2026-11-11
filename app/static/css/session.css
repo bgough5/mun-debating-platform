@@ -1627,3 +1627,11 @@
 @media (max-width: 1150px) { .s-g-paths { grid-template-columns: repeat(3, 1fr); } }
 /* a beta copy's watermark (app/beta.py) */
 .s-beta-mark { position: fixed; z-index: 70; left: 50%; bottom: 2px; transform: translateX(-50%); margin: 0; padding: 1px 10px; font: 12px var(--book); color: var(--parchment); background: color-mix(in srgb, var(--walnut-dk) 80%, transparent); pointer-events: none; }
+/* conversations (11 Nov): their concern first, then your choices in groups */
+.s-talk-opts { display: grid; gap: 10px; }
+.s-talk-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: stretch; }
+.s-talk-gh { flex: 1 0 100%; margin: 0; font: 700 12px var(--book); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.s-talk-group .s-btn { flex: 1 1 150px; flex-direction: column; align-items: flex-start; text-align: left; padding: 6px 10px; min-height: 0; }
+.s-talk-group .s-btn span { font: 400 13px/1.3 var(--book); text-transform: none; letter-spacing: 0; }
+.s-talk-group .s-btn.known b::after { content: " ✓"; color: var(--green); }
+.s-talk-group .s-btn.used { opacity: .8; }

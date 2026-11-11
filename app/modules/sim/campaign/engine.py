@@ -764,7 +764,7 @@ def apply(scn: Scenario, game: dict, action: dict) -> tuple[dict, dict]:
     g["stats"][do] = g["stats"].get(do, 0) + 1
     if isinstance(action.get("iso3"), str) and do not in ("post", "end_turn"):
         g.setdefault("touched", []).append(action["iso3"])
-    if do in ENGAGE and isinstance(action.get("iso3"), str) and action["iso3"] not in g.setdefault("engaged", []):
+    if do in ENGAGE and action.get("step") != "greet" and isinstance(action.get("iso3"), str) and action["iso3"] not in g.setdefault("engaged", []):
         g["engaged"].append(action["iso3"])
     if do not in ("end_turn", "advance") and _check_breakthrough(scn, g):
         out["breakthrough"] = True

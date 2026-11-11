@@ -253,35 +253,40 @@
       $("s-visit-n").textContent = "";
       var row = $("s-visit-opts"); row.textContent = ""; row.classList.remove("s-cards5"); return row;
     }
-    function talk(iso) {                                               // open (or return to) a conversation
+    function talk(iso) {                                               // go over (free): they lead with what is on their mind
       var v = c.view(); if (!v || showing) return;
       talking = iso; showing = "talk";
       if (v.conv && v.conv.iso3 === iso) { talkReply(v.conv); return; }
-      var d = v.tokens[iso];
-      var row = talkFrame(iso, "What will you open with?", (d.listens_to && d.listens_to.length ? "From its file, it listens to " + d.listens_to.join(" and ").toLowerCase() + ". " : "") +
-        "Choose the argument you lead with. Watch how they take it: where you go next decides how far they move.");
-      row.classList.add("s-cards5");
-      Object.keys(v.args).forEach(function (k) {
-        var known = d.listens_to && d.listens_to.indexOf(v.args[k].name) >= 0, used = (d.talked || []).indexOf(k) >= 0;
-        var b = h("button", "s-btn ghost s-argcard" + (known ? " known" : "") + (used ? " used" : "")); b.type = "button";
-        b.appendChild(h("b", "", v.args[k].name)); b.appendChild(h("span", "", v.args[k].what));
-        if (used) b.appendChild(h("em", "", "You've used this with them"));
-        b.addEventListener("click", function () { c.move({ do: "talk", step: "open", iso3: iso, arg: k }); A.play("paper"); });
-        row.appendChild(b);
-      });
-      var back = h("button", "s-btn ghost small", "Not now"); back.type = "button";
-      back.addEventListener("click", leaveTalk); row.appendChild(back);
-      c.open("s-visit"); c.restart(document.querySelector("#s-visit .s-doc"), "s-reel-in"); A.play("paper");
+      c.move({ do: "talk", step: "greet", iso3: iso }); A.play("paper");
     }
+    var GROUP = { concern: "Their concern", argument: "Make your case", tone: "Your tone", move: "Where you take it" };
+    var STAGE_H = { open: "They have something on their mind", reply: "They react", third: "A turning point" };
     function talkReply(cv) {
-      var row = talkFrame(cv.iso3, "They react", "");
-      cv.options.forEach(function (o, i) {
-        var b = h("button", "s-btn ghost", o.label); b.type = "button";      // every answer alike (10 Nov)
+      var row = talkFrame(cv.iso3, STAGE_H[cv.stage] || "They react", "");
+      row.classList.add("s-talk-opts");
+      var groups = {};
+      cv.options.forEach(function (o) {
+        var gname = o.group || "move";
+        if (!groups[gname]) {
+          groups[gname] = h("div", "s-talk-group"); groups[gname].appendChild(h("p", "s-talk-gh", GROUP[gname] || ""));
+          row.appendChild(groups[gname]);
+        }
+        var b = h("button", "s-btn ghost" + (gname === "argument" ? " s-argcard" : "") + (o.known ? " known" : "") + (o.used ? " used" : "")); b.type = "button";   // every answer alike
+        b.appendChild(h("b", "", o.label));
+        if (o.what && cv.stage === "open") b.appendChild(h("span", "", o.what));
+        if (o.known) b.title = "From its file, it listens to this";
+        if (o.cost && c.view().influence < o.cost) b.disabled = true;
         b.addEventListener("click", function () { c.move({ do: "talk", step: "follow", choice: o.code }); A.play("paper"); });
-        row.appendChild(b);
+        groups[gname].appendChild(b);
       });
-      if ($("s-visit").hidden) c.open("s-visit");
-      say($("s-visit-face"), $("s-visit-p"), "You opened with " + cv.first_name.toLowerCase() + ". \u201c" + cv.reply + "\u201d", row, cv.iso3);
+      if (cv.stage === "open") {
+        var back = h("button", "s-btn ghost small", "Not now (free)"); back.type = "button";
+        back.addEventListener("click", function () { c.move({ do: "talk", step: "follow", choice: "close" }); });
+        row.appendChild(back);
+      }
+      if ($("s-visit").hidden) { c.open("s-visit"); c.restart(document.querySelector("#s-visit .s-doc"), "s-reel-in"); }
+      var said = cv.stage === "open" || !cv.said ? "" : "You " + cv.said + ". ";
+      say($("s-visit-face"), $("s-visit-p"), said + "“" + cv.reply + "”", row, cv.iso3);
       var T = { strong: ["delighted", "nod"], some: ["thinking", "brow"], weak: ["concerned", "shake"], red: ["concerned", "shake"] }[cv.tone];
       if (T) reactIn($("s-visit-face"), T[0], T[1]);
     }
@@ -297,6 +302,8 @@
       var intel = h("span", "s-intel-box");
       var landed = TALKS().pitchAnswer(out); if (landed) intel.appendChild(h("span", "s-intel", "Your arguments: " + landed));
       if (out.would_vote) intel.appendChild(h("span", "s-intel", "On the whole text as it stands, they would vote " + out.would_vote + "."));
+      if (out.withheld) intel.appendChild(h("span", "s-intel", "They kept their counsel: “" + out.withheld + "”"));
+      if (out.pledged) intel.appendChild(h("span", "s-intel", "They pledged their support."));
       if (out.leans) intel.appendChild(h("span", "s-intel", "Towards each rival: " + Object.keys(out.leans).map(function (k) { return k + " " + (out.leans[k] > 0.3 ? "warm" : out.leans[k] < -0.3 ? "cold" : "neutral"); }).join(", ") + "."));
       row.parentNode.insertBefore(intel, row);
       A.play(out.moved > 0.2 ? "chime" : "tick");
@@ -305,8 +312,9 @@
     function TALKS() { return c.talks(); }
     // after a talk move: their reaction, or the end of the conversation
     function talkStep(v, out, action) {
-      if (action.step === "open" && out && out.conv) { talkReply(out.conv); return; }
+      if (out && out.conv) { talkReply(out.conv); return; }               // the conversation goes on
       if (out && out.talked) talkEnd(v, out);
+      else if (out && out.left) leaveTalk();
     }
     return { offer: offer, procAnswer: procAnswer, sheet: sheet, powers: powers, after: after, talk: talk, talkStep: talkStep, likeness: likeness, pin: pin };
   };

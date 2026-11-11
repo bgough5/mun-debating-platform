@@ -95,6 +95,13 @@ class Bot:
         else:
             choice = "close"
         g3, _ = E.apply(self.scn, g2, {"do": "talk", "step": "follow", "choice": choice})
+        if g3.get("conv"):                                     # a third exchange: seal it if they're warm and it's affordable
+            third = [o["code"] for o in T.conv_view(self.scn, g3)["options"]]
+            pick = "seal" if competent and "seal" in third and g3["influence"] >= 4 else "close"
+            try:
+                g3, _ = E.apply(self.scn, g3, {"do": "talk", "step": "follow", "choice": pick})
+            except E.GameError:
+                g3, _ = E.apply(self.scn, g3, {"do": "talk", "step": "follow", "choice": "close"})
         return g3, True
 
     def turn(self, g: dict) -> dict:

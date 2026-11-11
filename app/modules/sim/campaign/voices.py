@@ -67,20 +67,37 @@ def _rng(g: dict, iso: str, slot: str) -> random.Random:
     return random.Random(f"{g['seed']}:voice:{g.get('tick', 0)}:{g.get('n', 0)}:{iso}:{slot}")
 
 
+def pick(g: dict, key: str, options: list, rng: random.Random) -> str:
+    """A line from `options` not yet heard in this game under `key`, while any remain (Ben, 11 Nov: talks repeated
+    themselves). Every delegation that speaks in the same register shares the memory, so no two of them say the same
+    line until the bank is used up. Seeded, so games replay identically."""
+    used = g.setdefault("lines_used", {}).setdefault(key, [])
+    free = [i for i in range(len(options)) if i not in used]
+    if not free:
+        used.clear()
+        free = list(range(len(options)))
+    i = rng.choice(free)
+    used.append(i)
+    return options[i]
+
+
 def _say(scn, g, iso, bank, slot, rng=None) -> str:
-    return (rng or _rng(g, iso, slot)).choice(bank[voice(scn, g, iso)])
+    reg = voice(scn, g, iso)
+    return pick(g, f"{slot}:{reg}", bank[reg], rng or _rng(g, iso, slot))
 
 
 # ---------------------------------------------------------------- talking: first reactions, the verdict, the stance
 
 def react(scn, g, iso, level: str, rng=None) -> str:
     """What they say when you open with an argument: level is "strong", "some" or "weak"."""
-    return (rng or _rng(g, iso, "react")).choice(REACT[voice(scn, g, iso)][level])
+    reg = voice(scn, g, iso)
+    return pick(g, f"react:{reg}:{level}", REACT[reg][level], rng or _rng(g, iso, "react"))
 
 
 def stance(scn, g, iso, b: int, rng=None) -> str:
     """Where they stand on your position: the five buckets of `engine.bucket`, 2 (strongly for) to -2 (against)."""
-    return (rng or _rng(g, iso, "stance")).choice(STANCE[voice(scn, g, iso)][b])
+    reg = voice(scn, g, iso)
+    return pick(g, f"stance:{reg}:{b}", STANCE[reg][b], rng or _rng(g, iso, "stance"))
 
 
 def answer(scn, g, iso, level: str | None, b: int) -> str:
@@ -89,26 +106,28 @@ def answer(scn, g, iso, level: str | None, b: int) -> str:
     "we're not persuaded, we strongly support you" (Ben's coherence rule)."""
     reg = voice(scn, g, iso)
     rng = _rng(g, iso, "answer")
-    where = rng.choice(STANCE[reg][b])
+    where = pick(g, f"stance:{reg}:{b}", STANCE[reg][b], rng)
     if level is None:
         return where
-    parts = [rng.choice(VERDICT[reg][level])]
+    parts = [pick(g, f"verdict:{reg}:{level}", VERDICT[reg][level], rng)]
     if level != "weak" and b < 0:
-        parts.append(rng.choice(BUT[reg]))
+        parts.append(pick(g, f"but:{reg}", BUT[reg], rng))
     elif level == "weak" and b > 0:
-        parts.append(rng.choice(STILL[reg]))
+        parts.append(pick(g, f"still:{reg}", STILL[reg], rng))
     return " ".join(parts + [where])
 
 
 def red_line(scn, g, iso, when: str) -> str:
     """when: "open" (before you make your case) or "close" (after it)."""
-    return _rng(g, iso, "red" + when).choice(RED[voice(scn, g, iso)][when])
+    reg = voice(scn, g, iso)
+    return pick(g, f"red:{reg}:{when}", RED[reg][when], _rng(g, iso, "red" + when))
 
 
 # ---------------------------------------------------------------- visits
 
 def greet(scn, g, iso, salt: str = "") -> str:
-    return _rng(g, iso, "greet" + salt).choice(GREET[voice(scn, g, iso)])
+    reg = voice(scn, g, iso)
+    return pick(g, f"greet:{reg}", GREET[reg], _rng(g, iso, "greet" + salt))
 
 
 def visit(scn, g, iso, kind: str, **kw) -> str:

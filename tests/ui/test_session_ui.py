@@ -9,6 +9,14 @@ from tests.ui.conftest import axe
 pytestmark = pytest.mark.ui
 
 
+def _to_their_answer(page):
+    """A talk ends at their answer; one that went very well or very badly first reaches a turning point (11 Nov)."""
+    page.wait_for_function("['Their answer', 'A turning point'].includes(document.getElementById('s-visit-h').textContent)")
+    if page.inner_text("#s-visit-h") == "A turning point":
+        page.click("#s-visit-opts button:has-text('Leave it there')")
+        page.wait_for_function("document.getElementById('s-visit-h').textContent === 'Their answer'")
+
+
 def _close_card(page):
     """Close the stage card. In the chapters the stage's own panel then opens over the map (the Draft centre stage in
     the Working group); close it as a player would, to reach the tokens."""
@@ -200,7 +208,7 @@ def test_a_guest_makes_moves_on_the_board(browser, live):
     page.wait_for_function("document.getElementById('s-visit-h').textContent === 'They react'")
     ap_is(ap - 1)
     page.locator("#s-visit-opts button").nth(1).click()                      # turn to a second argument
-    page.wait_for_function("document.getElementById('s-visit-h').textContent === 'Their answer'")
+    _to_their_answer(page)
     page.click("#s-visit-opts button:has-text('Done')")
     page.wait_for_selector("#c-heard:not([hidden]) blockquote")
     assert "Your pitch:" in page.inner_text("#c-heard")
@@ -618,7 +626,7 @@ def test_talking_picking_and_signing(browser, live):
     page.locator("#s-visit .s-argcard").first.click()
     page.wait_for_function("document.getElementById('s-visit-h').textContent === 'They react'")
     page.locator("#s-visit-opts button").first.click()
-    page.wait_for_function("document.getElementById('s-visit-h').textContent === 'Their answer'")
+    _to_their_answer(page)
     assert not axe(page, "session_talk_answer")
     page.click("#s-visit-opts button:has-text('Done')")
     assert page.is_visible("#c-heard") and "Australia" in page.inner_text("#c-heard")
