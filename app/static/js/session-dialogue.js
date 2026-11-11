@@ -276,11 +276,12 @@
         }
         var b = h("button", "s-btn ghost" + (gname === "argument" ? " s-argcard" : "") + (o.known ? " known" : "") + (o.used ? " used" : "")); b.type = "button";   // every answer alike
         b.appendChild(h("b", "", o.label));
-        if (o.what && cv.stage === "open") b.appendChild(h("span", "", o.what));
-        if (o.known) b.title = "From its file, it listens to this";
+        if (o.what && cv.stage === "open") { b.appendChild(h("span", "", o.what)); b.title = o.what; }
+        if (o.known) b.title = (b.title ? b.title + " - " : "") + "From its file, it listens to this";
         if (o.cost && c.view().influence < o.cost) b.disabled = true;
         b.addEventListener("click", function () { c.move({ do: "talk", step: "follow", choice: o.code }); A.play("paper"); });
         groups[gname].appendChild(b);
+        groups[gname].style.setProperty("--n", Math.min(5, groups[gname].children.length - 1));
       });
       if (cv.stage === "open") {
         var back = h("button", "s-btn ghost small", "Not now (free)"); back.type = "button";
