@@ -27,10 +27,7 @@ class Bot:
         st = {a: E.stance(self.scn, g, a, clause) for a in ["you", *[r["iso3"] for r in g["rivals"]]]}
         if my is not None:
             st["you"] = my
-        x = E.latent(self.scn, g, iso, clause, st, mood=False)
-        if "read_room" in g["skills"] and iso in g["read"]:
-            x += 0.5 * self.scn.dist(clause["tags"]).get(iso, (0, 1))[1] * g["moods"].get(iso, 0)
-        return E.vote_of(self.scn, x)
+        return E.vote_of(self.scn, E.latent(self.scn, g, iso, clause, st, mood=False, known=True))
 
     def est_yes(self, g, clause, my=1) -> int:
         return sum(1 for i in self.scn.isos if i not in E._others(g) and self.est(g, i, clause, my) == "yes")
@@ -95,6 +92,13 @@ class Bot:
         else:
             choice = "close"
         g3, _ = E.apply(self.scn, g2, {"do": "talk", "step": "follow", "choice": choice})
+        if g3.get("conv"):                                     # a third exchange: seal it if they're warm and it's affordable
+            third = [o["code"] for o in T.conv_view(self.scn, g3)["options"]]
+            pick = "seal" if competent and "seal" in third and g3["influence"] >= 4 else "close"
+            try:
+                g3, _ = E.apply(self.scn, g3, {"do": "talk", "step": "follow", "choice": pick})
+            except E.GameError:
+                g3, _ = E.apply(self.scn, g3, {"do": "talk", "step": "follow", "choice": "close"})
         return g3, True
 
     def turn(self, g: dict) -> dict:

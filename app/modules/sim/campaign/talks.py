@@ -93,7 +93,8 @@ def a_lobby(scn, g, a):
     if g["length"] != "quick" and g["chapter"] >= 2:
         out["leans"] = {scn.member(rv["iso3"]).name: round(E.lean(scn, g, rv["iso3"], iso), 2) for rv in g["rivals"]}
     if g["length"] != "quick" and g["chapter"] >= 3 and E.final_clause(g)["tags"]:
-        out["would_vote"] = E.vote_of(scn, E.latent(scn, g, iso, E.final_clause(g), mood=False))
+        rd = E.reading(scn, g, iso)
+        out["would_vote"], out["would_sure"], out["would_says"] = rd["vote"], rd["sure"], E.reading_words(rd)["says"]
     return out
 
 
@@ -139,83 +140,25 @@ def _memory(scn, g, iso, arg) -> tuple[str, float]:
 
 
 def conv_view(scn, g) -> dict | None:
-    """The conversation you have open (it lasts until you finish it or end the turn)."""
-    cv = g.get("conv")
-    if not cv:
-        return None
-    opts = [{"code": "press", "label": f"{PRESS_WORDS['press']}: {ARGS[cv['first']]['name'].lower()}"}]
-    if not cv.get("red"):
-        opts += [{"code": "switch:" + k, "label": f"Turn to {ARGS[k]['name'].lower()}" + (" (used before)" if _used(g, cv["iso3"], k) else "")}
-             for k in ARGS if k != cv["first"]]
-    opts += [{"code": "ask", "label": PRESS_WORDS["ask"]}, {"code": "close", "label": PRESS_WORDS["close"]}]
-    return {"iso3": cv["iso3"], "name": scn.member(cv["iso3"]).name, "first": cv["first"], "first_name": ARGS[cv["first"]]["name"],
-            "reply": cv["reply"], "options": opts, "tone": cv.get("tone")}
+    """The conversation you have open (conversation.py since 11 Nov)."""
+    from app.modules.sim.campaign import conversation as C
+    return C.view(scn, g)
 
 
 def a_talk(scn, g, a):
-    """step "open": spend the action and open with an argument; step "follow": where you take it, and the outcome."""
+    """step "greet" (free): they lead with their concern; step "follow": your opening (it spends the action), your
+    follow-up and, sometimes, a third exchange. step "open" with an argument (the bots, and older pages) greets and opens
+    with that argument in one go."""
+    from app.modules.sim.campaign import conversation as C
     step = a.get("step", "open")
+    if step == "greet":
+        return C.greet(scn, g, a.get("iso3"))
     if step == "open":
-        iso, arg = a.get("iso3"), a.get("arg")
-        E._country(scn, g, iso)
-        if arg not in ARGS:
+        if a.get("arg") not in ARGS:
             raise E.GameError("Choose what to open with.")
-        if g.get("conv"):
-            raise E.GameError("Finish the conversation you're in first.")
-        cost = E.lobby_cost(scn, g, iso)
-        E._spend(g, 1, cost)
-        r = receptive(scn, g, iso)
-        red = E.mu_of(scn, g, iso, [g["mandate"]["must"]]) <= E.R["redline"]
-        rng = random.Random(f"{g['seed']}:talk:{g['n']}:{iso}")
-        memory, goodwill = _memory(scn, g, iso, arg)
-        felt = r[arg] * REPEAT ** _used(g, iso, arg)
-        reply = (VO.red_line(scn, g, iso, "open") if red
-                 else memory + VO.react(scn, g, iso, _word(r[arg]) if felt >= r[arg] * 0.99 else ("some" if felt >= SOME else "weak"), rng))
-        g["conv"] = {"iso3": iso, "first": arg, "reply": reply, "red": red, "cost": cost, "goodwill": goodwill,
-                     "tone": "red" if red else _word(felt)}                # how it landed, for the delegate's face
-        return {"conv": conv_view(scn, g)}
-    cv = g.get("conv")
-    if not cv:
-        raise E.GameError("You aren't in a conversation.")
-    choice = a.get("choice") or "close"
-    iso, first = cv["iso3"], cv["first"]
-    r = {k: x * REPEAT ** _used(g, iso, k) for k, x in receptive(scn, g, iso).items()}   # what they've heard before counts less
-    if choice == "press":
-        q, how = (min(1.15, r[first] * 1.2), "pressed the point") if r[first] >= 0.9 else (r[first] * 0.6, "pressed a point that wasn't landing")
-        landed = {first: _word(r[first])}
-    elif choice.startswith("switch:") and choice[7:] in ARGS and choice[7:] != first and not cv.get("red"):
-        k = choice[7:]
-        q, how = (r[first] + r[k]) / 2, "turned to " + ARGS[k]["name"].lower()
-        landed = {first: _word(r[first]), k: _word(r[k])}
-    elif choice == "ask":
-        q, how, landed = r[first] * 0.6, "asked where they stand", {first: _word(r[first])}
-    elif choice == "close":
-        q, how, landed = r[first] * 0.75, "left it there", {first: _word(r[first])}
-    else:
-        raise E.GameError("Choose where to take the conversation.")
-    q = q + cv.get("goodwill", 0.0)
-    g["conv"] = None
-    g.setdefault("talked", {}).setdefault(iso, []).append({"args": list(landed), "q": round(q, 2), "tick": g.get("tick", 0)})
-    mu = E.mu_of(scn, g, iso, [g["mandate"]["must"]])
-    if cv.get("red"):
-        moved = E._sway(g, "you", iso, E.R["redline_step"])
-        heard = VO.red_line(scn, g, iso, "close")
-    else:
-        moved = E._sway(g, "you", iso, E.R["pitch_step"] * (0.3 + 0.7 * q))
-        heard = _answer(scn, g, iso, q, mu)
-    if q >= 0.5:
-        for adv in g.get("staff", []):
-            if adv.get("post") == iso:
-                E._xp(g, adv, f"Their briefing helped your talk with {scn.member(iso).name}.")
-    g["region_last"][scn.member(iso).region] = "you"
-    E._log(g, "you", f"You talked with {scn.member(iso).name}: you opened with {ARGS[first]['name'].lower()} and {how}.", "action", iso)
-    out = {"heard": heard, "moved": round(moved, 2), "cost": cv["cost"], "red_line": bool(cv.get("red")), "landed": landed,
-           "talked": iso, "how": how, "q": round(q, 2)}
-    if choice == "ask" or (g["length"] != "quick" and g["chapter"] >= 2):
-        out["leans"] = {scn.member(rv["iso3"]).name: round(E.lean(scn, g, rv["iso3"], iso), 2) for rv in g["rivals"]}
-    if (choice == "ask" or (g["length"] != "quick" and g["chapter"] >= 3)) and E.final_clause(g)["tags"]:
-        out["would_vote"] = E.vote_of(scn, E.latent(scn, g, iso, E.final_clause(g), mood=False))
-    return out
+        C.greet(scn, g, a.get("iso3"))
+        return C.follow(scn, g, {"choice": "arg:" + a["arg"]})
+    return C.follow(scn, g, a)
 
 
 # ---------------------------------------------------------------- haggling (deals and compromises)

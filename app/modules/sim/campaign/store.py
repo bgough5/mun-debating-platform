@@ -285,6 +285,7 @@ def view(scn: Scenario, g: dict) -> dict:
             tokens[iso] = {**base, "you": True, "dossier": X.profile(iso)}
             continue
         rival = any(r["iso3"] == iso for r in g["rivals"])
+        rd = {"vote": None, "sure": None} if rival or not final["tags"] else E.reading(scn, g, iso, final)
         t = {**base, "rival": rival, "trust": g["trust"].get(iso, 0), "lean": round(E.lean(scn, g, "you", iso), 2),
              "sway": round(g["sway"]["you"].get(iso, 0.0), 2), "read": iso in g["read"],
              "signed": "sponsor" if iso in g["sponsors"] else "signatory" if iso in g["signatories"] else None,
@@ -292,7 +293,8 @@ def view(scn: Scenario, g: dict) -> dict:
              "predicted": g["whip"].get(iso), "secured": iso in g.get("secured", []),
              "studied_by": next((a["name"] for a in g.get("staff", []) if a.get("post") == iso), None),
              "sphere": _sphere(scn, g, iso),
-             "est": None if rival or not final["tags"] else E._deal_vote(scn, g, iso, final, E.vote_of(scn, E.latent(scn, g, iso, final, mood=False))),
+             "est": rd["vote"], "est_sure": rd["sure"],            # how it would vote as far as you can tell, and how sure that is
+             "est_word": E.reading_words(rd)["word"],
              "deal_vote": (g.get("deal_votes") or {}).get(iso)}
         t["dossier"] = X.profile(iso)
         t["relation"] = VI.relation(g, iso)
@@ -496,7 +498,7 @@ def _tug(scn: Scenario, g: dict) -> dict:
     m = g["mandate"]
     aims = (m["must"] in tags) + (m.get("also") in tags) + (m["red"] not in tags)
     return {"yes": p["yes"], "no": p["no"], "abstain": p["abstain"], "passed": p["passed"], "summary": p["summary"],
-            "of": len(scn.members), "final": False, "aims": aims}
+            "of": len(scn.members), "final": False, "aims": aims, "unsure": p.get("unsure", 0)}
 
 
 def _sphere(scn: Scenario, g: dict, iso: str) -> str | None:
@@ -542,7 +544,8 @@ def _summit_view(scn: Scenario, g: dict) -> dict | None:
     if s["step"] == "caucus":
         out["topics"] = [{"code": t, "label": scn.tags[t], "mine": SM._my_view(g, t)} for t in SM.caucus_topics(scn, g)]
         final = E.final_clause(g)
-        out["floor"] = sorted(({"iso3": i, "name": names[i], "lean": E.vote_of(scn, E.latent(scn, g, i, final, mood=False)) if final["tags"] else None}
+        out["floor"] = sorted(({"iso3": i, "name": names[i], "lean": E.reading(scn, g, i, final)["vote"] if final["tags"] else None,
+                                "word": E.reading_words(E.reading(scn, g, i, final))["word"] if final["tags"] else None}
                                for i in scn.isos if i not in E._others(g) and i != g["iso3"]), key=lambda x: x["name"])
     if s["step"] == "amendments":
         am = s.get("cur")

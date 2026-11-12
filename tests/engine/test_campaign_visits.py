@@ -136,11 +136,17 @@ def test_talking_is_a_conversation(scn):
     with pytest.raises(E.GameError):
         E.apply(scn, g1, {"do": "talk", "step": "open", "iso3": iso, "arg": worst})    # one conversation at a time
     pressed, o1 = E.apply(scn, g1, {"do": "talk", "step": "follow", "choice": "press"})
+    if pressed.get("conv"):                                                       # it went well: a third exchange (11 Nov)
+        assert pressed["conv"]["stage"] == "third" and "seal" in {o["code"] for o in o1["conv"]["options"]}
+        pressed, o1 = E.apply(scn, pressed, {"do": "talk", "step": "follow", "choice": "close"})
     closed, o2 = E.apply(scn, g1, {"do": "talk", "step": "follow", "choice": "close"})
     asked, o3 = E.apply(scn, g1, {"do": "talk", "step": "follow", "choice": "ask"})
-    assert o1["moved"] > o2["moved"] > o3["moved"] and "leans" in o3 and not pressed.get("conv")   # pressing a strong point pays
+    assert o1["moved"] > o2["moved"] > o3["moved"] and not pressed.get("conv")              # pressing a strong point pays
+    assert "withheld" in o3 or "landed" in o3                                     # what they tell you depends on how they feel
     g2, _ = E.apply(scn, g, {"do": "talk", "step": "open", "iso3": iso, "arg": worst})
-    _, weak = E.apply(scn, g2, {"do": "talk", "step": "follow", "choice": "press"})
+    g2w, weak = E.apply(scn, g2, {"do": "talk", "step": "follow", "choice": "press"})
+    if g2w.get("conv"):                                                           # it went badly: leave it there
+        _, weak = E.apply(scn, g2w, {"do": "talk", "step": "follow", "choice": "close"})
     assert weak["moved"] < o1["moved"]                                                      # pressing a weak one doesn't
     g3, _ = E.apply(scn, g2, {"do": "end_turn"})
     assert not g3.get("conv") and any("talked with" in x["text"] for x in g3["log"])          # left open, it ends politely
@@ -156,9 +162,13 @@ def test_delegates_remember_your_talks(scn):
     best = max(r, key=lambda k: (r[k], k))
     g1, _ = E.apply(scn, g, {"do": "talk", "step": "open", "iso3": iso, "arg": best})
     g1, first = E.apply(scn, g1, {"do": "talk", "step": "follow", "choice": "press"})
+    if g1.get("conv"):                                                            # a third exchange: leave it there
+        g1, first = E.apply(scn, g1, {"do": "talk", "step": "follow", "choice": "close"})
     g2, out = E.apply(scn, g1, {"do": "talk", "step": "open", "iso3": iso, "arg": best})
     assert "before" in out["conv"]["reply"]                                                  # they remember
     g2, again = E.apply(scn, g2, {"do": "talk", "step": "follow", "choice": "press"})
+    if g2.get("conv"):
+        g2, again = E.apply(scn, g2, {"do": "talk", "step": "follow", "choice": "close"})
     assert again["moved"] < first["moved"] and len(g2["talked"][iso]) == 2                   # the same point counts for less
     other = next(k for k in T.ARGS if k != best)
     g3, out = E.apply(scn, g1, {"do": "talk", "step": "open", "iso3": iso, "arg": other})
